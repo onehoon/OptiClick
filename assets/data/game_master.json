@@ -259,7 +259,7 @@
     "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/2457220/daca2b22832ca67d1a675b02cdeca255eb318da2/library_600x900_2x.jpg?t=1752605722",
     "cover_filename": "Avowed.webp",
     "enabled": true,
-    "support_intel": true,
+    "support_intel": "Native XeFG",
     "support_amd": true,
     "support_nvidia": true
   },
