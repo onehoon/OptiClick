@@ -36,8 +36,10 @@ def find_duplicate_headers(headers: List[str]) -> List[str]:
     for header in headers:
         if not header:
             continue
+
         if header in seen:
             duplicates.add(header)
+
         seen.add(header)
 
     return sorted(duplicates)
@@ -51,7 +53,34 @@ def escape_sheet_name_for_a1(sheet_name: str) -> str:
 def pad_row(row: List[Any], length: int) -> List[Any]:
     if len(row) >= length:
         return row[:length]
+
     return row + [""] * (length - len(row))
+
+
+def list_all_sheet_names(service: Any, spreadsheet_id: str) -> List[str]:
+    response = (
+        service.spreadsheets()
+        .get(
+            spreadsheetId=spreadsheet_id,
+            includeGridData=False,
+        )
+        .execute()
+    )
+
+    sheets = response.get("sheets", [])
+    sheet_names: List[str] = []
+
+    for sheet in sheets:
+        properties = sheet.get("properties", {})
+        title = properties.get("title", "")
+
+        if title:
+            sheet_names.append(title)
+
+    if not sheet_names:
+        raise ValueError("구글시트에서 Sheet 목록을 찾을 수 없습니다.")
+
+    return sheet_names
 
 
 def build_json_rows_from_values(values: List[List[Any]], sheet_name: str) -> List[Dict[str, Any]]:
@@ -104,7 +133,11 @@ def build_json_rows_from_values(values: List[List[Any]], sheet_name: str) -> Lis
     return output
 
 
-def get_sheet_values(service: Any, spreadsheet_id: str, sheet_names: List[str]) -> Dict[str, List[List[Any]]]:
+def get_sheet_values(
+    service: Any,
+    spreadsheet_id: str,
+    sheet_names: List[str],
+) -> Dict[str, List[List[Any]]]:
     ranges = [escape_sheet_name_for_a1(sheet_name) for sheet_name in sheet_names]
 
     response = (
@@ -129,25 +162,10 @@ def get_sheet_values(service: Any, spreadsheet_id: str, sheet_names: List[str]) 
     return result
 
 
-def parse_sheet_names() -> List[str]:
-    input_sheet_names = os.environ.get("INPUT_SHEET_NAMES", "").strip()
-    default_sheet_names = os.environ.get("DEFAULT_SHEET_NAMES", "").strip()
-
-    raw = input_sheet_names or default_sheet_names
-    sheet_names = [name.strip() for name in raw.split(",") if name.strip()]
-
-    if not sheet_names:
-        raise ValueError("동기화할 시트명이 없습니다.")
-
-    return sheet_names
-
-
 def main() -> None:
     credentials_path = os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
     spreadsheet_id = os.environ["GOOGLE_SPREADSHEET_ID"]
     output_dir = Path(os.environ.get("OUTPUT_DIR", "assets/data"))
-
-    sheet_names = parse_sheet_names()
 
     credentials = service_account.Credentials.from_service_account_file(
         credentials_path,
@@ -155,6 +173,12 @@ def main() -> None:
     )
 
     service = build("sheets", "v4", credentials=credentials, cache_discovery=False)
+
+    sheet_names = list_all_sheet_names(service, spreadsheet_id)
+
+    print("[INFO] 전체 시트를 동기화합니다:")
+    for sheet_name in sheet_names:
+        print(f" - {sheet_name}")
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
