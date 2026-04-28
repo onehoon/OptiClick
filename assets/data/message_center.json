@@ -1,5 +1,13 @@
 [
   {
+    "message_id": "global.startup_warning0",
+    "category": "popup",
+    "ko": "[RED]신규 추가 게임[END]\n[indent]Styx: Blades of Greed\n[indent]Windrose\n[indent]Samson\n[indent]레드 데드 리뎀션\n[indent]The Elder Scrolls IV: Oblivion Remastered",
+    "en": "[RED]New game support[END]\n[indent]Styx: Blades of Greed\n[indent]Windrose\n[indent]Samson\n[indent]Red Dead Redemption\n[indent]The Elder Scrolls IV: Oblivion Remastered",
+    "url": "",
+    "memo": ""
+  },
+  {
     "message_id": "global.startup_warning1",
     "category": "popup",
     "ko": "[RED]설치 전 게임을 경계없는 전체창모드(보더리스)로 설정하세요. (크래쉬, 블랙스크린 방지)[END]",
