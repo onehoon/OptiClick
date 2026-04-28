@@ -608,7 +608,7 @@
     "cover_filename": "A Plague Tale Requiem.webp",
     "enabled": false,
     "support_intel": false,
-    "support_amd": true,
+    "support_amd": false,
     "support_nvidia": false
   },
   {
