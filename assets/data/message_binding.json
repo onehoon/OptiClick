@@ -45,7 +45,7 @@
     "stage": "install_pre",
     "message_id": "install_pre.hdr_conflict",
     "priority": 100,
-    "memo": "HDR 충돌 안내"
+    "memo": ""
   },
   {
     "game_id": "HFW",
