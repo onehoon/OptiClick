@@ -576,6 +576,30 @@
     "support_nvidia": true
   },
   {
+    "game_id": "oblivion",
+    "match_exe": "OblivionRemastered-Win64-Shipping.exe",
+    "game_name_kr": "The Elder Scrolls IV: Oblivion Remastered",
+    "game_name_en": "The Elder Scrolls IV: Oblivion Remastered",
+    "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/2623190/b52322f78cbdc7e6c267d873056abba7916f7ff3/library_600x900_2x.jpg?t=1753715747",
+    "cover_filename": "oblivion.webp",
+    "enabled": true,
+    "support_intel": true,
+    "support_amd": true,
+    "support_nvidia": true
+  },
+  {
+    "game_id": "oblivionGP",
+    "match_exe": "OblivionRemastered-WinGDK-Shipping.exe",
+    "game_name_kr": "The Elder Scrolls IV: Oblivion Remastered",
+    "game_name_en": "The Elder Scrolls IV: Oblivion Remastered",
+    "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/2623190/b52322f78cbdc7e6c267d873056abba7916f7ff3/library_600x900_2x.jpg?t=1753715747",
+    "cover_filename": "oblivionGP.webp",
+    "enabled": true,
+    "support_intel": true,
+    "support_amd": true,
+    "support_nvidia": true
+  },
+  {
     "game_id": "Requiem",
     "match_exe": "",
     "game_name_kr": "플래그 테일: 레퀴엠",
