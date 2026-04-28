@@ -3,9 +3,17 @@
     "game_id": "*",
     "gpu_vendor": "ALL",
     "stage": "startup",
+    "message_id": "global.startup_warning0",
+    "priority": 90,
+    "memo": ""
+  },
+  {
+    "game_id": "*",
+    "gpu_vendor": "ALL",
+    "stage": "startup",
     "message_id": "global.startup_warning1",
     "priority": 100,
-    "memo": "앱 시작 공지"
+    "memo": ""
   },
   {
     "game_id": "*",
@@ -13,7 +21,7 @@
     "stage": "startup",
     "message_id": "global.startup_warning2",
     "priority": 200,
-    "memo": "앱 시작 공지"
+    "memo": ""
   },
   {
     "game_id": "*",
@@ -21,7 +29,7 @@
     "stage": "startup",
     "message_id": "global.startup_warning3",
     "priority": 300,
-    "memo": "앱 시작 공지"
+    "memo": ""
   },
   {
     "game_id": "*",
@@ -29,7 +37,7 @@
     "stage": "startup",
     "message_id": "global.startup_warning4",
     "priority": 400,
-    "memo": "앱 시작 공지"
+    "memo": ""
   },
   {
     "game_id": "KCD2",
