@@ -3,7 +3,6 @@ import logging
 import os
 import shutil
 import subprocess
-import tempfile
 import zipfile
 import ctypes
 from ctypes import wintypes
