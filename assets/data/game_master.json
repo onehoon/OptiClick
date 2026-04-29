@@ -427,7 +427,7 @@
     "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/3321460/0ea942465fd1dff8a7fbc11cc9fca8c476c5e5ae/library_capsule_2x.jpg?t=1763622767",
     "cover_filename": "Crimson Desert.webp",
     "enabled": true,
-    "support_intel": "Native XeFG",
+    "support_intel": true,
     "support_amd": true,
     "support_nvidia": true
   },
