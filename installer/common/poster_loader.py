@@ -139,51 +139,148 @@ class PosterImageLoader:
         return self._default_poster_base.copy().convert("RGBA")
 
     def load(self, title: str, cover_filename: str, url: str) -> PosterLoadResult:
+        """Load a poster while preserving source priority and retry semantics.
+
+        Source order must remain:
+        1) bundled cover asset
+        2) disk cover cache
+        3) repo raw cover URL
+        4) sheet cover_url
+        5) default poster
+        """
         normalized_cover_filename = normalize_cover_filename(cover_filename)
+        cover_cache_key = (
+            self._poster_cache_key("cover_file", normalized_cover_filename, title=title)
+            if normalized_cover_filename
+            else ""
+        )
+        cover_result, repo_failed = self._load_from_cover_filename(
+            normalized_cover_filename=normalized_cover_filename,
+            cover_cache_key=cover_cache_key,
+        )
+        if cover_result is not None:
+            return cover_result
+
+        return self._load_from_cover_url(
+            title=title,
+            normalized_cover_filename=normalized_cover_filename,
+            cover_cache_key=cover_cache_key,
+            url=url,
+            repo_failed=repo_failed,
+        )
+
+    def _load_from_cover_filename(
+        self,
+        *,
+        normalized_cover_filename: str,
+        cover_cache_key: str,
+    ) -> tuple[Optional[PosterLoadResult], bool]:
+        """Resolve cover filename path sources and report repo fallback failure state."""
         repo_failed = False
-        cover_cache_key = ""
+        if not normalized_cover_filename:
+            return None, repo_failed
 
-        if normalized_cover_filename:
-            cover_cache_key = self._poster_cache_key("cover_file", normalized_cover_filename, title=title)
+        bundled_result = self._load_from_bundled_cover(
+            normalized_cover_filename=normalized_cover_filename,
+            cover_cache_key=cover_cache_key,
+        )
+        if bundled_result is not None:
+            return bundled_result, repo_failed
 
-            bundled_cover_path = self._find_bundled_cover_asset(normalized_cover_filename)
-            if bundled_cover_path is not None:
-                pil_img = self._load_prepared_image_from_path(bundled_cover_path, cover_cache_key)
-                if pil_img is not None:
-                    return PosterLoadResult(pil_img, False, False)
+        disk_result = self._load_from_disk_cover_cache(
+            normalized_cover_filename=normalized_cover_filename,
+            cover_cache_key=cover_cache_key,
+        )
+        if disk_result is not None:
+            return disk_result, repo_failed
 
-            disk_cache_path = self._get_cover_cache_path(normalized_cover_filename)
-            if disk_cache_path is not None and disk_cache_path.exists():
-                pil_img = self._load_prepared_image_from_path(disk_cache_path, cover_cache_key)
-                if pil_img is not None:
-                    return PosterLoadResult(pil_img, False, False)
-                try:
-                    disk_cache_path.unlink()
-                except OSError:
-                    pass
+        repo_result, repo_failed = self._load_from_repo_cover(
+            normalized_cover_filename=normalized_cover_filename,
+            cover_cache_key=cover_cache_key,
+        )
+        return repo_result, repo_failed
 
-            repo_url = self._build_cover_repo_raw_url(normalized_cover_filename)
-            if repo_url:
-                try:
-                    image_bytes = self._download_image_bytes(repo_url)
-                    pil_img = self._load_prepared_image_from_bytes(image_bytes, cover_cache_key)
-                    if pil_img is None:
-                        raise RuntimeError("Downloaded cover image could not be decoded")
-                    try:
-                        self._store_cover_cache_bytes(normalized_cover_filename, image_bytes)
-                    except Exception:
-                        pass
-                    return PosterLoadResult(pil_img, False, False)
-                except Exception:
-                    repo_failed = True
+    def _load_from_bundled_cover(
+        self,
+        *,
+        normalized_cover_filename: str,
+        cover_cache_key: str,
+    ) -> Optional[PosterLoadResult]:
+        """Try bundled asset mapped by normalized cover filename."""
+        bundled_cover_path = self._find_bundled_cover_asset(normalized_cover_filename)
+        if bundled_cover_path is None:
+            return None
 
+        pil_img = self._load_prepared_image_from_path(bundled_cover_path, cover_cache_key)
+        if pil_img is None:
+            return None
+        return PosterLoadResult(pil_img, False, False)
+
+    def _load_from_disk_cover_cache(
+        self,
+        *,
+        normalized_cover_filename: str,
+        cover_cache_key: str,
+    ) -> Optional[PosterLoadResult]:
+        """Try filename-based disk cache and delete corrupt cache file on decode failure."""
+        disk_cache_path = self._get_cover_cache_path(normalized_cover_filename)
+        if disk_cache_path is None or not disk_cache_path.exists():
+            return None
+
+        pil_img = self._load_prepared_image_from_path(disk_cache_path, cover_cache_key)
+        if pil_img is not None:
+            return PosterLoadResult(pil_img, False, False)
+
+        try:
+            disk_cache_path.unlink()
+        except OSError:
+            pass
+        return None
+
+    def _load_from_repo_cover(
+        self,
+        *,
+        normalized_cover_filename: str,
+        cover_cache_key: str,
+    ) -> tuple[Optional[PosterLoadResult], bool]:
+        """Try repo raw cover URL and return (result, repo_failed_for_retry_signal)."""
+        repo_url = self._build_cover_repo_raw_url(normalized_cover_filename)
+        if not repo_url:
+            return None, False
+
+        try:
+            image_bytes = self._download_image_bytes(repo_url)
+            pil_img = self._load_prepared_image_from_bytes(image_bytes, cover_cache_key)
+            if pil_img is None:
+                raise RuntimeError("Downloaded cover image could not be decoded")
+            try:
+                self._store_cover_cache_bytes(normalized_cover_filename, image_bytes)
+            except Exception:
+                pass
+            return PosterLoadResult(pil_img, False, False), False
+        except Exception:
+            return None, True
+
+    def _load_from_cover_url(
+        self,
+        *,
+        title: str,
+        normalized_cover_filename: str,
+        cover_cache_key: str,
+        url: str,
+        repo_failed: bool,
+    ) -> PosterLoadResult:
+        """Resolve URL path and preserve retry contract.
+
+        If URL is empty, should_retry must mirror repo_failed from filename path.
+        """
         cache_key = self._poster_cache_key("cover_url", url, title=title)
         cached_image = self._image_cache_get(cache_key) if self._config.enable_memory_cache else None
         if cached_image is not None:
             return PosterLoadResult(cached_image, False, False)
 
         if not url:
-            return PosterLoadResult(self.make_placeholder_image(), True, repo_failed)
+            return self._make_default_result(should_retry=repo_failed)
 
         try:
             image_bytes = self._download_image_bytes(url)
@@ -201,7 +298,11 @@ class PosterImageLoader:
                         pass
             return PosterLoadResult(pil_img, False, False)
         except Exception:
-            return PosterLoadResult(self.make_placeholder_image(), True, True)
+            return self._make_default_result(should_retry=True)
+
+    def _make_default_result(self, *, should_retry: bool) -> PosterLoadResult:
+        """Build default poster result with explicit retry flag."""
+        return PosterLoadResult(self.make_placeholder_image(), True, bool(should_retry))
 
     def _build_retry_session(self) -> requests.Session:
         session = requests.Session()
