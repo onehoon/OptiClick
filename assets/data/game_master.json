@@ -602,8 +602,8 @@
   {
     "game_id": "WWM",
     "match_exe": "wwm.exe",
-    "game_name_kr": "연운",
-    "game_name_en": "Where Winds Meet",
+    "game_name_kr": "연운 (스팀)",
+    "game_name_en": "Where Winds Meet (Steam)",
     "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/3564740/2ca8b95c52577eae830c347ff9292369fc950d57/library_capsule_2x.jpg?t=1763138859",
     "cover_filename": "WWM.webp",
     "enabled": true,
