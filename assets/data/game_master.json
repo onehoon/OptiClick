@@ -606,22 +606,22 @@
     "game_name_en": "Where Winds Meet",
     "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/3564740/2ca8b95c52577eae830c347ff9292369fc950d57/library_capsule_2x.jpg?t=1763138859",
     "cover_filename": "WWM.webp",
-    "enabled": false,
-    "support_intel": false,
-    "support_amd": false,
-    "support_nvidia": false
+    "enabled": true,
+    "support_intel": true,
+    "support_amd": true,
+    "support_nvidia": true
   },
   {
     "game_id": "NTE",
-    "match_exe": "",
+    "match_exe": "HTGame.exe",
     "game_name_kr": "이환",
     "game_name_en": "Neverness to Everness",
     "cover_url": "https://static.actugaming.net/media/2024/10/neverness-to-evenerss-nte-jaquette.jpg",
     "cover_filename": "NTE.webp",
-    "enabled": false,
-    "support_intel": false,
-    "support_amd": false,
-    "support_nvidia": false
+    "enabled": true,
+    "support_intel": true,
+    "support_amd": true,
+    "support_nvidia": true
   },
   {
     "game_id": "Requiem",
