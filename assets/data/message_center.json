@@ -2,7 +2,7 @@
   {
     "message_id": "global.startup_warning0",
     "category": "popup",
-    "ko": "[RED]신규 추가 게임[END]\n[indent][dot]연운(스팀)\n[indent][dot]이환 (수동 스캔 필요)\n[indent][dot]Styx: Blades of Greed\n[indent][dot]Windrose\n[indent][dot]Samson\n[indent][dot]레드 데드 리뎀션\n[indent][dot]The Elder Scrolls IV: Oblivion Remastered",
+    "ko": "[RED]신규 추가 게임[END]\n[indent][dot]연운 (스팀)\n[indent][dot]이환 (수동 스캔 필요)\n[indent][dot]Styx: Blades of Greed\n[indent][dot]Windrose\n[indent][dot]Samson\n[indent][dot]레드 데드 리뎀션\n[indent][dot]The Elder Scrolls IV: Oblivion Remastered",
     "en": "[RED]New game support[END]\n[indent][dot]Where winds meet (Steam)\n[indent][dot]Neverness to Everness (Manual scan needed)\n[indent][dot]Styx: Blades of Greed\n[indent][dot]Windrose\n[indent][dot]Samson\n[indent][dot]Red Dead Redemption\n[indent][dot]The Elder Scrolls IV: Oblivion Remastered",
     "url": "",
     "memo": ""
