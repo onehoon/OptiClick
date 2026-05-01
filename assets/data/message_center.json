@@ -184,6 +184,14 @@
     "memo": ""
   },
   {
+    "message_id": "install_pre_Hypervisor",
+    "category": "popup",
+    "ko": "[RED]Hypervisor와 호환되지 않습니다.[END]",
+    "en": "[RED]Not compatible with Hypervisor[END]",
+    "url": "",
+    "memo": ""
+  },
+  {
     "message_id": "install_post.dlss_relaunch",
     "category": "popup",
     "ko": "[RED]설치 후 인게임 설정을 보더리스, DLSS, DLSS프레임생성으로 맞추고 게임 재실행[END]",
