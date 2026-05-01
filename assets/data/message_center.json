@@ -26,14 +26,6 @@
   {
     "message_id": "global.startup_warning3",
     "category": "popup",
-    "ko": "[RED]설치 전 팝업 및 가이드 내용을 꼭 확인하세요.[END]",
-    "en": "[RED]Please ensure you review information provided.[END]",
-    "url": "",
-    "memo": ""
-  },
-  {
-    "message_id": "global.startup_warning4",
-    "category": "popup",
     "ko": "[RED]MOD 없는 순정 게임 기준으로 제작되었습니다.[END]",
     "en": "[RED]This installer is designed for vanilla game.[END]",
     "url": "",

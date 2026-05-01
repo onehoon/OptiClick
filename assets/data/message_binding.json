@@ -32,14 +32,6 @@
     "memo": ""
   },
   {
-    "game_id": "*",
-    "gpu_vendor": "ALL",
-    "stage": "startup",
-    "message_id": "global.startup_warning4",
-    "priority": 400,
-    "memo": ""
-  },
-  {
     "game_id": "PRAGMATA",
     "gpu_vendor": "INTEL",
     "stage": "install_pre",
