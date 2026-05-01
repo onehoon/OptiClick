@@ -139,17 +139,31 @@ def _is_optiscaler_managed(file_path: Path) -> bool:
         return False
 
 
+def _has_reshade_version_attribute(version_info: dict[str, str]) -> bool:
+    for value in version_info.values():
+        if "reshade" in str(value or "").lower():
+            return True
+    return False
+
+
 def _identify_binary_owner(file_path: Path) -> str:
     if _is_optiscaler_managed(file_path):
         return "optiscaler"
 
     version_info = installer_services.read_windows_version_strings(file_path)
+    # Treat ReShade metadata in file version strings as a decisive owner signal.
+    if _has_reshade_version_attribute(version_info):
+        return "reshade"
+
     haystack = " ".join(
         part.lower()
         for part in [file_path.name, *(str(value) for value in version_info.values())]
         if str(part or "").strip()
     )
     for owner, keywords in _OWNER_KEYWORDS.items():
+        if owner == "reshade":
+            # ReShade must be confirmed by file metadata, not by filename alone.
+            continue
         if any(keyword in haystack for keyword in keywords):
             return owner
     return ""
