@@ -3,6 +3,7 @@
 from . import services
 from .components import (
     OPTISCALER_ASI_NAME,
+    install_extra_bundle,
     install_optipatcher,
     install_reframework_dinput8,
     install_specialk,
@@ -42,6 +43,7 @@ __all__ = [
     "install_base_payload",
     "install_base_payload_from_archive",
     "install_base_payload_from_folder",
+    "install_extra_bundle",
     "install_optipatcher",
     "install_fsr4_dll",
     "install_reframework_dinput8",

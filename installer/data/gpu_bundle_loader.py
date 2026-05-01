@@ -29,6 +29,7 @@ _INSTALL_PROFILE_BOOL_FIELDS = (
 _INSTALL_PROFILE_TEXT_FIELDS = (
     "optiscaler_dll_name",
     "reframework_url",
+    "extra_bundle",
 )
 
 
