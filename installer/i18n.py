@@ -171,8 +171,8 @@ _STRINGS_BY_LANG: dict[Lang, AppStrings] = {
             installer_notice_title="설치 안내",
             wiki_not_configured_detail="지원 게임 위키 주소가 설정되지 않았습니다.",
             wiki_open_failed_detail="지원 게임 위키를 열지 못했습니다.",
-            rtss_game_overlay_notice="[RED]RTSS 오버레이 사용 시 문제가 있을 수 있습니다.[br]설치 시 해당 게임의 RTSS 오버레이는 Off됩니다.[END]",
-            close_while_installing_body="??? ?? ????. ?? ? ??? ???.",
+            rtss_game_overlay_notice="[RED]본 게임에 대해서는 RTSS 오버레이가 Off됩니다.(충돌방지)[END]",
+            close_while_installing_body="설치가 진행 중입니다. 잠시만 기다려 주세요.",
             installation_completed="설치가 완료되었습니다.",
             installation_completed_with_name_template=(
                 "[RED]OptiScaler가 설치되었습니다.\n"
