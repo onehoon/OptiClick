@@ -624,6 +624,18 @@
     "support_nvidia": true
   },
   {
+    "game_id": "PRAGMATA",
+    "match_exe": "PRAGMATA.exe",
+    "game_name_kr": "프래그마타",
+    "game_name_en": "Pragmata",
+    "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/3357650/ffe0d0b1778821e7e63b0a57ee8a16b8ab749497/library_600x900_2x.jpg?t=1749097394",
+    "cover_filename": "PRAGMATA.webp",
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
+  },
+  {
     "game_id": "Requiem",
     "match_exe": "",
     "game_name_kr": "플래그 테일: 레퀴엠",
@@ -722,13 +734,13 @@
   {
     "game_id": "TEST",
     "match_exe": "test.exe",
-    "game_name_kr": "New 테스트1",
-    "game_name_en": "New Test",
+    "game_name_kr": "New 테스트[프래그마타]",
+    "game_name_en": "New 테스트[프래그마타]",
     "cover_url": "",
     "cover_filename": "",
     "enabled": true,
     "support_intel": true,
-    "support_amd": true,
+    "support_amd": false,
     "support_nvidia": true
   }
 ]

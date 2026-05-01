@@ -110,5 +110,19 @@
     "sha256": "",
     "platform": "",
     "homepage_url": ""
+  },
+  {
+    "resource_id": "pragmata_bundle",
+    "resource_group": "extra_bundle",
+    "variant": "default",
+    "resource_type": "archive",
+    "name": "Pragmata Bundle",
+    "url": "https://raw.githubusercontent.com/onehoon/OptiScalerInstaller/main/assets/extra_bundle/pragmata_bundle.7z",
+    "filename": "pragmata_bundle.7z",
+    "version": 0.1,
+    "display_version": 0.1,
+    "sha256": "",
+    "platform": "windows",
+    "homepage_url": ""
   }
 ]

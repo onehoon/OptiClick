@@ -184,6 +184,14 @@
     "memo": ""
   },
   {
+    "message_id": "install_pre_SK_reshade",
+    "category": "popup",
+    "ko": "[RED]설치 후 ReShade 사용 불가능합니다.[END]",
+    "en": "[RED]After install, you can't use ReShade[END]",
+    "url": "",
+    "memo": ""
+  },
+  {
     "message_id": "install_post.dlss_relaunch",
     "category": "popup",
     "ko": "[RED]설치 후 인게임 설정을 보더리스, DLSS, DLSS프레임생성으로 맞추고 게임 재실행[END]",
