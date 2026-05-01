@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import json
 from typing import Any
 
-from ..common.network_utils import get_shared_retry_session
+from ..common.network_utils import add_github_raw_data_cache_bust, get_shared_retry_session
 from .game_db_keys import GPU_PROFILE_ID_KEY
 
 
@@ -67,7 +67,7 @@ def _load_profile_rows(source_url: str, *, label: str, timeout_seconds: float = 
     if not normalized:
         raise ValueError(f"{label} URL is empty")
 
-    response = _PROFILE_SESSION.get(normalized, timeout=timeout_seconds)
+    response = _PROFILE_SESSION.get(add_github_raw_data_cache_bust(normalized), timeout=timeout_seconds)
     response.raise_for_status()
     rows = json.loads(response.content.decode("utf-8-sig"))
     if not isinstance(rows, list):

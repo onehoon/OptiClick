@@ -4,7 +4,7 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
-from installer.common.network_utils import get_shared_retry_session
+from installer.common.network_utils import add_github_raw_data_cache_bust, get_shared_retry_session
 from installer.data.game_db_keys import (
     GUIDE_URL_KEY,
     INSTALL_POST_EN_KEY,
@@ -72,7 +72,7 @@ def _fetch_remote_text(url: str, *, timeout_seconds: float = 10.0) -> str:
     normalized = _normalize_text(url)
     if not normalized:
         raise ValueError("Remote JSON URL is empty")
-    response = _file_session.get(normalized, timeout=timeout_seconds)
+    response = _file_session.get(add_github_raw_data_cache_bust(normalized), timeout=timeout_seconds)
     response.raise_for_status()
     return response.content.decode("utf-8-sig")
 
