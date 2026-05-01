@@ -6,7 +6,7 @@ from urllib.parse import parse_qs, urlparse
 from ..common.cover_utils import normalize_cover_filename
 from ..common.flag_parser import parse_bool_token
 from ..common.log_sanitizer import redact_text
-from ..common.network_utils import get_shared_retry_session
+from ..common.network_utils import add_github_raw_data_cache_bust, get_shared_retry_session
 
 
 _file_session = get_shared_retry_session()
@@ -40,7 +40,7 @@ def load_game_db_from_remote_json(source_url: str, *, timeout_seconds: float = 1
 
 
 def _load_remote_json(source_url: str, *, timeout_seconds: float) -> object:
-    response = _file_session.get(source_url, timeout=timeout_seconds)
+    response = _file_session.get(add_github_raw_data_cache_bust(source_url), timeout=timeout_seconds)
     response.raise_for_status()
     return json.loads(response.content.decode("utf-8-sig"))
 
