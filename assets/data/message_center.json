@@ -184,14 +184,6 @@
     "memo": ""
   },
   {
-    "message_id": "install_pre_RTSS_overlay_disabled",
-    "category": "popup",
-    "ko": "[RED]본 게임에 대해서는 RTSS 오버레이가 Off 됩니다.(충돌방지)[END]",
-    "en": "[RED]RTSS overaly for this game will be disabled to prevent crash[END]",
-    "url": "",
-    "memo": ""
-  },
-  {
     "message_id": "install_pre_SK_reshade",
     "category": "popup",
     "ko": "[RED]설치 후 ReShade 사용 불가능합니다.[END]",
