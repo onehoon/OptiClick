@@ -1,3 +1,4 @@
+from .extra_bundle import install_extra_bundle
 from .optipatcher import install_optipatcher
 from .reframework import install_reframework_dinput8
 from .specialk import install_specialk
@@ -9,6 +10,7 @@ from .unreal5 import install_unreal5_patch
 
 __all__ = [
     "OPTISCALER_ASI_NAME",
+    "install_extra_bundle",
     "install_optipatcher",
     "install_reframework_dinput8",
     "install_specialk",

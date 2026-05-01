@@ -10,6 +10,7 @@ from ..app import rtss_notice
 from . import services as installer_services
 from .components import (
     OPTISCALER_ASI_NAME,
+    install_extra_bundle,
     install_optipatcher,
     install_reframework_dinput8,
     install_specialk,
@@ -116,6 +117,13 @@ def _install_additional_files(
         install_ctx.game_data,
         module_download_links,
         optipatcher_cached_archive,
+    )
+
+    install_extra_bundle(
+        install_ctx.target_path,
+        install_ctx.game_data,
+        module_download_links,
+        logger=logger,
     )
 
     if install_ctx.use_ultimate_asi_loader:
