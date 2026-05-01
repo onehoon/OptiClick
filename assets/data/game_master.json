@@ -630,8 +630,8 @@
     "game_name_en": "Pragmata",
     "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/3357650/ffe0d0b1778821e7e63b0a57ee8a16b8ab749497/library_600x900_2x.jpg?t=1749097394",
     "cover_filename": "PRAGMATA.webp",
-    "enabled": true,
-    "support_intel": true,
+    "enabled": false,
+    "support_intel": false,
     "support_amd": false,
     "support_nvidia": false
   },
