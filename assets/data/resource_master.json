@@ -112,11 +112,11 @@
     "homepage_url": ""
   },
   {
-    "resource_id": "extra_bundle",
+    "resource_id": "pragmata_bundle",
     "resource_group": "extra_bundle",
     "variant": "default",
     "resource_type": "archive",
-    "name": "PRAGMATA Extra Bundle",
+    "name": "Pragmata Bundle",
     "url": "https://raw.githubusercontent.com/onehoon/OptiScalerInstaller/main/assets/extra_bundle/pragmata_bundle.7z",
     "filename": "pragmata_bundle.7z",
     "version": 0.1,
