@@ -152,5 +152,131 @@
     "section": "/Script/CJLyraBase.LyraSettingsLocal",
     "key": "NVIDIAReflexMode",
     "value": "On"
+  },
+  {
+    "profile_id": "PRAGMATA_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "FSR3Quality",
+    "value": "Performance"
+  },
+  {
+    "profile_id": "PRAGMATA_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "FrameGeneration",
+    "value": "Fsr"
+  },
+  {
+    "profile_id": "PRAGMATA_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "MotionBlur",
+    "value": "OFF"
+  },
+  {
+    "profile_id": "PRAGMATA_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "PathTracing",
+    "value": "OFF"
+  },
+  {
+    "profile_id": "PRAGMATA_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "RayTracing",
+    "value": "OFF"
+  },
+  {
+    "profile_id": "PRAGMATA_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "UpscalingAlgorithm",
+    "value": "FSR3"
+  },
+  {
+    "profile_id": "PRAGMATA_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "VSync",
+    "value": "OFF"
+  },
+  {
+    "profile_id": "PRAGMATA_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "WindowMode",
+    "value": "Borderless"
+  },
+  {
+    "profile_id": "PRAGMATA_INTEL",
+    "path": "config.ini",
+    "section": "Render",
+    "key": "Capability",
+    "value": "DirectX12"
+  },
+  {
+    "profile_id": "TEST_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "FSR3Quality",
+    "value": "Performance"
+  },
+  {
+    "profile_id": "TEST_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "FrameGeneration",
+    "value": "Fsr"
+  },
+  {
+    "profile_id": "TEST_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "MotionBlur",
+    "value": "OFF"
+  },
+  {
+    "profile_id": "TEST_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "PathTracing",
+    "value": "OFF"
+  },
+  {
+    "profile_id": "TEST_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "RayTracing",
+    "value": "OFF"
+  },
+  {
+    "profile_id": "TEST_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "UpscalingAlgorithm",
+    "value": "FSR3"
+  },
+  {
+    "profile_id": "TEST_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "VSync",
+    "value": "OFF"
+  },
+  {
+    "profile_id": "TEST_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "WindowMode",
+    "value": "Borderless"
+  },
+  {
+    "profile_id": "TEST_INTEL",
+    "path": "config.ini",
+    "section": "Render",
+    "key": "Capability",
+    "value": "DirectX12"
   }
 ]
