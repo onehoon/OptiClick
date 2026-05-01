@@ -40,6 +40,30 @@
     "memo": ""
   },
   {
+    "game_id": "PRAGMATA",
+    "gpu_vendor": "INTEL",
+    "stage": "install_pre",
+    "message_id": "install_pre_RTSS_overlay_disabled",
+    "priority": 80,
+    "memo": ""
+  },
+  {
+    "game_id": "PRAGMATA",
+    "gpu_vendor": "INTEL",
+    "stage": "install_pre",
+    "message_id": "install_pre_SK_reshade",
+    "priority": 90,
+    "memo": ""
+  },
+  {
+    "game_id": "PRAGMATA",
+    "gpu_vendor": "INTEL",
+    "stage": "install_pre",
+    "message_id": "install_pre.borderless_fsr3_required",
+    "priority": 100,
+    "memo": ""
+  },
+  {
     "game_id": "KCD2",
     "gpu_vendor": "ALL",
     "stage": "install_pre",
