@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from ..common.cover_utils import normalize_cover_filename
@@ -137,14 +138,38 @@ def _build_module_download_links_from_rows(rows: object) -> dict[str, dict[str, 
         version = str(row.get("version", "") or "").strip()
         display_version = str(row.get("display_version", "") or "").strip()
         filename = str(row.get("filename", "") or "").strip()
-        mapping[resource_key] = {
+        entry = {
             "url": url,
             "version": version,
             "display_version": display_version,
             "filename": filename,
         }
+        for alias_key in _build_resource_alias_keys(row, resource_key):
+            mapping[alias_key] = entry
 
     return mapping
+
+
+def _build_resource_alias_keys(row: dict[str, object], primary_key: str) -> list[str]:
+    keys: list[str] = []
+
+    def _append(value: object) -> None:
+        key = str(value or "").strip().lower()
+        if key and key not in keys:
+            keys.append(key)
+
+    _append(primary_key)
+    _append(row.get("resource_id"))
+
+    resource_group = str(row.get("resource_group", "") or "").strip().lower()
+    resource_id = str(row.get("resource_id", "") or "").strip().lower()
+    if resource_group == "extra_bundle" or resource_id == "extra_bundle":
+        _append(row.get("name"))
+        filename = str(row.get("filename", "") or "").strip()
+        if filename:
+            _append(Path(filename).stem)
+
+    return keys
 
 
 def _is_truthy_support_flag(value: object) -> bool:
