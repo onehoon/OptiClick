@@ -50,8 +50,8 @@
   {
     "game_id": "PRAGMATA",
     "gpu_vendor": "INTEL",
-    "stage": "install_pre",
-    "message_id": "install_pre.borderless_fsr3_required",
+    "stage": "install_post",
+    "message_id": "install_post_ingamesetting",
     "priority": 100,
     "memo": ""
   },
@@ -66,8 +66,8 @@
   {
     "game_id": "TEST",
     "gpu_vendor": "INTEL",
-    "stage": "install_pre",
-    "message_id": "install_pre.borderless_fsr3_required",
+    "stage": "install_post",
+    "message_id": "install_post_ingamesetting",
     "priority": 100,
     "memo": ""
   },

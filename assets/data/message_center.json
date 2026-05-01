@@ -186,8 +186,8 @@
   {
     "message_id": "install_pre_SK_reshade",
     "category": "popup",
-    "ko": "[RED]설치 후 ReShade 사용 불가능합니다.[END]",
-    "en": "[RED]After install, you can't use ReShade[END]",
+    "ko": "[RED]설치 후 ReShade 사용 불가능합니다.[br]Reframework와 Special K가 호환성을 위해 같이 설치됩니다.[END]",
+    "en": "[RED]After install, you can't use ReShade[br]Reframework & Special K will be installes for compatibility.[END]",
     "url": "",
     "memo": ""
   },
@@ -236,6 +236,14 @@
     "category": "popup",
     "ko": "[RED]설치 후 DLSS/DLSS프레임생성 설정 (수직동기화를 꺼야 설정가능함)[END]",
     "en": "[RED]After install, set DLSS/DLSS FG in game (VSYNC must be off to enable DLSS FG)[END]",
+    "url": "",
+    "memo": ""
+  },
+  {
+    "message_id": "install_post_ingamesetting",
+    "category": "popup",
+    "ko": "[RED]인게임 그래픽설정까지 자동 설정되었습니다.[p]추가 설정없이 바로 게임 플레이 가능합니다.[END]",
+    "en": "[RED]In-game graphics settings configured automatically.[p]You can start playing right away without any additional setup.[END]",
     "url": "",
     "memo": ""
   },
