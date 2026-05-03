@@ -636,6 +636,42 @@
     "support_nvidia": false
   },
   {
+    "game_id": "FFWEST",
+    "match_exe": "FarFarWest-Win64-Shipping.exe",
+    "game_name_kr": "Far Far West",
+    "game_name_en": "Far Far West",
+    "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/3124540/bf9fc1400f95ce602b502653ec4e63b4ebc55e5d/library_600x900_2x.jpg?t=1765192853",
+    "cover_filename": "FFWEST.webp",
+    "enabled": true,
+    "support_intel": true,
+    "support_amd": true,
+    "support_nvidia": true
+  },
+  {
+    "game_id": "Industria2",
+    "match_exe": "Industria_2-Win64-Shipping.exe",
+    "game_name_kr": "Industria 2",
+    "game_name_en": "Industria 2",
+    "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/2154070/library_600x900_2x.jpg?t=1760350252",
+    "cover_filename": "Industria2.webp",
+    "enabled": true,
+    "support_intel": true,
+    "support_amd": true,
+    "support_nvidia": true
+  },
+  {
+    "game_id": "HighOnLife2",
+    "match_exe": "HighOnLife2-Win64-Shipping.exe",
+    "game_name_kr": "High On Life 2",
+    "game_name_en": "High On Life 2",
+    "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/2069250/e0c451a4e1ac4502dfc52d97a0268248065796c4/library_600x900_2x.jpg?t=1755054611",
+    "cover_filename": "HighOnLife2.webp",
+    "enabled": true,
+    "support_intel": true,
+    "support_amd": true,
+    "support_nvidia": true
+  },
+  {
     "game_id": "Requiem",
     "match_exe": "",
     "game_name_kr": "플래그 테일: 레퀴엠",

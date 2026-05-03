@@ -1,5 +1,47 @@
 [
   {
+    "profile_id": "Industria2_ALL",
+    "path": "%LOCALAPPDATA%\\Industria_2\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Engine.GameUserSettings",
+    "key": "FullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "Industria2_ALL",
+    "path": "%LOCALAPPDATA%\\Industria_2\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Engine.GameUserSettings",
+    "key": "bUseDynamicResolution",
+    "value": "False"
+  },
+  {
+    "profile_id": "FFWEST_ALL",
+    "path": "%LOCALAPPDATA%\\FarFarWest\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Engine.GameUserSettings",
+    "key": "FullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "FFWEST_ALL",
+    "path": "%LOCALAPPDATA%\\FarFarWest\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Engine.GameUserSettings",
+    "key": "bUseDynamicResolution",
+    "value": "False"
+  },
+  {
+    "profile_id": "HighOnLife2_ALL",
+    "path": "%LOCALAPPDATA%\\HighOnLife2\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Washington.WAGameUserSettings",
+    "key": "FullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "HighOnLife2_ALL",
+    "path": "%LOCALAPPDATA%\\HighOnLife2\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Washington.WAGameUserSettings",
+    "key": "bUseDynamicResolution",
+    "value": "False"
+  },
+  {
     "profile_id": "SHF_ALL",
     "path": "%LOCALAPPDATA%\\SHf\\Saved\\Config\\Windows\\GameUserSettings.ini",
     "section": "/Script/GameNoce.NoceLocalGameUserSettings",
