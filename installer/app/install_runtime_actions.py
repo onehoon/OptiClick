@@ -14,6 +14,9 @@ from .install_state import (
 )
 from .install_ui_state import InstallButtonStateInputs, compute_install_button_state
 
+_INSTALL_STATUS_UPDATE_AVAILABLE = "update_available"
+_INSTALL_STATUS_LATEST = "latest"
+
 
 def is_multi_gpu_block_active(app: Any) -> bool:
     return app.gpu_state.gpu_count > MAX_SUPPORTED_GPU_COUNT
@@ -91,6 +94,46 @@ def tick_loading_blink(app: Any) -> None:
     app._loading_blink_job = app.root.after(600, lambda: tick_loading_blink(app))
 
 
+def _get_selected_install_status_code(app: Any) -> str:
+    selection = build_selected_game_snapshot_from_runtime(app)
+    selected_game = selection.selected_game
+    if not isinstance(selected_game, Mapping):
+        return ""
+
+    install_status = selected_game.get("install_status")
+    if not isinstance(install_status, Mapping):
+        return ""
+
+    return str(install_status.get("code", "") or "").strip()
+
+
+def _get_main_text(app: Any, name: str, fallback_name: str) -> str:
+    main = app.txt.main
+    fallback = str(getattr(main, fallback_name, "") or "")
+    return str(getattr(main, name, fallback) or fallback)
+
+
+def _resolve_install_button_text(app: Any, *, show_installing: bool) -> str:
+    status_code = _get_selected_install_status_code(app)
+    if status_code == _INSTALL_STATUS_UPDATE_AVAILABLE:
+        return _get_main_text(
+            app,
+            "updating_button" if show_installing else "update_button",
+            "installing_button" if show_installing else "install_button",
+        )
+    if status_code == _INSTALL_STATUS_LATEST:
+        return _get_main_text(
+            app,
+            "reinstalling_button" if show_installing else "reinstall_button",
+            "installing_button" if show_installing else "install_button",
+        )
+    return _get_main_text(
+        app,
+        "installing_button" if show_installing else "install_button",
+        "installing_button" if show_installing else "install_button",
+    )
+
+
 def update_install_button_state(app: Any) -> None:
     if not hasattr(app, "apply_btn"):
         return
@@ -105,9 +148,9 @@ def update_install_button_state(app: Any) -> None:
         app._loading_blink_job = None
 
     if button_state.show_installing:
-        button_text = app.txt.main.installing_button
+        button_text = _resolve_install_button_text(app, show_installing=True)
     elif can_install:
-        button_text = app.txt.main.install_button
+        button_text = _resolve_install_button_text(app, show_installing=False)
     elif is_sheet_loading:
         button_text = app.txt.main.loading_button
     else:

@@ -52,7 +52,11 @@ class MainUiStrings:
     supported_games_link: str
     install_section_title: str
     install_button: str
+    update_button: str
+    reinstall_button: str
     installing_button: str
+    updating_button: str
+    reinstalling_button: str
     loading_button: str
     install_before_popup_label: str
     install_after_popup_label: str
@@ -154,7 +158,11 @@ _STRINGS_BY_LANG: dict[Lang, AppStrings] = {
             supported_games_link="지원 게임 목록 보기",
             install_section_title="2. 설치 정보",
             install_button="설치",
+            update_button="업데이트",
+            reinstall_button="재설치",
             installing_button="설치 중...",
+            updating_button="업데이트 중...",
+            reinstalling_button="재설치 중...",
             loading_button="로딩 중...",
             install_before_popup_label="설치 전",
             install_after_popup_label="설치 후",
@@ -248,7 +256,11 @@ _STRINGS_BY_LANG: dict[Lang, AppStrings] = {
             supported_games_link="Check Supported Games",
             install_section_title="2. Install Information",
             install_button="Install",
+            update_button="Update",
+            reinstall_button="Reinstall",
             installing_button="Installing...",
+            updating_button="Updating...",
+            reinstalling_button="Reinstalling...",
             loading_button="Loading...",
             install_before_popup_label="Before Install",
             install_after_popup_label="After Install",
