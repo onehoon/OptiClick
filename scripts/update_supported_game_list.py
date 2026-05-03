@@ -312,7 +312,7 @@ def build_intel_label(tokens: list[str]) -> str:
         stripped = upper.strip('*')
         if "ARC" in upper:
             arc_found = True
-        elif stripped in {"130V", "140V", "130T", "140T"}:
+        elif stripped in {"130V", "140V", "130T", "140T", "B570", "B580"}:
             models.append(stripped)
     if arc_found:
         # ARC와 세부 모델이 동시에 있으면 Arc Series만 표기
