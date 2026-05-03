@@ -6,6 +6,22 @@ from typing import Any
 from . import gpu_notice, message_popup
 from .ui_builder import MainUiTheme
 
+_FONT_FAMILIES_BY_LANG = {
+    "ko": "Malgun Gothic",
+    "en": "Segoe UI",
+}
+_TK_DEFAULT_FONT_NAMES = (
+    "TkDefaultFont",
+    "TkTextFont",
+    "TkFixedFont",
+    "TkMenuFont",
+    "TkHeadingFont",
+    "TkCaptionFont",
+    "TkSmallCaptionFont",
+    "TkIconFont",
+    "TkTooltipFont",
+)
+
 
 @dataclass(frozen=True)
 class AppThemeBundle:
@@ -33,6 +49,18 @@ class AppThemeBundle:
     main_ui_theme: MainUiTheme
     gpu_notice_theme: gpu_notice.GpuNoticeTheme
     message_popup_theme: message_popup.MessagePopupTheme
+
+
+def _resolve_app_font_families(strings: Any) -> tuple[str, str]:
+    lang = str(getattr(strings, "lang", "") or "").strip().casefold()
+    if lang in _FONT_FAMILIES_BY_LANG:
+        font_family = _FONT_FAMILIES_BY_LANG[lang]
+        return font_family, font_family
+
+    configured_heading = str(getattr(strings.main, "heading_font_family", "") or "").strip()
+    configured = str(getattr(strings.main, "ui_font_family", "") or "").strip()
+    font_ui = configured or _FONT_FAMILIES_BY_LANG["en"]
+    return configured_heading or font_ui, font_ui
 
 
 def build_app_theme(
@@ -76,8 +104,7 @@ def build_app_theme(
     card_title_overlay_text = "#FFFFFF"
     surface = "#2A2E35"
     panel = "#1E2128"
-    font_heading = str(strings.main.heading_font_family)
-    font_ui = str(strings.main.ui_font_family)
+    font_heading, font_ui = _resolve_app_font_families(strings)
 
     gpu_notice_theme = gpu_notice.GpuNoticeTheme(
         surface_color=surface,
@@ -144,7 +171,25 @@ def build_app_theme(
     )
 
 
+def apply_tk_default_font_family(root: Any, font_family: str) -> None:
+    family = str(font_family or "").strip()
+    if not family:
+        return
+
+    try:
+        import tkinter.font as tkfont
+    except Exception:
+        return
+
+    for font_name in _TK_DEFAULT_FONT_NAMES:
+        try:
+            tkfont.nametofont(font_name).configure(family=family)
+        except Exception:
+            continue
+
+
 __all__ = [
     "AppThemeBundle",
+    "apply_tk_default_font_family",
     "build_app_theme",
 ]

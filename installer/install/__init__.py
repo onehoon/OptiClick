@@ -1,5 +1,6 @@
 """Installation services and components."""
 
+from . import install_status
 from . import services
 from .components import (
     OPTISCALER_ASI_NAME,
@@ -48,6 +49,7 @@ __all__ = [
     "install_fsr4_dll",
     "install_reframework_dinput8",
     "install_specialk",
+    "install_status",
     "install_ultimate_asi_loader",
     "install_unreal5_patch",
     "resolve_ingame_ini_path",

@@ -17,6 +17,7 @@ from ..scan_controller import ScanController, ScanControllerCallbacks
 from ..scan_entry_controller import ScanEntryCallbacks, ScanEntryController
 from ..scan_feedback import ScanFeedbackCallbacks, ScanFeedbackController
 from ..ui_shell_actions import set_information_text, set_scan_status_message
+from ...install.install_status import resolve_game_install_status
 
 
 def build_scan_controllers(
@@ -48,7 +49,7 @@ def build_scan_controllers(
         callbacks=ScanControllerCallbacks(
             prepare_scan_ui=scan_feedback.prepare_scan_ui,
             reset_scan_results=lambda: reset_scan_results_for_new_scan(app),
-            add_game_card=lambda game: add_game_card_incremental(app, game),
+            add_game_card=lambda game: _add_game_card_with_install_status(app, game),
             finish_scan_ui=scan_feedback.finish_scan_ui,
             pump_poster_queue=lambda: pump_poster_queue(app),
             show_auto_scan_empty_popup=scan_feedback.enqueue_initial_auto_scan_empty_popup,
@@ -67,6 +68,16 @@ def build_scan_controllers(
         ),
     )
     return scan_feedback, scan, scan_entry
+
+
+def _add_game_card_with_install_status(app: Any, game: dict[str, Any]) -> None:
+    enriched_game = dict(game or {})
+    enriched_game["install_status"] = resolve_game_install_status(
+        enriched_game,
+        app.sheet_state.module_download_links,
+        lang=app.lang,
+    )
+    add_game_card_incremental(app, enriched_game)
 
 
 def _build_scan_feedback_controller(

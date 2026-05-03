@@ -149,6 +149,19 @@ def apply_loaded_poster(app: Any, index: int, label: Any, pil_img: Any):
     return controller.set_card_base_image(index, label, pil_img)
 
 
+def update_card_install_status(app: Any, index: int, install_status: Mapping[str, Any]) -> None:
+    if index < 0 or index >= len(app.found_exe_list):
+        return
+
+    updated_game = dict(app.found_exe_list[index] or {})
+    updated_game["install_status"] = dict(install_status or {})
+    app.found_exe_list[index] = updated_game
+
+    controller = getattr(app, "_card_ui_controller", None)
+    if controller is not None:
+        controller.update_card_install_status(index, install_status)
+
+
 def set_card_image_updates_suspended(app: Any, suspended: bool) -> None:
     controller = getattr(app, "_card_ui_controller", None)
     if controller is None:
@@ -210,5 +223,6 @@ __all__ = [
     "run_install_precheck",
     "select_game",
     "set_card_image_updates_suspended",
+    "update_card_install_status",
     "visible_game_indices",
 ]
