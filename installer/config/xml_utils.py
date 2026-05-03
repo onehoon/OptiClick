@@ -17,6 +17,7 @@ _XML_BOM_ENCODINGS = (
     (codecs.BOM_UTF16_LE, "utf-16-le"),
     (codecs.BOM_UTF8, "utf-8"),
 )
+_XML_UTF16_LE_XML_DECL_PREFIX = b"\x3c\x00\x3f\x00"
 _XML_NAME_STOP_CHARS = {" ", "\t", "\r", "\n", "/", ">", "="}
 
 
@@ -148,6 +149,14 @@ def _read_xml_text_with_encoding(path: Path, logger=None) -> tuple[str, _XmlEnco
             elif encoding != "utf-8":
                 logging.info("Read XML %s using BOM-detected encoding %s", path, encoding)
             return text, _XmlEncodingInfo(encoding=encoding, bom=bom)
+
+    if raw.startswith(_XML_UTF16_LE_XML_DECL_PREFIX):
+        text = raw.decode("utf-16-le")
+        if logger:
+            logger.info("Read XML %s using pattern-detected encoding %s", path, "utf-16-le")
+        else:
+            logging.info("Read XML %s using pattern-detected encoding %s", path, "utf-16-le")
+        return text, _XmlEncodingInfo(encoding="utf-16-le")
 
     encoding_candidates: list[str] = []
     declaration_match = _XML_DECL_ENCODING_RE.search(raw[:512])
