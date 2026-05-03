@@ -26,8 +26,8 @@
   {
     "message_id": "global.startup_warning3",
     "category": "popup",
-    "ko": "[RED]MOD 없는 순정 게임 기준으로 제작되었습니다.[END]",
-    "en": "[RED]This installer is designed for vanilla game.[END]",
+    "ko": "[RED]Hypervisor 크랙 게임과 호환되지 않습니다.[END]",
+    "en": "[RED]Not compatible with Hypervisor crack.[END]",
     "url": "",
     "memo": ""
   },
