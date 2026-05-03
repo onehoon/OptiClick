@@ -10,6 +10,7 @@ from .card_grid import compute_visible_game_indices
 from .card_visuals import (
     GameCardVisualTheme,
     ensure_game_card_image_cache,
+    render_game_card_status_badge,
     render_game_card_visual,
     update_game_card_base_image,
 )
@@ -48,6 +49,7 @@ class GameCardUiController:
         grid_rows_visible: int = 4,
         create_game_card_fn: Callable[..., Any] = create_game_card,
         ensure_card_image_cache_fn: Callable[..., None] = ensure_game_card_image_cache,
+        render_card_status_badge_fn: Callable[..., None] = render_game_card_status_badge,
         render_card_visual_fn: Callable[..., None] = render_game_card_visual,
         update_card_base_image_fn: Callable[..., bool] = update_game_card_base_image,
         compute_visible_indices_fn: Callable[..., set[int]] = compute_visible_game_indices,
@@ -71,6 +73,7 @@ class GameCardUiController:
         self._grid_rows_visible = max(1, int(grid_rows_visible))
         self._create_game_card = create_game_card_fn
         self._ensure_card_image_cache = ensure_card_image_cache_fn
+        self._render_card_status_badge = render_card_status_badge_fn
         self._render_card_visual = render_card_visual_fn
         self._update_card_base_image = update_card_base_image_fn
         self._compute_visible_indices = compute_visible_indices_fn
@@ -107,6 +110,14 @@ class GameCardUiController:
     def refresh_all_card_visuals(self) -> None:
         for index in range(len(self._card_items)):
             self.refresh_card_visual(index)
+
+    def update_card_install_status(self, index: int, install_status: Mapping[str, Any]) -> None:
+        if index < 0 or index >= len(self._card_items):
+            return
+
+        item = self._card_items[index]
+        item["install_status"] = dict(install_status or {})
+        self._render_card_status_badge(item)
 
     def set_card_image_updates_suspended(self, suspended: bool) -> None:
         self._card_ui_state.image_updates_suspended = bool(suspended)

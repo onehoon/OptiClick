@@ -12,7 +12,9 @@ from .ui_shell_actions import set_information_text
 from installer.games.handlers import get_game_handler
 from installer.i18n import build_install_information_text
 from installer.install import build_install_context, create_install_workflow_callbacks, run_install_workflow
+from installer.install.install_status import resolve_game_install_status
 
+from .card_runtime_actions import update_card_install_status
 from .install_entry import InstallEntryDecision, InstallEntryState, validate_install_entry
 from .install_rejection_codes import (
     INSTALL_REJECT_CONFIRM_POPUP_REQUIRED,
@@ -324,7 +326,7 @@ class InstallFlowController:
         self._callbacks.update_install_button_state()
 
         if success:
-            game = installed_game if isinstance(installed_game, dict) else {}
+            game = self._refresh_installed_game_status(installed_game if isinstance(installed_game, dict) else {})
             self._callbacks.set_information_text(
                 build_install_information_text(
                     game,
@@ -338,6 +340,36 @@ class InstallFlowController:
             self._txt.common.error,
             self._txt.dialogs.install_failed_body_template.format(message=message),
         )
+
+    def _refresh_installed_game_status(self, game: Mapping[str, Any]) -> dict[str, Any]:
+        refreshed_game = dict(game or {})
+        install_status = resolve_game_install_status(
+            refreshed_game,
+            self._sheet_state.module_download_links,
+            lang=self._callbacks.get_lang(),
+        )
+        refreshed_game["install_status"] = install_status
+
+        selected_index = getattr(getattr(self._app_ref, "card_ui_state", None), "selected_game_index", None)
+        if selected_index is None:
+            return refreshed_game
+
+        found_games = getattr(self._app_ref, "found_exe_list", ())
+        try:
+            selected_index_int = int(selected_index)
+        except Exception:
+            return refreshed_game
+        if selected_index_int < 0 or selected_index_int >= len(found_games):
+            return refreshed_game
+
+        selected_game = found_games[selected_index_int]
+        selected_path = str((selected_game or {}).get("path", "") or "").strip()
+        refreshed_path = str(refreshed_game.get("path", "") or "").strip()
+        if selected_path and refreshed_path and selected_path != refreshed_path:
+            return refreshed_game
+
+        update_card_install_status(self._app_ref, selected_index_int, install_status)
+        return dict(getattr(self._app_ref, "found_exe_list", ())[selected_index_int])
 
     def _is_korean(self) -> bool:
         return str(self._callbacks.get_lang() or "").lower() == "ko"

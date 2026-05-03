@@ -19,7 +19,9 @@ except ImportError:  # pragma: no cover - optional dependency at runtime
 
 
 OPTISCALER_DLL = "OptiScaler.dll"
-OPTISCALER_PROXY_DLL_NAMES = {
+OPTISCALER_MANAGED_CANDIDATE_NAMES = (
+    "OptiScaler.asi",
+    OPTISCALER_DLL,
     "dxgi.dll",
     "winmm.dll",
     "d3d12.dll",
@@ -27,12 +29,13 @@ OPTISCALER_PROXY_DLL_NAMES = {
     "version.dll",
     "wininet.dll",
     "winhttp.dll",
-}
-OPTISCALER_BACKUP_DLL_NAMES = (
-    OPTISCALER_DLL,
-    "OptiScaler.asi",
-    *tuple(sorted(OPTISCALER_PROXY_DLL_NAMES, key=str.lower)),
 )
+OPTISCALER_PROXY_DLL_NAMES = {
+    name
+    for name in OPTISCALER_MANAGED_CANDIDATE_NAMES
+    if name not in {OPTISCALER_DLL, "OptiScaler.asi"}
+}
+OPTISCALER_BACKUP_DLL_NAMES = OPTISCALER_MANAGED_CANDIDATE_NAMES
 # Legacy OptiScaler-side compatibility cleanup targets.
 # These names are intentionally removed as stale OptiScaler artifacts, not treated as third-party mods.
 OPTISCALER_LEGACY_REMOVE_NAMES = {
@@ -119,7 +122,15 @@ def _read_windows_version_strings(file_path: Path) -> dict[str, str]:
         lang, codepage = translation[0], translation[1]
 
         values = {}
-        for key in ("CompanyName", "FileDescription", "ProductName", "OriginalFilename", "InternalName"):
+        for key in (
+            "CompanyName",
+            "FileDescription",
+            "ProductName",
+            "OriginalFilename",
+            "InternalName",
+            "FileVersion",
+            "ProductVersion",
+        ):
             value_ptr = ctypes.c_wchar_p()
             value_len = wintypes.UINT()
             sub_block = f"\\StringFileInfo\\{lang:04x}{codepage:04x}\\{key}"
@@ -135,26 +146,10 @@ def read_windows_version_strings(file_path) -> dict[str, str]:
     return _read_windows_version_strings(Path(file_path))
 
 
-def _file_contains_optiscaler_signature(file_path: Path) -> bool:
-    try:
-        with file_path.open("rb") as f:
-            while True:
-                chunk = f.read(1024 * 1024)
-                if not chunk:
-                    return False
-                if b"optiscaler" in chunk.lower():
-                    return True
-    except Exception:
-        logging.debug("Failed to inspect file contents for %s", file_path, exc_info=True)
-    return False
-
-
 def _is_optiscaler_managed_proxy_dll(file_path: Path) -> bool:
     version_info = _read_windows_version_strings(file_path)
-    for value in version_info.values():
-        if "optiscaler" in value.lower():
-            return True
-    return _file_contains_optiscaler_signature(file_path)
+    original_filename = str(version_info.get("OriginalFilename", "") or "").strip().casefold()
+    return original_filename == OPTISCALER_DLL.casefold()
 
 
 def is_optiscaler_managed_proxy_dll(file_path) -> bool:

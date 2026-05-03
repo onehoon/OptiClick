@@ -28,6 +28,7 @@ from installer.app.runtime_state import (
 from installer.app.ui_runtime_config import (
     build_app_ui_runtime_config,
 )
+from installer.app.theme import apply_tk_default_font_family
 from installer.app.window_focus import has_startup_foreground_request, request_window_foreground
 from installer.i18n import (
     detect_ui_language,
@@ -185,6 +186,7 @@ class OptiManagerApp:
 if __name__ == "__main__":
     request_foreground = has_startup_foreground_request(sys.argv[1:])
     root = ctk.CTk()
+    apply_tk_default_font_family(root, APP_THEME.font_ui)
     app = OptiManagerApp(root)
     if request_foreground:
         request_window_foreground(root, logger=logging.getLogger("APP"))

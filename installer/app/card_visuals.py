@@ -6,6 +6,19 @@ from typing import Any
 
 import customtkinter as ctk
 
+_STATUS_BADGE_STYLES = {
+    "installable": ("#2E7D5B", "#F4FFF8"),
+    "update_available": ("#D6AA43", "#0B121A"),
+    "latest": ("#243447", "#FFFFFF"),
+    "pre_release": ("#4A5D7A", "#FFFFFF"),
+    "needs_review": ("#9B4D56", "#FFFFFF"),
+}
+_DEFAULT_STATUS_BADGE_STYLE = ("#2A303A", "#E3EAF3")
+_STATUS_BADGE_HEIGHT = 20
+_STATUS_BADGE_HORIZONTAL_PAD = 4
+_STATUS_BADGE_X = 0
+_STATUS_BADGE_Y = 0
+
 
 @dataclass(frozen=True)
 class GameCardVisualTheme:
@@ -13,6 +26,59 @@ class GameCardVisualTheme:
     card_width: int
     card_height: int
     title_overlay_y: int
+
+
+def _resolve_status_badge_style(install_status: MutableMapping[str, Any]) -> tuple[str, str]:
+    code = str((install_status or {}).get("code", "") or "").strip()
+    return _STATUS_BADGE_STYLES.get(code, _DEFAULT_STATUS_BADGE_STYLE)
+
+
+def _is_wide_status_badge_char(char: str) -> bool:
+    codepoint = ord(char)
+    return (
+        0x1100 <= codepoint <= 0x11FF
+        or 0x3130 <= codepoint <= 0x318F
+        or 0xAC00 <= codepoint <= 0xD7AF
+        or 0x4E00 <= codepoint <= 0x9FFF
+    )
+
+
+def _estimate_status_badge_width(text: str) -> int:
+    text_width = 0
+    for char in str(text or ""):
+        if char.isspace():
+            text_width += 3
+        elif _is_wide_status_badge_char(char):
+            text_width += 9
+        elif char in "().,/":
+            text_width += 4
+        else:
+            text_width += 5
+    return text_width + (_STATUS_BADGE_HORIZONTAL_PAD * 2)
+
+
+def render_game_card_status_badge(item: MutableMapping[str, Any]) -> None:
+    status_badge = item.get("status_badge")
+    if status_badge is None:
+        return
+
+    install_status = item.get("install_status") or {}
+    status_label = str(install_status.get("label", "") or "").strip()
+    if not status_label:
+        status_badge.place_forget()
+        return
+
+    fg_color, text_color = _resolve_status_badge_style(install_status)
+    status_badge.configure(
+        text=status_label,
+        fg_color=fg_color,
+        bg_color=fg_color,
+        text_color=text_color,
+        width=_estimate_status_badge_width(status_label),
+        height=_STATUS_BADGE_HEIGHT,
+    )
+    status_badge.place(x=_STATUS_BADGE_X, y=_STATUS_BADGE_Y)
+    status_badge.lift()
 
 
 def ensure_game_card_image_cache(
@@ -54,6 +120,8 @@ def render_game_card_visual(
     else:
         title_overlay.place_forget()
 
+    render_game_card_status_badge(item)
+
     ensure_game_card_image_cache(
         item,
         theme=theme,
@@ -86,6 +154,7 @@ def update_game_card_base_image(
 __all__ = [
     "GameCardVisualTheme",
     "ensure_game_card_image_cache",
+    "render_game_card_status_badge",
     "render_game_card_visual",
     "update_game_card_base_image",
 ]
