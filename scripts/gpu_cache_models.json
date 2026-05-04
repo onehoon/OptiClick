@@ -16,10 +16,40 @@
     "NVIDIA GeForce RTX 5070"
   ],
   "intel": [
-    "Intel(R) Arc(TM) Graphics",
-    "Intel(R) Arc(TM) Graphics 130V",
-    "Intel(R) Arc(TM) Graphics 140V",
-    "Intel(R) Arc(TM) Graphics 130T",
-    "Intel(R) Arc(TM) Graphics 140T"
+  "Intel(R) Arc(TM) Graphics",
+
+  "Intel(R) Arc(TM) Graphics 130V",
+  "Intel(R) Arc(TM) Graphics 140V",
+  "Intel(R) Arc(TM) Graphics 130T",
+  "Intel(R) Arc(TM) Graphics 140T",
+
+  "Intel(R) Arc(TM) B390 GPU",
+  "Intel(R) Arc(TM) B370 GPU",
+
+  "Intel(R) Arc(TM) B580 Graphics",
+  "Intel(R) Arc(TM) B570 Graphics",
+
+  "Intel(R) Arc(TM) A770 Graphics",
+  "Intel(R) Arc(TM) A750 Graphics",
+  "Intel(R) Arc(TM) A730M Graphics",
+  "Intel(R) Arc(TM) A580 Graphics",
+  "Intel(R) Arc(TM) A570M Graphics",
+  "Intel(R) Arc(TM) A550M Graphics",
+  "Intel(R) Arc(TM) A530M Graphics",
+  "Intel(R) Arc(TM) A380 Graphics",
+  "Intel(R) Arc(TM) A370M Graphics",
+  "Intel(R) Arc(TM) A350M Graphics",
+  "Intel(R) Arc(TM) A310 Graphics",
+
+  "Intel(R) Arc(TM) Pro B70 Graphics",
+  "Intel(R) Arc(TM) Pro B65 Graphics",
+  "Intel(R) Arc(TM) Pro B60 Graphics",
+  "Intel(R) Arc(TM) Pro B50 Graphics",
+
+  "Intel(R) Arc(TM) Pro A60 Graphics",
+  "Intel(R) Arc(TM) Pro A50 Graphics",
+  "Intel(R) Arc(TM) Pro A40 Graphics",
+  "Intel(R) Arc(TM) Pro A60M Graphics",
+  "Intel(R) Arc(TM) Pro A30M Graphics"
   ]
 }
