@@ -678,8 +678,8 @@
     "game_name_en": "Wuthering Waves (Steam)",
     "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/3513350/4060d4860e9528d5e85cecd61741001c3c107bf0/library_capsule_2x.jpg?t=1763115172",
     "cover_filename": "WUWA.webp",
-    "enabled": false,
-    "support_intel": false,
+    "enabled": true,
+    "support_intel": true,
     "support_amd": false,
     "support_nvidia": false
   },
