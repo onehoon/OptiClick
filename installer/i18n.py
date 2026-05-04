@@ -282,7 +282,7 @@ _STRINGS_BY_LANG: dict[Lang, AppStrings] = {
             installation_completed="Installation completed.",
             installation_completed_with_name_template=(
                 "[RED]OptiScaler has been installed.\n"
-                "To remove it, delete or rename the OptiScaler file ({name}).[END]"
+                "To remove it, delete or rename the OptiScaler DLL ({name})[END]"
             ),
             select_game_card_body="Please select a game card to install.",
             preparing_archive_title="Preparing Archive",

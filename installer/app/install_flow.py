@@ -369,7 +369,7 @@ class InstallFlowController:
             return refreshed_game
 
         update_card_install_status(self._app_ref, selected_index_int, install_status)
-        return dict(getattr(self._app_ref, "found_exe_list", ())[selected_index_int])
+        return refreshed_game
 
     def _is_korean(self) -> bool:
         return str(self._callbacks.get_lang() or "").lower() == "ko"
