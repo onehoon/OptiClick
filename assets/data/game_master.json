@@ -672,6 +672,18 @@
     "support_nvidia": true
   },
   {
+    "game_id": "WUWA",
+    "match_exe": "",
+    "game_name_kr": "명조 (Steam)",
+    "game_name_en": "Wuthering Waves (Steam)",
+    "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/3513350/4060d4860e9528d5e85cecd61741001c3c107bf0/library_capsule_2x.jpg?t=1763115172",
+    "cover_filename": "WUWA.webp",
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
+  },
+  {
     "game_id": "Requiem",
     "match_exe": "",
     "game_name_kr": "플래그 테일: 레퀴엠",
