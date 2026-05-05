@@ -131,6 +131,17 @@ def resolve_device_logo_key(raw_manufacturer: str, rules: DeviceIdentityRules) -
     return rules.logo_keys.get(_normalize_lookup_key(display_manufacturer), "")
 
 
+def resolve_gpu_vendor_logo_key(vendor: str) -> str:
+    normalized_vendor = _normalize_lookup_key(vendor)
+    if normalized_vendor == "NVIDIA":
+        return "nvidia"
+    if normalized_vendor == "AMD":
+        return "amd"
+    if normalized_vendor == "INTEL":
+        return "intel"
+    return ""
+
+
 __all__ = [
     "DeviceIdentityRules",
     "build_device_title",
@@ -140,4 +151,5 @@ __all__ = [
     "normalize_device_manufacturer",
     "normalize_device_model",
     "resolve_device_logo_key",
+    "resolve_gpu_vendor_logo_key",
 ]

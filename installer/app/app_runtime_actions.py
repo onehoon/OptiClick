@@ -97,6 +97,14 @@ def refresh_device_info_header(app: Any) -> None:
     gpu_widget.configure(text=gpu_text)
 
     logo_key = device_identity.resolve_device_logo_key(raw_manufacturer, rules)
+    if not logo_key:
+        selected_adapter = getattr(getattr(app, "gpu_state", None), "selected_adapter", None)
+        selected_vendor = str(getattr(selected_adapter, "vendor", "") or "").strip()
+        if not selected_vendor:
+            gpu_context = getattr(getattr(app, "gpu_state", None), "gpu_context", None)
+            selected_vendor = str(getattr(gpu_context, "selected_vendor", "") or "").strip()
+        logo_key = device_identity.resolve_gpu_vendor_logo_key(selected_vendor)
+
     logo_image = _resolve_device_logo_image(app, logo_key)
     if logo_image is None:
         logo_widget.configure(image=None, text="", width=0)
