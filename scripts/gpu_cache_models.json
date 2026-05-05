@@ -19,10 +19,10 @@
   "intel": [
   "Intel(R) Arc(TM) Graphics",
 
-  "Intel(R) Arc(TM) Graphics 130V",
-  "Intel(R) Arc(TM) Graphics 140V",
-  "Intel(R) Arc(TM) Graphics 130T",
-  "Intel(R) Arc(TM) Graphics 140T",
+  "Intel(R) Arc(TM) 130V GPU",
+  "Intel(R) Arc(TM) 140V GPU",
+  "Intel(R) Arc(TM) 130T GPU",
+  "Intel(R) Arc(TM) 140T GPU",
 
   "Intel(R) Arc(TM) B390 GPU",
   "Intel(R) Arc(TM) B370 GPU",
