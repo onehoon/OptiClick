@@ -9,7 +9,12 @@
     "LENOVO": "Lenovo",
     "LENOVO GROUP LIMITED": "Lenovo",
     "GIGABYTE TECHNOLOGY CO., LTD.": "Gigabyte",
-    "GIGABYTE": "Gigabyte"
+    "GIGABYTE": "Gigabyte",
+
+    "MICRO-STAR INTERNATIONAL CO.,LTD": "MSI",
+    "MICRO-STAR INTERNATIONAL CO., LTD": "MSI",
+    "ASUSTEK COMPUTER INC": "ASUS",
+    "ASUSTeK COMPUTER INC.": "ASUS"
   },
   "model_aliases": {
     "SYSTEM PRODUCT NAME": "__HIDE__"
@@ -18,6 +23,5 @@
     "ASUS": "asus",
     "MSI": "msi",
     "LENOVO": "lenovo",
-    "GIGABYTE": "gigabyte"
   }
 }
