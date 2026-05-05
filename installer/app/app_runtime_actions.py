@@ -45,7 +45,7 @@ def _resolve_device_logo_image(app: Any, logo_key: str):
         if trim_box:
             pil_image = pil_image.crop(trim_box)
 
-        target_height = 36
+        target_height = 30 if normalized_key == "nvidia" else 36
         max_width = 72
         width, height = pil_image.size
         if width > 0 and height > 0:
