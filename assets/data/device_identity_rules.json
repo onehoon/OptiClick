@@ -1,32 +1,31 @@
 {
   "manufacturer_aliases": {
-    "ASUSTEK COMPUTER INC.": "ASUS",
     "ASUSTEK": "ASUS",
-    "ASUS": "ASUS",
-    "MICRO-STAR INTERNATIONAL CO., LTD.": "MSI",
-    "MICRO-STAR INTERNATIONAL": "MSI",
-    "MSI": "MSI",
-    "LENOVO": "Lenovo",
-    "LENOVO GROUP LIMITED": "Lenovo",
-    "GIGABYTE TECHNOLOGY CO., LTD.": "Gigabyte",
-    "GIGABYTE": "Gigabyte",
-    "MICRO-STAR INTERNATIONAL CO.,LTD": "MSI",
-    "MICRO-STAR INTERNATIONAL CO., LTD": "MSI",
     "ASUSTEK COMPUTER INC": "ASUS",
-    "ASUSTeK COMPUTER INC.": "ASUS"
+    "ASUSTEK COMPUTER INC.": "ASUS",
+    "ASUSTeK COMPUTER INC.": "ASUS",
+    "GIGABYTE TECHNOLOGY CO., LTD.": "Gigabyte",
+    "LENOVO GROUP LIMITED": "Lenovo",
+    "MICRO-STAR INTERNATIONAL": "MSI",
+    "MICRO-STAR INTERNATIONAL CO., LTD": "MSI",
+    "MICRO-STAR INTERNATIONAL CO., LTD.": "MSI",
+    "MICRO-STAR INTERNATIONAL CO.,LTD": "MSI"
   },
   "model_aliases": {
     "SYSTEM PRODUCT NAME": "__HIDE__",
-    "ROG Ally RC71L_RC71L": "ROG Ally",
+
     "RC71L": "ROG Ally",
-    "RC72LA": "ROG Ally X",
+    "ROG Ally RC71L_RC71L": "ROG Ally",
     "ROG Ally X RC72LA_RC72LA": "ROG Ally X",
+    "RC72LA": "ROG Ally X",
+
     "RC73YA": "ROG Xbox Ally",
     "RC73XA": "ROG Xbox Ally X",
+
     "83E1": "Legion Go",
+    "83L3": "Legion Go S",
     "83N0": "Legion Go 2",
     "83N1": "Legion Go 2",
-    "83L3": "Legion Go S",
     "83N6": "Legion Go S",
     "83Q2": "Legion Go S",
     "83Q3": "Legion Go S"
