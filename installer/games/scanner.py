@@ -156,6 +156,7 @@ def _get_detected_steam_common_paths(logger=None) -> list[Path]:
 
 def _get_fallback_steam_common_paths() -> tuple[Path, ...]:
     fallback: list[Path] = [
+        Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "Steam" / "steamapps" / "common",
         Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")) / "Steam" / "steamapps" / "common",
     ]
     for letter in _get_non_system_drive_letters():
