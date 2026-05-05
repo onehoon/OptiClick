@@ -4,23 +4,40 @@
     "ASUSTEK COMPUTER INC": "ASUS",
     "ASUSTEK COMPUTER INC.": "ASUS",
     "ASUSTeK COMPUTER INC.": "ASUS",
+
     "GIGABYTE TECHNOLOGY CO., LTD.": "Gigabyte",
+
     "LENOVO GROUP LIMITED": "Lenovo",
+
     "MICRO-STAR INTERNATIONAL": "MSI",
     "MICRO-STAR INTERNATIONAL CO., LTD": "MSI",
     "MICRO-STAR INTERNATIONAL CO., LTD.": "MSI",
-    "MICRO-STAR INTERNATIONAL CO.,LTD": "MSI"
+    "MICRO-STAR INTERNATIONAL CO.,LTD": "MSI",
+
+    "VALVE CORPORATION": "Valve",
+
+    "AYADEVICE": "AYANEO",
+
+    "ONE-NETBOOK": "ONEXPLAYER",
+    "ONE-NETBOOK TECHNOLOGY CO., LTD.": "ONEXPLAYER",
+    "ONE-NETBOOK TECHNOLOGY CO.,LTD": "ONEXPLAYER",
+
+    "PC PARTNER LIMITED": "ZOTAC"
   },
   "model_aliases": {
     "SYSTEM PRODUCT NAME": "__HIDE__",
 
     "RC71L": "ROG Ally",
     "ROG Ally RC71L_RC71L": "ROG Ally",
-    "ROG Ally X RC72LA_RC72LA": "ROG Ally X",
+
     "RC72LA": "ROG Ally X",
+    "ROG Ally X RC72LA_RC72LA": "ROG Ally X",
 
     "RC73YA": "ROG Xbox Ally",
+    "ROG Xbox Ally RC73YA_RC73YA": "ROG Xbox Ally",
+
     "RC73XA": "ROG Xbox Ally X",
+    "ROG Xbox Ally X RC73XA_RC73XA": "ROG Xbox Ally X",
 
     "83E1": "Legion Go",
     "83L3": "Legion Go S",
@@ -28,11 +45,38 @@
     "83N1": "Legion Go 2",
     "83N6": "Legion Go S",
     "83Q2": "Legion Go S",
-    "83Q3": "Legion Go S"
+    "83Q3": "Legion Go S",
+
+    "MS-1T41": "Claw A1M",
+    "MS-1T42": "Claw 7 AI+ A2VM",
+    "MS-1T52": "Claw 8 AI+ A2VM",
+    "MS-1T8K": "Claw A8 BZ2EM",
+
+    "ZGC-G1A1W": "ZOTAC GAMING ZONE",
+    "G0A1W": "ZOTAC GAMING ZONE",
+
+    "Jupiter": "Steam Deck",
+    "Galileo": "Steam Deck OLED",
+
+    "ONEXPLAYER X1Pro": "ONEXPLAYER X1 Pro",
+    "ONEXPLAYER F1Pro": "ONEXPLAYER OneXFly F1 Pro",
+    "ONEXPLAYER 2 PRO ARP23P": "ONEXPLAYER 2 Pro",
+    "ONEXPLAYER 2 PRO ARP23P EVA-01": "ONEXPLAYER 2 Pro EVA-01",
+    "ONEXPLAYER G1 i": "ONEXPLAYER G1 Intel",
+    "ONEXPLAYER G1 A": "ONEXPLAYER G1 AMD",
+
+    "G1617-01": "GPD WIN Mini",
+    "G1617-02": "GPD WIN Mini",
+    "G1618-03": "GPD WIN 3",
+    "G1618-04": "GPD WIN 4",
+    "G1618-05": "GPD WIN 5",
+    "G1619-03": "GPD WIN Max 2",
+    "G1619-04": "GPD WIN Max 2",
+    "G1619-05": "GPD WIN Max 2"
   },
   "logo_keys": {
     "ASUS": "asus",
     "MSI": "msi",
-    "LENOVO": "lenovo"
+    "Lenovo": "lenovo",
   }
 }
