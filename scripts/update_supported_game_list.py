@@ -15,6 +15,50 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 GAME_MASTER_PATH = ROOT_DIR / "assets" / "data" / "game_master.json"
 WIKI_REPO_URL = "https://github.com/onehoon/OptiScalerInstaller.wiki.git"
 NATIVE_XEFG_TEXT = "Native XeFG Support"
+INTEL_IGPU_MARKERS = {
+    "ARC GRAPHICS",
+    "INTEL ARC GRAPHICS",
+}
+INTEL_ARC_SERIES_MARKERS = {
+    "ARC",
+    "ARC SERIES",
+    "INTEL ARC",
+    "INTEL ARC SERIES",
+}
+INTEL_LUNAR_LAKE_MODELS = (
+    "130V",
+    "140V",
+    "130T",
+    "140T",
+)
+INTEL_PANTHER_LAKE_MODELS = (
+    "B390",
+    "B370",
+)
+INTEL_ARC_B_SERIES_MODELS = (
+    "B580",
+    "B570",
+)
+INTEL_ARC_A_SERIES_MODELS = (
+    "A770",
+    "A750",
+    "A730",
+    "A580",
+    "A570",
+    "A550",
+    "A530",
+    "A380",
+    "A370",
+    "A350",
+    "A310",
+)
+INTEL_ARC_MODEL_ORDER = (
+    *INTEL_LUNAR_LAKE_MODELS,
+    *INTEL_PANTHER_LAKE_MODELS,
+    *INTEL_ARC_B_SERIES_MODELS,
+    *INTEL_ARC_A_SERIES_MODELS,
+)
+INTEL_ARC_MODELS = set(INTEL_ARC_MODEL_ORDER)
 NEW_GAMES_HEADING = "## 신규 지원 게임 추가 / Newly Supported Games"
 NEW_GAMES_METADATA_START = "<!-- newly-supported-games"
 NEW_GAMES_METADATA_END = "-->"
@@ -305,23 +349,53 @@ def build_sheet_index(rows: list[dict[str, str]]) -> tuple[dict[str, dict[str, l
 
 
 def build_intel_label(tokens: list[str]) -> str:
-    arc_found = False
-    models = []
+    igpu_found = False
+    arc_series_found = False
+    models: list[str] = []
     for token in tokens:
-        upper = token.upper()
-        stripped = upper.strip('*')
-        if "ARC" in upper:
-            arc_found = True
-        elif stripped in {"130V", "140V", "130T", "140T", "B570", "B580"}:
+        stripped = token.upper().strip('*')
+        if stripped in INTEL_IGPU_MARKERS:
+            igpu_found = True
+        elif stripped in INTEL_ARC_SERIES_MARKERS:
+            arc_series_found = True
+        elif stripped in INTEL_ARC_MODELS and stripped not in models:
             models.append(stripped)
-    if arc_found:
-        # ARC와 세부 모델이 동시에 있으면 Arc Series만 표기
-        return "Intel Arc Series"
-    if models:
-        if len(models) == 1:
-            return f"Intel Arc {models[0]}"
         else:
-            return "Intel Arc " + "/".join(models)
+            for model in INTEL_ARC_MODEL_ORDER:
+                if re.search(
+                    rf"(?<![A-Z0-9]){re.escape(model)}(?![A-Z0-9])",
+                    stripped,
+                ):
+                    if model not in models:
+                        models.append(model)
+                    break
+    ordered_models = [model for model in INTEL_ARC_MODEL_ORDER if model in models]
+    model_set = set(ordered_models)
+    labels: list[str] = []
+
+    if igpu_found and INTEL_ARC_MODELS.issubset(model_set):
+        return "Intel Arc Series"
+
+    if igpu_found:
+        labels.append("Intel iGPU")
+        model_set.difference_update(INTEL_LUNAR_LAKE_MODELS)
+        model_set.difference_update(INTEL_PANTHER_LAKE_MODELS)
+    elif model_set.intersection(INTEL_LUNAR_LAKE_MODELS):
+        labels.append("Intel LunarLake")
+
+    if not igpu_found and model_set.intersection(INTEL_PANTHER_LAKE_MODELS):
+        labels.append("Intel PantherLake")
+
+    if model_set.intersection(INTEL_ARC_B_SERIES_MODELS):
+        labels.append("Intel Arc B Series")
+
+    if model_set.intersection(INTEL_ARC_A_SERIES_MODELS):
+        labels.append("Intel Arc A Series")
+
+    if labels:
+        return ", ".join(labels)
+    if arc_series_found:
+        return "Intel Arc Series"
     return ""
 
 
