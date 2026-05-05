@@ -371,6 +371,7 @@ def _build_game_db_controller(
             base_url,
             vendor,
             gpu_model,
+            request_source="app",
             device_manufacturer=device_info.manufacturer,
             device_model=device_info.model,
             app_version=APP_VERSION,
