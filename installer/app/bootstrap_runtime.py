@@ -101,7 +101,7 @@ def init_file_logger(*, app_version: str, source_root: Path) -> Path | None:
     candidates.append(Path(tempfile.gettempdir()) / "OptiScalerInstaller")
 
     root_logger = logging.getLogger()
-    formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s")
+    formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", datefmt="%H:%M:%S")
 
     for directory in candidates:
         try:
@@ -138,7 +138,7 @@ def configure_logging(*, app_version: str, source_root: Path) -> None:
     if not any(isinstance(handler, logging.StreamHandler) for handler in root.handlers):
         stream_handler = logging.StreamHandler(sys.stderr)
         stream_handler.setLevel(logging.INFO)
-        stream_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s: %(message)s"))
+        stream_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s: %(message)s", datefmt="%H:%M:%S"))
         root.addHandler(stream_handler)
 
     logging.getLogger("urllib3").setLevel(logging.WARNING)
