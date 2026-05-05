@@ -55,7 +55,7 @@ As a result, users can install and start playing immediately without additional 
 | Vendor | Supported GPUs | Upscaling | Frame Generation | Frame Multiplier |
 |:---:|:---:|:---:|:---:|:---:|
 | **Intel** | Arc Series | XeSS | Intel XeFG | 3x |
-| **AMD** | 780/890M, 8060S, RX 6000/7000 Series | FSR | Intel XeFG | 2x |
+| **AMD** | 780/880/890M, 8050S/8060S, RX 6000/7000 Series | FSR | Intel XeFG | 2x |
 | **NVIDIA** | RTX 2000/3000 Series | DLSS | Intel XeFG | 2x |
 
 > XeMFG is supported up to 4x only on **Intel Arc**.

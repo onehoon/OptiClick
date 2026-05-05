@@ -88,8 +88,8 @@ WIKI_CAUTION_BLOCKS = [
 ]
 RADEON_IGPU_NOTE_BLOCKS = [
     "> [!NOTE]",
-    "> AMD Radeon iGPU* in this list refers to Radeon 780M, 880M, 890M, and 8060S.",
-    "> 이 리스트에서 AMD Radeon iGPU* 지원은 Radeon 780M, 880M, 890M, 8060S를 의미합니다.",
+    "> AMD Radeon iGPU* in this list refers to Radeon 780M, 880M, 890M, 8050S, and 8060S.",
+    "> 이 리스트에서 AMD Radeon iGPU* 지원은 Radeon 780M, 880M, 890M, 8050S, 8060S를 의미합니다.",
 ]
 WIKI_PUSH_TOKEN = str(os.environ.get("WIKI_PUSH_TOKEN", "") or "").strip()
 TARGET_WIKI_PAGE_FILE = str(
@@ -414,7 +414,7 @@ def build_amd_label(tokens: list[str]) -> str:
 
     for token in tokens:
         upper = token.upper()
-        if upper in {"*780M*", "*880M*", "*890M*", "*8060S*"}:
+        if upper in {"*780M*", "*880M*", "*890M*", "*8050S*", "*8060S*"}:
             has_radeon_igpu = True
         elif upper in {"*RX 6*", "*RX 60*"}:
             add_rx("6000")
