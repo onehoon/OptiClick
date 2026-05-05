@@ -73,13 +73,13 @@
     "ONEXPLAYER G1 i": "ONEXPLAYER G1 Intel",
     "ONEXPLAYER G1 A": "ONEXPLAYER G1 AMD",
 
-    "G1617-01": "GPD WIN Mini",
-    "G1617-02": "GPD WIN Mini",
-    "G1618-03": "GPD WIN 3",
-    "G1618-04": "GPD WIN 4",
-    "G1618-05": "GPD WIN 5",
-    "G1619-03": "GPD WIN Max 2",
-    "G1619-04": "GPD WIN Max 2",
-    "G1619-05": "GPD WIN Max 2"
+    "G1617-01": "WIN Mini",
+    "G1617-02": "WIN Mini",
+    "G1618-03": "WIN 3",
+    "G1618-04": "WIN 4",
+    "G1618-05": "WIN 5",
+    "G1619-03": "WIN Max 2",
+    "G1619-04": "WIN Max 2",
+    "G1619-05": "WIN Max 2"
   }
 }
