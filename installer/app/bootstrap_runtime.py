@@ -10,7 +10,7 @@ import time
 from typing import Any, Callable
 
 
-APP_VERSION = "0.4.4"
+APP_VERSION = "0.4.5"
 MAX_SUPPORTED_GPU_COUNT = 2
 
 
