@@ -11,7 +11,9 @@
     "GIGABYTE TECHNOLOGY CO., LTD.": "Gigabyte",
     "GIGABYTE": "Gigabyte"
   },
-  "model_aliases": {},
+  "model_aliases": {
+    "SYSTEM PRODUCT NAME": "__HIDE__"
+  },
   "logo_keys": {
     "ASUS": "asus",
     "MSI": "msi",

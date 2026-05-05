@@ -9,6 +9,7 @@ from ..common.network_utils import add_github_raw_data_cache_bust, get_shared_re
 
 _DEFAULT_FALLBACK_TITLE = "Desktop PC"
 _REMOTE_SESSION = get_shared_retry_session()
+_HIDE_SENTINEL = "__HIDE__"
 
 
 @dataclass(frozen=True)
@@ -96,7 +97,10 @@ def normalize_device_model(raw_model: str, rules: DeviceIdentityRules) -> str:
     normalized_raw = _normalize_text(raw_model)
     if not normalized_raw:
         return ""
-    return rules.model_aliases.get(_normalize_lookup_key(normalized_raw), normalized_raw)
+    resolved = rules.model_aliases.get(_normalize_lookup_key(normalized_raw), normalized_raw)
+    if _normalize_lookup_key(resolved) == _HIDE_SENTINEL:
+        return ""
+    return resolved
 
 
 def build_device_title(
