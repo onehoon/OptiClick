@@ -58,7 +58,7 @@ def _resolve_device_logo_image(app: Any, logo_key: str):
         if trim_box:
             pil_image = pil_image.crop(trim_box)
 
-        target_height = 30 if normalized_key == "nvidia" else 36
+        target_height = 38 if normalized_key == "intel" else 30 if normalized_key == "nvidia" else 37
         max_width = 72
         width, height = pil_image.size
         if width > 0 and height > 0:
@@ -118,6 +118,7 @@ def refresh_device_info_header(app: Any) -> None:
 
     logo_width = int(getattr(logo_image, "_size", (36, 36))[0]) if getattr(logo_image, "_size", None) else 36
     logo_widget.configure(image=logo_image, text="", width=logo_width)
+    logo_widget.grid_configure(pady=(0, 6) if logo_key == "nvidia" else 0)
     logo_widget.grid()
 
 
