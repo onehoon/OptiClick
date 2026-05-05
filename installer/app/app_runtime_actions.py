@@ -14,6 +14,19 @@ def format_gpu_label_text(app: Any, gpu_info: str) -> str:
     return normalized_gpu
 
 
+def _resolve_gpu_vendor_logo_key(app: Any) -> str:
+    gpu_state = getattr(app, "gpu_state", None)
+    selected_adapter = getattr(gpu_state, "selected_adapter", None)
+    selected_vendor = str(getattr(selected_adapter, "vendor", "") or "").strip()
+    logo_key = device_identity.resolve_gpu_vendor_logo_key(selected_vendor)
+    if logo_key:
+        return logo_key
+
+    gpu_context = getattr(gpu_state, "gpu_context", None)
+    selected_vendor = str(getattr(gpu_context, "selected_vendor", "") or "").strip()
+    return device_identity.resolve_gpu_vendor_logo_key(selected_vendor)
+
+
 def _resolve_device_logo_image(app: Any, logo_key: str):
     normalized_key = str(logo_key or "").strip().lower()
     if not normalized_key:
@@ -96,15 +109,7 @@ def refresh_device_info_header(app: Any) -> None:
     title_widget.configure(text=title_text)
     gpu_widget.configure(text=gpu_text)
 
-    logo_key = device_identity.resolve_device_logo_key(raw_manufacturer, rules)
-    if not logo_key:
-        selected_adapter = getattr(getattr(app, "gpu_state", None), "selected_adapter", None)
-        selected_vendor = str(getattr(selected_adapter, "vendor", "") or "").strip()
-        if not selected_vendor:
-            gpu_context = getattr(getattr(app, "gpu_state", None), "gpu_context", None)
-            selected_vendor = str(getattr(gpu_context, "selected_vendor", "") or "").strip()
-        logo_key = device_identity.resolve_gpu_vendor_logo_key(selected_vendor)
-
+    logo_key = _resolve_gpu_vendor_logo_key(app)
     logo_image = _resolve_device_logo_image(app, logo_key)
     if logo_image is None:
         logo_widget.configure(image=None, text="", width=0)

@@ -16,7 +16,6 @@ _HIDE_SENTINEL = "__HIDE__"
 class DeviceIdentityRules:
     manufacturer_aliases: dict[str, str] = field(default_factory=dict)
     model_aliases: dict[str, str] = field(default_factory=dict)
-    logo_keys: dict[str, str] = field(default_factory=dict)
 
 
 def _normalize_lookup_key(value: object) -> str:
@@ -48,7 +47,6 @@ def _build_rules_from_payload(payload: object) -> DeviceIdentityRules:
     return DeviceIdentityRules(
         manufacturer_aliases=_normalize_rule_mapping(payload.get("manufacturer_aliases")),
         model_aliases=_normalize_rule_mapping(payload.get("model_aliases")),
-        logo_keys=_normalize_rule_mapping(payload.get("logo_keys")),
     )
 
 
@@ -76,13 +74,9 @@ def merge_device_identity_rules(base: DeviceIdentityRules, override: DeviceIdent
     merged_models = dict(base.model_aliases)
     merged_models.update(override.model_aliases)
 
-    merged_logo_keys = dict(base.logo_keys)
-    merged_logo_keys.update(override.logo_keys)
-
     return DeviceIdentityRules(
         manufacturer_aliases=merged_manufacturers,
         model_aliases=merged_models,
-        logo_keys=merged_logo_keys,
     )
 
 
@@ -124,13 +118,6 @@ def build_device_title(
     return str(fallback_title or _DEFAULT_FALLBACK_TITLE).strip() or _DEFAULT_FALLBACK_TITLE
 
 
-def resolve_device_logo_key(raw_manufacturer: str, rules: DeviceIdentityRules) -> str:
-    display_manufacturer = normalize_device_manufacturer(raw_manufacturer, rules)
-    if not display_manufacturer:
-        return ""
-    return rules.logo_keys.get(_normalize_lookup_key(display_manufacturer), "")
-
-
 def resolve_gpu_vendor_logo_key(vendor: str) -> str:
     normalized_vendor = _normalize_lookup_key(vendor)
     if normalized_vendor == "NVIDIA":
@@ -150,6 +137,5 @@ __all__ = [
     "merge_device_identity_rules",
     "normalize_device_manufacturer",
     "normalize_device_model",
-    "resolve_device_logo_key",
     "resolve_gpu_vendor_logo_key",
 ]
