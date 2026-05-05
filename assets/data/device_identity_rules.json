@@ -26,10 +26,13 @@
 
     "PC PARTNER LIMITED": "ZOTAC",
     "ZOTAC INTERNATIONAL": "ZOTAC",
-    "ZOTAC INTERNATIONAL (MCO) LTD.": "ZOTAC"
+    "ZOTAC INTERNATIONAL (MCO) LTD.": "ZOTAC",
+    "To Be Filled By O.E.M.": "__HIDE__"
+
   },
   "model_aliases": {
     "SYSTEM PRODUCT NAME": "__HIDE__",
+    "To Be Filled By O.E.M.": "__HIDE__",
 
     "RC71L": "ROG Ally",
     "ROG Ally RC71L": "ROG Ally",
