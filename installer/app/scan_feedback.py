@@ -2,9 +2,20 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Protocol
 
 from . import message_popup
+
+
+class EnqueueStartupPopup(Protocol):
+    def __call__(
+        self,
+        popup_id: str,
+        *,
+        priority: int,
+        show_callback: Callable[..., Any],
+        blocking: bool = False,
+    ) -> None: ...
 
 
 @dataclass(frozen=True)
@@ -12,7 +23,7 @@ class ScanFeedbackCallbacks:
     set_scan_status_message: Callable[[str, str], None]
     set_select_folder_enabled: Callable[[bool], None]
     set_information_text: Callable[[str], None]
-    enqueue_startup_popup: Callable[[str, int, Callable[..., Any], bool], None]
+    enqueue_startup_popup: EnqueueStartupPopup
     run_next_startup_popup: Callable[[], None]
 
 
@@ -66,12 +77,12 @@ class ScanFeedbackController:
         self._initial_auto_scan_empty_popup_shown = True
         self._callbacks.enqueue_startup_popup(
             "auto_scan_no_results",
-            60,
-            lambda done_callback, text=self._auto_scan_no_results_text: self._show_scan_result_popup(
+            priority=60,
+            show_callback=lambda done_callback, text=self._auto_scan_no_results_text: self._show_scan_result_popup(
                 text,
                 on_close=done_callback,
             ),
-            False,
+            blocking=False,
         )
         self._callbacks.run_next_startup_popup()
 
