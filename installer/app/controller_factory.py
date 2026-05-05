@@ -12,6 +12,7 @@ from installer.install import services as installer_services
 from installer.system import gpu_service
 
 from . import gpu_notice
+from .bootstrap_runtime import APP_VERSION
 from .app_runtime_actions import (
     pump_poster_queue,
     shutdown_app,
@@ -364,13 +365,18 @@ def _build_game_db_controller(
     game_json_profile_url = str(config.game_json_profile_url or "").strip()
     load_game_db = lambda: sheet_loader.load_game_db_from_remote_json(game_master_url)
     load_module_download_links = lambda: sheet_loader.load_module_download_links_from_remote_json(resource_master_url)
-    load_gpu_bundle = lambda base_url, vendor, gpu_model: gpu_bundle_loader.load_supported_game_bundle(
-        base_url,
-        vendor,
-        gpu_model,
-        debug=config.gpu_bundle_debug,
-        logger=logging.getLogger(),
-    )
+    def load_gpu_bundle(base_url: str, vendor: str, gpu_model: str) -> dict[str, dict[str, Any]]:
+        device_info = gpu_service.get_device_info()
+        return gpu_bundle_loader.load_supported_game_bundle(
+            base_url,
+            vendor,
+            gpu_model,
+            device_manufacturer=device_info.manufacturer,
+            device_model=device_info.model,
+            app_version=APP_VERSION,
+            debug=config.gpu_bundle_debug,
+            logger=logging.getLogger(),
+        )
 
     return GameDbLoadController(
         executor=executor,

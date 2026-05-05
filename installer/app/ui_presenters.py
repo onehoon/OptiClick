@@ -208,7 +208,7 @@ class BottomPanelPresenter:
             return
         if sheet_loading:
             if version_label.winfo_exists():
-                version_label.configure(text="")
+                version_label.configure(text=version_line_template.format(value="-"))
             return
 
         links = module_download_links if isinstance(module_download_links, dict) else resource_master
@@ -227,7 +227,7 @@ class BottomPanelPresenter:
             version_text = version_line_template.format(value="-")
 
         if version_label.winfo_exists():
-            version_label.configure(text=version_text, text_color="#AEB9C8")
+            version_label.configure(text=version_text)
 
     def apply_information_text_shift(self, info_text_widget: Any) -> None:
         try:

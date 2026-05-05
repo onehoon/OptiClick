@@ -81,39 +81,6 @@ def _build_header(app: Any, theme: MainUiTheme) -> None:
     )
     app.gpu_lbl.grid(row=0, column=0, padx=(1, 0), sticky="w")
 
-    app.status_badge = ctk.CTkFrame(
-        sub_frame,
-        fg_color="transparent",
-        corner_radius=0,
-    )
-    app.status_badge.grid(row=0, column=1, sticky="e", padx=(8, 0))
-    app.status_badge.grid_columnconfigure(1, weight=1)
-
-    app.status_badge_dot = ctk.CTkFrame(
-        app.status_badge,
-        width=theme.status_indicator_size,
-        height=theme.status_indicator_size,
-        fg_color=theme.status_indicator_loading_color,
-        corner_radius=theme.status_indicator_size // 2,
-    )
-    app.status_badge_dot.grid(
-        row=0,
-        column=0,
-        padx=(0, 8),
-        pady=(theme.status_indicator_y_offset, 0),
-        sticky="w",
-    )
-
-    app.status_badge_label = ctk.CTkLabel(
-        app.status_badge,
-        text=app.txt.main.status_game_db,
-        font=ctk.CTkFont(family=theme.font_ui, size=12, weight="bold"),
-        text_color=theme.status_text_color,
-        anchor="w",
-    )
-    app.status_badge_label.grid(row=0, column=1, sticky="w")
-    set_status_badge_state(app, app.txt.main.status_game_db, theme.status_indicator_loading_color, pulse=True)
-
     sep = ctk.CTkFrame(hdr, height=1, fg_color="#4A5361", corner_radius=0)
     sep.grid(row=2, column=0, sticky="ew")
 
@@ -224,6 +191,8 @@ def _build_grid_area(app: Any, theme: MainUiTheme) -> None:
 
 
 def _build_bottom_bar(app: Any, theme: MainUiTheme) -> None:
+    status_badge_right_pad = 22 if getattr(app, "lang", "en") == "ko" else 17
+
     bar = ctk.CTkFrame(app.root, fg_color=theme.surface_color, corner_radius=0, height=142)
     bar.grid(row=3, column=0, sticky="ew", padx=0, pady=0)
     bar.grid_propagate(False)
@@ -231,26 +200,51 @@ def _build_bottom_bar(app: Any, theme: MainUiTheme) -> None:
 
     title_line = ctk.CTkFrame(bar, fg_color="transparent", corner_radius=0)
     title_line.grid(row=0, column=0, padx=20, pady=(7, 2), sticky="ew")
-    title_line.grid_columnconfigure(1, weight=1)
+    title_line.grid_columnconfigure(0, weight=1)
 
     sec_lbl = ctk.CTkLabel(
         title_line,
         text=app.txt.main.install_section_title,
         font=ctk.CTkFont(family=theme.font_heading, size=12, weight="bold"),
         text_color="#F1F5F9",
+        anchor="w",
+        justify="left",
     )
     sec_lbl.grid(row=0, column=0, sticky="w")
+    app.lbl_optiscaler_version_line = sec_lbl
 
-    app.lbl_optiscaler_version_line = ctk.CTkLabel(
+    app.status_badge = ctk.CTkFrame(
         title_line,
-        text="",
-        font=ctk.CTkFont(family=theme.font_ui, size=11),
-        text_color="#AEB9C8",
-        anchor="e",
-        justify="right",
-        wraplength=520,
+        fg_color="transparent",
+        corner_radius=0,
     )
-    app.lbl_optiscaler_version_line.grid(row=0, column=1, padx=(10, 0), pady=(2, 0), sticky="e")
+    app.status_badge.grid(row=0, column=1, sticky="e", padx=(10, status_badge_right_pad))
+    app.status_badge.grid_columnconfigure(1, weight=1)
+
+    app.status_badge_dot = ctk.CTkFrame(
+        app.status_badge,
+        width=theme.status_indicator_size,
+        height=theme.status_indicator_size,
+        fg_color=theme.status_indicator_loading_color,
+        corner_radius=theme.status_indicator_size // 2,
+    )
+    app.status_badge_dot.grid(
+        row=0,
+        column=0,
+        padx=(0, 8),
+        pady=(theme.status_indicator_y_offset, 0),
+        sticky="w",
+    )
+
+    app.status_badge_label = ctk.CTkLabel(
+        app.status_badge,
+        text=app.txt.main.status_game_db,
+        font=ctk.CTkFont(family=theme.font_ui, size=12, weight="bold"),
+        text_color=theme.status_text_color,
+        anchor="w",
+    )
+    app.status_badge_label.grid(row=0, column=1, sticky="w")
+    set_status_badge_state(app, app.txt.main.status_game_db, theme.status_indicator_loading_color, pulse=True)
 
     mid_bottom = ctk.CTkFrame(bar, fg_color=theme.surface_color, corner_radius=0)
     mid_bottom.grid(row=1, column=0, sticky="ew", padx=20, pady=(2, 0))

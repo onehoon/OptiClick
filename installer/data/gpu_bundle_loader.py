@@ -53,11 +53,21 @@ def build_gpu_bundle_request_url(
     *,
     gpu_vendor: str,
     gpu_model: str,
+    device_manufacturer: str | None = None,
+    device_model: str | None = None,
+    app_version: str | None = None,
     debug: bool | None = None,
 ) -> str:
     base_url = _normalize_apps_script_base_url(base_url_or_key)
     parsed = urlparse(base_url)
-    excluded_query_keys = {"action", "vendor", "gpu"}
+    excluded_query_keys = {
+        "action",
+        "vendor",
+        "gpu",
+        "device_manufacturer",
+        "device_model",
+        "app_version",
+    }
     if debug is not None:
         excluded_query_keys.add("debug")
     preserved = [
@@ -70,6 +80,9 @@ def build_gpu_bundle_request_url(
         ("action", "getSupportedGameBundle"),
         ("vendor", str(gpu_vendor or "").strip().lower()),
         ("gpu", str(gpu_model or "").strip()),
+        ("device_manufacturer", str(device_manufacturer or "").strip()),
+        ("device_model", str(device_model or "").strip()),
+        ("app_version", str(app_version or "").strip()),
     ]
     if debug:
         request_query.append(("debug", "1"))
@@ -94,6 +107,9 @@ def load_supported_game_bundle(
     gpu_vendor: str,
     gpu_model: str,
     *,
+    device_manufacturer: str | None = None,
+    device_model: str | None = None,
+    app_version: str | None = None,
     timeout_seconds: float = 10.0,
     debug: bool | None = None,
     logger: logging.Logger | None = None,
@@ -103,6 +119,9 @@ def load_supported_game_bundle(
         base_url_or_key,
         gpu_vendor=gpu_vendor,
         gpu_model=gpu_model,
+        device_manufacturer=device_manufacturer,
+        device_model=device_model,
+        app_version=app_version,
         debug=debug,
     )
     read_timeout = max(float(timeout_seconds or 0.0), 1.0)

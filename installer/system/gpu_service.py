@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import fnmatch
+import json
 import logging
 import os
 import re
@@ -49,6 +50,12 @@ class GpuContext:
         return self.gpu_count > 1
 
 
+@dataclass(frozen=True)
+class HardwareDeviceInfo:
+    manufacturer: str
+    model: str
+
+
 def _is_truthy_env(name: str) -> bool:
     raw = str(os.environ.get(name, "") or "").strip().lower()
     return raw in {"1", "true", "yes", "on"}
@@ -79,8 +86,84 @@ def _get_test_gpu_names_override() -> list[str]:
     return gpu_names
 
 
-def get_graphics_adapter_snapshot() -> tuple[list[str], int, str]:
-    """Return unique GPU names, detected adapter count, and a user-facing summary string."""
+def _run_powershell_cim_query(command_text: str, *, timeout: int = 8) -> list[dict[str, object]]:
+    if os.name != "nt":
+        return []
+
+    try:
+        result = subprocess.run(
+            [
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                command_text,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            **subprocess_no_window_kwargs(),
+        )
+        if result.returncode != 0:
+            return []
+
+        payload = str(result.stdout or "").strip()
+        if not payload:
+            return []
+
+        parsed = json.loads(payload)
+        if isinstance(parsed, dict):
+            return [parsed]
+        if isinstance(parsed, list):
+            return [row for row in parsed if isinstance(row, dict)]
+    except Exception:
+        pass
+
+    return []
+
+
+def _get_windows_video_controller_rows() -> list[dict[str, object]]:
+    return _run_powershell_cim_query(
+        "Get-CimInstance Win32_VideoController | "
+        "Select-Object Name | ConvertTo-Json -Compress"
+    )
+
+
+def get_device_info() -> HardwareDeviceInfo:
+    if os.name != "nt":
+        return HardwareDeviceInfo(manufacturer="", model="")
+
+    rows = _run_powershell_cim_query(
+        "Get-CimInstance Win32_ComputerSystem | "
+        "Select-Object Manufacturer, Model | ConvertTo-Json -Compress"
+    )
+    row = rows[0] if rows else {}
+    return HardwareDeviceInfo(
+        manufacturer=_normalize_text(str(row.get("Manufacturer", "") or "")),
+        model=_normalize_text(str(row.get("Model", "") or "")),
+    )
+
+
+def build_gpu_display_list(gpu_rows: list[dict[str, object]]) -> str:
+    display_entries: list[str] = []
+    for row in gpu_rows:
+        name = str(row.get("Name", "") or "").strip()
+        if not name:
+            continue
+        lowered = name.lower()
+        if not any(keyword in lowered for keyword in _ALLOWED_VENDOR_KEYWORDS):
+            continue
+        display_entries.append(name)
+    return " | ".join(display_entries)
+
+
+def log_hardware_snapshot(*, device_info: HardwareDeviceInfo, gpu_display_list: str) -> None:
+    logging.info("[Hardware] Device.Manufacturer=%s", device_info.manufacturer or "Unknown")
+    logging.info("[Hardware] Device.Model=%s", device_info.model or "Unknown")
+    logging.info("[Hardware] GPU.DisplayList=%s", gpu_display_list or "Unknown")
+
+
+def _get_graphics_adapter_snapshot_details() -> tuple[list[str], int, str, str]:
+    """Return unique GPU names, detected adapter count, UI summary text, and log display text."""
     test_gpu_names = _get_test_gpu_names_override()
     if test_gpu_names:
         logging.info(
@@ -88,38 +171,21 @@ def get_graphics_adapter_snapshot() -> tuple[list[str], int, str]:
             _TEST_GPU_ENABLED_ENV,
             " | ".join(test_gpu_names),
         )
-        return test_gpu_names, len(test_gpu_names), ", ".join(test_gpu_names)
+        return test_gpu_names, len(test_gpu_names), ", ".join(test_gpu_names), " | ".join(test_gpu_names)
 
     if os.name != "nt":
-        return [], 0, "Unknown (non-Windows OS)"
-
-    command = [
-        "powershell",
-        "-NoProfile",
-        "-Command",
-        "Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name",
-    ]
+        return [], 0, "Unknown (non-Windows OS)", "Unknown (non-Windows OS)"
 
     try:
-        result = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            timeout=8,
-            **subprocess_no_window_kwargs(),
-        )
-        if result.returncode != 0:
-            return [], 0, "Unknown"
+        gpu_rows = _get_windows_video_controller_rows()
+        gpu_display_list = build_gpu_display_list(gpu_rows)
 
-        gpu_names_raw = []
-        for line in result.stdout.splitlines():
-            name = line.strip()
-            if name:
-                gpu_names_raw.append(name)
-
-        filtered_names_unique = []
+        gpu_names_unique = []
         seen_filtered_names = set()
-        for name in gpu_names_raw:
+        for row in gpu_rows:
+            name = _normalize_text(str(row.get("Name", "") or ""))
+            if not name:
+                continue
             lowered = name.lower()
             if "mirage driver" in lowered:
                 continue
@@ -127,15 +193,20 @@ def get_graphics_adapter_snapshot() -> tuple[list[str], int, str]:
                 normalized_name = " ".join(lowered.split())
                 if normalized_name not in seen_filtered_names:
                     seen_filtered_names.add(normalized_name)
-                    filtered_names_unique.append(name)
+                    gpu_names_unique.append(name)
 
-        if filtered_names_unique:
+        if gpu_names_unique:
             # Only treat distinct GPU names as multi-GPU so duplicate WMI rows do not block installation.
-            return filtered_names_unique, len(filtered_names_unique), ", ".join(filtered_names_unique)
+            return gpu_names_unique, len(gpu_names_unique), ", ".join(gpu_names_unique), gpu_display_list or ", ".join(gpu_names_unique)
     except Exception:
         pass
 
-    return [], 0, "Unknown"
+    return [], 0, "Unknown", "Unknown"
+
+
+def get_graphics_adapter_snapshot() -> tuple[list[str], int, str]:
+    gpu_names, gpu_count, gpu_info, _gpu_display_list = _get_graphics_adapter_snapshot_details()
+    return gpu_names, gpu_count, gpu_info
 
 
 def _normalize_text(text: str) -> str:
@@ -207,7 +278,11 @@ def _select_preferred_adapter(adapters: tuple[GpuAdapterChoice, ...]) -> GpuAdap
 
 
 def detect_gpu_context() -> GpuContext:
-    gpu_names, gpu_count, gpu_info = get_graphics_adapter_snapshot()
+    gpu_names, gpu_count, gpu_info, gpu_display_list = _get_graphics_adapter_snapshot_details()
+    log_hardware_snapshot(
+        device_info=get_device_info(),
+        gpu_display_list=gpu_display_list,
+    )
     adapters = build_gpu_adapter_choices(gpu_names)
 
     selected_adapter = _select_preferred_adapter(adapters)

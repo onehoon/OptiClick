@@ -11,7 +11,12 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode
 
+_SCRIPT_ROOT = Path(__file__).resolve().parents[1]
+if str(_SCRIPT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_SCRIPT_ROOT))
+
 import requests
+from installer.app.bootstrap_runtime import APP_VERSION
 
 try:
     from dotenv import load_dotenv
@@ -23,10 +28,13 @@ _SCRIPT_ID_RE = re.compile(r"^[A-Za-z0-9_-]{20,}$")
 _DEFAULT_TIMEOUT_SECONDS = 30.0
 _DEFAULT_DELAY_SECONDS = 3
 _SUPPORTED_VENDORS = ("amd", "nvidia", "intel")
+_DEFAULT_REQUEST_SOURCE = "cache_prewarm"
+_DEFAULT_DEVICE_MANUFACTURER = "GitHub"
+_DEFAULT_DEVICE_MODEL = "Actions"
 
 
 def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[1]
+    return _SCRIPT_ROOT
 
 
 def _load_repo_env() -> None:
@@ -131,11 +139,26 @@ def _iter_requests(models_by_vendor: Mapping[str, Iterable[str]]) -> list[tuple[
     return requests_to_make
 
 
-def _build_request_url(base_url: str, *, vendor: str, gpu_model: str, debug: bool, force: bool = False) -> str:
+def _build_request_url(
+    base_url: str,
+    *,
+    vendor: str,
+    gpu_model: str,
+    request_source: str,
+    device_manufacturer: str,
+    device_model: str,
+    app_version: str,
+    debug: bool,
+    force: bool = False,
+) -> str:
     params = {
         "action": "getSupportedGameBundle",
         "vendor": vendor,
         "gpu": gpu_model,
+        "request_source": request_source,
+        "device_manufacturer": device_manufacturer,
+        "device_model": device_model,
+        "app_version": app_version,
     }
     if debug:
         params["debug"] = "1"
@@ -158,10 +181,24 @@ def _request_bundle(
     base_url: str,
     vendor: str,
     gpu_model: str,
+    request_source: str,
+    device_manufacturer: str,
+    device_model: str,
+    app_version: str,
     timeout_seconds: float,
     debug: bool,
 ) -> tuple[bool, float, str]:
-    request_url = _build_request_url(base_url, vendor=vendor, gpu_model=gpu_model, debug=debug, force=getattr(_request_bundle, "force", False))
+    request_url = _build_request_url(
+        base_url,
+        vendor=vendor,
+        gpu_model=gpu_model,
+        request_source=request_source,
+        device_manufacturer=device_manufacturer,
+        device_model=device_model,
+        app_version=app_version,
+        debug=debug,
+        force=getattr(_request_bundle, "force", False),
+    )
     started = time.perf_counter()
     response = session.get(request_url, timeout=timeout_seconds)
     elapsed_ms = (time.perf_counter() - started) * 1000.0
@@ -227,6 +264,26 @@ def main() -> int:
         action="store_true",
         help="Pass debug=1 to the endpoint and print cache metadata when the Apps Script supports it.",
     )
+    parser.add_argument(
+        "--request-source",
+        default="",
+        help=f"Request source marker for Apps Script logging. Default: {_DEFAULT_REQUEST_SOURCE}",
+    )
+    parser.add_argument(
+        "--device-manufacturer",
+        default="",
+        help=f"Device manufacturer marker to send with requests. Default: {_DEFAULT_DEVICE_MANUFACTURER}",
+    )
+    parser.add_argument(
+        "--device-model",
+        default="",
+        help=f"Device model marker to send with requests. Default: {_DEFAULT_DEVICE_MODEL}",
+    )
+    parser.add_argument(
+        "--app-version",
+        default="",
+        help=f"App version marker to send with requests. Default: {APP_VERSION}",
+    )
     args = parser.parse_args()
 
     _load_repo_env()
@@ -236,6 +293,26 @@ def main() -> int:
         # Patch _request_bundle to pass force argument
         setattr(_request_bundle, "force", args.force)
         base_url = _normalize_base_url(args.base_url or os.environ.get("OPTISCALER_GPU_BUNDLE_URL", ""))
+        request_source = str(
+            args.request_source
+            or os.environ.get("OPTISCALER_GPU_BUNDLE_REQUEST_SOURCE", "")
+            or _DEFAULT_REQUEST_SOURCE
+        ).strip()
+        device_manufacturer = str(
+            args.device_manufacturer
+            or os.environ.get("OPTISCALER_GPU_BUNDLE_DEVICE_MANUFACTURER", "")
+            or _DEFAULT_DEVICE_MANUFACTURER
+        ).strip()
+        device_model = str(
+            args.device_model
+            or os.environ.get("OPTISCALER_GPU_BUNDLE_DEVICE_MODEL", "")
+            or _DEFAULT_DEVICE_MODEL
+        ).strip()
+        app_version = str(
+            args.app_version
+            or os.environ.get("OPTISCALER_GPU_BUNDLE_APP_VERSION", "")
+            or APP_VERSION
+        ).strip()
         inline_models_json = str(args.models_json or os.environ.get("OPTISCALER_GPU_CACHE_MODELS_JSON", "")).strip()
         if inline_models_json:
             models_by_vendor = _load_models_from_json_text(
@@ -260,6 +337,13 @@ def main() -> int:
     print(f"Apps Script: {base_url}")
     print(f"Models source: {models_source_description}")
     print(f"Requests: {len(request_items)}")
+    print(
+        "Metadata: "
+        f"request_source={request_source} "
+        f"device_manufacturer={device_manufacturer} "
+        f"device_model={device_model} "
+        f"app_version={app_version}"
+    )
 
     session = requests.Session()
     failures = 0
@@ -271,6 +355,10 @@ def main() -> int:
                 base_url=base_url,
                 vendor=vendor,
                 gpu_model=gpu_model,
+                request_source=request_source,
+                device_manufacturer=device_manufacturer,
+                device_model=device_model,
+                app_version=app_version,
                 timeout_seconds=max(float(args.timeout or 0.0), 1.0),
                 debug=bool(args.debug),
             )
