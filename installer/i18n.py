@@ -90,6 +90,7 @@ class DialogStrings:
     preparing_download_body: str
     fsr4_not_ready: str
     confirm_popup_body: str
+    install_permission_denied_body: str
     install_failed_body_template: str
 
 
@@ -197,6 +198,10 @@ _STRINGS_BY_LANG: dict[Lang, AppStrings] = {
             preparing_download_body="FSR4 다운로드가 아직 진행 중입니다. 잠시만 기다려 주세요.",
             fsr4_not_ready="FSR4가 아직 준비되지 않았습니다.",
             confirm_popup_body="설치 전에 안내 팝업을 먼저 확인해 주세요.",
+            install_permission_denied_body=(
+                "선택한 게임 폴더에 파일을 복사할 권한이 없어 설치를 진행할 수 없습니다.\n"
+                "인스톨러를 관리자 권한으로 다시 실행해 주세요."
+            ),
             install_failed_body_template="설치 중 오류가 발생했습니다: {message}",
         ),
         gpu=GpuStrings(
@@ -295,6 +300,10 @@ _STRINGS_BY_LANG: dict[Lang, AppStrings] = {
             preparing_download_body="FSR4 download is still in progress. Please wait.",
             fsr4_not_ready="FSR4 is not ready yet.",
             confirm_popup_body="Please confirm the popup before installing.",
+            install_permission_denied_body=(
+                "The installer does not have permission to copy files to the selected game folder.\n"
+                "Please restart the installer as administrator."
+            ),
             install_failed_body_template="An error occurred during installation: {message}",
         ),
         gpu=GpuStrings(

@@ -3,8 +3,10 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from concurrent.futures import Executor
 from dataclasses import dataclass
+from pathlib import Path
 from tkinter import messagebox
 from typing import Any
+from uuid import uuid4
 
 from installer.common.log_sanitizer import redact_text
 from .ui_shell_actions import set_information_text
@@ -245,6 +247,18 @@ class InstallFlowController:
             return
 
         game_data = dict(decision.selected_game or {})
+        if not self._has_install_target_write_permission(game_data):
+            detail = str(
+                getattr(
+                    self._txt.dialogs,
+                    "install_permission_denied_body",
+                    "The installer does not have permission to copy files to the selected game folder.\n"
+                    "Please restart the installer as administrator.",
+                )
+            )
+            self._callbacks.show_error(self._txt.common.error, detail)
+            return
+
         source_archive = decision.source_archive
         resolved_dll_name = decision.resolved_dll_name
         fsr4_source_archive = decision.fsr4_source_archive
@@ -267,6 +281,30 @@ class InstallFlowController:
             specialk_cached_archive,
             unreal5_cached_archive,
         )
+
+    def _has_install_target_write_permission(self, game_data: Mapping[str, Any]) -> bool:
+        target_dir = Path(str(game_data.get("path", "") or "").strip())
+        if not target_dir.is_dir():
+            return False
+
+        token = uuid4().hex
+        probe_path = target_dir / f".optiscaler_write_test_{token}.tmp"
+        renamed_probe_path = target_dir / f".optiscaler_write_test_{token}.renamed.tmp"
+
+        try:
+            with probe_path.open("x", encoding="utf-8") as handle:
+                handle.write("write-test")
+            probe_path.replace(renamed_probe_path)
+            renamed_probe_path.unlink()
+            return True
+        except Exception:
+            for path in (probe_path, renamed_probe_path):
+                try:
+                    if path.exists():
+                        path.unlink()
+                except Exception:
+                    pass
+            return False
 
     def run_install_worker(
         self,
