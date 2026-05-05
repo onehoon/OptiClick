@@ -5,8 +5,9 @@
     "ASUSTEK COMPUTER INC.": "ASUS",
     "ASUSTeK COMPUTER INC.": "ASUS",
 
-    "GIGABYTE TECHNOLOGY CO., LTD.": "Gigabyte",
+    "GIGABYTE TECHNOLOGY CO., LTD.": "GIGABYTE",
 
+    "LENOVO": "Lenovo",
     "LENOVO GROUP LIMITED": "Lenovo",
 
     "MICRO-STAR INTERNATIONAL": "MSI",
@@ -14,7 +15,8 @@
     "MICRO-STAR INTERNATIONAL CO., LTD.": "MSI",
     "MICRO-STAR INTERNATIONAL CO.,LTD": "MSI",
 
-    "VALVE CORPORATION": "Valve",
+    "VALVE": "VALVE",
+    "VALVE CORPORATION": "VALVE",
 
     "AYADEVICE": "AYANEO",
 
@@ -22,15 +24,19 @@
     "ONE-NETBOOK TECHNOLOGY CO., LTD.": "ONEXPLAYER",
     "ONE-NETBOOK TECHNOLOGY CO.,LTD": "ONEXPLAYER",
 
-    "PC PARTNER LIMITED": "ZOTAC"
+    "PC PARTNER LIMITED": "ZOTAC",
+    "ZOTAC INTERNATIONAL": "ZOTAC",
+    "ZOTAC INTERNATIONAL (MCO) LTD.": "ZOTAC"
   },
   "model_aliases": {
     "SYSTEM PRODUCT NAME": "__HIDE__",
 
     "RC71L": "ROG Ally",
+    "ROG Ally RC71L": "ROG Ally",
     "ROG Ally RC71L_RC71L": "ROG Ally",
 
     "RC72LA": "ROG Ally X",
+    "ROG Ally X RC72LA": "ROG Ally X",
     "ROG Ally X RC72LA_RC72LA": "ROG Ally X",
 
     "RC73YA": "ROG Xbox Ally",
@@ -55,8 +61,10 @@
     "ZGC-G1A1W": "ZOTAC GAMING ZONE",
     "G0A1W": "ZOTAC GAMING ZONE",
 
+    "Aerith": "Steam Deck",
     "Jupiter": "Steam Deck",
     "Galileo": "Steam Deck OLED",
+    "Sephiroth": "Steam Deck OLED",
 
     "ONEXPLAYER X1Pro": "ONEXPLAYER X1 Pro",
     "ONEXPLAYER F1Pro": "ONEXPLAYER OneXFly F1 Pro",
