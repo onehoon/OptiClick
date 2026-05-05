@@ -1,24 +1,121 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any
 
+from . import device_identity
 from .install_selection_controller import InstallSelectionUiState
 from .scan_entry_controller import ScanEntryState
 
 
 def format_gpu_label_text(app: Any, gpu_info: str) -> str:
     normalized_gpu = str(gpu_info or "").strip() or app.txt.main.unknown_gpu
-    return app.txt.main.gpu_label_template.format(gpu=normalized_gpu)
+    return normalized_gpu
+
+
+def _resolve_device_logo_image(app: Any, logo_key: str):
+    normalized_key = str(logo_key or "").strip().lower()
+    if not normalized_key:
+        return None
+
+    cache = getattr(app, "_device_logo_images", None)
+    if cache is None:
+        cache = {}
+        app._device_logo_images = cache
+    if normalized_key in cache:
+        return cache[normalized_key]
+
+    try:
+        import customtkinter as ctk
+        from PIL import Image
+    except Exception:
+        return None
+
+    assets_dir = Path(getattr(getattr(app, "_app_paths", None), "assets_dir", ""))
+    logo_path = assets_dir / "logos" / f"{normalized_key}.png"
+    if not logo_path.exists():
+        cache[normalized_key] = None
+        return None
+
+    try:
+        pil_image = Image.open(logo_path).convert("RGBA")
+        alpha_channel = pil_image.getchannel("A")
+        trim_box = alpha_channel.getbbox()
+        if trim_box:
+            pil_image = pil_image.crop(trim_box)
+
+        target_height = 36
+        max_width = 72
+        width, height = pil_image.size
+        if width > 0 and height > 0:
+            target_width = max(1, int(round(width * (target_height / float(height)))))
+        else:
+            target_width = target_height
+
+        if target_width > max_width and target_width > 0:
+            scale = max_width / float(target_width)
+            target_width = max_width
+            target_height = max(1, int(round(target_height * scale)))
+
+        ctk_image = ctk.CTkImage(
+            light_image=pil_image,
+            dark_image=pil_image,
+            size=(target_width, target_height),
+        )
+    except Exception:
+        logging.getLogger().debug("Failed to load device logo from %s", logo_path, exc_info=True)
+        cache[normalized_key] = None
+        return None
+
+    cache[normalized_key] = ctk_image
+    return ctk_image
+
+
+def refresh_device_info_header(app: Any) -> None:
+    title_widget = getattr(app, "device_title_lbl", None)
+    gpu_widget = getattr(app, "device_gpu_lbl", None)
+    logo_widget = getattr(app, "device_logo_lbl", None)
+    if title_widget is None or gpu_widget is None or logo_widget is None:
+        return
+    if hasattr(title_widget, "winfo_exists") and callable(title_widget.winfo_exists) and not title_widget.winfo_exists():
+        return
+
+    rules = getattr(app, "_device_identity_rules", device_identity.DeviceIdentityRules())
+    device_info = getattr(getattr(app, "gpu_state", None), "device_info", None)
+    raw_manufacturer = str(getattr(device_info, "manufacturer", "") or "").strip()
+    raw_model = str(getattr(device_info, "model", "") or "").strip()
+
+    title_text = device_identity.build_device_title(
+        raw_manufacturer,
+        raw_model,
+        rules,
+    )
+    gpu_text = format_gpu_label_text(app, getattr(getattr(app, "gpu_state", None), "gpu_info", ""))
+
+    title_widget.configure(text=title_text)
+    gpu_widget.configure(text=gpu_text)
+
+    logo_key = device_identity.resolve_device_logo_key(raw_manufacturer, rules)
+    logo_image = _resolve_device_logo_image(app, logo_key)
+    if logo_image is None:
+        logo_widget.configure(image=None, text="", width=0)
+        logo_widget.grid_remove()
+        return
+
+    logo_width = int(getattr(logo_image, "_size", (36, 36))[0]) if getattr(logo_image, "_size", None) else 36
+    logo_widget.configure(image=logo_image, text="", width=logo_width)
+    logo_widget.grid()
 
 
 def set_gpu_label_text(app: Any, text: str) -> None:
-    widget = getattr(app, "gpu_lbl", None)
+    widget = getattr(app, "device_gpu_lbl", None)
     if widget is None:
         return
     if hasattr(widget, "winfo_exists") and callable(widget.winfo_exists) and not widget.winfo_exists():
         return
     widget.configure(text=str(text or ""))
+    refresh_device_info_header(app)
 
 
 def set_folder_select_enabled(app: Any, enabled: bool) -> None:
@@ -172,6 +269,7 @@ __all__ = [
     "format_gpu_label_text",
     "is_scan_in_progress",
     "pump_poster_queue",
+    "refresh_device_info_header",
     "request_close",
     "reset_install_selection_state",
     "select_game_folder",

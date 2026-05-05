@@ -8,12 +8,14 @@ from typing import Any, Callable
 
 from installer import app_update
 from installer.i18n import pick_module_message
+from installer.system import gpu_service
 
 from .app_runtime_actions import (
     apply_install_selection_state,
     clear_found_games,
     format_gpu_label_text,
     is_scan_in_progress,
+    refresh_device_info_header,
     request_close,
     set_folder_select_enabled,
     set_gpu_label_text,
@@ -36,6 +38,12 @@ from .controller_factory import (
     AppControllers,
     bind_app_controllers,
     build_app_controllers,
+)
+from .device_identity import (
+    DeviceIdentityRules,
+    load_device_identity_rules_from_file,
+    load_device_identity_rules_from_remote,
+    merge_device_identity_rules,
 )
 from .install_runtime_actions import (
     is_multi_gpu_block_active,
@@ -159,6 +167,7 @@ def initialize_app_runtime_state(
     app.sheet_state = runtime_state_bundle.sheet_state
     app.install_state = runtime_state_bundle.install_state
     app.card_ui_state = runtime_state_bundle.card_ui_state
+    app.gpu_state.device_info = gpu_service.get_device_info()
     app.optiscaler_cache_dir = _ensure_cache_dir(app_paths.optiscaler_cache_dir)
     app.fsr4_cache_dir = _ensure_cache_dir(app_paths.fsr4_cache_dir)
     app.optipatcher_cache_dir = _ensure_cache_dir(app_paths.optipatcher_cache_dir)
@@ -170,6 +179,53 @@ def initialize_app_runtime_state(
     app.card_frames = []
     app.card_items = []
     app._ctk_images = []
+    app._device_identity_rules = load_device_identity_rules_from_file(app_paths.device_identity_rules_path)
+    app._device_identity_rules_future = None
+    app._device_logo_images = {}
+
+
+def _start_device_identity_rules_refresh(app: Any, *, app_paths: AppPathConfig, logger=None) -> None:
+    rules_url = str(app_paths.device_identity_rules_url or "").strip()
+    if not rules_url:
+        return
+    try:
+        app._device_identity_rules_future = app._task_executor.submit(
+            load_device_identity_rules_from_remote,
+            rules_url,
+        )
+    except Exception:
+        (logger or logging.getLogger()).debug("Failed to start device identity rules refresh", exc_info=True)
+
+
+def _poll_device_identity_rules_refresh(app: Any, *, logger=None) -> None:
+    future = getattr(app, "_device_identity_rules_future", None)
+    if future is None:
+        return
+
+    shared_logger = logger or logging.getLogger()
+
+    def _poll() -> None:
+        current_future = getattr(app, "_device_identity_rules_future", None)
+        if current_future is None:
+            return
+        if not current_future.done():
+            app.root.after(120, _poll)
+            return
+
+        app._device_identity_rules_future = None
+        try:
+            remote_rules = current_future.result()
+            if not isinstance(remote_rules, DeviceIdentityRules):
+                return
+            app._device_identity_rules = merge_device_identity_rules(
+                getattr(app, "_device_identity_rules", DeviceIdentityRules()),
+                remote_rules,
+            )
+            refresh_device_info_header(app)
+        except Exception:
+            shared_logger.debug("Failed to refresh device identity rules from remote", exc_info=True)
+
+    app.root.after(120, _poll)
 
 
 def build_presenter_bundle(
@@ -347,6 +403,11 @@ def initialize_app_infra(
     app._optiscaler_prepare_executor = startup_update_infra.optiscaler_prepare_executor
     app._download_executor = startup_update_infra.download_executor
     app._app_update_manager = startup_update_infra.app_update_manager
+    _start_device_identity_rules_refresh(
+        app,
+        app_paths=app_paths,
+        logger=shared_logger,
+    )
 
 
 def initialize_app_presenters(
@@ -469,6 +530,7 @@ def initialize_app_runtime_startup(
     gpu_flow_controller = getattr(app, "_gpu_flow_controller", None)
     if gpu_flow_controller is not None:
         gpu_flow_controller.start_detection()
+    _poll_device_identity_rules_refresh(app, logger=shared_logger)
     bind_app_root_events(
         app,
         app_ui_config=app_ui_config,

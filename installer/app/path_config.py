@@ -27,6 +27,8 @@ class AppPathConfig:
     app_base_dir: Path
     assets_dir: Path
     default_poster_candidates: tuple[Path, ...]
+    device_identity_rules_path: Path
+    device_identity_rules_url: str
 
 
 def build_app_path_config(
@@ -47,6 +49,13 @@ def build_app_path_config(
         )
         or ""
     ).strip().rstrip("/")
+    device_identity_rules_url = str(
+        get_runtime_config_value(
+            "OPTISCALER_DEVICE_IDENTITY_RULES_URL",
+            "https://raw.githubusercontent.com/onehoon/OptiScalerInstaller/main/assets/data/device_identity_rules.json",
+        )
+        or ""
+    ).strip()
 
     return AppPathConfig(
         local_appdata_dir=local_appdata_dir,
@@ -70,6 +79,8 @@ def build_app_path_config(
             assets_dir / "default_poster.jpg",
             assets_dir / "default_poster.png",
         ),
+        device_identity_rules_path=assets_dir / "data" / "device_identity_rules.json",
+        device_identity_rules_url=device_identity_rules_url,
     )
 
 

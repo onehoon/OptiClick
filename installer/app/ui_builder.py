@@ -5,7 +5,12 @@ from typing import Any
 
 import customtkinter as ctk
 
-from .app_runtime_actions import apply_selected_install, format_gpu_label_text, select_game_folder
+from .app_runtime_actions import (
+    apply_selected_install,
+    format_gpu_label_text,
+    refresh_device_info_header,
+    select_game_folder,
+)
 from .install_runtime_actions import update_install_button_state
 from .ui_shell_actions import (
     apply_information_text_shift,
@@ -59,30 +64,65 @@ def _build_header(app: Any, theme: MainUiTheme) -> None:
     hdr = ctk.CTkFrame(app.root, fg_color=theme.panel_color, corner_radius=0)
     hdr.grid(row=0, column=0, sticky="ew", padx=0, pady=0)
     hdr.grid_columnconfigure(0, weight=1)
+    hdr.grid_columnconfigure(1, weight=0)
+
+    title_wrap = ctk.CTkFrame(hdr, fg_color=theme.panel_color, corner_radius=0)
+    title_wrap.grid(row=0, column=0, padx=24, pady=(16, 16), sticky="w")
 
     title_lbl = ctk.CTkLabel(
-        hdr,
+        title_wrap,
         text=app.txt.main.app_title,
         font=ctk.CTkFont(family=theme.font_heading, size=20, weight="bold"),
         text_color=theme.title_text_color,
     )
-    title_lbl.grid(row=0, column=0, padx=24, pady=(18, 2), sticky="w")
+    title_lbl.grid(row=0, column=0, sticky="w")
 
-    sub_frame = ctk.CTkFrame(hdr, fg_color=theme.panel_color, corner_radius=0)
-    sub_frame.grid(row=1, column=0, padx=24, pady=(0, 14), sticky="ew")
-    sub_frame.grid_columnconfigure(0, weight=1)
-
-    app.gpu_lbl = ctk.CTkLabel(
-        sub_frame,
-        text=format_gpu_label_text(app, app.gpu_state.gpu_info),
-        font=ctk.CTkFont(family=theme.font_ui, size=11),
-        text_color="#C5CFDB",
-        anchor="w",
+    device_info_frame = ctk.CTkFrame(
+        hdr,
+        fg_color="transparent",
+        corner_radius=0,
     )
-    app.gpu_lbl.grid(row=0, column=0, padx=(1, 0), sticky="w")
+    device_info_frame.grid(row=0, column=1, padx=(12, 24), pady=(30, 15), sticky="e")
+    device_info_frame.grid_columnconfigure(1, weight=1)
+
+    app.device_logo_lbl = ctk.CTkLabel(
+        device_info_frame,
+        text="",
+        width=40,
+        anchor="center",
+    )
+    app.device_logo_lbl.grid(row=0, column=0, rowspan=2, padx=(0, 8), pady=0, sticky="w")
+
+    text_frame = ctk.CTkFrame(device_info_frame, fg_color="transparent", corner_radius=0)
+    text_frame.grid(row=0, column=1, rowspan=2, padx=0, pady=0, sticky="ew")
+    text_frame.grid_columnconfigure(0, weight=1)
+
+    app.device_title_lbl = ctk.CTkLabel(
+        text_frame,
+        text="Desktop PC",
+        font=ctk.CTkFont(family=theme.font_ui, size=12, weight="bold"),
+        text_color="#94A3B8",
+        height=12,
+        anchor="w",
+        justify="left",
+    )
+    app.device_title_lbl.grid(row=0, column=0, sticky="w")
+
+    app.device_gpu_lbl = ctk.CTkLabel(
+        text_frame,
+        text=format_gpu_label_text(app, app.gpu_state.gpu_info),
+        font=ctk.CTkFont(family=theme.font_ui, size=12, weight="bold"),
+        text_color="#94A3B8",
+        height=12,
+        anchor="w",
+        justify="left",
+    )
+    app.device_gpu_lbl.grid(row=1, column=0, pady=(0, 0), sticky="w")
+
+    refresh_device_info_header(app)
 
     sep = ctk.CTkFrame(hdr, height=1, fg_color="#4A5361", corner_radius=0)
-    sep.grid(row=2, column=0, sticky="ew")
+    sep.grid(row=1, column=0, columnspan=2, sticky="ew")
 
 
 def _build_scan_row(app: Any, theme: MainUiTheme) -> None:

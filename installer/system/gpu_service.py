@@ -27,6 +27,9 @@ _VENDOR_KEYWORD_MAP = {
 _VENDOR_PRIORITY = ("nvidia", "amd", "intel")
 _TEST_GPU_ENABLED_ENV = "DUAL_GPU_TEST"
 _TEST_GPU_NAMES_ENV = "TEST_GPU_NAMES"
+_TEST_DEVICE_INFO_ENABLED_ENV = "DEVICE_INFO_TEST"
+_TEST_DEVICE_MANUFACTURER_ENV = "TEST_DEVICE_MANUFACTURER"
+_TEST_DEVICE_MODEL_ENV = "TEST_DEVICE_MODEL"
 
 
 @dataclass(frozen=True)
@@ -44,6 +47,7 @@ class GpuContext:
     selected_vendor: str
     adapters: tuple[GpuAdapterChoice, ...] = ()
     selected_model_name: str = ""
+    device_info: HardwareDeviceInfo | None = None
 
     @property
     def is_multi_gpu(self) -> bool:
@@ -84,6 +88,27 @@ def _get_test_gpu_names_override() -> list[str]:
         seen_names.add(dedupe_key)
         gpu_names.append(name)
     return gpu_names
+
+
+def _get_test_device_info_override() -> HardwareDeviceInfo | None:
+    if not _is_truthy_env(_TEST_DEVICE_INFO_ENABLED_ENV):
+        return None
+
+    manufacturer = _normalize_text(str(os.environ.get(_TEST_DEVICE_MANUFACTURER_ENV, "") or ""))
+    model = _normalize_text(str(os.environ.get(_TEST_DEVICE_MODEL_ENV, "") or ""))
+    if not manufacturer and not model:
+        return None
+
+    logging.info(
+        "[Hardware] Using test device override because %s is enabled: manufacturer=%s, model=%s",
+        _TEST_DEVICE_INFO_ENABLED_ENV,
+        manufacturer or "Unknown",
+        model or "Unknown",
+    )
+    return HardwareDeviceInfo(
+        manufacturer=manufacturer,
+        model=model,
+    )
 
 
 def _run_powershell_cim_query(command_text: str, *, timeout: int = 8) -> list[dict[str, object]]:
@@ -129,6 +154,10 @@ def _get_windows_video_controller_rows() -> list[dict[str, object]]:
 
 
 def get_device_info() -> HardwareDeviceInfo:
+    test_override = _get_test_device_info_override()
+    if test_override is not None:
+        return test_override
+
     if os.name != "nt":
         return HardwareDeviceInfo(manufacturer="", model="")
 
@@ -279,8 +308,9 @@ def _select_preferred_adapter(adapters: tuple[GpuAdapterChoice, ...]) -> GpuAdap
 
 def detect_gpu_context() -> GpuContext:
     gpu_names, gpu_count, gpu_info, gpu_display_list = _get_graphics_adapter_snapshot_details()
+    device_info = get_device_info()
     log_hardware_snapshot(
-        device_info=get_device_info(),
+        device_info=device_info,
         gpu_display_list=gpu_display_list,
     )
     adapters = build_gpu_adapter_choices(gpu_names)
@@ -300,6 +330,7 @@ def detect_gpu_context() -> GpuContext:
         selected_vendor=selected_vendor,
         adapters=adapters,
         selected_model_name=selected_model_name,
+        device_info=device_info,
     )
 
 

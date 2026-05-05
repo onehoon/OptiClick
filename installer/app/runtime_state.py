@@ -48,6 +48,7 @@ class GpuRuntimeState:
     gpu_info: str = ""
     gpu_context: Any | None = None
     selected_adapter: Any | None = None
+    device_info: Any | None = None
 
 
 @dataclass

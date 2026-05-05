@@ -90,6 +90,7 @@ class GpuFlowController:
                 selected_vendor="default",
                 adapters=(),
                 selected_model_name="",
+                device_info=gpu_service.HardwareDeviceInfo(manufacturer="", model=""),
             )
 
         schedule_safely(

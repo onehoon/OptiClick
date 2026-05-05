@@ -1,0 +1,21 @@
+{
+  "manufacturer_aliases": {
+    "ASUSTEK COMPUTER INC.": "ASUS",
+    "ASUSTEK": "ASUS",
+    "ASUS": "ASUS",
+    "MICRO-STAR INTERNATIONAL CO., LTD.": "MSI",
+    "MICRO-STAR INTERNATIONAL": "MSI",
+    "MSI": "MSI",
+    "LENOVO": "Lenovo",
+    "LENOVO GROUP LIMITED": "Lenovo",
+    "GIGABYTE TECHNOLOGY CO., LTD.": "Gigabyte",
+    "GIGABYTE": "Gigabyte"
+  },
+  "model_aliases": {},
+  "logo_keys": {
+    "ASUS": "asus",
+    "MSI": "msi",
+    "LENOVO": "lenovo",
+    "GIGABYTE": "gigabyte"
+  }
+}

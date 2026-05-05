@@ -168,6 +168,7 @@ class StartupRuntimeCoordinator:
         gpu_state.multi_gpu_blocked = bool(state.multi_gpu_blocked)
         gpu_state.gpu_selection_pending = bool(state.gpu_selection_pending)
         gpu_state.selected_adapter = state.selected_adapter
+        gpu_state.device_info = state.gpu_context.device_info
 
         if state.game_db_vendor is not None:
             sheet_state.active_vendor = str(state.game_db_vendor or "default")
