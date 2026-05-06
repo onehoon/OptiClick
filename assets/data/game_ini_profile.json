@@ -91,6 +91,13 @@
     "value": 1
   },
   {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "LastConfirmedFullscreenMode",
+    "value": 1
+  },
+  {
     "profile_id": "FFWEST_ALL",
     "path": "%LOCALAPPDATA%\\FarFarWest\\Saved\\Config\\Windows\\GameUserSettings.ini",
     "section": "/Script/Engine.GameUserSettings",
