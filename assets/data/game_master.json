@@ -790,17 +790,5 @@
     "support_intel": false,
     "support_amd": false,
     "support_nvidia": false
-  },
-  {
-    "game_id": "TEST",
-    "match_exe": "",
-    "game_name_kr": "New 테스트[프래그마타]",
-    "game_name_en": "New 테스트[프래그마타]",
-    "cover_url": "",
-    "cover_filename": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": false,
-    "support_nvidia": true
   }
 ]
