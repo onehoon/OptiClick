@@ -14,6 +14,83 @@
     "value": "False"
   },
   {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "MotionBlur",
+    "value": 0
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "FrameRateLimit",
+    "value": 0
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "bUseVSync",
+    "value": "False"
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "UpscalingMode",
+    "value": "None"
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "DLSSValue",
+    "value": 2
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "DLSSG_Mode",
+    "value": 2
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "FSRValue",
+    "value": 0
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "FSRFI",
+    "value": "False"
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "XeSSValue",
+    "value": 0
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "bUseDynamicResolution",
+    "value": "False"
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "PreferredFullscreenMode",
+    "value": 1
+  },
+  {
     "profile_id": "FFWEST_ALL",
     "path": "%LOCALAPPDATA%\\FarFarWest\\Saved\\Config\\Windows\\GameUserSettings.ini",
     "section": "/Script/Engine.GameUserSettings",
