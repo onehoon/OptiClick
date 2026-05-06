@@ -684,6 +684,18 @@
     "support_nvidia": false
   },
   {
+    "game_id": "inZOI",
+    "match_exe": "",
+    "game_name_kr": "인조이",
+    "game_name_en": "inZOI",
+    "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/2456740/library_600x900_2x.jpg?t=1755613311",
+    "cover_filename": "inZOI.webp",
+    "enabled": false,
+    "support_intel": true,
+    "support_amd": false,
+    "support_nvidia": true
+  },
+  {
     "game_id": "Requiem",
     "match_exe": "",
     "game_name_kr": "플래그 테일: 레퀴엠",

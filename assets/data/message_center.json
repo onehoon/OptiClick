@@ -42,7 +42,7 @@
   {
     "message_id": "install_pre.borderless_fsr3_required",
     "category": "popup",
-    "ko": "[red]설치 전 전체 창모드, FSR3/FSRFG로 설정하고 오세요[end]",
+    "ko": "[red]설치 전 전체 창모드(경계없는 전체화면), FSR3/FSRFG로 설정하고 오세요[end]",
     "en": "[red]Before install, set Borderless, FSR3/FSRFG in-game[end]",
     "url": "",
     "memo": ""
@@ -122,7 +122,7 @@
   {
     "message_id": "install_pre_CD",
     "category": "popup",
-    "ko": "[red]하이퍼바이저 크랙 버젼에서 동작하지 않습니다.[end]",
+    "ko": "[red]하이퍼바이저 크랙 게임일 경우 동작하지 않습니다.[end]",
     "en": "[red]Not compatible with HV crack ver.[end]",
     "url": "",
     "memo": "붉은사막"
