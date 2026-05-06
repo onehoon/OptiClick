@@ -793,7 +793,7 @@
   },
   {
     "game_id": "TEST",
-    "match_exe": "test.exe",
+    "match_exe": "",
     "game_name_kr": "New 테스트[프래그마타]",
     "game_name_en": "New 테스트[프래그마타]",
     "cover_url": "",
