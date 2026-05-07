@@ -193,12 +193,41 @@ class ArchivePreparationController:
         cache_dir: Path,
         manifest_root: Path | None = None,
     ) -> ArchivePreparationState:
-        return self._prepare_versioned_asset(
-            entry=entry,
-            cache_dir=cache_dir,
-            manifest_root=manifest_root or self._manifest_root,
+        normalized_entry = self._normalize_entry(entry)
+        url = str(normalized_entry.get("url", "")).strip()
+        version = str(normalized_entry.get("version", "")).strip()
+        filename = self._resolve_archive_filename(normalized_entry)
+        cache_path = cache_dir / filename if filename else Path("")
+
+        if not url or not filename:
+            self._logger.warning(
+                "[APP] OptiPatcher archive preparation skipped: missing metadata (has_url=%s, filename=%r)",
+                bool(url),
+                filename,
+            )
+            return ArchivePreparationState(
+                filename=filename,
+                archive_path=str(cache_path) if filename and cache_path.exists() else "",
+                ready=bool(filename and cache_path.exists()),
+                downloading=False,
+                error_message="" if (filename and cache_path.exists()) else "Missing OptiPatcher archive download metadata in sheet.",
+            )
+
+        # OptiPatcher policy: always attempt fresh download at startup, then
+        # fall back to last successful local cache if download fails.
+        self._logger.info("[APP] Starting OptiPatcher forced refresh download: %s", filename)
+        return self._start_download(
             asset_key="optipatcher",
             asset_label="OptiPatcher archive",
+            url=url,
+            cache_dir=cache_dir,
+            cache_path=cache_path,
+            filename=filename,
+            validate_zip=True,
+            cleanup_stale=False,
+            version=version,
+            manifest_root=manifest_root or self._manifest_root,
+            fallback_cache_path=cache_path if cache_path.exists() else None,
         )
 
     def prepare_specialk(
@@ -349,6 +378,7 @@ class ArchivePreparationController:
         cleanup_stale: bool,
         version: str = "",
         manifest_root: Path | None = None,
+        fallback_cache_path: Path | None = None,
     ) -> ArchivePreparationState:
         try:
             self._executor.submit(
@@ -363,6 +393,7 @@ class ArchivePreparationController:
                 cleanup_stale,
                 version,
                 manifest_root,
+                fallback_cache_path,
             )
         except Exception as exc:
             self._logger.exception("Failed to submit %s download worker", asset_label)
@@ -428,6 +459,7 @@ class ArchivePreparationController:
         cleanup_stale: bool,
         version: str = "",
         manifest_root: Path | None = None,
+        fallback_cache_path: Path | None = None,
     ) -> None:
         try:
             self._download_to_file(url, str(cache_path), timeout=300)
@@ -452,6 +484,21 @@ class ArchivePreparationController:
             )
         except Exception as exc:
             self._logger.error("[APP] %s download failed: %s", asset_label, redact_text(exc))
+            if fallback_cache_path and fallback_cache_path.exists():
+                self._logger.warning(
+                    "[APP] %s fallback to local cache after download failure: %s",
+                    asset_label,
+                    fallback_cache_path,
+                )
+                state = ArchivePreparationState(
+                    filename=filename,
+                    archive_path=str(fallback_cache_path),
+                    ready=True,
+                    downloading=False,
+                    error_message="",
+                )
+                self._schedule_state_change(asset_key, state, description=f"{asset_label} completion callback")
+                return
             state = ArchivePreparationState(
                 filename=filename,
                 archive_path="",
