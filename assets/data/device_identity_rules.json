@@ -72,12 +72,13 @@
     "Galileo": "Steam Deck OLED",
     "Sephiroth": "Steam Deck OLED",
 
-    "ONEXPLAYER X1Pro": "ONEXPLAYER X1 Pro",
-    "ONEXPLAYER F1Pro": "ONEXPLAYER OneXFly F1 Pro",
-    "ONEXPLAYER 2 PRO ARP23P": "ONEXPLAYER 2 Pro",
-    "ONEXPLAYER 2 PRO ARP23P EVA-01": "ONEXPLAYER 2 Pro EVA-01",
-    "ONEXPLAYER G1 i": "ONEXPLAYER G1 Intel",
-    "ONEXPLAYER G1 A": "ONEXPLAYER G1 AMD",
+    "ONEXPLAYER X1Pro": "X1 Pro",
+    "ONEXPLAYER F1Pro": "OneXFly F1 Pro",
+    "ONEXPLAYER 2 PRO ARP23P": "2 Pro",
+    "ONEXPLAYER 2 PRO ARP23P EVA-01": "2 Pro EVA-01",
+    "ONEXPLAYER G1 i": "G1 Intel",
+    "ONEXPLAYER G1 A": "G1 AMD",
+    "ONEXPLAYER APEX": "APEX"
 
     "960QHA": "Galaxy Book Pro 360",
     
