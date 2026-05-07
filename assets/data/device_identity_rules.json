@@ -29,7 +29,10 @@
     "PC PARTNER LIMITED": "ZOTAC",
     "ZOTAC INTERNATIONAL": "ZOTAC",
     "ZOTAC INTERNATIONAL (MCO) LTD.": "ZOTAC",
-    "To Be Filled By O.E.M.": "Desktop"
+    "To Be Filled By O.E.M.": "Desktop",
+
+    "PC Specialist LTD": "PC Specialist",
+    "PCSpecialist": "PC Specialist",
 
   },
   "model_aliases": {
