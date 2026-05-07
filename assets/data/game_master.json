@@ -696,6 +696,18 @@
     "support_nvidia": true
   },
   {
+    "game_id": "DeadasDisco",
+    "match_exe": "PagodaSteam-Win64-Shipping.exe",
+    "game_name_kr": "Dead as Disco",
+    "game_name_en": "Dead as Disco",
+    "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/3404260/e5352e951d5e9201b63a06bba579b6cf607aac36/library_600x900_2x.jpg?t=1755371591",
+    "cover_filename": "DeadasDisco.webp",
+    "enabled": true,
+    "support_intel": true,
+    "support_amd": true,
+    "support_nvidia": true
+  },
+  {
     "game_id": "Requiem",
     "match_exe": "",
     "game_name_kr": "플래그 테일: 레퀴엠",

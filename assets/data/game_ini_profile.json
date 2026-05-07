@@ -14,6 +14,76 @@
     "value": "False"
   },
   {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "FrameRateLimit_OnBattery",
+    "value": 0
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "FrameRateLimit_InMenu",
+    "value": 0
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "FrameRateLimit_WhenBackgrounded",
+    "value": 0
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "UpscalerType",
+    "value": "DLSS"
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "FrameGenerationMode",
+    "value": "DLSS_Auto"
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "DLSSMode",
+    "value": "Performance"
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "bUseVSync",
+    "value": "False"
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "FullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "PreferredFullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "FrameRateLimit",
+    "value": 0
+  },
+  {
     "profile_id": "inZOI_ALL",
     "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows\\GameUserSettings.ini",
     "section": "/Script/BlueClient.B1GameUserSettings",
