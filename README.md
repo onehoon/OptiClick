@@ -1,6 +1,6 @@
 # 🚀 OptiScaler Installer
 
-<img width="1920" height="1128" alt="OptiScaler Installer Screenshot" src="https://github.com/user-attachments/assets/5ace04fd-3cd4-4234-a792-63575fee5610" />
+<img width="1920" height="1128" alt="OptiScaler Installer Screenshot" src="https://github.com/user-attachments/assets/933fe333-f5f1-4524-94f1-2ff0cd40f4be" />
 
 <p align="center">
   <b>Automatically installs and configures OptiScaler per game and GPU.</b><br>
