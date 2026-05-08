@@ -130,8 +130,8 @@
   {
     "message_id": "install_pre_CD_INTEL",
     "category": "popup",
-    "ko": "[red]최신버전에서 XeSS 수정되어 옵티스케일러 없이 인게임 XeSS+XeFG 사용해도 됩니다.[end]",
-    "en": "[red]Xess+XeFG fixed on the latest game patch. OptiScaler not needed[end]",
+    "ko": "[red]인게임 XeFG 지원됩니다. 그래도 OptiScaler가 필요할 경우 설치하세요.[end]",
+    "en": "[red]Native XeFG supported. OptiScaler NOT needed. But if you want install.[end]",
     "url": "",
     "memo": "붉은사막1"
   },
