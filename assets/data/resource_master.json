@@ -117,7 +117,7 @@
     "variant": "default",
     "resource_type": "archive",
     "name": "Pragmata Bundle",
-    "url": "https://raw.githubusercontent.com/onehoon/OptiScalerInstaller/main/assets/extra_bundle/pragmata_bundle.7z",
+    "url": "https://raw.githubusercontent.com/onehoon/OptiClick/main/assets/extra_bundle/pragmata_bundle.7z",
     "filename": "pragmata_bundle.7z",
     "version": 0.1,
     "display_version": 0.1,
