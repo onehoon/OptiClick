@@ -39,3 +39,4 @@ pytest-cache-files-*/
 pytest.ini
 .coverage
 htmlcov/
+ScreenShot/
