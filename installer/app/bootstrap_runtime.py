@@ -3,10 +3,10 @@ from __future__ import annotations
 import importlib
 import logging
 import os
+from datetime import date, timedelta
 from pathlib import Path
 import sys
 import tempfile
-import time
 from typing import Any, Callable
 
 
@@ -83,6 +83,26 @@ def get_prefixed_logger(prefix: str = "APP") -> PrefixedLoggerAdapter:
     return PrefixedLoggerAdapter(logging.getLogger(), {"prefix": prefix})
 
 
+def _build_daily_log_filename(day: date) -> str:
+    return f"OptiClick_{day.strftime('%Y%m%d')}.log"
+
+
+def _prune_old_log_files(directory: Path, *, today: date) -> None:
+    keep_names = {
+        _build_daily_log_filename(today),
+        _build_daily_log_filename(today - timedelta(days=1)),
+    }
+    for path in directory.glob("*.log"):
+        if path.name in keep_names:
+            continue
+        if not (path.name.startswith("OptiClick_") or path.name.startswith("installer_")):
+            continue
+        try:
+            path.unlink()
+        except Exception:
+            logging.debug("[APP] Failed to delete old log file: %s", path)
+
+
 def init_file_logger(*, app_version: str, source_root: Path) -> Path | None:
     candidates: list[Path] = []
 
@@ -102,11 +122,13 @@ def init_file_logger(*, app_version: str, source_root: Path) -> Path | None:
 
     root_logger = logging.getLogger()
     formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", datefmt="%H:%M:%S")
+    today = date.today()
 
     for directory in candidates:
         try:
             directory.mkdir(parents=True, exist_ok=True)
-            log_path = directory / f"installer_{time.strftime('%Y-%m-%d_%H-%M-%S')}.log"
+            _prune_old_log_files(directory, today=today)
+            log_path = directory / _build_daily_log_filename(today)
 
             for handler in list(root_logger.handlers):
                 if isinstance(handler, logging.FileHandler):
@@ -116,7 +138,7 @@ def init_file_logger(*, app_version: str, source_root: Path) -> Path | None:
                     except Exception:
                         pass
 
-            file_handler = logging.FileHandler(log_path, encoding="utf-8")
+            file_handler = logging.FileHandler(log_path, mode="a", encoding="utf-8")
             file_handler.setLevel(logging.INFO)
             file_handler.setFormatter(formatter)
             root_logger.addHandler(file_handler)
