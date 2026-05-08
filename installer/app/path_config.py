@@ -9,6 +9,20 @@ from typing import Callable
 
 
 RuntimeConfigGetter = Callable[[str, str], str]
+APP_CACHE_DIR_NAME = "OptiClick"
+LEGACY_APP_CACHE_DIR_NAME = "OptiScalerInstaller"
+
+
+def migrate_legacy_app_cache_dir(local_appdata_dir: Path) -> None:
+    legacy_cache_dir = local_appdata_dir / LEGACY_APP_CACHE_DIR_NAME
+    app_cache_dir = local_appdata_dir / APP_CACHE_DIR_NAME
+    if not legacy_cache_dir.exists() or app_cache_dir.exists():
+        return
+    try:
+        legacy_cache_dir.rename(app_cache_dir)
+    except Exception:
+        # Migration must never block app startup.
+        pass
 
 
 @dataclass(frozen=True)
@@ -38,21 +52,22 @@ def build_app_path_config(
 ) -> AppPathConfig:
     source_path = Path(entry_file).resolve()
     local_appdata_dir = Path(os.environ.get("LOCALAPPDATA") or tempfile.gettempdir())
-    app_cache_dir = local_appdata_dir / "OptiScalerInstaller"
+    migrate_legacy_app_cache_dir(local_appdata_dir)
+    app_cache_dir = local_appdata_dir / APP_CACHE_DIR_NAME
     app_base_dir = Path(getattr(sys, "_MEIPASS", source_path.parent))
     assets_dir = app_base_dir / "assets"
 
     covers_repo_raw_base_url = str(
         get_runtime_config_value(
             "OPTISCALER_COVERS_RAW_BASE_URL",
-            "https://raw.githubusercontent.com/onehoon/OptiScalerInstaller/covers/assets",
+            "https://raw.githubusercontent.com/onehoon/OptiClick/covers/assets",
         )
         or ""
     ).strip().rstrip("/")
     device_identity_rules_url = str(
         get_runtime_config_value(
             "OPTISCALER_DEVICE_IDENTITY_RULES_URL",
-            "https://raw.githubusercontent.com/onehoon/OptiScalerInstaller/main/assets/data/device_identity_rules.json",
+            "https://raw.githubusercontent.com/onehoon/OptiClick/main/assets/data/device_identity_rules.json",
         )
         or ""
     ).strip()
@@ -85,6 +100,9 @@ def build_app_path_config(
 
 
 __all__ = [
+    "APP_CACHE_DIR_NAME",
     "AppPathConfig",
+    "LEGACY_APP_CACHE_DIR_NAME",
     "build_app_path_config",
+    "migrate_legacy_app_cache_dir",
 ]

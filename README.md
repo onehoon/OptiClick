@@ -1,6 +1,6 @@
-# 🚀 OptiScaler Installer
+# 🚀 OptiClick
 
-<img width="1920" alt="OptiScaler Installer Screenshot" src="https://github.com/user-attachments/assets/933fe333-f5f1-4524-94f1-2ff0cd40f4be" />
+<img width="1920" alt="OptiClick Screenshot" src="https://github.com/user-attachments/assets/933fe333-f5f1-4524-94f1-2ff0cd40f4be" />
 
 <p align="center">
   <b>Automatically installs and configures OptiScaler per game and GPU.</b><br>
@@ -31,7 +31,7 @@ As a result, users can install and start playing immediately without additional 
 
 ## 🌏 Language / Documentation
 
-- [한국어 상세 가이드](https://github.com/onehoon/OptiScalerInstaller/wiki/%ED%95%9C%EA%B5%AD%EC%96%B4-%EC%84%B8%EB%B6%80-%EA%B8%B0%EB%8A%A5-%EB%B0%8F-%EC%82%AC%EC%9A%A9-%EA%B0%80%EC%9D%B4%EB%93%9C)
+- [한국어 상세 가이드](https://github.com/onehoon/OptiClick/wiki/%ED%95%9C%EA%B5%AD%EC%96%B4-%EC%84%B8%EB%B6%80-%EA%B8%B0%EB%8A%A5-%EB%B0%8F-%EC%82%AC%EC%9A%A9-%EA%B0%80%EC%9D%B4%EB%93%9C)
 - This page (English)
 
 ---
@@ -67,7 +67,7 @@ As a result, users can install and start playing immediately without additional 
 
 ---
 
-## [Supported Game List](https://github.com/onehoon/OptiScalerInstaller/wiki/Supported-Game-List)
+## [Supported Game List](https://github.com/onehoon/OptiClick/wiki/Supported-Game-List)
 
 > [!TIP]
 > New supported games are continuously being added.  
@@ -207,5 +207,5 @@ nitec, TheRazerMD, Fakemichau, Keu, By-U, Atsy, san9, Cryio
 
 ---
 
-![GitHub All Releases](https://img.shields.io/github/downloads/onehoon/OptiScalerInstaller/total?style=for-the-badge&color=orange)
-![GitHub Downloads (latest Release)](https://img.shields.io/github/downloads/onehoon/OptiScalerInstaller/latest/total?style=for-the-badge&label=latest%20download&color=brightgreen)
+![GitHub All Releases](https://img.shields.io/github/downloads/onehoon/OptiClick/total?style=for-the-badge&color=orange)
+![GitHub Downloads (latest Release)](https://img.shields.io/github/downloads/onehoon/OptiClick/latest/total?style=for-the-badge&label=latest%20download&color=brightgreen)

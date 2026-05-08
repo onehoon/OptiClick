@@ -13,7 +13,7 @@ import requests
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 GAME_MASTER_PATH = ROOT_DIR / "assets" / "data" / "game_master.json"
-WIKI_REPO_URL = "https://github.com/onehoon/OptiScalerInstaller.wiki.git"
+WIKI_REPO_URL = "https://github.com/onehoon/OptiClick.wiki.git"
 NATIVE_XEFG_TEXT = "Native XeFG Support"
 INTEL_IGPU_MARKERS = {
     "ARC GRAPHICS",
@@ -943,7 +943,7 @@ def update_wiki(games: list[dict[str, str]], markdown_text: str, *, retention_da
     with tempfile.TemporaryDirectory() as tmpdir:
         repo_dir = Path(tmpdir) / "wiki_repo"
         run_git(["git", "clone", authed_url, str(repo_dir)], cwd=tmpdir)
-        run_git(["git", "config", "user.name", "OptiScalerInstaller Bot"], cwd=repo_dir)
+        run_git(["git", "config", "user.name", "OptiClick Bot"], cwd=repo_dir)
         run_git(["git", "config", "user.email", "actions@users.noreply.github.com"], cwd=repo_dir)
 
         target_file = repo_dir / TARGET_WIKI_PAGE_FILE

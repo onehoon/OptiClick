@@ -11,13 +11,26 @@ from ..common.windows_paths import normalize_candidate_path
 
 _SCAN_HINTS_SCHEMA_VERSION = 1
 _SCAN_HINTS_FILE_NAME = "manual_scan_hints.json"
+APP_CACHE_DIR_NAME = "OptiClick"
+LEGACY_APP_CACHE_DIR_NAME = "OptiScalerInstaller"
+
+
+def _resolve_app_cache_dir(base_dir: Path) -> Path:
+    legacy_dir = base_dir / LEGACY_APP_CACHE_DIR_NAME
+    app_dir = base_dir / APP_CACHE_DIR_NAME
+    if legacy_dir.exists() and not app_dir.exists():
+        try:
+            legacy_dir.rename(app_dir)
+        except Exception:
+            pass
+    return app_dir
 
 
 def _get_app_cache_dir() -> Path:
     local_appdata = str(os.environ.get("LOCALAPPDATA") or "").strip()
     if local_appdata:
-        return Path(local_appdata) / "OptiScalerInstaller"
-    return Path(tempfile.gettempdir()) / "OptiScalerInstaller"
+        return _resolve_app_cache_dir(Path(local_appdata))
+    return _resolve_app_cache_dir(Path(tempfile.gettempdir()))
 
 
 def _get_manual_scan_hints_path() -> Path:

@@ -19,7 +19,7 @@ from .i18n import AppStrings
 from .install import services as installer_services
 
 
-INSTALLER_LATEST_RELEASE_URL = "https://github.com/onehoon/OptiScalerInstaller/releases/latest"
+INSTALLER_LATEST_RELEASE_URL = "https://github.com/onehoon/OptiClick/releases/latest"
 
 
 def parse_version_tuple(verstr: str) -> tuple[int, ...]:
@@ -46,7 +46,7 @@ def build_expected_installer_exe_name(version_text: str, fallback_url: str = "")
     if normalized.lower().startswith("v"):
         normalized = normalized[1:]
     if normalized:
-        return f"OptiScaler_Installer_v{normalized}.exe"
+        return f"OptiClick_v{normalized}.exe"
 
     fallback_name = Path(urlparse(str(fallback_url or "")).path).name
     if fallback_name.lower().endswith(".exe"):
@@ -223,7 +223,7 @@ class InstallerUpdateManager:
         if source_ext == ".exe":
             target_name = build_expected_installer_exe_name(latest_version, download_url) or source_name
         else:
-            target_name = source_name or "OptiScaler_Installer_update.zip"
+            target_name = source_name or "OptiClick_update.zip"
         download_path = runtime_dir / Path(target_name).name
 
         self._set_in_progress(True)

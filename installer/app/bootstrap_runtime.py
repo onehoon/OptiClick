@@ -12,6 +12,8 @@ from typing import Any, Callable
 
 APP_VERSION = "0.4.9"
 MAX_SUPPORTED_GPU_COUNT = 2
+APP_CACHE_DIR_NAME = "OptiClick"
+LEGACY_APP_CACHE_DIR_NAME = "OptiScalerInstaller"
 
 
 def _load_generated_build_config() -> dict[str, object]:
@@ -83,6 +85,17 @@ def get_prefixed_logger(prefix: str = "APP") -> PrefixedLoggerAdapter:
     return PrefixedLoggerAdapter(logging.getLogger(), {"prefix": prefix})
 
 
+def _resolve_app_cache_dir(base_dir: Path) -> Path:
+    legacy_dir = base_dir / LEGACY_APP_CACHE_DIR_NAME
+    app_dir = base_dir / APP_CACHE_DIR_NAME
+    if legacy_dir.exists() and not app_dir.exists():
+        try:
+            legacy_dir.rename(app_dir)
+        except Exception:
+            logging.debug("[APP] Legacy cache dir migration failed: %s -> %s", legacy_dir, app_dir)
+    return app_dir
+
+
 def _build_daily_log_filename(day: date) -> str:
     return f"OptiClick_{day.strftime('%Y%m%d')}.log"
 
@@ -116,9 +129,9 @@ def init_file_logger(*, app_version: str, source_root: Path) -> Path | None:
 
     local_app_data = os.environ.get("LOCALAPPDATA")
     if local_app_data:
-        candidates.append(Path(local_app_data) / "OptiScalerInstaller")
+        candidates.append(_resolve_app_cache_dir(Path(local_app_data)))
 
-    candidates.append(Path(tempfile.gettempdir()) / "OptiScalerInstaller")
+    candidates.append(_resolve_app_cache_dir(Path(tempfile.gettempdir())))
 
     root_logger = logging.getLogger()
     formatter = logging.Formatter("%(asctime)s %(levelname)s: %(message)s", datefmt="%H:%M:%S")
@@ -142,7 +155,7 @@ def init_file_logger(*, app_version: str, source_root: Path) -> Path | None:
             file_handler.setLevel(logging.INFO)
             file_handler.setFormatter(formatter)
             root_logger.addHandler(file_handler)
-            get_prefixed_logger("APP").info("OptiScaler Installer version %s", app_version)
+            get_prefixed_logger("APP").info("OptiClick version %s", app_version)
             return log_path
         except Exception as exc:
             try:
