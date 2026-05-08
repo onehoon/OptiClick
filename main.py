@@ -71,7 +71,7 @@ load_dev_env_file(load_dotenv, entry_file=__file__)
 # and via environment variables/.env during source development.
 SUPPORTED_GAMES_WIKI_URL = get_runtime_config_value("SUPPORTED_GAMES_WIKI_URL", "").strip()
 OPTISCALER_GPU_BUNDLE_URL = get_runtime_config_value("OPTISCALER_GPU_BUNDLE_URL", "").strip()
-OPTISCALER_GPU_BUNDLE_DEBUG = get_bool_env("OPTISCALER_GPU_BUNDLE_DEBUG", False)
+OPTISCALER_GPU_BUNDLE_DEBUG = False if getattr(sys, "frozen", False) else get_bool_env("OPTISCALER_GPU_BUNDLE_DEBUG", False)
 OPTISCALER_GAME_MASTER_URL = get_runtime_config_value("OPTISCALER_GAME_MASTER_URL", "").strip()
 OPTISCALER_RESOURCE_MASTER_URL = get_runtime_config_value("OPTISCALER_RESOURCE_MASTER_URL", "").strip()
 OPTISCALER_MESSAGE_CENTER_URL = get_runtime_config_value("OPTISCALER_MESSAGE_CENTER_URL", "").strip()
