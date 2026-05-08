@@ -2,9 +2,11 @@
 build.py
 .env
 .env.*
+.venv/
 .venv-build/
 installer/_generated_build_config.py
 .vscode/
+OptiClick.code-workspace
 docs/getSupportedGameBundle.gs
 AGENTS.md
 
@@ -16,6 +18,7 @@ dist/
 *.pyc
 temp_version.txt
 *.log
+importtime.log
 *.exe
 
 # Log output directory (dev mode)
@@ -26,6 +29,7 @@ tests/*
 tests_runtime/
 .pytest_cache/
 .pytest_tmp/
+codex_pytest_tmp/
 codex_test_tmp/
 codex_*/
 tmp_wiki_inspect/
