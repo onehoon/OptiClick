@@ -1,4 +1,4 @@
-# 🚀 Opti Click
+# 🚀 OptiClick
 
 <img width="1920" alt="OptiClick Screenshot" src="https://github.com/user-attachments/assets/933fe333-f5f1-4524-94f1-2ff0cd40f4be" />
 
