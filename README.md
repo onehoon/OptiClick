@@ -207,5 +207,6 @@ nitec, TheRazerMD, Fakemichau, Keu, By-U, Atsy, san9, Cryio
 
 ---
 
-![GitHub All Releases](https://img.shields.io/github/downloads/onehoon/OptiClick/total?style=for-the-badge&color=orange)
-![GitHub Downloads (latest Release)](https://img.shields.io/github/downloads/onehoon/OptiClick/latest/total?style=for-the-badge&label=latest%20download&color=brightgreen)
+[![Latest release downloads](https://img.shields.io/github/downloads/onehoon/OptiClick/latest/total?label=latest%20downloads)](https://github.com/onehoon/OptiClick/releases/latest)
+[![Total downloads](https://img.shields.io/github/downloads/onehoon/OptiClick/total?label=total%20downloads)](https://github.com/onehoon/OptiClick/releases)
+[![GitHub release](https://img.shields.io/github/v/release/onehoon/OptiClick?label=latest%20release)](https://github.com/onehoon/OptiClick/releases/latest)
