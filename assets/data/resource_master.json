@@ -88,7 +88,7 @@
     "resource_group": "optiscaler_installer",
     "variant": "latest",
     "resource_type": "installer",
-    "name": "OptiScaler Installer",
+    "name": "OptiClick",
     "url": "https://github.com/onehoon/OptiClick/releases/download/v0.4.9/OptiClick_v0.4.9.exe",
     "filename": "OptiClick_v0.4.9.exe",
     "version": "0.4.9",
