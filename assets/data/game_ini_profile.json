@@ -203,6 +203,20 @@
     "value": "False"
   },
   {
+    "profile_id": "HighOnLife2GP_ALL",
+    "path": "%LOCALAPPDATA%\\HighOnLife2\\Saved\\Config\\WinGDK\\GameUserSettings.ini",
+    "section": "/Script/Washington.WAGameUserSettings",
+    "key": "FullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "HighOnLife2GP_ALL",
+    "path": "%LOCALAPPDATA%\\HighOnLife2\\Saved\\Config\\WinGDK\\GameUserSettings.ini",
+    "section": "/Script/Washington.WAGameUserSettings",
+    "key": "bUseDynamicResolution",
+    "value": "False"
+  },
+  {
     "profile_id": "SHF_ALL",
     "path": "%LOCALAPPDATA%\\SHf\\Saved\\Config\\Windows\\GameUserSettings.ini",
     "section": "/Script/GameNoce.NoceLocalGameUserSettings",

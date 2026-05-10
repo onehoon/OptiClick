@@ -672,6 +672,18 @@
     "support_nvidia": true
   },
   {
+    "game_id": "HighOnLife2GP",
+    "match_exe": "HighOnLife2-WinGDK-Shipping.exe",
+    "game_name_kr": "High On Life 2",
+    "game_name_en": "High On Life 2",
+    "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/2069250/e0c451a4e1ac4502dfc52d97a0268248065796c4/library_600x900_2x.jpg?t=1755054611",
+    "cover_filename": "HighOnLife2.webp",
+    "enabled": true,
+    "support_intel": true,
+    "support_amd": true,
+    "support_nvidia": true
+  },
+  {
     "game_id": "WUWA",
     "match_exe": "Client-Win64-Shipping.exe",
     "game_name_kr": "명조 (Steam)",
