@@ -33,7 +33,7 @@
     "variant": "default",
     "resource_type": "binary",
     "name": "OptiPatcher",
-    "url": "https://github.com/optiscaler/OptiPatcher/releases/latest/download/OptiPatcher.asi",
+    "url": "https://github.com/optiscaler/OptiPatcher/releases/download/rolling/OptiPatcher.asi",
     "filename": "OptiPatcher.asi",
     "version": 20260507,
     "display_version": 20260507,
