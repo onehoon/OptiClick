@@ -114,8 +114,8 @@
   {
     "message_id": "install_pre_TW3",
     "category": "popup",
-    "ko": "[red]다이렉트X12로 실행해야합니다.[p]화면 옵션에서 전체창을 선택해야합니다.[p]ReShade, SpeciaK 등 각종 MOD와 충돌이 발생할 수 있습니다.[end]",
-    "en": "[red]Must be launched in DirectX 12 mode.[p]Set the Display Mode to 'Borderless Window' in the graphics options.[p]Conflicts may occur with ReShade, SpecialK, other MOD[end]",
+    "ko": "[red]다이렉트X12로 실행해야합니다.[p]ReShade, SpeciaK 등 각종 MOD와 충돌이 발생할 수 있습니다.[end]",
+    "en": "[red]Must be launched in DirectX 12 mode.[p]Conflicts may occur with ReShade, SpecialK, other MOD[end]",
     "url": "",
     "memo": "위쳐3"
   },
