@@ -7,7 +7,7 @@ from queue import Empty, SimpleQueue
 from tkinter import messagebox
 from typing import Any
 
-from installer.data import gpu_bundle_loader, message_loader, sheet_loader
+from installer.data import gpu_bundle_loader, message_loader, new_game_support_loader, sheet_loader
 from installer.install import services as installer_services
 from installer.system import gpu_service
 
@@ -54,6 +54,7 @@ class AppControllerFactoryConfig:
     resource_master_url: str
     message_binding_url: str
     message_center_url: str
+    new_game_support_url: str
     gpu_notice_theme: Any
     max_supported_gpu_count: int
     message_popup_theme: Any
@@ -363,6 +364,7 @@ def _build_game_db_controller(
     game_xml_profile_url = _require_remote_json_url("game_xml_profile_url", config.game_xml_profile_url)
     registry_profile_url = _require_remote_json_url("registry_profile_url", config.registry_profile_url)
     game_json_profile_url = str(config.game_json_profile_url or "").strip()
+    new_game_support_url = str(config.new_game_support_url or "").strip()
     load_game_db = lambda: sheet_loader.load_game_db_from_remote_json(game_master_url)
     load_module_download_links = lambda: sheet_loader.load_module_download_links_from_remote_json(resource_master_url)
     def load_gpu_bundle(base_url: str, vendor: str, gpu_model: str) -> dict[str, dict[str, Any]]:
@@ -400,6 +402,9 @@ def _build_game_db_controller(
         game_xml_profile_url=game_xml_profile_url,
         registry_profile_url=registry_profile_url,
         game_json_profile_url=game_json_profile_url,
+        new_game_support_url=new_game_support_url,
+        load_new_game_support=new_game_support_loader.load_new_game_support,
+        build_new_game_support_popup_text=new_game_support_loader.build_new_game_support_popup_text,
         logger=logging.getLogger(),
     )
 

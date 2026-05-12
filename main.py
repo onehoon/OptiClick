@@ -70,6 +70,7 @@ load_dev_env_file(load_dotenv, entry_file=__file__)
 # Allow overriding these values via build-time config for frozen builds
 # and via environment variables/.env during source development.
 SUPPORTED_GAMES_WIKI_URL = get_runtime_config_value("SUPPORTED_GAMES_WIKI_URL", "").strip()
+OPTICLICK_NEW_GAME_SUPPORT_URL = get_runtime_config_value("OPTICLICK_NEW_GAME_SUPPORT_URL", "").strip()
 OPTISCALER_GPU_BUNDLE_URL = get_runtime_config_value("OPTISCALER_GPU_BUNDLE_URL", "").strip()
 OPTISCALER_GPU_BUNDLE_DEBUG = False if getattr(sys, "frozen", False) else get_bool_env("OPTISCALER_GPU_BUNDLE_DEBUG", False)
 OPTISCALER_GAME_MASTER_URL = get_runtime_config_value("OPTISCALER_GAME_MASTER_URL", "").strip()
@@ -103,6 +104,7 @@ ctk.set_default_color_theme("blue")
 APP_COMPOSITION_CONFIG = build_app_composition_config(
     strings=APP_STRINGS,
     supported_games_wiki_url=SUPPORTED_GAMES_WIKI_URL,
+    new_game_support_url=OPTICLICK_NEW_GAME_SUPPORT_URL,
     grid_width=APP_UI_CONFIG.grid_width,
     grid_height=APP_UI_CONFIG.grid_height,
     card_width=APP_UI_CONFIG.card_width,

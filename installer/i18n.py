@@ -453,6 +453,13 @@ def pick_module_message(source: Mapping[str, object], base_key: str, lang: Lang)
     return _pick_internal_lang_key(source, base_key, lang)
 
 
+def build_startup_popup_text(source: Mapping[str, object], lang: Lang) -> str:
+    new_game_support_text = pick_module_message(source, "new_game_support", lang)
+    warning_text = pick_module_message(source, "warning", lang)
+    parts = [part for part in (new_game_support_text, warning_text) if part]
+    return "[P]".join(parts)
+
+
 def translate_default_precheck_error(raw_error: str, lang: Lang) -> str:
     error_text = str(raw_error or "").strip()
     if lang != "ko" or not error_text.startswith(_NO_AVAILABLE_DLL_PREFIX):
@@ -501,6 +508,7 @@ __all__ = [
     "build_install_selection_popup_text",
     "build_mod_conflict_finding_text",
     "build_mod_conflict_notice_text",
+    "build_startup_popup_text",
     "detect_ui_language",
     "get_app_strings",
     "is_korean",

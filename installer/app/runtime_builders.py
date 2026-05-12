@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from installer import app_update
-from installer.i18n import pick_module_message
+from installer.i18n import build_startup_popup_text
 from installer.system import gpu_service
 
 from .app_runtime_actions import (
@@ -392,7 +392,7 @@ def initialize_app_infra(
             on_close=on_close,
         ),
         is_multi_gpu_blocked=lambda: is_multi_gpu_block_active(app),
-        get_startup_warning_text=lambda: pick_module_message(app.sheet_state.module_download_links, "warning", app.lang),
+        get_startup_warning_text=lambda: build_startup_popup_text(app.sheet_state.module_download_links, app.lang),
         on_busy_state_changed=lambda: update_install_button_state(app),
         on_exit_requested=lambda: request_close(app),
         logger=shared_logger,

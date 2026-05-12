@@ -7,7 +7,7 @@ import logging
 from typing import Any, Protocol
 
 from ..common.log_sanitizer import redact_text
-from ..data import gpu_bundle_loader, message_loader, profile_loader
+from ..data import gpu_bundle_loader, message_loader, new_game_support_loader, profile_loader
 
 
 SchedulerCallback = Callable[[Callable[[], None]], Any]
@@ -19,6 +19,7 @@ MessageRepoBuilder = Callable[[dict[str, message_loader.MessageTemplate], tuple[
 GpuBundleMerger = Callable[[dict[str, dict[str, Any]], dict[str, dict[str, Any]]], dict[str, dict[str, Any]]]
 ProfileCatalogLoader = Callable[[str, str, str, str, str, str], profile_loader.ProfileCatalogs]
 ProfileCatalogAttacher = Callable[[dict[str, dict[str, Any]], profile_loader.ProfileCatalogs], dict[str, dict[str, Any]]]
+NewGameSupportLoader = Callable[[str], tuple[new_game_support_loader.NewGameSupportEntry, ...]]
 
 
 class MessageMaterializer(Protocol):
@@ -39,6 +40,16 @@ class GpuBundleLoader(Protocol):
         gpu_vendor: str,
         gpu_model: str,
     ) -> dict[str, dict[str, Any]]:
+        ...        
+
+
+class NewGameSupportPopupBuilder(Protocol):
+    def __call__(
+        self,
+        entries: tuple[new_game_support_loader.NewGameSupportEntry, ...] | list[new_game_support_loader.NewGameSupportEntry],
+        *,
+        lang: str,
+    ) -> str:
         ...
 
 
@@ -80,6 +91,9 @@ class GameDbLoadController:
         game_xml_profile_url: str = "",
         registry_profile_url: str = "",
         game_json_profile_url: str = "",
+        new_game_support_url: str = "",
+        load_new_game_support: NewGameSupportLoader = new_game_support_loader.load_new_game_support,
+        build_new_game_support_popup_text: NewGameSupportPopupBuilder = new_game_support_loader.build_new_game_support_popup_text,
         load_profile_catalogs: ProfileCatalogLoader = profile_loader.load_profile_catalogs,
         attach_profile_catalogs: ProfileCatalogAttacher = profile_loader.attach_profile_catalogs_to_game_db,
         logger=None,
@@ -104,6 +118,9 @@ class GameDbLoadController:
         self._game_xml_profile_url = str(game_xml_profile_url or "").strip()
         self._registry_profile_url = str(registry_profile_url or "").strip()
         self._game_json_profile_url = str(game_json_profile_url or "").strip()
+        self._new_game_support_url = str(new_game_support_url or "").strip()
+        self._load_new_game_support = load_new_game_support
+        self._build_new_game_support_popup_text = build_new_game_support_popup_text
         self._load_profile_catalogs = load_profile_catalogs
         self._attach_profile_catalogs = attach_profile_catalogs
         self._logger = logger or logging.getLogger()
@@ -153,6 +170,7 @@ class GameDbLoadController:
                 message_repo,
                 game_db_vendor=game_db_vendor,
             )
+            self._inject_new_game_support_links(module_links)
             result = self._build_success_result(
                 game_db,
                 module_links,
@@ -274,6 +292,28 @@ class GameDbLoadController:
             gpu_vendor=game_db_vendor,
             lang=lang,
         )
+
+    def _inject_new_game_support_links(self, module_links: dict[str, Any]) -> None:
+        if not self._new_game_support_url:
+            return
+
+        try:
+            entries = self._load_new_game_support(self._new_game_support_url)
+        except Exception as exc:
+            self._logger.info("Failed to load new game support data: %s", redact_text(exc))
+            return
+
+        try:
+            text_ko = self._build_new_game_support_popup_text(entries, lang="ko")
+            text_en = self._build_new_game_support_popup_text(entries, lang="en")
+        except Exception as exc:
+            self._logger.info("Failed to build new game support popup text: %s", redact_text(exc))
+            return
+
+        if text_ko:
+            module_links["__new_game_support_kr__"] = text_ko
+        if text_en:
+            module_links["__new_game_support_en__"] = text_en
 
     def _build_success_result(
         self,
