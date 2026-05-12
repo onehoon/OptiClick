@@ -104,14 +104,6 @@
     "memo": ""
   },
   {
-    "game_id": "HighOnLife2GP",
-    "gpu_vendor": "ALL",
-    "stage": "install_post",
-    "message_id": "install_post.dlss_relaunch",
-    "priority": 100,
-    "memo": ""
-  },
-  {
     "game_id": "HighOnLife2",
     "gpu_vendor": "ALL",
     "stage": "install_post",
@@ -849,30 +841,6 @@
   },
   {
     "game_id": "oblivion",
-    "gpu_vendor": "NVIDIA",
-    "stage": "install_post",
-    "message_id": "install_post.dlss_relaunch",
-    "priority": 100,
-    "memo": ""
-  },
-  {
-    "game_id": "oblivionGP",
-    "gpu_vendor": "INTEL",
-    "stage": "install_pre",
-    "message_id": "install_pre.borderless_fsr3_required",
-    "priority": 100,
-    "memo": ""
-  },
-  {
-    "game_id": "oblivionGP",
-    "gpu_vendor": "AMD",
-    "stage": "install_pre",
-    "message_id": "install_pre.borderless_fsr3_required",
-    "priority": 100,
-    "memo": ""
-  },
-  {
-    "game_id": "oblivionGP",
     "gpu_vendor": "NVIDIA",
     "stage": "install_post",
     "message_id": "install_post.dlss_relaunch",

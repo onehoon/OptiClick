@@ -203,14 +203,14 @@
     "value": "False"
   },
   {
-    "profile_id": "HighOnLife2GP_ALL",
+    "profile_id": "HighOnLife2_ALL",
     "path": "%LOCALAPPDATA%\\HighOnLife2\\Saved\\Config\\WinGDK\\GameUserSettings.ini",
     "section": "/Script/Washington.WAGameUserSettings",
     "key": "FullscreenMode",
     "value": 1
   },
   {
-    "profile_id": "HighOnLife2GP_ALL",
+    "profile_id": "HighOnLife2_ALL",
     "path": "%LOCALAPPDATA%\\HighOnLife2\\Saved\\Config\\WinGDK\\GameUserSettings.ini",
     "section": "/Script/Washington.WAGameUserSettings",
     "key": "bUseDynamicResolution",
@@ -350,27 +350,6 @@
     "value": "On"
   },
   {
-    "profile_id": "Samson_ALL",
-    "path": "%LOCALAPPDATA%\\Samson\\Saved\\Config\\WinGDK\\GameUserSettings.ini",
-    "section": "/Script/CJLyraBase.LyraSettingsLocal",
-    "key": "UpsamplingMethod",
-    "value": "DLSS"
-  },
-  {
-    "profile_id": "Samson_ALL",
-    "path": "%LOCALAPPDATA%\\Samson\\Saved\\Config\\WinGDK\\GameUserSettings.ini",
-    "section": "/Script/CJLyraBase.LyraSettingsLocal",
-    "key": "DLSSFrameGenerationMode",
-    "value": "On2X"
-  },
-  {
-    "profile_id": "Samson_ALL",
-    "path": "%LOCALAPPDATA%\\Samson\\Saved\\Config\\WinGDK\\GameUserSettings.ini",
-    "section": "/Script/CJLyraBase.LyraSettingsLocal",
-    "key": "NVIDIAReflexMode",
-    "value": "On"
-  },
-  {
     "profile_id": "PRAGMATA_INTEL",
     "path": "config.ini",
     "section": "GraphicsOption",
@@ -428,69 +407,6 @@
   },
   {
     "profile_id": "PRAGMATA_INTEL",
-    "path": "config.ini",
-    "section": "Render",
-    "key": "Capability",
-    "value": "DirectX12"
-  },
-  {
-    "profile_id": "TEST_INTEL",
-    "path": "config.ini",
-    "section": "GraphicsOption",
-    "key": "FSR3Quality",
-    "value": "Performance"
-  },
-  {
-    "profile_id": "TEST_INTEL",
-    "path": "config.ini",
-    "section": "GraphicsOption",
-    "key": "FrameGeneration",
-    "value": "Fsr"
-  },
-  {
-    "profile_id": "TEST_INTEL",
-    "path": "config.ini",
-    "section": "GraphicsOption",
-    "key": "MotionBlur",
-    "value": "OFF"
-  },
-  {
-    "profile_id": "TEST_INTEL",
-    "path": "config.ini",
-    "section": "GraphicsOption",
-    "key": "PathTracing",
-    "value": "OFF"
-  },
-  {
-    "profile_id": "TEST_INTEL",
-    "path": "config.ini",
-    "section": "GraphicsOption",
-    "key": "RayTracing",
-    "value": "OFF"
-  },
-  {
-    "profile_id": "TEST_INTEL",
-    "path": "config.ini",
-    "section": "GraphicsOption",
-    "key": "UpscalingAlgorithm",
-    "value": "FSR3"
-  },
-  {
-    "profile_id": "TEST_INTEL",
-    "path": "config.ini",
-    "section": "GraphicsOption",
-    "key": "VSync",
-    "value": "OFF"
-  },
-  {
-    "profile_id": "TEST_INTEL",
-    "path": "config.ini",
-    "section": "GraphicsOption",
-    "key": "WindowMode",
-    "value": "Borderless"
-  },
-  {
-    "profile_id": "TEST_INTEL",
     "path": "config.ini",
     "section": "Render",
     "key": "Capability",
