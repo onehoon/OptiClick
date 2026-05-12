@@ -3,7 +3,7 @@ name: Prewarm GPU Bundle Cache
 on:
   workflow_dispatch:
   schedule:
-    - cron: "37 */2 * * *"
+    - cron: "37 */3 * * *"
 
 permissions: {}
 
