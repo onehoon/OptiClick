@@ -13,6 +13,7 @@ import requests
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 GAME_MASTER_PATH = ROOT_DIR / "assets" / "data" / "game_master.json"
+NEW_GAME_SUPPORT_JSON_PATH = ROOT_DIR / "assets" / "data" / "new_game_support.json"
 WIKI_REPO_URL = "https://github.com/onehoon/OptiClick.wiki.git"
 NATIVE_XEFG_TEXT = "Native XeFG Support"
 
@@ -878,6 +879,49 @@ def build_new_games_block(new_game_records: list[dict[str, str]]) -> str:
     return "\n".join(lines)
 
 
+def build_new_game_support_json_payload(
+    new_game_records: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    payload: list[dict[str, str]] = []
+
+    for record in sort_new_game_records(new_game_records):
+        game_name_kr = normalize_text(record.get("game_name_kr"))
+        game_name_en = normalize_text(record.get("game_name_en"))
+        detected_on = normalize_text(record.get("detected_on"))
+
+        if not game_name_kr and not game_name_en:
+            continue
+
+        if parse_iso_date(detected_on) is None:
+            continue
+
+        payload.append(
+            {
+                "game_name_kr": game_name_kr,
+                "game_name_en": game_name_en,
+                "detected_on": detected_on,
+            }
+        )
+
+    return payload
+
+
+def write_new_game_support_json(new_game_records: list[dict[str, str]]) -> None:
+    payload = build_new_game_support_json_payload(new_game_records)
+
+    NEW_GAME_SUPPORT_JSON_PATH.parent.mkdir(parents=True, exist_ok=True)
+    NEW_GAME_SUPPORT_JSON_PATH.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    print(
+        "Updated app new game support data: "
+        f"{NEW_GAME_SUPPORT_JSON_PATH.relative_to(ROOT_DIR)} "
+        f"({len(payload)} records)"
+    )
+
+
 def refresh_new_game_record_from_current_games(
     record: dict[str, str],
     games: list[dict[str, str]],
@@ -888,13 +932,12 @@ def refresh_new_game_record_from_current_games(
     return make_new_game_record(matching_game, record["detected_on"])
 
 
-def apply_new_games_block(
-    markdown_text: str,
+def build_new_game_records_for_outputs(
     games: list[dict[str, str]],
     existing_markdown_text: str,
     *,
     retention_days: int,
-) -> str:
+) -> list[dict[str, str]]:
     existing_game_keys = extract_supported_game_keys_from_markdown(existing_markdown_text)
     today = date.today()
     today_text = today.isoformat()
@@ -915,7 +958,14 @@ def apply_new_games_block(
         for record in new_game_records
     ]
 
-    new_games_block = build_new_games_block(refreshed_records)
+    return sort_new_game_records(refreshed_records)
+
+
+def apply_new_games_block_from_records(
+    markdown_text: str,
+    new_game_records: list[dict[str, str]],
+) -> str:
+    new_games_block = build_new_games_block(new_game_records)
     markdown_without_existing_new_games = strip_existing_new_games_block(markdown_text).lstrip()
 
     if not new_games_block:
@@ -999,19 +1049,21 @@ def update_wiki_page(markdown_text: str, games: list[dict[str, str]], retention_
         if not existing_markdown_text:
             existing_markdown_text = read_text_if_exists(target_page_path)
 
-        final_markdown = apply_new_games_block(
-            markdown_text,
+        new_game_records = build_new_game_records_for_outputs(
             games,
             existing_markdown_text,
             retention_days=retention_days,
         )
+        final_markdown = apply_new_games_block_from_records(markdown_text, new_game_records)
+        write_new_game_support_json(new_game_records)
 
         changed = write_if_changed(target_page_path, final_markdown)
         if not changed:
             print("Supported game list is already up to date.")
-            return
+        else:
+            commit_and_push_if_changed(wiki_dir, TARGET_WIKI_PAGE_FILE)
 
-        commit_and_push_if_changed(wiki_dir, TARGET_WIKI_PAGE_FILE)
+        return
 
 
 def main() -> None:

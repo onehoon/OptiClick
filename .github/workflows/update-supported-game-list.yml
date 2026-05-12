@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: update-supported-game-list
@@ -26,8 +26,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
-        with:
-          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -37,5 +35,19 @@ jobs:
       - name: Install runtime dependencies
         run: python -m pip install --disable-pip-version-check requests google-auth
 
-      - name: Update wiki page
+      - name: Update wiki page and app data
         run: python scripts/update_supported_game_list.py
+
+      - name: Commit generated app data
+        run: |
+          if git diff --quiet -- assets/data/new_game_support.json; then
+            echo "No new game support JSON changes."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add assets/data/new_game_support.json
+          git commit -m "Update new game support data"
+          git push
