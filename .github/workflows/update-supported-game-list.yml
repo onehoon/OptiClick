@@ -2,6 +2,8 @@ name: Update Supported Game List
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 15 * * *"
 
 permissions:
   contents: write
