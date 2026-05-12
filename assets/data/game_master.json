@@ -848,7 +848,7 @@
     "cover_filename": "WUWA.webp",
     "enabled": true,
     "support_intel": true,
-    "support_amd": false,
+    "support_amd": true,
     "support_nvidia": false
   },
   {
