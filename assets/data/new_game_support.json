@@ -1,1 +1,57 @@
-[]
+[
+  {
+    "game_name_kr": "포르자 호라이즌 6",
+    "game_name_en": "Forza Horizon 6",
+    "detected_on": "2026-05-12"
+  },
+  {
+    "game_name_kr": "Dead as Disco",
+    "game_name_en": "Dead as Disco",
+    "detected_on": "2026-05-07"
+  },
+  {
+    "game_name_kr": "인조이",
+    "game_name_en": "inZOI",
+    "detected_on": "2026-05-07"
+  },
+  {
+    "game_name_kr": "명조 (Steam)",
+    "game_name_en": "Wuthering Waves (Steam)",
+    "detected_on": "2026-05-05"
+  },
+  {
+    "game_name_kr": "Far Far West",
+    "game_name_en": "Far Far West",
+    "detected_on": "2026-05-03"
+  },
+  {
+    "game_name_kr": "High On Life 2",
+    "game_name_en": "High On Life 2",
+    "detected_on": "2026-05-03"
+  },
+  {
+    "game_name_kr": "Industria 2",
+    "game_name_en": "Industria 2",
+    "detected_on": "2026-05-03"
+  },
+  {
+    "game_name_kr": "프래그마타",
+    "game_name_en": "Pragmata",
+    "detected_on": "2026-05-01"
+  },
+  {
+    "game_name_kr": "연운 (스팀)",
+    "game_name_en": "Where Winds Meet (Steam)",
+    "detected_on": "2026-04-30"
+  },
+  {
+    "game_name_kr": "이환",
+    "game_name_en": "Neverness to Everness",
+    "detected_on": "2026-04-30"
+  },
+  {
+    "game_name_kr": "The Elder Scrolls IV: Oblivion Remastered",
+    "game_name_en": "The Elder Scrolls IV: Oblivion Remastered",
+    "detected_on": "2026-04-28"
+  }
+]
