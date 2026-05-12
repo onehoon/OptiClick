@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from collections.abc import Callable
 from concurrent.futures import Executor
@@ -40,7 +40,7 @@ class GpuBundleLoader(Protocol):
         gpu_vendor: str,
         gpu_model: str,
     ) -> dict[str, dict[str, Any]]:
-        ...        
+        ...
 
 
 class NewGameSupportPopupBuilder(Protocol):

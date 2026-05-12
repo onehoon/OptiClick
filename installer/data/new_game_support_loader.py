@@ -73,7 +73,7 @@ def _parse_entry(row: dict[str, Any]) -> NewGameSupportEntry | None:
 def load_new_game_support(
     source_url: str = "",
     *,
-    timeout_seconds: float = 10.0,
+    timeout_seconds: float = 5.0,
 ) -> tuple[NewGameSupportEntry, ...]:
     text = _fetch_remote_text(source_url, timeout_seconds=timeout_seconds)
     entries: list[NewGameSupportEntry] = []
