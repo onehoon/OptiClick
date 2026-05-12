@@ -3,14 +3,6 @@
     "game_id": "*",
     "gpu_vendor": "ALL",
     "stage": "startup",
-    "message_id": "global.startup_warning0",
-    "priority": 90,
-    "memo": ""
-  },
-  {
-    "game_id": "*",
-    "gpu_vendor": "ALL",
-    "stage": "startup",
     "message_id": "global.startup_warning1",
     "priority": 100,
     "memo": ""

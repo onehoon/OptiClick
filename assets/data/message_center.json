@@ -1,13 +1,5 @@
 [
   {
-    "message_id": "global.startup_warning0",
-    "category": "popup",
-    "ko": "[RED]신규 추가 게임[END]\n[indent][dot]Dead as Disco\n[indent][dot]인조이\n[indent][dot]명조 (스팀)\n[indent][dot]High On Life 2\n[indent][dot]Industria 2\n[indent][dot]Far Far West\n[indent][dot]프래그마타 (Intel 루나레이크 전용)\n[indent][dot]연운 (스팀)\n[indent][dot]이환 (수동 스캔 필요)",
-    "en": "[RED]New game support[END]\n[indent][dot]Dead as Disco\n[indent][dot]inZOI\n[indent][dot]Wuthering Waves (Steam)\n[indent][dot]High On Life 2\n[indent][dot]Industria 2\n[indent][dot]Far Far West\n[indent][dot]Pragmata (Intel LunarLake Only)\n[indent][dot]Where winds meet (Steam)\n[indent][dot]Neverness to Everness (Manual scan needed)",
-    "url": "",
-    "memo": ""
-  },
-  {
     "message_id": "global.startup_warning1",
     "category": "popup",
     "ko": "[RED]설치 전 게임을 경계없는 전체창모드(보더리스)로 설정하세요. (크래쉬, 블랙스크린 방지)[END]",
