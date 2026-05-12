@@ -32,6 +32,14 @@
     "memo": ""
   },
   {
+    "game_id": "FH6",
+    "gpu_vendor": "ALL",
+    "stage": "install_post",
+    "message_id": "install_post.dlss_relaunch",
+    "priority": 100,
+    "memo": ""
+  },
+  {
     "game_id": "DeadasDisco",
     "gpu_vendor": "ALL",
     "stage": "install_pre",
