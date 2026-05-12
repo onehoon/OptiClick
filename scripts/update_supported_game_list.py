@@ -15,6 +15,7 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 GAME_MASTER_PATH = ROOT_DIR / "assets" / "data" / "game_master.json"
 WIKI_REPO_URL = "https://github.com/onehoon/OptiClick.wiki.git"
 NATIVE_XEFG_TEXT = "Native XeFG Support"
+
 INTEL_IGPU_MARKERS = {
     "ARC GRAPHICS",
     "INTEL ARC GRAPHICS",
@@ -59,6 +60,7 @@ INTEL_ARC_MODEL_ORDER = (
     *INTEL_ARC_A_SERIES_MODELS,
 )
 INTEL_ARC_MODELS = set(INTEL_ARC_MODEL_ORDER)
+
 NEW_GAMES_HEADING = "## 신규 지원 게임 추가 / Newly Supported Games"
 NEW_GAMES_METADATA_START = "<!-- newly-supported-games"
 NEW_GAMES_METADATA_END = "-->"
@@ -69,8 +71,10 @@ NEW_GAMES_HEADING_ALIASES = {
     NEW_GAMES_HEADING,
     "## 신규 지원 게임 추가 / Newly Added Supported Games",
 }
+
 SUPPORTED_GAMES_TABLE_HEADER = "| Korean Title | English Title | Intel | AMD | NVIDIA |"
 SUPPORTED_GAMES_TABLE_SEPARATOR = "|---|---|---|---|---|"
+
 WIKI_CAUTION_BLOCKS = [
     "> [!CAUTION]",
     "> 각종 MOD 사용 시 게임 실행이 불가능하거나 호환되지 않을 수 있습니다.",
@@ -86,11 +90,13 @@ WIKI_CAUTION_BLOCKS = [
     "> Game performance may vary depending on your GPU model and game options.",
     "> OptiScaler may not work properly depending on your PC environment.",
 ]
+
 RADEON_IGPU_NOTE_BLOCKS = [
     "> [!NOTE]",
     "> AMD Radeon iGPU* in this list refers to Radeon 780M, 880M, 890M, 8050S, and 8060S.",
     "> 이 리스트에서 AMD Radeon iGPU* 지원은 Radeon 780M, 880M, 890M, 8050S, 8060S를 의미합니다.",
 ]
+
 WIKI_PUSH_TOKEN = str(os.environ.get("WIKI_PUSH_TOKEN", "") or "").strip()
 TARGET_WIKI_PAGE_FILE = str(
     os.environ.get("TARGET_WIKI_PAGE_FILE", "Supported-Game-List.md") or ""
@@ -302,8 +308,6 @@ def load_game_master() -> dict[str, dict[str, Any]]:
         if not game_id:
             continue
         if "_" in game_id:
-            # game_id deliberately does not support underscores; profile IDs
-            # reserve '_' for game/vendor/profile suffix splitting.
             raise RuntimeError(
                 "game_master.json game_id values must not contain '_' because "
                 f"profile _all fallback splitting depends on that invariant: {game_id}"
@@ -352,8 +356,9 @@ def build_intel_label(tokens: list[str]) -> str:
     igpu_found = False
     arc_series_found = False
     models: list[str] = []
+
     for token in tokens:
-        stripped = token.upper().strip('*')
+        stripped = token.upper().strip("*")
         if stripped in INTEL_IGPU_MARKERS:
             igpu_found = True
         elif stripped in INTEL_ARC_SERIES_MARKERS:
@@ -362,13 +367,11 @@ def build_intel_label(tokens: list[str]) -> str:
             models.append(stripped)
         else:
             for model in INTEL_ARC_MODEL_ORDER:
-                if re.search(
-                    rf"(?<![A-Z0-9]){re.escape(model)}(?![A-Z0-9])",
-                    stripped,
-                ):
+                if re.search(rf"(?<![A-Z0-9]){re.escape(model)}(?![A-Z0-9])", stripped):
                     if model not in models:
                         models.append(model)
                     break
+
     ordered_models = [model for model in INTEL_ARC_MODEL_ORDER if model in models]
     model_set = set(ordered_models)
     labels: list[str] = []
@@ -517,6 +520,7 @@ def build_games() -> list[dict[str, str]]:
     for game_id, game in game_master.items():
         vendor_rules = sheet_index.get(game_id, {"INTEL": [], "AMD": [], "NVIDIA": []})
         all_supported = game_id in all_supported_games
+
         intel = build_vendor_display(game, vendor_rules["INTEL"], vendor="intel", all_supported=all_supported)
         amd = build_vendor_display(game, vendor_rules["AMD"], vendor="amd", all_supported=all_supported)
         nvidia = build_vendor_display(game, vendor_rules["NVIDIA"], vendor="nvidia", all_supported=all_supported)
@@ -667,6 +671,7 @@ def extract_existing_new_games_block(markdown_text: str) -> str:
         RADEON_IGPU_NOTE_BLOCKS[0],
     }
     seen_new_games_table_header = False
+
     for index in range(start_index + 1, len(lines)):
         stripped = normalize_text(lines[index])
         if stripped in break_markers:
@@ -821,9 +826,22 @@ def add_new_game_record(records: list[dict[str, str]], record: dict[str, str]) -
     records.append(record)
 
 
+def sort_new_game_records(records: list[dict[str, str]]) -> list[dict[str, str]]:
+    return sorted(
+        records,
+        key=lambda record: (
+            -(parse_iso_date(record.get("detected_on")) or date.min).toordinal(),
+            normalize_text(record.get("game_name_kr")).lower(),
+            normalize_text(record.get("game_name_en")).lower(),
+        ),
+    )
+
+
 def build_new_games_block(new_game_records: list[dict[str, str]]) -> str:
     if not new_game_records:
         return ""
+
+    new_game_records = sort_new_game_records(new_game_records)
 
     metadata = [
         {
@@ -860,6 +878,16 @@ def build_new_games_block(new_game_records: list[dict[str, str]]) -> str:
     return "\n".join(lines)
 
 
+def refresh_new_game_record_from_current_games(
+    record: dict[str, str],
+    games: list[dict[str, str]],
+) -> dict[str, str]:
+    matching_game = find_matching_game(games, record)
+    if not matching_game:
+        return record
+    return make_new_game_record(matching_game, record["detected_on"])
+
+
 def apply_new_games_block(
     markdown_text: str,
     games: list[dict[str, str]],
@@ -870,91 +898,106 @@ def apply_new_games_block(
     existing_game_keys = extract_supported_game_keys_from_markdown(existing_markdown_text)
     today = date.today()
     today_text = today.isoformat()
-    new_game_records: list[dict[str, str]] = []
 
-    for record in extract_existing_new_game_records(existing_markdown_text, today_text):
-        if not should_keep_new_game_record(record, today, retention_days):
+    new_game_records = [
+        record
+        for record in extract_existing_new_game_records(existing_markdown_text, today_text)
+        if should_keep_new_game_record(record, today, retention_days)
+    ]
+
+    for game in games:
+        if has_matching_game_identity(existing_game_keys, game):
             continue
-        current_game = find_matching_game(games, record)
-        if current_game is None:
-            continue
-        add_new_game_record(new_game_records, make_new_game_record(current_game, record["detected_on"]))
+        add_new_game_record(new_game_records, make_new_game_record(game, today_text))
 
-    if existing_game_keys:
-        for game in games:
-            if not has_matching_game_identity(existing_game_keys, game):
-                add_new_game_record(new_game_records, make_new_game_record(game, today_text))
+    refreshed_records = [
+        refresh_new_game_record_from_current_games(record, games)
+        for record in new_game_records
+    ]
 
-    new_games_block = build_new_games_block(new_game_records)
+    new_games_block = build_new_games_block(refreshed_records)
+    markdown_without_existing_new_games = strip_existing_new_games_block(markdown_text).lstrip()
+
     if not new_games_block:
-        return markdown_text
-    return f"{new_games_block}\n\n{markdown_text}"
+        return markdown_without_existing_new_games
+
+    return f"{new_games_block}\n\n{markdown_without_existing_new_games}"
 
 
-def mask_sensitive_text(text: str) -> str:
-    masked = str(text or "")
-    if WIKI_PUSH_TOKEN:
-        for secret in {WIKI_PUSH_TOKEN, quote(WIKI_PUSH_TOKEN, safe="")}:
-            if secret:
-                masked = masked.replace(secret, "***")
-    return masked
-
-
-def run_git(cmd: list[str], cwd: str | Path) -> None:
-    display_cmd = mask_sensitive_text(" ".join(cmd))
-    print(f"[RUN] {display_cmd}")
-
-    result = subprocess.run(
-        cmd,
+def run_git(args: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", *args],
         cwd=cwd,
         text=True,
+        check=True,
         capture_output=True,
-        check=False,
     )
-    stdout = mask_sensitive_text(result.stdout)
-    stderr = mask_sensitive_text(result.stderr)
-
-    if stdout:
-        print("[STDOUT]")
-        print(stdout)
-
-    if stderr:
-        print("[STDERR]")
-        print(stderr)
-
-    if result.returncode != 0:
-        raise RuntimeError(
-            f"Git command failed: {display_cmd}\n"
-            f"STDOUT:\n{stdout}\n\nSTDERR:\n{stderr}"
-        )
 
 
-def update_wiki(games: list[dict[str, str]], markdown_text: str, *, retention_days: int) -> None:
+def run_git_stream(args: list[str], cwd: Path) -> None:
+    subprocess.run(["git", *args], cwd=cwd, check=True)
+
+
+def build_wiki_clone_url() -> str:
     if not WIKI_PUSH_TOKEN:
-        raise RuntimeError("Missing required environment variable: WIKI_PUSH_TOKEN")
+        return WIKI_REPO_URL
+    return WIKI_REPO_URL.replace("https://", f"https://x-access-token:{WIKI_PUSH_TOKEN}@", 1)
+
+
+def read_text_if_exists(path: Path) -> str:
+    if not path.exists():
+        return ""
+    return path.read_text(encoding="utf-8")
+
+
+def write_if_changed(path: Path, content: str) -> bool:
+    existing = read_text_if_exists(path)
+    if existing == content:
+        return False
+    path.write_text(content, encoding="utf-8", newline="\n")
+    return True
+
+
+def configure_git_user(wiki_dir: Path) -> None:
+    run_git(["config", "user.name", "github-actions[bot]"], wiki_dir)
+    run_git(["config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"], wiki_dir)
+
+
+def has_git_changes(wiki_dir: Path) -> bool:
+    result = run_git(["status", "--porcelain"], wiki_dir)
+    return bool(result.stdout.strip())
+
+
+def commit_and_push_if_changed(wiki_dir: Path, target_file: str) -> None:
+    if not has_git_changes(wiki_dir):
+        print("No wiki changes to commit.")
+        return
+
+    configure_git_user(wiki_dir)
+    run_git_stream(["add", target_file], wiki_dir)
+    run_git_stream(["commit", "-m", "Update supported game list"], wiki_dir)
+    run_git_stream(["push"], wiki_dir)
+
+
+def update_wiki_page(markdown_text: str, games: list[dict[str, str]], retention_days: int) -> None:
     if not TARGET_WIKI_PAGE_FILE:
         raise RuntimeError("TARGET_WIKI_PAGE_FILE must not be empty.")
+    if not BASELINE_WIKI_PAGE_FILE:
+        raise RuntimeError("BASELINE_WIKI_PAGE_FILE must not be empty.")
 
-    authed_url = WIKI_REPO_URL.replace(
-        "https://",
-        f"https://x-access-token:{quote(WIKI_PUSH_TOKEN, safe='')}@",
-    )
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        wiki_dir = temp_path / "wiki"
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        repo_dir = Path(tmpdir) / "wiki_repo"
-        run_git(["git", "clone", authed_url, str(repo_dir)], cwd=tmpdir)
-        run_git(["git", "config", "user.name", "OptiClick Bot"], cwd=repo_dir)
-        run_git(["git", "config", "user.email", "actions@users.noreply.github.com"], cwd=repo_dir)
+        clone_url = build_wiki_clone_url()
+        run_git_stream(["clone", clone_url, str(wiki_dir)], temp_path)
 
-        target_file = repo_dir / TARGET_WIKI_PAGE_FILE
-        baseline_file = repo_dir / (BASELINE_WIKI_PAGE_FILE or TARGET_WIKI_PAGE_FILE)
-        existing_markdown_text = ""
-        if baseline_file.exists():
-            print(f"Using baseline wiki file: {baseline_file.name}")
-            existing_markdown_text = baseline_file.read_text(encoding="utf-8")
-        elif target_file.exists():
-            print(f"Using target wiki file as baseline: {target_file.name}")
-            existing_markdown_text = target_file.read_text(encoding="utf-8")
+        target_page_path = wiki_dir / TARGET_WIKI_PAGE_FILE
+        baseline_page_path = wiki_dir / BASELINE_WIKI_PAGE_FILE
+
+        existing_markdown_text = read_text_if_exists(baseline_page_path)
+        if not existing_markdown_text:
+            existing_markdown_text = read_text_if_exists(target_page_path)
 
         final_markdown = apply_new_games_block(
             markdown_text,
@@ -963,49 +1006,20 @@ def update_wiki(games: list[dict[str, str]], markdown_text: str, *, retention_da
             retention_days=retention_days,
         )
 
-        print("=== MARKDOWN PREVIEW START ===")
-        print(final_markdown[:4000])
-        print("=== MARKDOWN PREVIEW END ===")
-
-        print(f"Writing wiki file: {target_file}")
-        target_file.write_text(final_markdown, encoding="utf-8")
-
-        run_git(["git", "add", TARGET_WIKI_PAGE_FILE], cwd=repo_dir)
-
-        status = subprocess.run(
-            ["git", "status", "--porcelain"],
-            cwd=repo_dir,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        print("[GIT STATUS PORCELAIN]")
-        print(status.stdout)
-
-        if not status.stdout.strip():
-            print("No changes detected.")
+        changed = write_if_changed(target_page_path, final_markdown)
+        if not changed:
+            print("Supported game list is already up to date.")
             return
 
-        run_git(["git", "commit", "-m", "Auto update supported game list"], cwd=repo_dir)
-        try:
-            run_git(["git", "push"], cwd=repo_dir)
-        except RuntimeError as exc:
-            message = str(exc)
-            if "Permission to" in message and "403" in message:
-                raise RuntimeError(
-                    "GitHub rejected the wiki push with HTTP 403. The token authenticated, but it does not have "
-                    "write access to the wiki repository. Use a token with wiki write access."
-                ) from exc
-            raise
-
-        print("Wiki updated successfully.")
+        commit_and_push_if_changed(wiki_dir, TARGET_WIKI_PAGE_FILE)
 
 
 def main() -> None:
-    retention_days = require_int_env_value("NEW_GAMES_RETENTION_DAYS", 0)
     games = build_games()
-    markdown = build_markdown(games)
-    update_wiki(games, markdown, retention_days=retention_days)
+    markdown_text = build_markdown(games)
+    retention_days = require_int_env_value("NEW_GAMES_RETENTION_DAYS", 15)
+    update_wiki_page(markdown_text, games, retention_days)
+    print(f"Updated supported game list with {len(games)} games.")
 
 
 if __name__ == "__main__":
