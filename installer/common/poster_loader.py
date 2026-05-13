@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import json
 import logging
 import threading
 from dataclasses import dataclass, field
@@ -102,6 +103,11 @@ def extract_steam_cover_asset_url(payload: object) -> str:
         for item in items:
             if not isinstance(item, dict):
                 continue
+            assets = item.get("assets") or {}
+            if not isinstance(assets, dict):
+                continue
+            asset_url_format = str(assets.get("asset_url_format", "") or "").strip()
+            appid = str(item.get("appid", "") or "").strip()
             for path in candidate_paths:
                 node: object = item
                 for key in path:
@@ -110,8 +116,15 @@ def extract_steam_cover_asset_url(payload: object) -> str:
                         break
                     node = node.get(key, "")
                 value = str(node or "").strip()
-                if value:
+                if value and (value.startswith("http://") or value.startswith("https://")):
                     return value
+                if not value:
+                    continue
+                if asset_url_format and "${FILENAME}" in asset_url_format:
+                    rendered_path = asset_url_format.replace("${FILENAME}", value).lstrip("/")
+                    return f"https://shared.steamstatic.com/store_item_assets/{rendered_path}"
+                if appid:
+                    return f"https://shared.steamstatic.com/store_item_assets/steam/apps/{appid}/{value.lstrip('/')}"
     except Exception:
         return ""
     return ""
@@ -177,14 +190,16 @@ class PosterImageLoader:
             game_name_en=game_name_en,
             cover_url=url,
         )
-        steam_result = self._load_from_steam_cover(
+        # TODO: non-Steam cache filename is game_name_en-based, so cover_url changes alone
+        # won't invalidate existing disk cache. Revisit with explicit cover cache versioning.
+        steam_result, steam_failed_retryable = self._load_from_steam_cover(
             title=title,
             cover_steam_app_id=normalized_cover_steam_app_id,
         )
         if steam_result is not None:
             return steam_result
 
-        cover_url_result = self._load_from_cover_url_cache_and_source(
+        cover_url_result, cover_url_failed_retryable = self._load_from_cover_url_cache_and_source(
             title=title,
             url=url,
             cache_filename=cover_url_cache_filename,
@@ -204,37 +219,49 @@ class PosterImageLoader:
         if cover_result is not None:
             return cover_result
 
-        return self._make_default_result(should_retry=repo_failed)
+        return self._make_default_result(
+            should_retry=repo_failed or steam_failed_retryable or cover_url_failed_retryable
+        )
 
-    def _load_from_steam_cover(self, *, title: str, cover_steam_app_id: str) -> Optional[PosterLoadResult]:
+    def _load_from_steam_cover(self, *, title: str, cover_steam_app_id: str) -> tuple[Optional[PosterLoadResult], bool]:
         if not cover_steam_app_id:
-            return None
+            return None, False
         cache_filename = f"{cover_steam_app_id}.webp"
         cache_key = self._poster_cache_key("steam_app", cover_steam_app_id, title=title)
         cached = self._load_from_disk_cover_cache(normalized_cover_filename=cache_filename, cover_cache_key=cache_key)
         if cached is not None:
-            return cached
+            return cached, False
 
         direct_url = f"https://shared.steamstatic.com/store_item_assets/steam/apps/{cover_steam_app_id}/library_600x900_2x.jpg"
-        result = self._try_download_to_cache(direct_url, cache_filename, cache_key)
+        result, direct_failed_retryable = self._try_download_to_cache(direct_url, cache_filename, cache_key)
         if result is not None:
-            return result
+            return result, False
         logging.debug("Steam cover direct URL failed: cover_steam_app_id=%s", cover_steam_app_id)
 
         assets_url = self._fetch_steam_assets_cover_url(cover_steam_app_id)
         if assets_url:
-            result = self._try_download_to_cache(assets_url, cache_filename, cache_key)
+            result, assets_failed_retryable = self._try_download_to_cache(assets_url, cache_filename, cache_key)
             if result is not None:
-                return result
+                return result, False
+            return None, assets_failed_retryable or direct_failed_retryable
         logging.debug("Steam cover assets URL failed: cover_steam_app_id=%s", cover_steam_app_id)
-        return None
+        return None, direct_failed_retryable
 
     def _fetch_steam_assets_cover_url(self, cover_steam_app_id: str) -> str:
         api_url = "https://api.steampowered.com/IStoreBrowseService/GetItems/v1/"
         try:
+            app_id_int = int(cover_steam_app_id)
+        except Exception:
+            return ""
+        input_json = {
+            "ids": [{"appid": app_id_int}],
+            "context": {"country_code": "US"},
+            "data_request": {"include_assets": True},
+        }
+        try:
             with self._image_session.get(
                 api_url,
-                params={"appids": cover_steam_app_id, "include_assets": "true"},
+                params={"input_json": json.dumps(input_json, separators=(",", ":"))},
                 timeout=self._config.timeout_seconds,
             ) as response:
                 response.raise_for_status()
@@ -243,29 +270,44 @@ class PosterImageLoader:
         except Exception:
             return ""
 
-    def _try_download_to_cache(self, source_url: str, cache_filename: str, cache_key: str) -> Optional[PosterLoadResult]:
+    def _try_download_to_cache(
+        self, source_url: str, cache_filename: str, cache_key: str
+    ) -> tuple[Optional[PosterLoadResult], bool]:
         try:
             image_bytes = self._download_image_bytes(source_url)
             prepared = self._load_prepared_image_from_bytes(image_bytes, cache_key)
             if prepared is None:
-                return None
+                return None, False
             cache_bytes = self._encode_cover_cache_webp_bytes(image_bytes)
             if cache_bytes:
                 self._store_cover_cache_bytes(cache_filename, cache_bytes)
-            return PosterLoadResult(prepared, False, False)
-        except Exception:
-            return None
+            return PosterLoadResult(prepared, False, False), False
+        except Exception as exc:
+            return None, self._is_retryable_download_exception(exc)
 
-    def _load_from_cover_url_cache_and_source(self, *, title: str, url: str, cache_filename: str) -> Optional[PosterLoadResult]:
+    def _load_from_cover_url_cache_and_source(
+        self, *, title: str, url: str, cache_filename: str
+    ) -> tuple[Optional[PosterLoadResult], bool]:
         if not url:
-            return None
+            return None, False
         cache_key = self._poster_cache_key("cover_url", url, title=title)
         if cache_filename:
             cached = self._load_from_disk_cover_cache(normalized_cover_filename=cache_filename, cover_cache_key=cache_key)
             if cached is not None:
-                return cached
+                return cached, False
 
-        return self._try_download_to_cache(url, cache_filename, cache_key) if cache_filename else None
+        return self._try_download_to_cache(url, cache_filename, cache_key) if cache_filename else (None, False)
+
+    def _is_retryable_download_exception(self, exc: Exception) -> bool:
+        if isinstance(exc, requests.exceptions.Timeout):
+            return True
+        if isinstance(exc, requests.exceptions.ConnectionError):
+            return True
+        if isinstance(exc, requests.exceptions.HTTPError):
+            response = getattr(exc, "response", None)
+            status = int(getattr(response, "status_code", 0) or 0)
+            return status >= 500
+        return False
 
     def _load_from_cover_filename(
         self,
