@@ -969,10 +969,10 @@
     "cover_steam_app_id": 2255370,
     "cover_url": "",
     "cover_filename": "",
-    "enabled": false,
-    "support_intel": false,
-    "support_amd": false,
-    "support_nvidia": false
+    "enabled": true,
+    "support_intel": true,
+    "support_amd": true,
+    "support_nvidia": true
   },
   {
     "game_id": "Requiem",

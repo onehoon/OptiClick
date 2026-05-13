@@ -88,6 +88,14 @@
     "memo": ""
   },
   {
+    "game_id": "Directive8020",
+    "gpu_vendor": "INTEL",
+    "stage": "install_pre",
+    "message_id": "install_pre_CD_INTEL",
+    "priority": 90,
+    "memo": ""
+  },
+  {
     "game_id": "FFWEST",
     "gpu_vendor": "ALL",
     "stage": "install_post",
