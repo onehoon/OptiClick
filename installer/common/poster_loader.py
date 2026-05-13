@@ -90,15 +90,31 @@ def _prepare_cover_image(img: Image.Image, target_w: int, target_h: int) -> Imag
     return img.convert("RGBA")
 
 
-def _encode_lossless_webp_bytes(image_bytes: bytes) -> Optional[bytes]:
+def extract_steam_cover_asset_url(payload: object) -> str:
+    candidate_paths = (
+        ("assets", "library_capsule_2x"),
+        ("assets", "library_capsule"),
+    )
     try:
-        with Image.open(io.BytesIO(image_bytes)) as source_img:
-            converted = source_img.convert("RGBA")
-        output = io.BytesIO()
-        converted.save(output, format="WEBP", lossless=True)
-        return output.getvalue()
+        items = (((payload or {}).get("response") or {}).get("store_items") or [])
+        if not isinstance(items, list):
+            return ""
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            for path in candidate_paths:
+                node: object = item
+                for key in path:
+                    if not isinstance(node, dict):
+                        node = ""
+                        break
+                    node = node.get(key, "")
+                value = str(node or "").strip()
+                if value:
+                    return value
     except Exception:
-        return None
+        return ""
+    return ""
 
 
 class PosterImageLoader:
@@ -223,11 +239,7 @@ class PosterImageLoader:
             ) as response:
                 response.raise_for_status()
                 payload = response.json()
-            items = (((payload or {}).get("response") or {}).get("store_items") or [])
-            if not items:
-                return ""
-            assets = (items[0] or {}).get("assets") or {}
-            return str(assets.get("library_capsule_2x", "") or "").strip()
+            return extract_steam_cover_asset_url(payload)
         except Exception:
             return ""
 
