@@ -411,5 +411,96 @@
     "section": "Render",
     "key": "Capability",
     "value": "DirectX12"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "FrameGenerationMode",
+    "value": "NVIDIA_DLSS"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "LowLatencyMode",
+    "value": "NVIDIA_Reflex"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "AntiAliasingMethod",
+    "value": "DLSS"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "DLSSSuperResolution",
+    "value": "Performance"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "DLSSFrameGeneration",
+    "value": "FrameGen_2X"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "NVIDIAReflexLowLatency",
+    "value": "On"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "FSRFrameGeneration",
+    "value": "Off"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "FSRAntiLag",
+    "value": "Off"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "XeSSFrameGeneration",
+    "value": "Off"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "XeSSLowLatency",
+    "value": "Off"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "MotionBlurIntensity",
+    "value": 0
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "bUseDynamicResolution",
+    "value": false
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "FullscreenMode",
+    "value": 1
   }
 ]
