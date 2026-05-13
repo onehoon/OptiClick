@@ -10,7 +10,7 @@ import tempfile
 from typing import Any, Callable
 
 
-APP_VERSION = "0.5.1"
+APP_VERSION = "0.5.2"
 MAX_SUPPORTED_GPU_COUNT = 2
 APP_CACHE_DIR_NAME = "OptiClick"
 LEGACY_APP_CACHE_DIR_NAME = "OptiScalerInstaller"
