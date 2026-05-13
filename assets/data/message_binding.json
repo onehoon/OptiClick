@@ -537,6 +537,14 @@
   },
   {
     "game_id": "Avowed",
+    "gpu_vendor": "INTEL",
+    "stage": "install_pre",
+    "message_id": "install_pre_CD_INTEL",
+    "priority": 90,
+    "memo": ""
+  },
+  {
+    "game_id": "Avowed",
     "gpu_vendor": "ALL",
     "stage": "install_post",
     "message_id": "install_post.dlss_relaunch",
