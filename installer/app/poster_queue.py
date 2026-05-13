@@ -15,6 +15,8 @@ class PosterQueueJob:
     title: str
     cover_filename: str
     url: str
+    cover_steam_app_id: str
+    game_name_en: str
     generation: int
     delayed_retry_count: int = 0
 
@@ -25,7 +27,7 @@ class PosterQueueController:
         *,
         root: Any,
         executor: Executor,
-        loader: Callable[[str, str, str], Any],
+        loader: Callable[[str, str, str, str, str], Any],
         max_workers: int,
         retry_delay_ms: int,
         get_visible_indices: Callable[[], set[int]],
@@ -69,7 +71,16 @@ class PosterQueueController:
         self._inflight_jobs.clear()
         self._failed_jobs.clear()
 
-    def queue(self, index: int, label: object, title: str, cover_filename: str, url: str) -> None:
+    def queue(
+        self,
+        index: int,
+        label: object,
+        title: str,
+        cover_filename: str,
+        url: str,
+        cover_steam_app_id: str = "",
+        game_name_en: str = "",
+    ) -> None:
         self._cancel_delayed_retry(index)
         self._pending_jobs[index] = PosterQueueJob(
             index=index,
@@ -77,6 +88,8 @@ class PosterQueueController:
             title=title,
             cover_filename=cover_filename,
             url=url,
+            cover_steam_app_id=cover_steam_app_id,
+            game_name_en=game_name_en,
             generation=self._render_generation,
         )
         self.pump()
@@ -113,6 +126,8 @@ class PosterQueueController:
                 job.title,
                 job.cover_filename,
                 job.url,
+                job.cover_steam_app_id,
+                job.game_name_en,
             )
             self._inflight_jobs[future] = job
 

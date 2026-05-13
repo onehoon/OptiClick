@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from ..common.cover_utils import normalize_cover_filename
+from ..common.cover_utils import normalize_cover_filename, normalize_cover_steam_app_id
 from ..common.flag_parser import parse_bool_token
 from ..common.log_sanitizer import redact_text
 from ..common.network_utils import add_github_raw_data_cache_bust, get_shared_retry_session
@@ -93,6 +93,7 @@ def _build_game_db_from_rows(rows: object) -> dict[str, dict[str, object]]:
             "game_name_kr": game_name_kr,
             "optiscaler_dll_name": "",
             "cover_url": str(row.get("cover_url", "") or "").strip(),
+            "cover_steam_app_id": normalize_cover_steam_app_id(row.get("cover_steam_app_id", "")),
             "filename_cover": normalize_cover_filename(str(row.get("cover_filename", "") or "")),
             "support_intel": row.get("support_intel", ""),
             "support_amd": row.get("support_amd", ""),

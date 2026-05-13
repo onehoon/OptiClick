@@ -219,11 +219,13 @@ class GameCardUiController:
         title: str,
         filename_cover: str,
         cover_url: str,
+        cover_steam_app_id: str,
+        game_name_en: str,
     ) -> None:
         queue_method = getattr(self._poster_queue, "queue", None)
         if not callable(queue_method):
             return
-        queue_method(index, label, title, filename_cover, cover_url)
+        queue_method(index, label, title, filename_cover, cover_url, cover_steam_app_id, game_name_en)
 
     def _flush_deferred_image_updates(self) -> None:
         pending_indices = sorted(self._card_ui_state.deferred_image_update_indices)

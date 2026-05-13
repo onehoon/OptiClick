@@ -8,7 +8,7 @@ import customtkinter as ctk
 
 
 CardIndexCallback = Callable[[int], None]
-PosterQueueCallback = Callable[[int, Any, str, str, str], None]
+PosterQueueCallback = Callable[[int, Any, str, str, str, str, str], None]
 PlaceholderImageFactory = Callable[[], Any]
 
 _STATUS_BADGE_STYLES = {
@@ -158,6 +158,8 @@ def create_game_card(
         display_name,
         str(game.get("filename_cover", "") or ""),
         str(game.get("cover_url", "") or ""),
+        str(game.get("cover_steam_app_id", "") or ""),
+        str(game.get("game_name_en", "") or ""),
     )
 
     return GameCardBuildResult(

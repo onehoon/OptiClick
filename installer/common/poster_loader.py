@@ -15,7 +15,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from .. import app_update
-from .cover_utils import normalize_cover_filename
+from .cover_utils import build_cover_cache_filename, normalize_cover_filename, normalize_cover_steam_app_id
 
 
 @dataclass(slots=True)
@@ -138,17 +138,44 @@ class PosterImageLoader:
     def make_placeholder_image(self) -> Image.Image:
         return self._default_poster_base.copy().convert("RGBA")
 
-    def load(self, title: str, cover_filename: str, url: str) -> PosterLoadResult:
+    def load(
+        self,
+        title: str,
+        cover_filename: str,
+        url: str,
+        cover_steam_app_id: str = "",
+        game_name_en: str = "",
+    ) -> PosterLoadResult:
         """Load a poster while preserving source priority and retry semantics.
 
-        Source order must remain:
-        1) bundled cover asset
-        2) disk cover cache
-        3) repo raw cover URL
-        4) sheet cover_url
-        5) default poster
+        Source order:
+        1) cover_steam_app_id cache / Steam URL / Steam assets API
+        2) cover_url cache / cover_url
+        3) legacy cover_filename path (bundled/disk/repo)
+        4) default poster
         """
+        normalized_cover_steam_app_id = normalize_cover_steam_app_id(cover_steam_app_id)
         normalized_cover_filename = normalize_cover_filename(cover_filename)
+        cover_url_cache_filename = build_cover_cache_filename(
+            cover_steam_app_id="",
+            game_name_en=game_name_en,
+            cover_url=url,
+        )
+        steam_result = self._load_from_steam_cover(
+            title=title,
+            cover_steam_app_id=normalized_cover_steam_app_id,
+        )
+        if steam_result is not None:
+            return steam_result
+
+        cover_url_result = self._load_from_cover_url_cache_and_source(
+            title=title,
+            url=url,
+            cache_filename=cover_url_cache_filename,
+        )
+        if cover_url_result is not None:
+            return cover_url_result
+
         cover_cache_key = (
             self._poster_cache_key("cover_file", normalized_cover_filename, title=title)
             if normalized_cover_filename
@@ -161,13 +188,72 @@ class PosterImageLoader:
         if cover_result is not None:
             return cover_result
 
-        return self._load_from_cover_url(
-            title=title,
-            normalized_cover_filename=normalized_cover_filename,
-            cover_cache_key=cover_cache_key,
-            url=url,
-            repo_failed=repo_failed,
-        )
+        return self._make_default_result(should_retry=repo_failed)
+
+    def _load_from_steam_cover(self, *, title: str, cover_steam_app_id: str) -> Optional[PosterLoadResult]:
+        if not cover_steam_app_id:
+            return None
+        cache_filename = f"{cover_steam_app_id}.webp"
+        cache_key = self._poster_cache_key("steam_app", cover_steam_app_id, title=title)
+        cached = self._load_from_disk_cover_cache(normalized_cover_filename=cache_filename, cover_cache_key=cache_key)
+        if cached is not None:
+            return cached
+
+        direct_url = f"https://shared.steamstatic.com/store_item_assets/steam/apps/{cover_steam_app_id}/library_600x900_2x.jpg"
+        result = self._try_download_to_cache(direct_url, cache_filename, cache_key)
+        if result is not None:
+            return result
+        logging.debug("Steam cover direct URL failed: cover_steam_app_id=%s", cover_steam_app_id)
+
+        assets_url = self._fetch_steam_assets_cover_url(cover_steam_app_id)
+        if assets_url:
+            result = self._try_download_to_cache(assets_url, cache_filename, cache_key)
+            if result is not None:
+                return result
+        logging.debug("Steam cover assets URL failed: cover_steam_app_id=%s", cover_steam_app_id)
+        return None
+
+    def _fetch_steam_assets_cover_url(self, cover_steam_app_id: str) -> str:
+        api_url = "https://api.steampowered.com/IStoreBrowseService/GetItems/v1/"
+        try:
+            with self._image_session.get(
+                api_url,
+                params={"appids": cover_steam_app_id, "include_assets": "true"},
+                timeout=self._config.timeout_seconds,
+            ) as response:
+                response.raise_for_status()
+                payload = response.json()
+            items = (((payload or {}).get("response") or {}).get("store_items") or [])
+            if not items:
+                return ""
+            assets = (items[0] or {}).get("assets") or {}
+            return str(assets.get("library_capsule_2x", "") or "").strip()
+        except Exception:
+            return ""
+
+    def _try_download_to_cache(self, source_url: str, cache_filename: str, cache_key: str) -> Optional[PosterLoadResult]:
+        try:
+            image_bytes = self._download_image_bytes(source_url)
+            prepared = self._load_prepared_image_from_bytes(image_bytes, cache_key)
+            if prepared is None:
+                return None
+            cache_bytes = self._encode_cover_cache_webp_bytes(image_bytes)
+            if cache_bytes:
+                self._store_cover_cache_bytes(cache_filename, cache_bytes)
+            return PosterLoadResult(prepared, False, False)
+        except Exception:
+            return None
+
+    def _load_from_cover_url_cache_and_source(self, *, title: str, url: str, cache_filename: str) -> Optional[PosterLoadResult]:
+        if not url:
+            return None
+        cache_key = self._poster_cache_key("cover_url", url, title=title)
+        if cache_filename:
+            cached = self._load_from_disk_cover_cache(normalized_cover_filename=cache_filename, cover_cache_key=cache_key)
+            if cached is not None:
+                return cached
+
+        return self._try_download_to_cache(url, cache_filename, cache_key) if cache_filename else None
 
     def _load_from_cover_filename(
         self,
@@ -261,44 +347,15 @@ class PosterImageLoader:
         except Exception:
             return None, True
 
-    def _load_from_cover_url(
-        self,
-        *,
-        title: str,
-        normalized_cover_filename: str,
-        cover_cache_key: str,
-        url: str,
-        repo_failed: bool,
-    ) -> PosterLoadResult:
-        """Resolve URL path and preserve retry contract.
-
-        If URL is empty, should_retry must mirror repo_failed from filename path.
-        """
-        cache_key = self._poster_cache_key("cover_url", url, title=title)
-        cached_image = self._image_cache_get(cache_key) if self._config.enable_memory_cache else None
-        if cached_image is not None:
-            return PosterLoadResult(cached_image, False, False)
-
-        if not url:
-            return self._make_default_result(should_retry=repo_failed)
-
+    def _encode_cover_cache_webp_bytes(self, image_bytes: bytes) -> Optional[bytes]:
         try:
-            image_bytes = self._download_image_bytes(url)
-            pil_img = self._load_prepared_image_from_bytes(image_bytes, cache_key)
-            if pil_img is None:
-                raise RuntimeError("Downloaded cover image could not be decoded")
-            if normalized_cover_filename:
-                webp_lossless_bytes = _encode_lossless_webp_bytes(image_bytes)
-                if webp_lossless_bytes:
-                    try:
-                        self._store_cover_cache_bytes(normalized_cover_filename, webp_lossless_bytes)
-                        if self._config.enable_memory_cache and cover_cache_key:
-                            self._image_cache_put(cover_cache_key, pil_img)
-                    except Exception:
-                        pass
-            return PosterLoadResult(pil_img, False, False)
+            with Image.open(io.BytesIO(image_bytes)) as source_img:
+                converted = source_img.convert("RGB")
+            output = io.BytesIO()
+            converted.save(output, format="WEBP", quality=90, method=6)
+            return output.getvalue()
         except Exception:
-            return self._make_default_result(should_retry=True)
+            return None
 
     def _make_default_result(self, *, should_retry: bool) -> PosterLoadResult:
         """Build default poster result with explicit retry flag."""
