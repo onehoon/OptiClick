@@ -208,6 +208,14 @@
     "memo": ""
   },
   {
+    "game_id": "CP2077",
+    "gpu_vendor": "INTEL",
+    "stage": "install_pre",
+    "message_id": "install_pre_CD_INTEL",
+    "priority": 90,
+    "memo": ""
+  },
+  {
     "game_id": "FF7R",
     "gpu_vendor": "ALL",
     "stage": "install_post",
@@ -736,11 +744,27 @@
     "memo": ""
   },
   {
+    "game_id": "BMW",
+    "gpu_vendor": "INTEL",
+    "stage": "install_pre",
+    "message_id": "install_pre_CD_INTEL",
+    "priority": 90,
+    "memo": ""
+  },
+  {
     "game_id": "E33",
     "gpu_vendor": "ALL",
     "stage": "install_post",
     "message_id": "install_post.dlss_relaunch",
     "priority": 100,
+    "memo": ""
+  },
+  {
+    "game_id": "E33",
+    "gpu_vendor": "INTEL",
+    "stage": "install_pre",
+    "message_id": "install_pre_CD_INTEL",
+    "priority": 90,
     "memo": ""
   },
   {

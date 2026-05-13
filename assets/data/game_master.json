@@ -7,7 +7,7 @@
     "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/1091500/fc7064f4a8ee2960eb51f5872d7990d771f26d2e/library_600x900_2x.jpg?t=1753355535",
     "cover_filename": "Cyberpunk 2077.webp",
     "enabled": true,
-    "support_intel": "Native XeFG",
+    "support_intel": true,
     "support_amd": true,
     "support_nvidia": true
   },
@@ -607,7 +607,7 @@
     "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/2358720/library_600x900_2x.jpg?t=1749182002",
     "cover_filename": "Black Myth Wukong.webp",
     "enabled": true,
-    "support_intel": "Native XeFG",
+    "support_intel": true,
     "support_amd": true,
     "support_nvidia": true
   },
@@ -619,7 +619,7 @@
     "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/1903340/8b21381a43ac5a535a838f723815f8fe14ceaf7c/library_600x900_2x.jpg?t=1753344054",
     "cover_filename": "Clair Obscur Expedition 33.webp",
     "enabled": true,
-    "support_intel": "Native XeFG",
+    "support_intel": true,
     "support_amd": true,
     "support_nvidia": true
   },
@@ -631,7 +631,7 @@
     "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/1903340/8b21381a43ac5a535a838f723815f8fe14ceaf7c/library_600x900_2x.jpg?t=1753344054",
     "cover_filename": "Clair Obscur Expedition 33.webp",
     "enabled": true,
-    "support_intel": "Native XeFG",
+    "support_intel": true,
     "support_amd": true,
     "support_nvidia": true
   },
@@ -749,7 +749,7 @@
     "game_name_kr": "The Elder Scrolls IV: Oblivion Remastered",
     "game_name_en": "The Elder Scrolls IV: Oblivion Remastered",
     "cover_url": "https://shared.steamstatic.com/store_item_assets/steam/apps/2623190/b52322f78cbdc7e6c267d873056abba7916f7ff3/library_600x900_2x.jpg?t=1753715747",
-    "cover_filename": "oblivionGP.webp",
+    "cover_filename": "oblivion.webp",
     "enabled": true,
     "support_intel": true,
     "support_amd": true,
