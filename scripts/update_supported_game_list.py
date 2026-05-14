@@ -974,6 +974,21 @@ def apply_new_games_block_from_records(
     return f"{new_games_block}\n\n{markdown_without_existing_new_games}"
 
 
+def apply_new_games_block(
+    markdown_text: str,
+    games: list[dict[str, str]],
+    existing_markdown_text: str,
+    *,
+    retention_days: int,
+) -> str:
+    new_game_records = build_new_game_records_for_outputs(
+        games,
+        existing_markdown_text,
+        retention_days=retention_days,
+    )
+    return apply_new_games_block_from_records(markdown_text, new_game_records)
+
+
 def run_git(args: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["git", *args],

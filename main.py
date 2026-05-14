@@ -71,7 +71,17 @@ load_dev_env_file(load_dotenv, entry_file=__file__)
 # and via environment variables/.env during source development.
 SUPPORTED_GAMES_WIKI_URL = get_runtime_config_value("SUPPORTED_GAMES_WIKI_URL", "").strip()
 OPTICLICK_NEW_GAME_SUPPORT_URL = get_runtime_config_value("OPTICLICK_NEW_GAME_SUPPORT_URL", "").strip()
-OPTISCALER_GPU_BUNDLE_URL = get_runtime_config_value("OPTISCALER_GPU_BUNDLE_URL", "").strip()
+OPTICLICK_GPU_BUNDLE_MANIFEST_URL = get_runtime_config_value(
+    "OPTICLICK_GPU_BUNDLE_MANIFEST_URL",
+    "https://opticlick-data-api.onehoon.workers.dev/v1/gpu-bundle-manifest",
+).strip()
+OPTICLICK_GPU_BUNDLE_URL = get_runtime_config_value(
+    "OPTICLICK_GPU_BUNDLE_URL",
+    get_runtime_config_value(
+        "OPTISCALER_GPU_BUNDLE_URL",
+        "https://opticlick-data-api.onehoon.workers.dev/v1/gpu-bundle",
+    ),
+).strip()
 OPTISCALER_GPU_BUNDLE_DEBUG = False if getattr(sys, "frozen", False) else get_bool_env("OPTISCALER_GPU_BUNDLE_DEBUG", False)
 OPTICLICK_RUNTIME_DATA_URL = get_runtime_config_value(
     "OPTICLICK_RUNTIME_DATA_URL",
@@ -111,7 +121,8 @@ APP_COMPOSITION_CONFIG = build_app_composition_config(
     card_h_spacing=APP_UI_CONFIG.card_h_spacing,
     card_v_spacing=APP_UI_CONFIG.card_v_spacing,
     create_prefixed_logger=get_prefixed_logger,
-    gpu_bundle_url=OPTISCALER_GPU_BUNDLE_URL,
+    gpu_bundle_url=OPTICLICK_GPU_BUNDLE_URL,
+    gpu_bundle_manifest_url=OPTICLICK_GPU_BUNDLE_MANIFEST_URL,
     gpu_bundle_debug=OPTISCALER_GPU_BUNDLE_DEBUG,
     runtime_data_url=OPTICLICK_RUNTIME_DATA_URL,
     max_supported_gpu_count=MAX_SUPPORTED_GPU_COUNT,

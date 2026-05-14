@@ -50,6 +50,7 @@ from .ui_shell_actions import (
 class AppControllerFactoryConfig:
     create_prefixed_logger: Callable[[str], Any]
     gpu_bundle_url: str
+    gpu_bundle_manifest_url: str
     runtime_data_url: str
     new_game_support_url: str
     gpu_notice_theme: Any
@@ -363,17 +364,17 @@ def _build_game_db_controller(
     load_runtime_data = lambda: runtime_data_loader.load_runtime_data(runtime_data_url)
     load_game_db = lambda rows: sheet_loader.build_game_db_from_rows(rows)
     load_module_download_links = lambda rows: sheet_loader.build_module_download_links_from_rows(rows)
-    def load_gpu_bundle(base_url: str, vendor: str, gpu_model: str) -> dict[str, dict[str, Any]]:
+    def load_gpu_bundle(bundle_base_url: str, manifest_url: str, vendor: str, gpu_model: str) -> dict[str, dict[str, Any]]:
         device_info = gpu_service.get_device_info()
         return gpu_bundle_loader.load_supported_game_bundle(
-            base_url,
+            bundle_base_url,
             vendor,
             gpu_model,
+            manifest_url=manifest_url,
             request_source="app",
             device_manufacturer=device_info.manufacturer,
             device_model=device_info.model,
             app_version=APP_VERSION,
-            debug=config.gpu_bundle_debug,
             logger=logging.getLogger(),
         )
 
@@ -389,6 +390,7 @@ def _build_game_db_controller(
         build_message_repository=message_loader.build_message_repository,
         materialize_bound_messages=message_loader.materialize_bound_messages_into_game_db,
         gpu_bundle_url=config.gpu_bundle_url,
+        gpu_bundle_manifest_url=config.gpu_bundle_manifest_url,
         load_gpu_bundle=load_gpu_bundle,
         merge_gpu_bundle=gpu_bundle_loader.merge_gpu_bundle_into_game_db,
         build_profile_catalogs_from_rows=profile_loader.build_profile_catalogs_from_rows,

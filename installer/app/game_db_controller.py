@@ -37,7 +37,8 @@ class MessageMaterializer(Protocol):
 class GpuBundleLoader(Protocol):
     def __call__(
         self,
-        base_url_or_key: str,
+        bundle_base_url: str,
+        manifest_url: str,
         gpu_vendor: str,
         gpu_model: str,
     ) -> dict[str, dict[str, Any]]:
@@ -92,6 +93,7 @@ class GameDbLoadController:
         build_message_repository: MessageRepoBuilder = message_loader.build_message_repository,
         materialize_bound_messages: MessageMaterializer = message_loader.materialize_bound_messages_into_game_db,
         gpu_bundle_url: str = "",
+        gpu_bundle_manifest_url: str = "",
         load_gpu_bundle: GpuBundleLoader = gpu_bundle_loader.load_supported_game_bundle,
         merge_gpu_bundle: GpuBundleMerger = gpu_bundle_loader.merge_gpu_bundle_into_game_db,
         build_profile_catalogs_from_rows: ProfileCatalogRowsLoader = profile_loader.build_profile_catalogs_from_rows,
@@ -112,6 +114,7 @@ class GameDbLoadController:
         self._build_message_repository = build_message_repository
         self._materialize_bound_messages = materialize_bound_messages
         self._gpu_bundle_url = str(gpu_bundle_url or "").strip()
+        self._gpu_bundle_manifest_url = str(gpu_bundle_manifest_url or "").strip()
         self._load_gpu_bundle = load_gpu_bundle
         self._merge_gpu_bundle = merge_gpu_bundle
         self._build_profile_catalogs_from_rows = build_profile_catalogs_from_rows
@@ -233,14 +236,24 @@ class GameDbLoadController:
 
         # GPU bundle is vendor-specific runtime data; if configured, a failed fetch must fail closed.
         try:
-            bundle = self._load_gpu_bundle(self._gpu_bundle_url, game_db_vendor, gpu_model)
+            bundle = self._load_gpu_bundle(
+                self._gpu_bundle_url,
+                self._gpu_bundle_manifest_url,
+                game_db_vendor,
+                gpu_model,
+            )
             return self._merge_gpu_bundle(game_db, bundle)
         except Exception as bundle_err:
             self._logger.error("Failed to load GPU bundle: %s", redact_text(bundle_err))
             raise RuntimeError("GPU bundle load failed") from bundle_err
 
     def _should_load_gpu_bundle(self, game_db_vendor: str) -> bool:
-        return bool(self._gpu_bundle_url and game_db_vendor and game_db_vendor != "default")
+        return bool(
+            self._gpu_bundle_url
+            and self._gpu_bundle_manifest_url
+            and game_db_vendor
+            and game_db_vendor != "default"
+        )
 
     def _attach_profile_catalogs_if_configured(
         self,

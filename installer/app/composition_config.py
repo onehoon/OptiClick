@@ -31,6 +31,7 @@ def build_app_composition_config(
     card_v_spacing: int,
     create_prefixed_logger: Callable[[str], Any],
     gpu_bundle_url: str,
+    gpu_bundle_manifest_url: str,
     gpu_bundle_debug: bool,
     runtime_data_url: str,
     max_supported_gpu_count: int,
@@ -59,6 +60,7 @@ def build_app_composition_config(
     app_controller_factory_config = AppControllerFactoryConfig(
         create_prefixed_logger=create_prefixed_logger,
         gpu_bundle_url=gpu_bundle_url,
+        gpu_bundle_manifest_url=gpu_bundle_manifest_url,
         gpu_bundle_debug=gpu_bundle_debug,
         runtime_data_url=runtime_data_url,
         new_game_support_url=new_game_support_url,
