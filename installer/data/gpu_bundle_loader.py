@@ -165,6 +165,7 @@ def load_supported_game_bundle(
         return {}
 
     bundle_key = str(matched_rule.get("bundle_key") or "").strip()
+    bundle_group = str(matched_rule.get("gpu_group") or "").strip()
     if not bundle_key:
         raise ValueError("GPU bundle rule has empty bundle_key")
     use_logger.info(
@@ -172,7 +173,7 @@ def load_supported_game_bundle(
         normalized_vendor or "-",
         normalized_gpu_model or "-",
         bundle_key,
-        str(matched_rule.get("gpu_group") or "").strip() or "-",
+        bundle_group or "-",
     )
 
     params = {
@@ -203,13 +204,32 @@ def load_supported_game_bundle(
     shared_profiles = payload.get("profiles") if isinstance(payload.get("profiles"), Mapping) else {}
 
     games_obj = payload.get("games")
+    groups_obj = payload.get("groups")
+    if isinstance(groups_obj, Mapping) and bundle_group:
+        selected_group_obj = groups_obj.get(bundle_group)
+        if isinstance(selected_group_obj, Mapping):
+            games_obj = selected_group_obj.get("games")
     if games_obj is None and all(isinstance(v, Mapping) for v in payload.values()):
         # Backward-compatible format: {"ffxvi": {...}, ...}
-        normalized = _normalize_bundle_games(payload, shared_profiles=shared_profiles, request_vendor=normalized_vendor)
+        normalized = _normalize_bundle_games(
+            payload,
+            shared_profiles=shared_profiles,
+            request_vendor=normalized_vendor,
+            bundle_key=bundle_key,
+            bundle_group=bundle_group,
+            manifest_version=manifest_version_text,
+        )
         use_logger.info("[GPU-BUNDLE] bundle games count=%d", len(normalized))
         return normalized
 
-    normalized = _normalize_bundle_games(games_obj, shared_profiles=shared_profiles, request_vendor=normalized_vendor)
+    normalized = _normalize_bundle_games(
+        games_obj,
+        shared_profiles=shared_profiles,
+        request_vendor=normalized_vendor,
+        bundle_key=bundle_key,
+        bundle_group=bundle_group,
+        manifest_version=manifest_version_text,
+    )
     use_logger.info("[GPU-BUNDLE] bundle games count=%d", len(normalized))
     return normalized
 
@@ -219,6 +239,9 @@ def _normalize_bundle_games(
     *,
     shared_profiles: Mapping[str, Any] | None = None,
     request_vendor: str = "",
+    bundle_key: str = "",
+    bundle_group: str = "",
+    manifest_version: str = "",
 ) -> dict[str, dict[str, Any]]:
     shared_profiles = shared_profiles or {}
     bundle: dict[str, dict[str, Any]] = {}
@@ -242,6 +265,12 @@ def _normalize_bundle_games(
         entry = dict(raw)
         if not _normalize_gpu_vendor(entry.get("bundle_gpu_vendor")) and normalized_request_vendor:
             entry["bundle_gpu_vendor"] = normalized_request_vendor
+        if bundle_key and "bundle_key" not in entry:
+            entry["bundle_key"] = bundle_key
+        if bundle_group and "bundle_gpu_group" not in entry:
+            entry["bundle_gpu_group"] = bundle_group
+        if manifest_version and "bundle_manifest_version" not in entry:
+            entry["bundle_manifest_version"] = manifest_version
         if shared_profiles and "shared_profiles" not in entry:
             entry["shared_profiles"] = dict(shared_profiles)
         bundle[game_id.casefold()] = entry
