@@ -222,11 +222,13 @@ class StartupRuntimeCoordinator:
             )
         else:
             self._logger.error(
-                "[APP] Failed to load Game DB for vendor=%s: %s",
+                "[APP] Failed to load Game DB for vendor=%s stage=%s: %s",
                 sheet_state.active_vendor,
+                str(result.error_stage or "unknown"),
                 redact_text(result.error),
             )
-            self._callbacks.show_runtime_data_connection_failed_popup()
+            if str(result.error_stage or "") == "runtime_data":
+                self._callbacks.show_runtime_data_connection_failed_popup()
 
         self._callbacks.update_install_button_state()
         self._callbacks.update_sheet_status()

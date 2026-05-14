@@ -61,6 +61,7 @@ class GameDbLoadResult:
     error: Exception | None
     module_download_links: dict[str, Any] = field(default_factory=dict)
     game_db_vendor: str = "default"
+    error_stage: str = ""
 
 
 @dataclass(frozen=True)
@@ -69,6 +70,14 @@ class GameDbControllerCallbacks:
 
 
 class GameDbLoadController:
+    @staticmethod
+    def _classify_error_stage(error: Exception) -> str:
+        if isinstance(error, RuntimeError) and str(error) == "GPU bundle load failed":
+            return "gpu_bundle"
+        if isinstance(error, RuntimeError) and str(error) == "Profile catalog load failed":
+            return "profile_catalog"
+        return "unknown"
+
     def __init__(
         self,
         *,
@@ -133,6 +142,7 @@ class GameDbLoadController:
                     ok=False,
                     error=exc,
                     game_db_vendor=normalized_vendor,
+                    error_stage="unknown",
                 ),
                 description="game DB load failure callback",
             )
@@ -143,6 +153,22 @@ class GameDbLoadController:
     def _run_load_worker(self, game_db_vendor: str, gpu_model: str = "") -> None:
         try:
             runtime_data = self._load_runtime_data()
+        except Exception as exc:
+            if isinstance(exc, runtime_data_loader.RuntimeDataError):
+                cloudflare_status = runtime_data_loader.check_cloudflare_status()
+                self._logger.error(
+                    "runtime-data load failed: %s; cloudflare_status=%s; cloudflare_status_description=%s",
+                    redact_text(exc),
+                    cloudflare_status.get("indicator", "unknown"),
+                    cloudflare_status.get("description", ""),
+                )
+                result = self._build_failure_result(exc, game_db_vendor=game_db_vendor, error_stage="runtime_data")
+            else:
+                result = self._build_failure_result(exc, game_db_vendor=game_db_vendor, error_stage="unknown")
+            self._schedule_result(result, description="game DB load completion callback")
+            return
+
+        try:
             game_db = self._load_base_game_db(runtime_data)
             message_repo = self._load_message_repository(runtime_data)
             game_db = self._materialize_messages(game_db, message_repo, game_db_vendor=game_db_vendor)
@@ -165,15 +191,9 @@ class GameDbLoadController:
                 game_db_vendor=game_db_vendor,
             )
         except Exception as exc:
-            if isinstance(exc, runtime_data_loader.RuntimeDataError):
-                cloudflare_status = runtime_data_loader.check_cloudflare_status()
-                self._logger.error(
-                    "runtime-data load failed: %s; cloudflare_status=%s; cloudflare_status_description=%s",
-                    redact_text(exc),
-                    cloudflare_status.get("indicator", "unknown"),
-                    cloudflare_status.get("description", ""),
-                )
-            result = self._build_failure_result(exc, game_db_vendor=game_db_vendor)
+            error_stage = self._classify_error_stage(exc)
+            self._logger.error("[APP] Game DB load failed at stage=%s: %s", error_stage, redact_text(exc))
+            result = self._build_failure_result(exc, game_db_vendor=game_db_vendor, error_stage=error_stage)
 
         self._schedule_result(result, description="game DB load completion callback")
 
@@ -314,6 +334,7 @@ class GameDbLoadController:
             ok=True,
             error=None,
             game_db_vendor=game_db_vendor,
+            error_stage="",
         )
 
     def _build_failure_result(
@@ -321,6 +342,7 @@ class GameDbLoadController:
         error: Exception,
         *,
         game_db_vendor: str,
+        error_stage: str,
     ) -> GameDbLoadResult:
         return GameDbLoadResult(
             game_db={},
@@ -328,6 +350,7 @@ class GameDbLoadController:
             ok=False,
             error=error,
             game_db_vendor=game_db_vendor,
+            error_stage=str(error_stage or "unknown"),
         )
 
     def _schedule_result(self, result: GameDbLoadResult, *, description: str) -> None:

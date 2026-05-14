@@ -7,7 +7,6 @@ import requests
 from installer.common.network_utils import build_retry_session
 
 
-OPTICLICK_RUNTIME_DATA_URL = "https://opticlick-data-api.onehoon.workers.dev/v1/runtime-data"
 CLOUDFLARE_STATUS_SUMMARY_URL = "https://www.cloudflarestatus.com/api/v2/summary.json"
 REQUIRED_RUNTIME_KEYS = {
     "engine_ini_profile",
@@ -70,7 +69,11 @@ def validate_runtime_data_payload(payload: Any) -> dict[str, Any]:
     return dict(data)
 
 
-def load_runtime_data(url: str = OPTICLICK_RUNTIME_DATA_URL, *, timeout_seconds: float = 5.0) -> dict[str, Any]:
+def load_runtime_data(url: str, *, timeout_seconds: float = 5.0) -> dict[str, Any]:
+    normalized_url = str(url or "").strip()
+    if not normalized_url:
+        raise RuntimeDataNetworkError("runtime-data URL is empty")
+
     session = build_retry_session(
         total=3,
         backoff_factor=0.5,
@@ -79,7 +82,7 @@ def load_runtime_data(url: str = OPTICLICK_RUNTIME_DATA_URL, *, timeout_seconds:
     )
     try:
         response = session.get(
-            str(url or "").strip(),
+            normalized_url,
             timeout=timeout_seconds,
             headers={"Accept": "application/json", "User-Agent": "OptiClick"},
         )
@@ -128,7 +131,6 @@ def check_cloudflare_status(*, timeout_seconds: float = 3.0) -> dict[str, str]:
 
 
 __all__ = [
-    "OPTICLICK_RUNTIME_DATA_URL",
     "RuntimeDataError",
     "RuntimeDataHttpError",
     "RuntimeDataLoadFailed",
