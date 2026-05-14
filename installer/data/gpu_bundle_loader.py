@@ -43,7 +43,6 @@ def _normalize_gpu_match_text(value: object) -> str:
 
     text = re.sub(r"\((?:tm|r)\)", "", text, flags=re.IGNORECASE)
     text = text.replace("\u2122", "").replace("\u00ae", "")
-    text = re.sub(r"\bgraphics\b", "", text, flags=re.IGNORECASE)
     return _normalize_space(text).casefold()
 
 
