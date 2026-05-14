@@ -32,6 +32,8 @@ class AppNoticeController:
         wiki_not_configured_detail: str,
         wiki_open_failed_detail: str,
         installation_completed_text: str,
+        runtime_data_failure_title: str,
+        runtime_data_failure_body: str,
         root_width_fallback: int,
         root_height_fallback: int,
         show_info: DialogCallback = messagebox.showinfo,
@@ -51,6 +53,8 @@ class AppNoticeController:
         self._wiki_not_configured_detail = str(wiki_not_configured_detail or "")
         self._wiki_open_failed_detail = str(wiki_open_failed_detail or "")
         self._installation_completed_text = str(installation_completed_text or "")
+        self._runtime_data_failure_title = str(runtime_data_failure_title or "")
+        self._runtime_data_failure_body = str(runtime_data_failure_body or "")
         self._root_width_fallback = int(root_width_fallback)
         self._root_height_fallback = int(root_height_fallback)
         self._show_info = show_info
@@ -97,6 +101,19 @@ class AppNoticeController:
             on_close=on_close,
             allow_window_close=True,
             debug_name="startup warning popup",
+            schedule_on_close=False,
+        )
+
+    def show_runtime_data_connection_failed_popup(
+        self,
+        on_close: Optional[Callable[[], None]] = None,
+    ) -> None:
+        self._show_popup(
+            message_text=self._runtime_data_failure_body,
+            title=self._runtime_data_failure_title or self._error_title,
+            on_close=on_close,
+            allow_window_close=True,
+            debug_name="runtime-data connection failed popup",
             schedule_on_close=False,
         )
 

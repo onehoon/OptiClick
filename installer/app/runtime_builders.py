@@ -596,6 +596,7 @@ def build_app_startup_runtime_coordinator_deps(app: Any, *, logger=None) -> Star
             should_apply_fsr4_for_game=lambda game=None: should_apply_fsr4_for_game(app, game),
             get_archive_controller=lambda: app._archive_controller,
             clear_found_games=lambda: clear_found_games(app),
+            show_runtime_data_connection_failed_popup=lambda: app._app_notice_controller.show_runtime_data_connection_failed_popup(),
         ),
         unknown_gpu_text=app.txt.main.unknown_gpu,
         logger=logger or logging.getLogger(),

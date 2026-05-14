@@ -88,6 +88,40 @@ def _build_profile_index(rows: Sequence[Mapping[str, Any]]) -> dict[str, tuple[d
     }
 
 
+def build_profile_catalogs_from_rows(
+    *,
+    game_ini_profile_rows: object,
+    engine_ini_profile_rows: object,
+    game_xml_profile_rows: object,
+    registry_profile_rows: object,
+    game_json_profile_rows: object = None,
+    game_unreal_ini_profile_rows: object = None,
+) -> ProfileCatalogs:
+    def _normalize_rows(rows: object, label: str) -> list[dict[str, Any]]:
+        if rows is None:
+            return []
+        if not isinstance(rows, list):
+            raise ValueError(f"{label} must contain a list")
+        return [dict(row) for row in rows if isinstance(row, Mapping)]
+
+    loaded_rows: dict[str, list[dict[str, Any]]] = {
+        "game_ini_profile": _normalize_rows(game_ini_profile_rows, "game_ini_profile"),
+        "game_unreal_ini_profile": _normalize_rows(game_unreal_ini_profile_rows, "game_unreal_ini_profile"),
+        "engine_ini_profile": _normalize_rows(engine_ini_profile_rows, "engine_ini_profile"),
+        "game_xml_profile": _normalize_rows(game_xml_profile_rows, "game_xml_profile"),
+        "registry_profile": _normalize_rows(registry_profile_rows, "registry_profile"),
+        "game_json_profile": _normalize_rows(game_json_profile_rows, "game_json_profile"),
+    }
+    return ProfileCatalogs(
+        game_ini_profile=_build_profile_index(loaded_rows["game_ini_profile"]),
+        game_unreal_ini_profile=_build_profile_index(loaded_rows["game_unreal_ini_profile"]),
+        engine_ini_profile=_build_profile_index(loaded_rows["engine_ini_profile"]),
+        game_xml_profile=_build_profile_index(loaded_rows["game_xml_profile"]),
+        registry_profile=_build_profile_index(loaded_rows["registry_profile"]),
+        game_json_profile=_build_profile_index(loaded_rows["game_json_profile"]),
+    )
+
+
 def load_profile_catalogs(
     game_ini_profile_url: str,
     engine_ini_profile_url: str,
@@ -161,5 +195,6 @@ def attach_profile_catalogs_to_game_db(
 __all__ = [
     "ProfileCatalogs",
     "attach_profile_catalogs_to_game_db",
+    "build_profile_catalogs_from_rows",
     "load_profile_catalogs",
 ]

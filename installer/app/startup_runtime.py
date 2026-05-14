@@ -40,6 +40,7 @@ class StartupRuntimeCallbacks:
     should_apply_fsr4_for_game: Callable[[Mapping[str, Any] | None], bool]
     get_archive_controller: Callable[[], ArchivePreparationController | None]
     clear_found_games: Callable[[], None]
+    show_runtime_data_connection_failed_popup: Callable[[], None]
 
 
 @dataclass(frozen=True)
@@ -225,6 +226,7 @@ class StartupRuntimeCoordinator:
                 sheet_state.active_vendor,
                 redact_text(result.error),
             )
+            self._callbacks.show_runtime_data_connection_failed_popup()
 
         self._callbacks.update_install_button_state()
         self._callbacks.update_sheet_status()

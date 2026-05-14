@@ -128,6 +128,18 @@ def _parse_rows_from_text(text: str) -> list[dict[str, Any]]:
     return [row for row in payload if isinstance(row, dict)]
 
 
+def parse_message_center_rows(rows: object) -> dict[str, MessageTemplate]:
+    if not isinstance(rows, list):
+        raise ValueError("message_center payload must be a list")
+    return _parse_message_center_rows([row for row in rows if isinstance(row, dict)])
+
+
+def parse_message_binding_rows(rows: object) -> tuple[MessageBinding, ...]:
+    if not isinstance(rows, list):
+        raise ValueError("message_binding payload must be a list")
+    return _parse_message_binding_rows([row for row in rows if isinstance(row, dict)])
+
+
 def load_message_center(source_url: str = "", *, timeout_seconds: float = 10.0) -> dict[str, MessageTemplate]:
     text = _fetch_remote_text(source_url, timeout_seconds=timeout_seconds)
     return _parse_message_center_rows(_parse_rows_from_text(text))
@@ -260,6 +272,8 @@ __all__ = [
     "load_message_binding",
     "load_message_center",
     "materialize_bound_messages_into_game_db",
+    "parse_message_binding_rows",
+    "parse_message_center_rows",
     "resolve_stage_guide_url",
     "resolve_stage_popup_text",
     "resolve_startup_warning_text",

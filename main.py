@@ -73,16 +73,13 @@ SUPPORTED_GAMES_WIKI_URL = get_runtime_config_value("SUPPORTED_GAMES_WIKI_URL", 
 OPTICLICK_NEW_GAME_SUPPORT_URL = get_runtime_config_value("OPTICLICK_NEW_GAME_SUPPORT_URL", "").strip()
 OPTISCALER_GPU_BUNDLE_URL = get_runtime_config_value("OPTISCALER_GPU_BUNDLE_URL", "").strip()
 OPTISCALER_GPU_BUNDLE_DEBUG = False if getattr(sys, "frozen", False) else get_bool_env("OPTISCALER_GPU_BUNDLE_DEBUG", False)
-OPTISCALER_GAME_MASTER_URL = get_runtime_config_value("OPTISCALER_GAME_MASTER_URL", "").strip()
-OPTISCALER_RESOURCE_MASTER_URL = get_runtime_config_value("OPTISCALER_RESOURCE_MASTER_URL", "").strip()
-OPTISCALER_MESSAGE_CENTER_URL = get_runtime_config_value("OPTISCALER_MESSAGE_CENTER_URL", "").strip()
-OPTISCALER_MESSAGE_BINDING_URL = get_runtime_config_value("OPTISCALER_MESSAGE_BINDING_URL", "").strip()
-OPTISCALER_GAME_INI_PROFILE_URL = get_runtime_config_value("OPTISCALER_GAME_INI_PROFILE_URL", "").strip()
-OPTISCALER_GAME_UNREAL_INI_PROFILE_URL = get_runtime_config_value("OPTISCALER_GAME_UNREAL_INI_PROFILE_URL", "").strip()
-OPTISCALER_ENGINE_INI_PROFILE_URL = get_runtime_config_value("OPTISCALER_ENGINE_INI_PROFILE_URL", "").strip()
-OPTISCALER_GAME_XML_PROFILE_URL = get_runtime_config_value("OPTISCALER_GAME_XML_PROFILE_URL", "").strip()
-OPTISCALER_REGISTRY_PROFILE_URL = get_runtime_config_value("OPTISCALER_REGISTRY_PROFILE_URL", "").strip()
-OPTISCALER_GAME_JSON_PROFILE_URL = get_runtime_config_value("OPTISCALER_GAME_JSON_PROFILE_URL", "").strip()
+OPTICLICK_RUNTIME_DATA_URL = get_runtime_config_value(
+    "OPTICLICK_RUNTIME_DATA_URL",
+    get_runtime_config_value(
+        "OPTISCALER_RUNTIME_DATA_URL",
+        "https://opticlick-data-api.onehoon.workers.dev/v1/runtime-data",
+    ),
+).strip()
 
 configure_logging(app_version=APP_VERSION, source_root=Path(__file__).resolve().parent)
 APP_LANG = detect_ui_language()
@@ -116,19 +113,10 @@ APP_COMPOSITION_CONFIG = build_app_composition_config(
     create_prefixed_logger=get_prefixed_logger,
     gpu_bundle_url=OPTISCALER_GPU_BUNDLE_URL,
     gpu_bundle_debug=OPTISCALER_GPU_BUNDLE_DEBUG,
-    game_master_url=OPTISCALER_GAME_MASTER_URL,
-    resource_master_url=OPTISCALER_RESOURCE_MASTER_URL,
-    message_binding_url=OPTISCALER_MESSAGE_BINDING_URL,
-    message_center_url=OPTISCALER_MESSAGE_CENTER_URL,
+    runtime_data_url=OPTICLICK_RUNTIME_DATA_URL,
     max_supported_gpu_count=MAX_SUPPORTED_GPU_COUNT,
     root_width_fallback=APP_UI_CONFIG.window_width,
     root_height_fallback=APP_UI_CONFIG.window_height,
-    game_ini_profile_url=OPTISCALER_GAME_INI_PROFILE_URL,
-    game_unreal_ini_profile_url=OPTISCALER_GAME_UNREAL_INI_PROFILE_URL,
-    engine_ini_profile_url=OPTISCALER_ENGINE_INI_PROFILE_URL,
-    game_xml_profile_url=OPTISCALER_GAME_XML_PROFILE_URL,
-    registry_profile_url=OPTISCALER_REGISTRY_PROFILE_URL,
-    game_json_profile_url=OPTISCALER_GAME_JSON_PROFILE_URL,
 )
 APP_THEME = APP_COMPOSITION_CONFIG.app_theme
 UI_CONTROLLER_FACTORY_CONFIG = APP_COMPOSITION_CONFIG.ui_controller_factory_config
