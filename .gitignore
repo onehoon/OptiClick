@@ -44,3 +44,4 @@ pytest.ini
 .coverage
 htmlcov/
 ScreenShot/
+_workspaces/
