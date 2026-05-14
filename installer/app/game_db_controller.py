@@ -86,7 +86,7 @@ class GameDbLoadController:
         callbacks: GameDbControllerCallbacks,
         load_game_db: GameDbLoader,
         load_module_download_links: ModuleLinksLoader,
-        load_runtime_data: RuntimeDataLoader = runtime_data_loader.load_runtime_data,
+        load_runtime_data: RuntimeDataLoader,
         parse_message_center_rows: MessageCenterRowsLoader = message_loader.parse_message_center_rows,
         parse_message_binding_rows: MessageBindingRowsLoader = message_loader.parse_message_binding_rows,
         build_message_repository: MessageRepoBuilder = message_loader.build_message_repository,
