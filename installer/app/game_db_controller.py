@@ -314,10 +314,12 @@ class GameDbLoadController:
 
     def _inject_new_game_support_links(self, module_links: dict[str, Any]) -> None:
         if not self._new_game_support_url:
+            self._logger.info("New game support URL is not configured; skipping startup new game support block")
             return
 
         try:
             entries = self._load_new_game_support(self._new_game_support_url)
+            self._logger.info("Loaded new game support entries: %d", len(entries))
         except Exception as exc:
             self._logger.info("Failed to load new game support data: %s", redact_text(exc))
             return
@@ -325,6 +327,11 @@ class GameDbLoadController:
         try:
             text_ko = self._build_new_game_support_popup_text(entries, lang="ko")
             text_en = self._build_new_game_support_popup_text(entries, lang="en")
+            self._logger.info(
+                "New game support popup text built: ko=%s en=%s",
+                bool(text_ko),
+                bool(text_en),
+            )
         except Exception as exc:
             self._logger.info("Failed to build new game support popup text: %s", redact_text(exc))
             return

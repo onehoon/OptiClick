@@ -70,7 +70,10 @@ load_dev_env_file(load_dotenv, entry_file=__file__)
 # Allow overriding these values via build-time config for frozen builds
 # and via environment variables/.env during source development.
 SUPPORTED_GAMES_WIKI_URL = get_runtime_config_value("SUPPORTED_GAMES_WIKI_URL", "").strip()
-OPTICLICK_NEW_GAME_SUPPORT_URL = get_runtime_config_value("OPTICLICK_NEW_GAME_SUPPORT_URL", "").strip()
+OPTICLICK_NEW_GAME_SUPPORT_URL = get_runtime_config_value(
+    "OPTICLICK_NEW_GAME_SUPPORT_URL",
+    "https://raw.githubusercontent.com/onehoon/OptiClick/main/assets/data/new_game_support.json",
+).strip()
 OPTICLICK_GPU_BUNDLE_MANIFEST_URL = get_runtime_config_value(
     "OPTICLICK_GPU_BUNDLE_MANIFEST_URL",
     "https://opticlick-data-api.onehoon.workers.dev/v1/gpu-bundle-manifest",
