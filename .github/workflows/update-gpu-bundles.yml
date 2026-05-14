@@ -1,0 +1,79 @@
+name: Update GPU Bundles
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: update-gpu-bundles
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write Google service account credentials
+        run: |
+          cat > "$RUNNER_TEMP/google-service-account.json" <<'EOF'
+          ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          EOF
+
+      - name: Build GPU bundles from Google Sheets
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/google-service-account.json
+          GOOGLE_SPREADSHEET_ID: ${{ secrets.GOOGLE_SPREADSHEET_ID }}
+          GPU_BUNDLE_OUTPUT_DIR: dist/gpu-bundles
+        run: python scripts/build_gpu_bundles.py
+
+      - name: Validate generated GPU bundles
+        run: python scripts/validate_gpu_bundles.py --manifest dist/gpu-bundles/manifest.json --bundles-dir dist/gpu-bundles
+
+      - name: Set up Node.js for Wrangler
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Upload GPU bundles to Cloudflare R2
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_R2_BUCKET: ${{ secrets.CLOUDFLARE_R2_BUCKET }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ] || [ -z "$CLOUDFLARE_R2_BUCKET" ]; then
+            echo "Missing Cloudflare R2 secrets." >&2
+            exit 1
+          fi
+
+          mapfile -t files < <(find dist/gpu-bundles -type f -name '*.json' | sort)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No generated bundle files found." >&2
+            exit 1
+          fi
+
+          for file in "${files[@]}"; do
+            rel="${file#dist/gpu-bundles/}"
+            key="gpu-bundles/${rel}"
+            echo "Uploading ${file} -> ${key}"
+            npx --yes wrangler@latest r2 object put "${CLOUDFLARE_R2_BUCKET}/${key}" \
+              --file "${file}" \
+              --content-type "application/json" \
+              --remote
+          done
+
+          echo "Upload complete: ${#files[@]} files"
