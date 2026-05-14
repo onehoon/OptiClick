@@ -3,7 +3,8 @@ name: Update GPU Bundles
 on:
   workflow_dispatch:
 
-permissions: {}
+permissions:
+  contents: read
 
 concurrency:
   group: update-gpu-bundles

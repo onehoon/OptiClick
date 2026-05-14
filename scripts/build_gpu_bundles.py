@@ -254,9 +254,7 @@ def parse_group_rows(rows: list[dict[str, Any]]) -> list[GroupRow]:
             errors.append(f"{prefix}: game_id is required")
         if vendor not in VALID_VENDORS:
             errors.append(f"{prefix}: invalid vendor '{vendor}'")
-        if not gpu_group:
-            errors.append(f"{prefix}: gpu_group is required")
-        elif not KEY_PATTERN.fullmatch(gpu_group):
+        if gpu_group and not KEY_PATTERN.fullmatch(gpu_group):
             errors.append(f"{prefix}: gpu_group must match ^[a-z0-9_]+$")
 
         entries.append(
@@ -328,9 +326,16 @@ def unique_bundle_pairs(rules: list[ManifestRule]) -> list[tuple[str, str, str]]
     return pairs
 
 
-def select_game_profiles(entries: list[GroupRow]) -> list[GroupRow]:
+def select_game_profiles(entries: list[GroupRow], *, target_gpu_group: str) -> list[GroupRow]:
     selected: dict[str, GroupRow] = {}
-    for entry in sorted(entries, key=lambda item: (item.priority, item.row_order)):
+    for entry in sorted(
+        entries,
+        key=lambda item: (
+            0 if item.gpu_group == target_gpu_group else 1,
+            item.priority,
+            item.row_order,
+        ),
+    ):
         key = entry.game_id.casefold()
         if key not in selected:
             selected[key] = entry
@@ -379,14 +384,14 @@ def build_bundle_payload(
     candidate_rows = [
         row
         for row in group_rows
-        if row.enabled and row.vendor == vendor and row.gpu_group == gpu_group
+        if row.enabled and row.vendor == vendor and (row.gpu_group == gpu_group or row.gpu_group == "")
     ]
     if not candidate_rows:
         raise ValueError(
             f"Bundle {vendor}/{bundle_key} has no enabled gpu_bundle_group rows for gpu_group '{gpu_group}'"
         )
 
-    selected_games = select_game_profiles(candidate_rows)
+    selected_games = select_game_profiles(candidate_rows, target_gpu_group=gpu_group)
     if not selected_games:
         raise ValueError(f"Bundle {vendor}/{bundle_key} resolved to zero games")
 
