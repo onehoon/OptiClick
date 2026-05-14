@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 import logging
+import re
 from typing import Any
 from urllib.parse import urljoin
 
@@ -31,12 +32,19 @@ _INSTALL_PROFILE_TEXT_FIELDS = (
 )
 
 
-def _normalize_space_lower(value: object) -> str:
-    return " ".join(str(value or "").split()).strip().casefold()
-
-
 def _normalize_space(value: object) -> str:
     return " ".join(str(value or "").split()).strip()
+
+
+def _normalize_gpu_match_text(value: object) -> str:
+    text = _normalize_space(value)
+    if not text:
+        return ""
+
+    text = re.sub(r"\((?:tm|r)\)", "", text, flags=re.IGNORECASE)
+    text = text.replace("\u2122", "").replace("\u00ae", "")
+    text = re.sub(r"\bgraphics\b", "", text, flags=re.IGNORECASE)
+    return _normalize_space(text).casefold()
 
 
 def load_gpu_bundle_manifest(
@@ -69,7 +77,7 @@ def resolve_gpu_bundle_rule(
     if not isinstance(rules, list):
         return None
     normalized_vendor = _normalize_gpu_vendor(vendor)
-    normalized_gpu_raw = _normalize_space_lower(gpu_raw)
+    normalized_gpu_raw = _normalize_gpu_match_text(gpu_raw)
     if not normalized_vendor or not normalized_gpu_raw:
         return None
 
@@ -84,9 +92,9 @@ def resolve_gpu_bundle_rule(
 
         match_mode = str(rule.get("match_mode") or "").strip().casefold()
         match_value = _normalize_space(rule.get("match_value"))
-        if not match_value:
+        normalized_match_value = _normalize_gpu_match_text(match_value)
+        if not normalized_match_value:
             continue
-        normalized_match_value = match_value.casefold()
 
         matched = False
         if match_mode == "exact":
@@ -150,6 +158,12 @@ def load_supported_game_bundle(
     )
     manifest_version_text = str(manifest.get("manifest_version") or "").strip()
     use_logger.info("[GPU-BUNDLE] manifest loaded version=%s", manifest_version_text or "-")
+    normalized_gpu_match_text = _normalize_gpu_match_text(normalized_gpu_model)
+    use_logger.info(
+        "[GPU-BUNDLE] matching gpu_raw=%s normalized=%s",
+        normalized_gpu_model or "-",
+        normalized_gpu_match_text or "-",
+    )
 
     matched_rule = resolve_gpu_bundle_rule(
         manifest,
@@ -158,16 +172,19 @@ def load_supported_game_bundle(
     )
     if not matched_rule:
         use_logger.info(
-            "[GPU-BUNDLE] no manifest match vendor=%s gpu=%s",
+            "[GPU-BUNDLE] no manifest match vendor=%s gpu=%s normalized=%s",
             normalized_vendor or "-",
             normalized_gpu_model or "-",
+            normalized_gpu_match_text or "-",
         )
         return {}
 
     bundle_key = str(matched_rule.get("bundle_key") or "").strip()
-    bundle_group = str(matched_rule.get("gpu_group") or "").strip()
+    bundle_group = str(matched_rule.get("gpu_group") or "").strip().lower()
     if not bundle_key:
         raise ValueError("GPU bundle rule has empty bundle_key")
+    if not bundle_group:
+        raise ValueError("GPU bundle rule has empty gpu_group")
     use_logger.info(
         "[GPU-BUNDLE] resolved vendor=%s gpu=%s bundle=%s group=%s",
         normalized_vendor or "-",
@@ -205,10 +222,13 @@ def load_supported_game_bundle(
 
     games_obj = payload.get("games")
     groups_obj = payload.get("groups")
-    if isinstance(groups_obj, Mapping) and bundle_group:
+    if isinstance(groups_obj, Mapping):
         selected_group_obj = groups_obj.get(bundle_group)
-        if isinstance(selected_group_obj, Mapping):
-            games_obj = selected_group_obj.get("games")
+        if not isinstance(selected_group_obj, Mapping):
+            raise ValueError(f"GPU bundle missing group: {bundle_group}")
+        games_obj = selected_group_obj.get("games")
+        selected_group_count = len(games_obj) if isinstance(games_obj, (Mapping, list)) else 0
+        use_logger.info("[GPU-BUNDLE] selected group=%s games count=%d", bundle_group, selected_group_count)
     if games_obj is None and all(isinstance(v, Mapping) for v in payload.values()):
         # Backward-compatible format: {"ffxvi": {...}, ...}
         normalized = _normalize_bundle_games(
