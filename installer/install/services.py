@@ -501,25 +501,8 @@ def install_optipatcher(target_path, url, logger=None, cached_archive_path=""):
     install_optipatcher_payload(target_path, url, logger=logger, cached_archive_path=cached_archive_path)
 
 
-def install_specialk(target_path, final_dll_name, url="", logger=None, cached_archive_path=""):
-    from .components.specialk import install_specialk_payload
-
-    return install_specialk_payload(
-        target_path,
-        final_dll_name,
-        url=url,
-        logger=logger,
-        cached_archive_path=cached_archive_path,
-    )
-
-
 def install_unreal5_from_url(url, target_path, logger=None, cached_archive_path=""):
     from .components.unreal5 import install_unreal5_payload
 
     return install_unreal5_payload(url, target_path, logger=logger, cached_archive_path=cached_archive_path)
 
-
-def install_reframework_dinput8_from_url(url, target_path, logger=None):
-    from .components.reframework import install_reframework_dinput8_payload
-
-    return install_reframework_dinput8_payload(url, target_path, logger=logger)

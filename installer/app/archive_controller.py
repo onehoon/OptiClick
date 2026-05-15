@@ -22,7 +22,6 @@ from .optiscaler_payload_cache import (
 SchedulerCallback = Callable[[Callable[[], None]], Any]
 DownloadToFile = Callable[..., None]
 ArchiveStateCallback = Callable[["ArchivePreparationState"], None]
-_NOOP_ARCHIVE_STATE_CALLBACK: ArchiveStateCallback = lambda _state: None
 
 _ARCHIVE_SUFFIXES = {".7z", ".zip", ".rar", ".tar", ".gz", ".xz", ".bz2", ".asi"}
 ARCHIVE_ASSET_UAL_STATE_KEY = "ual"
@@ -46,7 +45,7 @@ class ArchivePreparationCallbacks:
     on_specialk_state_changed: ArchiveStateCallback
     on_ual_state_changed: ArchiveStateCallback
     on_unreal5_state_changed: ArchiveStateCallback
-    on_reframework_state_changed: ArchiveStateCallback = _NOOP_ARCHIVE_STATE_CALLBACK
+    on_reframework_state_changed: ArchiveStateCallback
 
 
 class ArchivePreparationController:

@@ -17,6 +17,8 @@ def install_specialk(
     if not destination_rel_path:
         return False
     url = extract_module_url(module_download_links, "specialk")
+    entry = module_download_links.get("specialk") if isinstance(module_download_links, Mapping) else {}
+    download_filename = str((entry or {}).get("filename", "") or "").strip()
     if not cached_archive_path and not url:
         raise FileNotFoundError("Special K download link is not configured")
     install_dll_payload_from_archive(
@@ -25,6 +27,7 @@ def install_specialk(
         source_dll_name=SPECIALK64_DLL_NAME,
         url=url,
         cached_archive_path=cached_archive_path,
+        download_filename=download_filename,
         logger=logger,
         temp_prefix=".opticlick_specialk_tmp_",
     )

@@ -43,6 +43,7 @@ def install_dll_payload_from_archive(
     source_dll_name: str,
     url: str = "",
     cached_archive_path: str = "",
+    download_filename: str = "",
     logger=None,
     temp_prefix: str = ".opticlick_dll_payload_tmp_",
 ) -> bool:
@@ -61,7 +62,11 @@ def install_dll_payload_from_archive(
     try:
         source_path = cached
         if source_path is None:
-            file_name = Path(urlparse(normalized_url).path).name or source_dll_name
+            file_name = Path(str(download_filename or "").strip()).name
+            if not file_name:
+                file_name = Path(urlparse(normalized_url).path).name
+            if not file_name:
+                file_name = source_dll_name
             source_path = tmpdir_path / file_name
             installer_services.download_to_file(normalized_url, str(source_path), timeout=60, logger=logger)
 
@@ -92,4 +97,3 @@ def install_dll_payload_from_archive(
         return True
     finally:
         shutil.rmtree(tmpdir_path, ignore_errors=True)
-
