@@ -123,6 +123,14 @@
     "game_id": "PRAGMATA",
     "gpu_vendor": "INTEL",
     "stage": "install_pre",
+    "message_id": "install_pre_pireate_warning",
+    "priority": 70,
+    "memo": ""
+  },
+  {
+    "game_id": "PRAGMATA",
+    "gpu_vendor": "INTEL",
+    "stage": "install_pre",
     "message_id": "install_pre_Hypervisor",
     "priority": 80,
     "memo": ""
