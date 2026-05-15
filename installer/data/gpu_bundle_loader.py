@@ -21,13 +21,13 @@ _GPU_BUNDLE_CONNECT_TIMEOUT_SECONDS = 5.0
 _INSTALL_PROFILE_BOOL_FIELDS = (
     "ultimate_asi_loader",
     "optipatcher",
-    "specialk",
     "unreal5",
     "rtss_overlay",
 )
 _INSTALL_PROFILE_TEXT_FIELDS = (
     "optiscaler_dll_name",
     "reframework_url",
+    "specialk",
     "extra_bundle",
 )
 

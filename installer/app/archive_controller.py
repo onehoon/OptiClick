@@ -22,6 +22,7 @@ from .optiscaler_payload_cache import (
 SchedulerCallback = Callable[[Callable[[], None]], Any]
 DownloadToFile = Callable[..., None]
 ArchiveStateCallback = Callable[["ArchivePreparationState"], None]
+_NOOP_ARCHIVE_STATE_CALLBACK: ArchiveStateCallback = lambda _state: None
 
 _ARCHIVE_SUFFIXES = {".7z", ".zip", ".rar", ".tar", ".gz", ".xz", ".bz2", ".asi"}
 ARCHIVE_ASSET_UAL_STATE_KEY = "ual"
@@ -45,6 +46,7 @@ class ArchivePreparationCallbacks:
     on_specialk_state_changed: ArchiveStateCallback
     on_ual_state_changed: ArchiveStateCallback
     on_unreal5_state_changed: ArchiveStateCallback
+    on_reframework_state_changed: ArchiveStateCallback = _NOOP_ARCHIVE_STATE_CALLBACK
 
 
 class ArchivePreparationController:
@@ -256,6 +258,20 @@ class ArchivePreparationController:
             manifest_root=manifest_root or self._manifest_root,
             asset_key=ARCHIVE_ASSET_UAL_ENTRY_KEY,
             asset_label="Ultimate ASI Loader archive",
+        )
+
+    def prepare_reframework(
+        self,
+        entry: Mapping[str, object] | None,
+        cache_dir: Path,
+        manifest_root: Path | None = None,
+    ) -> ArchivePreparationState:
+        return self._prepare_versioned_asset(
+            entry=entry,
+            cache_dir=cache_dir,
+            manifest_root=manifest_root or self._manifest_root,
+            asset_key="reframework",
+            asset_label="REFramework archive",
         )
 
     def prepare_unreal5(
@@ -565,6 +581,9 @@ class ArchivePreparationController:
             return
         if asset_key == "specialk":
             self._callbacks.on_specialk_state_changed(state)
+            return
+        if asset_key == "reframework":
+            self._callbacks.on_reframework_state_changed(state)
             return
         # Startup runtime uses the compact state key, while resource data uses
         # the historical module entry key. Keep both callback aliases valid.

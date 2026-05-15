@@ -148,6 +148,7 @@ def build_install_entry_state(
     ual_cached_archive: str = "",
     optipatcher_cached_archive: str = "",
     specialk_cached_archive: str = "",
+    reframework_cached_archive: str = "",
     unreal5_cached_archive: str = "",
 ) -> InstallEntryState:
     return InstallEntryState(
@@ -172,6 +173,7 @@ def build_install_entry_state(
         ual_cached_archive=_normalize_text(ual_cached_archive),
         optipatcher_cached_archive=_normalize_text(optipatcher_cached_archive),
         specialk_cached_archive=_normalize_text(specialk_cached_archive),
+        reframework_cached_archive=_normalize_text(reframework_cached_archive),
         unreal5_cached_archive=_normalize_text(unreal5_cached_archive),
     )
 

@@ -336,6 +336,7 @@ def _build_archive_controller(app: Any, schedule_ui: Callable[[Callable[[], None
             on_fsr4_state_changed=lambda state: app._startup_runtime_coordinator.on_fsr4_archive_state_changed(state),
             on_optipatcher_state_changed=lambda state: app._startup_runtime_coordinator.on_optipatcher_archive_state_changed(state),
             on_specialk_state_changed=lambda state: app._startup_runtime_coordinator.on_specialk_archive_state_changed(state),
+            on_reframework_state_changed=lambda state: app._startup_runtime_coordinator.on_reframework_archive_state_changed(state),
             on_ual_state_changed=lambda state: app._startup_runtime_coordinator.on_ual_archive_state_changed(state),
             on_unreal5_state_changed=lambda state: app._startup_runtime_coordinator.on_unreal5_archive_state_changed(state),
         ),

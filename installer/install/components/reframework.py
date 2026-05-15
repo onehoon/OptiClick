@@ -1,50 +1,35 @@
 from __future__ import annotations
 
-import os
-import shutil
-import tempfile
-import zipfile
 from typing import Mapping
-from urllib.parse import urlparse
 
-from .. import services as installer_services
+from ._link_utils import extract_module_url
+from .dll_payload import install_dll_payload_from_archive
 
-
-def install_reframework_dinput8_payload(url, target_path, logger=None):
-    parsed = urlparse(url)
-    file_name = os.path.basename(parsed.path) or "reframework.zip"
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        archive_path = str(os.path.join(tmpdir, file_name))
-        installer_services.download_to_file(url, archive_path, timeout=60, logger=logger)
-
-        with zipfile.ZipFile(archive_path, "r") as z:
-            dll_member = next(
-                (
-                    m for m in z.namelist()
-                    if not m.endswith("/") and os.path.basename(m).lower() == "dinput8.dll"
-                ),
-                None,
-            )
-
-            if not dll_member:
-                msg = "dinput8.dll not found inside reframework zip"
-                if logger:
-                    logger.error(msg)
-                raise FileNotFoundError(msg)
-
-            dst = os.path.join(target_path, "dinput8.dll")
-            with z.open(dll_member, "r") as src_fp, open(dst, "wb") as dst_fp:
-                shutil.copyfileobj(src_fp, dst_fp)
+REFRAMEWORK_SOURCE_DLL_NAME = "dinput8.dll"
 
 
-def install_reframework_dinput8(target_path: str, game_data: Mapping[str, object], logger=None) -> bool:
-    """Return True only when REFramework dinput8.dll was requested and installed."""
-    url = str(game_data.get("reframework_url", "") or "").strip()
-    if not url:
+def install_reframework_dinput8(
+    target_path: str,
+    game_data: Mapping[str, object],
+    module_download_links: Mapping[str, object],
+    logger=None,
+    cached_archive_path: str = "",
+) -> bool:
+    destination_rel_path = str(game_data.get("reframework_url", "") or "").strip()
+    if not destination_rel_path:
         return False
-
-    installer_services.install_reframework_dinput8_from_url(url, target_path, logger=logger)
+    url = extract_module_url(module_download_links, "reframework")
+    if not cached_archive_path and not url:
+        raise FileNotFoundError("REFramework download link is not configured")
+    install_dll_payload_from_archive(
+        target_path=target_path,
+        destination_rel_path=destination_rel_path,
+        source_dll_name=REFRAMEWORK_SOURCE_DLL_NAME,
+        url=url,
+        cached_archive_path=cached_archive_path,
+        logger=logger,
+        temp_prefix=".opticlick_reframework_tmp_",
+    )
     if logger:
-        logger.info("Installed REFramework dinput8.dll")
+        logger.info("Installed REFramework to %s", destination_rel_path)
     return True

@@ -33,6 +33,7 @@ class AppPathConfig:
     fsr4_cache_dir: Path
     optipatcher_cache_dir: Path
     specialk_cache_dir: Path
+    reframework_cache_dir: Path
     ual_cache_dir: Path
     unreal5_cache_dir: Path
     cover_cache_dir: Path
@@ -79,6 +80,7 @@ def build_app_path_config(
         fsr4_cache_dir=app_cache_dir / "cache" / "fsr4",
         optipatcher_cache_dir=app_cache_dir / "cache" / "optipatcher",
         specialk_cache_dir=app_cache_dir / "cache" / "specialk",
+        reframework_cache_dir=app_cache_dir / "cache" / "reframework",
         ual_cache_dir=app_cache_dir / "cache" / "ultimateasiloader",
         unreal5_cache_dir=app_cache_dir / "cache" / "unreal5",
         cover_cache_dir=app_cache_dir / "cache" / "covers",

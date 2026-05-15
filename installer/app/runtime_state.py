@@ -26,6 +26,11 @@ class ArchiveRuntimeState:
     specialk_error: str = ""
     specialk_filename: str = ""
     specialk_source_archive: str = ""
+    reframework_ready: bool = False
+    reframework_downloading: bool = False
+    reframework_error: str = ""
+    reframework_filename: str = ""
+    reframework_source_archive: str = ""
     ual_ready: bool = False
     ual_downloading: bool = False
     ual_error: str = ""

@@ -54,6 +54,7 @@ class InstallEntryState:
     ual_cached_archive: str = ""
     optipatcher_cached_archive: str = ""
     specialk_cached_archive: str = ""
+    reframework_cached_archive: str = ""
     unreal5_cached_archive: str = ""
 
 
@@ -70,6 +71,7 @@ class InstallEntryDecision:
     ual_cached_archive: str = ""
     optipatcher_cached_archive: str = ""
     specialk_cached_archive: str = ""
+    reframework_cached_archive: str = ""
     unreal5_cached_archive: str = ""
 
 
@@ -133,6 +135,7 @@ def validate_install_entry(
         ual_cached_archive=_normalize_text(state.ual_cached_archive),
         optipatcher_cached_archive=_normalize_text(state.optipatcher_cached_archive),
         specialk_cached_archive=_normalize_text(state.specialk_cached_archive),
+        reframework_cached_archive=_normalize_text(state.reframework_cached_archive),
         unreal5_cached_archive=_normalize_text(state.unreal5_cached_archive),
     )
 
