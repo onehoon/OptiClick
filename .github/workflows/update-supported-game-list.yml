@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 15
     env:
       TZ: Asia/Seoul
-      INSTALL_PROFILE_SHEET_URL: ${{ secrets.INSTALL_PROFILE_SHEET_URL }}
+      GOOGLE_SPREADSHEET_ID: ${{ secrets.GOOGLE_SPREADSHEET_ID }}
       GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
       WIKI_PUSH_TOKEN: ${{ secrets.WIKI_PUSH_TOKEN }}
       TARGET_WIKI_PAGE_FILE: Supported-Game-List.md

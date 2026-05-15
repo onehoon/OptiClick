@@ -172,6 +172,7 @@ def initialize_app_runtime_state(
     app.fsr4_cache_dir = _ensure_cache_dir(app_paths.fsr4_cache_dir)
     app.optipatcher_cache_dir = _ensure_cache_dir(app_paths.optipatcher_cache_dir)
     app.specialk_cache_dir = _ensure_cache_dir(app_paths.specialk_cache_dir)
+    app.reframework_cache_dir = _ensure_cache_dir(app_paths.reframework_cache_dir)
     app.ual_cache_dir = _ensure_cache_dir(app_paths.ual_cache_dir)
     app.unreal5_cache_dir = _ensure_cache_dir(app_paths.unreal5_cache_dir)
     app.manifest_root = app_paths.app_cache_dir
@@ -571,6 +572,7 @@ def build_app_startup_runtime_coordinator_deps(app: Any, *, logger=None) -> Star
         fsr4_cache_dir=app.fsr4_cache_dir,
         optipatcher_cache_dir=app.optipatcher_cache_dir,
         specialk_cache_dir=app.specialk_cache_dir,
+        reframework_cache_dir=app.reframework_cache_dir,
         ual_cache_dir=app.ual_cache_dir,
         unreal5_cache_dir=app.unreal5_cache_dir,
         manifest_root=app.manifest_root,
@@ -596,6 +598,7 @@ def build_app_startup_runtime_coordinator_deps(app: Any, *, logger=None) -> Star
             should_apply_fsr4_for_game=lambda game=None: should_apply_fsr4_for_game(app, game),
             get_archive_controller=lambda: app._archive_controller,
             clear_found_games=lambda: clear_found_games(app),
+            show_runtime_data_connection_failed_popup=lambda: app._app_notice_controller.show_runtime_data_connection_failed_popup(),
         ),
         unknown_gpu_text=app.txt.main.unknown_gpu,
         logger=logger or logging.getLogger(),

@@ -4,7 +4,7 @@ from collections.abc import Mapping
 import logging
 import re
 from typing import Any
-from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+from urllib.parse import urljoin
 
 from ..common.flag_parser import parse_bool_token
 from ..common.network_utils import build_retry_session
@@ -16,80 +16,107 @@ from .game_db_keys import (
 )
 
 
-_SCRIPT_ID_RE = re.compile(r"^[A-Za-z0-9_-]{20,}$")
 _GPU_BUNDLE_SESSION = build_retry_session(total=4, backoff_factor=0.6)
 _GPU_BUNDLE_CONNECT_TIMEOUT_SECONDS = 5.0
 _INSTALL_PROFILE_BOOL_FIELDS = (
     "ultimate_asi_loader",
     "optipatcher",
-    "specialk",
     "unreal5",
     "rtss_overlay",
 )
 _INSTALL_PROFILE_TEXT_FIELDS = (
     "optiscaler_dll_name",
     "reframework_url",
+    "specialk",
     "extra_bundle",
 )
 
 
-def _normalize_apps_script_base_url(base_url_or_key: str) -> str:
-    raw = str(base_url_or_key or "").strip()
-    if not raw:
-        raise ValueError("GPU bundle URL is empty")
-
-    low = raw.lower()
-    if low.startswith("https://") or low.startswith("http://"):
-        return raw
-
-    if _SCRIPT_ID_RE.fullmatch(raw):
-        return f"https://script.google.com/macros/s/{raw}/exec"
-
-    raise ValueError("Invalid GPU bundle URL or Apps Script key")
+def _normalize_space(value: object) -> str:
+    return " ".join(str(value or "").split()).strip()
 
 
-def build_gpu_bundle_request_url(
-    base_url_or_key: str,
+def _normalize_gpu_match_text(value: object) -> str:
+    text = _normalize_space(value)
+    if not text:
+        return ""
+
+    text = re.sub(r"\((?:tm|r)\)", "", text, flags=re.IGNORECASE)
+    text = text.replace("\u2122", "").replace("\u00ae", "")
+    return _normalize_space(text).casefold()
+
+
+def load_gpu_bundle_manifest(
+    manifest_url: str,
     *,
-    gpu_vendor: str,
-    gpu_model: str,
-    request_source: str | None = None,
-    device_manufacturer: str | None = None,
-    device_model: str | None = None,
-    app_version: str | None = None,
-    debug: bool | None = None,
-) -> str:
-    base_url = _normalize_apps_script_base_url(base_url_or_key)
-    parsed = urlparse(base_url)
-    excluded_query_keys = {
-        "action",
-        "vendor",
-        "gpu",
-        "request_source",
-        "device_manufacturer",
-        "device_model",
-        "app_version",
-    }
-    if debug is not None:
-        excluded_query_keys.add("debug")
-    preserved = [
-        (k, v)
-        for k, v in parse_qsl(parsed.query, keep_blank_values=True)
-        if k.lower() not in excluded_query_keys
-    ]
+    timeout_seconds: float = 10.0,
+) -> dict[str, Any]:
+    request_url = str(manifest_url or "").strip()
+    if not request_url:
+        raise ValueError("GPU bundle manifest URL is empty")
+    read_timeout = max(float(timeout_seconds or 0.0), 1.0)
+    response = _GPU_BUNDLE_SESSION.get(
+        request_url,
+        timeout=(_GPU_BUNDLE_CONNECT_TIMEOUT_SECONDS, read_timeout),
+    )
+    response.raise_for_status()
+    payload = response.json()
+    if not isinstance(payload, Mapping):
+        raise ValueError("GPU bundle manifest response must be a JSON object")
+    return dict(payload)
 
-    request_query = preserved + [
-        ("action", "getSupportedGameBundle"),
-        ("vendor", str(gpu_vendor or "").strip().lower()),
-        ("gpu", str(gpu_model or "").strip()),
-        ("request_source", str(request_source or "").strip()),
-        ("device_manufacturer", str(device_manufacturer or "").strip()),
-        ("device_model", str(device_model or "").strip()),
-        ("app_version", str(app_version or "").strip()),
-    ]
-    if debug:
-        request_query.append(("debug", "1"))
-    return urlunparse(parsed._replace(query=urlencode(request_query, doseq=True)))
+
+def resolve_gpu_bundle_rule(
+    manifest: Mapping[str, Any],
+    *,
+    vendor: str,
+    gpu_raw: str,
+) -> Mapping[str, Any] | None:
+    rules = manifest.get("rules")
+    if not isinstance(rules, list):
+        return None
+    normalized_vendor = _normalize_gpu_vendor(vendor)
+    normalized_gpu_raw = _normalize_gpu_match_text(gpu_raw)
+    if not normalized_vendor or not normalized_gpu_raw:
+        return None
+
+    matches: list[tuple[int, int, int, Mapping[str, Any]]] = []
+    for index, rule in enumerate(rules):
+        if not isinstance(rule, Mapping):
+            continue
+        if not _to_bool(rule.get("enabled"), True):
+            continue
+        if _normalize_gpu_vendor(rule.get("vendor")) != normalized_vendor:
+            continue
+
+        match_mode = str(rule.get("match_mode") or "").strip().casefold()
+        match_value = _normalize_space(rule.get("match_value"))
+        normalized_match_value = _normalize_gpu_match_text(match_value)
+        if not normalized_match_value:
+            continue
+
+        matched = False
+        if match_mode == "exact":
+            matched = normalized_gpu_raw == normalized_match_value
+        elif match_mode == "contains":
+            matched = normalized_match_value in normalized_gpu_raw
+        if not matched:
+            continue
+
+        priority = _safe_int(rule.get("priority"), 100)
+        matches.append((priority, -len(normalized_match_value), index, rule))
+
+    if not matches:
+        return None
+    matches.sort(key=lambda item: (item[0], item[1], item[2]))
+    return matches[0][3]
+
+
+def _build_bundle_request_url(bundle_base_url: str) -> str:
+    request_url = str(bundle_base_url or "").strip()
+    if not request_url:
+        raise ValueError("GPU bundle URL is empty")
+    return request_url
 
 
 def _normalize_gpu_vendor(value: object) -> str:
@@ -106,32 +133,79 @@ def _normalize_gpu_vendor(value: object) -> str:
 
 
 def load_supported_game_bundle(
-    base_url_or_key: str,
+    bundle_base_url: str,
     gpu_vendor: str,
     gpu_model: str,
     *,
+    manifest_url: str | None = None,
     request_source: str | None = None,
     device_manufacturer: str | None = None,
     device_model: str | None = None,
     app_version: str | None = None,
     timeout_seconds: float = 10.0,
-    debug: bool | None = None,
     logger: logging.Logger | None = None,
 ) -> dict[str, dict[str, Any]]:
     use_logger = logger or logging.getLogger(__name__)
-    request_url = build_gpu_bundle_request_url(
-        base_url_or_key,
-        gpu_vendor=gpu_vendor,
-        gpu_model=gpu_model,
-        request_source=request_source,
-        device_manufacturer=device_manufacturer,
-        device_model=device_model,
-        app_version=app_version,
-        debug=debug,
+    normalized_vendor = _normalize_gpu_vendor(gpu_vendor)
+    normalized_gpu_model = _normalize_space(gpu_model)
+    request_url = _build_bundle_request_url(bundle_base_url)
+    manifest_request_url = str(manifest_url or "").strip() or urljoin(request_url, "/v1/gpu-bundle-manifest")
+
+    manifest = load_gpu_bundle_manifest(
+        manifest_request_url,
+        timeout_seconds=timeout_seconds,
     )
+    manifest_version_text = str(manifest.get("manifest_version") or "").strip()
+    use_logger.info("[GPU-BUNDLE] manifest loaded version=%s", manifest_version_text or "-")
+    normalized_gpu_match_text = _normalize_gpu_match_text(normalized_gpu_model)
+    use_logger.info(
+        "[GPU-BUNDLE] matching gpu_raw=%s normalized=%s",
+        normalized_gpu_model or "-",
+        normalized_gpu_match_text or "-",
+    )
+
+    matched_rule = resolve_gpu_bundle_rule(
+        manifest,
+        vendor=normalized_vendor,
+        gpu_raw=normalized_gpu_model,
+    )
+    if not matched_rule:
+        use_logger.info(
+            "[GPU-BUNDLE] no manifest match vendor=%s gpu=%s normalized=%s",
+            normalized_vendor or "-",
+            normalized_gpu_model or "-",
+            normalized_gpu_match_text or "-",
+        )
+        return {}
+
+    bundle_key = str(matched_rule.get("bundle_key") or "").strip()
+    bundle_group = str(matched_rule.get("gpu_group") or "").strip().lower()
+    if not bundle_key:
+        raise ValueError("GPU bundle rule has empty bundle_key")
+    if not bundle_group:
+        raise ValueError("GPU bundle rule has empty gpu_group")
+    use_logger.info(
+        "[GPU-BUNDLE] resolved vendor=%s gpu=%s bundle=%s group=%s",
+        normalized_vendor or "-",
+        normalized_gpu_model or "-",
+        bundle_key,
+        bundle_group or "-",
+    )
+
+    params = {
+        "vendor": normalized_vendor,
+        "bundle": bundle_key,
+        "gpu_raw": normalized_gpu_model,
+        "request_source": str(request_source or "").strip(),
+        "device_manufacturer": str(device_manufacturer or "").strip(),
+        "device_model": str(device_model or "").strip(),
+        "app_version": str(app_version or "").strip(),
+        "manifest_version": manifest_version_text,
+    }
     read_timeout = max(float(timeout_seconds or 0.0), 1.0)
     response = _GPU_BUNDLE_SESSION.get(
         request_url,
+        params=params,
         timeout=(_GPU_BUNDLE_CONNECT_TIMEOUT_SECONDS, read_timeout),
     )
     response.raise_for_status()
@@ -143,42 +217,40 @@ def load_supported_game_bundle(
     if payload.get("ok") is False:
         raise ValueError(str(payload.get("error") or "GPU bundle request failed"))
 
-    if debug:
-        _log_gpu_bundle_debug_response(payload, logger=use_logger)
-
     shared_profiles = payload.get("profiles") if isinstance(payload.get("profiles"), Mapping) else {}
 
     games_obj = payload.get("games")
+    groups_obj = payload.get("groups")
+    if isinstance(groups_obj, Mapping):
+        selected_group_obj = groups_obj.get(bundle_group)
+        if not isinstance(selected_group_obj, Mapping):
+            raise ValueError(f"GPU bundle missing group: {bundle_group}")
+        games_obj = selected_group_obj.get("games")
+        selected_group_count = len(games_obj) if isinstance(games_obj, (Mapping, list)) else 0
+        use_logger.info("[GPU-BUNDLE] selected group=%s games count=%d", bundle_group, selected_group_count)
     if games_obj is None and all(isinstance(v, Mapping) for v in payload.values()):
         # Backward-compatible format: {"ffxvi": {...}, ...}
-        return _normalize_bundle_games(payload, shared_profiles=shared_profiles, request_vendor=gpu_vendor)
+        normalized = _normalize_bundle_games(
+            payload,
+            shared_profiles=shared_profiles,
+            request_vendor=normalized_vendor,
+            bundle_key=bundle_key,
+            bundle_group=bundle_group,
+            manifest_version=manifest_version_text,
+        )
+        use_logger.info("[GPU-BUNDLE] bundle games count=%d", len(normalized))
+        return normalized
 
-    return _normalize_bundle_games(games_obj, shared_profiles=shared_profiles, request_vendor=gpu_vendor)
-
-
-def _log_gpu_bundle_debug_response(payload: Mapping[str, Any], *, logger: logging.Logger) -> None:
-    raw_debug_payload = payload.get("debug")
-    if raw_debug_payload is None:
-        logger.warning("[GPU-BUNDLE] debug requested but response.debug missing")
-        return
-    if not isinstance(raw_debug_payload, Mapping):
-        logger.warning("[GPU-BUNDLE] debug payload ignored: expected object")
-        return
-
-    cache_hit_text = "true" if _to_bool(raw_debug_payload.get("cache_hit"), False) else "false"
-    logger.info(
-        "[GPU-BUNDLE] debug cache_hit=%s cache_key=%s version=%s vendor=%s gpu=%s",
-        cache_hit_text,
-        _normalize_debug_field(raw_debug_payload.get("cache_key")),
-        _normalize_debug_field(raw_debug_payload.get("version")),
-        _normalize_debug_field(raw_debug_payload.get("vendor")),
-        _normalize_debug_field(raw_debug_payload.get("gpu")),
+    normalized = _normalize_bundle_games(
+        games_obj,
+        shared_profiles=shared_profiles,
+        request_vendor=normalized_vendor,
+        bundle_key=bundle_key,
+        bundle_group=bundle_group,
+        manifest_version=manifest_version_text,
     )
-
-
-def _normalize_debug_field(value: object, default: str = "-") -> str:
-    text = str(value or "").strip()
-    return text or default
+    use_logger.info("[GPU-BUNDLE] bundle games count=%d", len(normalized))
+    return normalized
 
 
 def _normalize_bundle_games(
@@ -186,6 +258,9 @@ def _normalize_bundle_games(
     *,
     shared_profiles: Mapping[str, Any] | None = None,
     request_vendor: str = "",
+    bundle_key: str = "",
+    bundle_group: str = "",
+    manifest_version: str = "",
 ) -> dict[str, dict[str, Any]]:
     shared_profiles = shared_profiles or {}
     bundle: dict[str, dict[str, Any]] = {}
@@ -209,6 +284,12 @@ def _normalize_bundle_games(
         entry = dict(raw)
         if not _normalize_gpu_vendor(entry.get("bundle_gpu_vendor")) and normalized_request_vendor:
             entry["bundle_gpu_vendor"] = normalized_request_vendor
+        if bundle_key and "bundle_key" not in entry:
+            entry["bundle_key"] = bundle_key
+        if bundle_group and "bundle_gpu_group" not in entry:
+            entry["bundle_gpu_group"] = bundle_group
+        if manifest_version and "bundle_manifest_version" not in entry:
+            entry["bundle_manifest_version"] = manifest_version
         if shared_profiles and "shared_profiles" not in entry:
             entry["shared_profiles"] = dict(shared_profiles)
         bundle[game_id.casefold()] = entry
@@ -343,7 +424,8 @@ def merge_gpu_bundle_into_game_db(
 
 
 __all__ = [
-    "build_gpu_bundle_request_url",
+    "load_gpu_bundle_manifest",
+    "resolve_gpu_bundle_rule",
     "load_supported_game_bundle",
     "merge_gpu_bundle_into_game_db",
 ]

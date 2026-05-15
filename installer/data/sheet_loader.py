@@ -40,6 +40,10 @@ def load_game_db_from_remote_json(source_url: str, *, timeout_seconds: float = 1
     return _build_game_db_from_rows(rows)
 
 
+def build_game_db_from_rows(rows: object) -> dict[str, dict[str, object]]:
+    return _build_game_db_from_rows(rows)
+
+
 def _load_remote_json(source_url: str, *, timeout_seconds: float) -> object:
     response = _file_session.get(add_github_raw_data_cache_bust(source_url), timeout=timeout_seconds)
     response.raise_for_status()
@@ -109,6 +113,10 @@ def load_module_download_links_from_remote_json(source_url: str, *, timeout_seco
     if not normalized:
         raise ValueError("Resource master URL is empty")
     rows = _load_remote_json(normalized, timeout_seconds=timeout_seconds)
+    return _build_module_download_links_from_rows(rows)
+
+
+def build_module_download_links_from_rows(rows: object) -> dict[str, dict[str, str] | str]:
     return _build_module_download_links_from_rows(rows)
 
 

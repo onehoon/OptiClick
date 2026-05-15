@@ -7,17 +7,18 @@ import logging
 from typing import Any, Protocol
 
 from ..common.log_sanitizer import redact_text
-from ..data import gpu_bundle_loader, message_loader, new_game_support_loader, profile_loader
+from ..data import gpu_bundle_loader, message_loader, new_game_support_loader, profile_loader, runtime_data_loader
 
 
 SchedulerCallback = Callable[[Callable[[], None]], Any]
-GameDbLoader = Callable[[], dict[str, dict[str, Any]]]
-ModuleLinksLoader = Callable[[], dict[str, Any]]
-MessageCenterLoader = Callable[[str], dict[str, message_loader.MessageTemplate]]
-MessageBindingLoader = Callable[[str], tuple[message_loader.MessageBinding, ...]]
+GameDbLoader = Callable[[object], dict[str, dict[str, Any]]]
+ModuleLinksLoader = Callable[[object], dict[str, Any]]
+RuntimeDataLoader = Callable[[], dict[str, Any]]
+MessageCenterRowsLoader = Callable[[object], dict[str, message_loader.MessageTemplate]]
+MessageBindingRowsLoader = Callable[[object], tuple[message_loader.MessageBinding, ...]]
 MessageRepoBuilder = Callable[[dict[str, message_loader.MessageTemplate], tuple[message_loader.MessageBinding, ...]], message_loader.MessageRepository]
 GpuBundleMerger = Callable[[dict[str, dict[str, Any]], dict[str, dict[str, Any]]], dict[str, dict[str, Any]]]
-ProfileCatalogLoader = Callable[[str, str, str, str, str, str], profile_loader.ProfileCatalogs]
+ProfileCatalogRowsLoader = Callable[..., profile_loader.ProfileCatalogs]
 ProfileCatalogAttacher = Callable[[dict[str, dict[str, Any]], profile_loader.ProfileCatalogs], dict[str, dict[str, Any]]]
 NewGameSupportLoader = Callable[[str], tuple[new_game_support_loader.NewGameSupportEntry, ...]]
 
@@ -36,7 +37,8 @@ class MessageMaterializer(Protocol):
 class GpuBundleLoader(Protocol):
     def __call__(
         self,
-        base_url_or_key: str,
+        bundle_base_url: str,
+        manifest_url: str,
         gpu_vendor: str,
         gpu_model: str,
     ) -> dict[str, dict[str, Any]]:
@@ -60,6 +62,7 @@ class GameDbLoadResult:
     error: Exception | None
     module_download_links: dict[str, Any] = field(default_factory=dict)
     game_db_vendor: str = "default"
+    error_stage: str = ""
 
 
 @dataclass(frozen=True)
@@ -68,6 +71,14 @@ class GameDbControllerCallbacks:
 
 
 class GameDbLoadController:
+    @staticmethod
+    def _classify_error_stage(error: Exception) -> str:
+        if isinstance(error, RuntimeError) and str(error) == "GPU bundle load failed":
+            return "gpu_bundle"
+        if isinstance(error, RuntimeError) and str(error) == "Profile catalog load failed":
+            return "profile_catalog"
+        return "unknown"
+
     def __init__(
         self,
         *,
@@ -76,25 +87,19 @@ class GameDbLoadController:
         callbacks: GameDbControllerCallbacks,
         load_game_db: GameDbLoader,
         load_module_download_links: ModuleLinksLoader,
-        message_center_url: str = "",
-        message_binding_url: str = "",
-        load_message_center: MessageCenterLoader = message_loader.load_message_center,
-        load_message_binding: MessageBindingLoader = message_loader.load_message_binding,
+        load_runtime_data: RuntimeDataLoader,
+        parse_message_center_rows: MessageCenterRowsLoader = message_loader.parse_message_center_rows,
+        parse_message_binding_rows: MessageBindingRowsLoader = message_loader.parse_message_binding_rows,
         build_message_repository: MessageRepoBuilder = message_loader.build_message_repository,
         materialize_bound_messages: MessageMaterializer = message_loader.materialize_bound_messages_into_game_db,
         gpu_bundle_url: str = "",
+        gpu_bundle_manifest_url: str = "",
         load_gpu_bundle: GpuBundleLoader = gpu_bundle_loader.load_supported_game_bundle,
         merge_gpu_bundle: GpuBundleMerger = gpu_bundle_loader.merge_gpu_bundle_into_game_db,
-        game_ini_profile_url: str = "",
-        game_unreal_ini_profile_url: str = "",
-        engine_ini_profile_url: str = "",
-        game_xml_profile_url: str = "",
-        registry_profile_url: str = "",
-        game_json_profile_url: str = "",
+        build_profile_catalogs_from_rows: ProfileCatalogRowsLoader = profile_loader.build_profile_catalogs_from_rows,
         new_game_support_url: str = "",
         load_new_game_support: NewGameSupportLoader = new_game_support_loader.load_new_game_support,
         build_new_game_support_popup_text: NewGameSupportPopupBuilder = new_game_support_loader.build_new_game_support_popup_text,
-        load_profile_catalogs: ProfileCatalogLoader = profile_loader.load_profile_catalogs,
         attach_profile_catalogs: ProfileCatalogAttacher = profile_loader.attach_profile_catalogs_to_game_db,
         logger=None,
     ) -> None:
@@ -103,25 +108,19 @@ class GameDbLoadController:
         self._callbacks = callbacks
         self._load_game_db = load_game_db
         self._load_module_download_links = load_module_download_links
-        self._message_center_url = str(message_center_url or "").strip()
-        self._message_binding_url = str(message_binding_url or "").strip()
-        self._load_message_center = load_message_center
-        self._load_message_binding = load_message_binding
+        self._load_runtime_data = load_runtime_data
+        self._parse_message_center_rows = parse_message_center_rows
+        self._parse_message_binding_rows = parse_message_binding_rows
         self._build_message_repository = build_message_repository
         self._materialize_bound_messages = materialize_bound_messages
         self._gpu_bundle_url = str(gpu_bundle_url or "").strip()
+        self._gpu_bundle_manifest_url = str(gpu_bundle_manifest_url or "").strip()
         self._load_gpu_bundle = load_gpu_bundle
         self._merge_gpu_bundle = merge_gpu_bundle
-        self._game_ini_profile_url = str(game_ini_profile_url or "").strip()
-        self._game_unreal_ini_profile_url = str(game_unreal_ini_profile_url or "").strip()
-        self._engine_ini_profile_url = str(engine_ini_profile_url or "").strip()
-        self._game_xml_profile_url = str(game_xml_profile_url or "").strip()
-        self._registry_profile_url = str(registry_profile_url or "").strip()
-        self._game_json_profile_url = str(game_json_profile_url or "").strip()
+        self._build_profile_catalogs_from_rows = build_profile_catalogs_from_rows
         self._new_game_support_url = str(new_game_support_url or "").strip()
         self._load_new_game_support = load_new_game_support
         self._build_new_game_support_popup_text = build_new_game_support_popup_text
-        self._load_profile_catalogs = load_profile_catalogs
         self._attach_profile_catalogs = attach_profile_catalogs
         self._logger = logger or logging.getLogger()
 
@@ -146,6 +145,7 @@ class GameDbLoadController:
                     ok=False,
                     error=exc,
                     game_db_vendor=normalized_vendor,
+                    error_stage="unknown",
                 ),
                 description="game DB load failure callback",
             )
@@ -155,16 +155,33 @@ class GameDbLoadController:
 
     def _run_load_worker(self, game_db_vendor: str, gpu_model: str = "") -> None:
         try:
-            game_db = self._load_base_game_db()
-            message_repo = self._load_message_repository()
+            runtime_data = self._load_runtime_data()
+        except Exception as exc:
+            if isinstance(exc, runtime_data_loader.RuntimeDataError):
+                cloudflare_status = runtime_data_loader.check_cloudflare_status()
+                self._logger.error(
+                    "runtime-data load failed: %s; cloudflare_status=%s; cloudflare_status_description=%s",
+                    redact_text(exc),
+                    cloudflare_status.get("indicator", "unknown"),
+                    cloudflare_status.get("description", ""),
+                )
+                result = self._build_failure_result(exc, game_db_vendor=game_db_vendor, error_stage="runtime_data")
+            else:
+                result = self._build_failure_result(exc, game_db_vendor=game_db_vendor, error_stage="unknown")
+            self._schedule_result(result, description="game DB load completion callback")
+            return
+
+        try:
+            game_db = self._load_base_game_db(runtime_data)
+            message_repo = self._load_message_repository(runtime_data)
             game_db = self._materialize_messages(game_db, message_repo, game_db_vendor=game_db_vendor)
             game_db = self._merge_gpu_bundle_if_configured(
                 game_db,
                 game_db_vendor=game_db_vendor,
                 gpu_model=gpu_model,
             )
-            game_db = self._attach_profile_catalogs_if_configured(game_db)
-            module_links = self._load_module_links()
+            game_db = self._attach_profile_catalogs_if_configured(game_db, runtime_data)
+            module_links = self._load_module_links(runtime_data)
             self._inject_startup_warning_links(
                 module_links,
                 message_repo,
@@ -177,19 +194,21 @@ class GameDbLoadController:
                 game_db_vendor=game_db_vendor,
             )
         except Exception as exc:
-            result = self._build_failure_result(exc, game_db_vendor=game_db_vendor)
+            error_stage = self._classify_error_stage(exc)
+            self._logger.error("[APP] Game DB load failed at stage=%s: %s", error_stage, redact_text(exc))
+            result = self._build_failure_result(exc, game_db_vendor=game_db_vendor, error_stage=error_stage)
 
         self._schedule_result(result, description="game DB load completion callback")
 
-    def _load_base_game_db(self) -> dict[str, dict[str, Any]]:
-        game_db = self._load_game_db()
+    def _load_base_game_db(self, runtime_data: dict[str, Any]) -> dict[str, dict[str, Any]]:
+        game_db = self._load_game_db(runtime_data.get("game_master", []))
         if not game_db:
             raise ValueError("Game DB has no data.")
         return game_db
 
-    def _load_message_repository(self) -> message_loader.MessageRepository:
-        message_center = self._load_message_center(self._message_center_url)
-        message_binding = self._load_message_binding(self._message_binding_url)
+    def _load_message_repository(self, runtime_data: dict[str, Any]) -> message_loader.MessageRepository:
+        message_center = self._parse_message_center_rows(runtime_data.get("message_center", []))
+        message_binding = self._parse_message_binding_rows(runtime_data.get("message_binding", []))
         return self._build_message_repository(message_center, message_binding)
 
     def _materialize_messages(
@@ -217,46 +236,46 @@ class GameDbLoadController:
 
         # GPU bundle is vendor-specific runtime data; if configured, a failed fetch must fail closed.
         try:
-            bundle = self._load_gpu_bundle(self._gpu_bundle_url, game_db_vendor, gpu_model)
+            bundle = self._load_gpu_bundle(
+                self._gpu_bundle_url,
+                self._gpu_bundle_manifest_url,
+                game_db_vendor,
+                gpu_model,
+            )
             return self._merge_gpu_bundle(game_db, bundle)
         except Exception as bundle_err:
             self._logger.error("Failed to load GPU bundle: %s", redact_text(bundle_err))
             raise RuntimeError("GPU bundle load failed") from bundle_err
 
     def _should_load_gpu_bundle(self, game_db_vendor: str) -> bool:
-        return bool(self._gpu_bundle_url and game_db_vendor and game_db_vendor != "default")
+        return bool(
+            self._gpu_bundle_url
+            and self._gpu_bundle_manifest_url
+            and game_db_vendor
+            and game_db_vendor != "default"
+        )
 
     def _attach_profile_catalogs_if_configured(
         self,
         game_db: dict[str, dict[str, Any]],
+        runtime_data: dict[str, Any],
     ) -> dict[str, dict[str, Any]]:
-        if not self._should_attach_profile_catalogs():
-            return game_db
-
         try:
-            catalogs = self._load_profile_catalogs(
-                self._game_ini_profile_url,
-                self._engine_ini_profile_url,
-                self._game_xml_profile_url,
-                self._registry_profile_url,
-                self._game_json_profile_url,
-                self._game_unreal_ini_profile_url,
+            catalogs = self._build_profile_catalogs_from_rows(
+                game_ini_profile_rows=runtime_data.get("game_ini_profile", []),
+                game_unreal_ini_profile_rows=runtime_data.get("game_unreal_ini_profile", []),
+                engine_ini_profile_rows=runtime_data.get("engine_ini_profile", []),
+                game_xml_profile_rows=runtime_data.get("game_xml_profile", []),
+                registry_profile_rows=runtime_data.get("registry_profile", []),
+                game_json_profile_rows=runtime_data.get("game_json_profile", []),
             )
             return self._attach_profile_catalogs(game_db, catalogs)
         except Exception as profile_err:
             self._logger.error("Failed to load profile catalogs: %s", redact_text(profile_err))
             raise RuntimeError("Profile catalog load failed") from profile_err
 
-    def _should_attach_profile_catalogs(self) -> bool:
-        return bool(
-            self._game_ini_profile_url
-            and self._engine_ini_profile_url
-            and self._game_xml_profile_url
-            and self._registry_profile_url
-        )
-
-    def _load_module_links(self) -> dict[str, Any]:
-        return self._load_module_download_links()
+    def _load_module_links(self, runtime_data: dict[str, Any]) -> dict[str, Any]:
+        return self._load_module_download_links(runtime_data.get("resource_master", []))
 
     def _inject_startup_warning_links(
         self,
@@ -295,10 +314,12 @@ class GameDbLoadController:
 
     def _inject_new_game_support_links(self, module_links: dict[str, Any]) -> None:
         if not self._new_game_support_url:
+            self._logger.info("New game support URL is not configured; skipping startup new game support block")
             return
 
         try:
             entries = self._load_new_game_support(self._new_game_support_url)
+            self._logger.info("Loaded new game support entries: %d", len(entries))
         except Exception as exc:
             self._logger.info("Failed to load new game support data: %s", redact_text(exc))
             return
@@ -306,6 +327,11 @@ class GameDbLoadController:
         try:
             text_ko = self._build_new_game_support_popup_text(entries, lang="ko")
             text_en = self._build_new_game_support_popup_text(entries, lang="en")
+            self._logger.info(
+                "New game support popup text built: ko=%s en=%s",
+                bool(text_ko),
+                bool(text_en),
+            )
         except Exception as exc:
             self._logger.info("Failed to build new game support popup text: %s", redact_text(exc))
             return
@@ -328,6 +354,7 @@ class GameDbLoadController:
             ok=True,
             error=None,
             game_db_vendor=game_db_vendor,
+            error_stage="",
         )
 
     def _build_failure_result(
@@ -335,6 +362,7 @@ class GameDbLoadController:
         error: Exception,
         *,
         game_db_vendor: str,
+        error_stage: str,
     ) -> GameDbLoadResult:
         return GameDbLoadResult(
             game_db={},
@@ -342,6 +370,7 @@ class GameDbLoadController:
             ok=False,
             error=error,
             game_db_vendor=game_db_vendor,
+            error_stage=str(error_stage or "unknown"),
         )
 
     def _schedule_result(self, result: GameDbLoadResult, *, description: str) -> None:

@@ -154,6 +154,7 @@ class InstallFlowController:
         predownload_in_progress = bool(
             archive.optipatcher_downloading
             or archive.specialk_downloading
+            or archive.reframework_downloading
             or archive.ual_downloading
             or archive.unreal5_downloading
         )
@@ -183,6 +184,10 @@ class InstallFlowController:
             specialk_cached_archive=resolve_ready_cached_archive_path(
                 archive.specialk_ready,
                 archive.specialk_source_archive,
+            ),
+            reframework_cached_archive=resolve_ready_cached_archive_path(
+                archive.reframework_ready,
+                archive.reframework_source_archive,
             ),
             unreal5_cached_archive=resolve_ready_cached_archive_path(
                 archive.unreal5_ready,
@@ -265,6 +270,7 @@ class InstallFlowController:
         ual_cached_archive = decision.ual_cached_archive
         optipatcher_cached_archive = decision.optipatcher_cached_archive
         specialk_cached_archive = decision.specialk_cached_archive
+        reframework_cached_archive = decision.reframework_cached_archive
         unreal5_cached_archive = decision.unreal5_cached_archive
 
         self._install_state.in_progress = True
@@ -279,6 +285,7 @@ class InstallFlowController:
             ual_cached_archive,
             optipatcher_cached_archive,
             specialk_cached_archive,
+            reframework_cached_archive,
             unreal5_cached_archive,
         )
 
@@ -316,6 +323,7 @@ class InstallFlowController:
         ual_cached_archive: str = "",
         optipatcher_cached_archive: str = "",
         specialk_cached_archive: str = "",
+        reframework_cached_archive: str = "",
         unreal5_cached_archive: str = "",
     ) -> None:
         game_name = str(game_data.get("game_name_en", "") or game_data.get("display", "unknown")).strip() or "unknown"
@@ -341,6 +349,7 @@ class InstallFlowController:
                 ual_cached_archive=ual_cached_archive,
                 optipatcher_cached_archive=optipatcher_cached_archive,
                 specialk_cached_archive=specialk_cached_archive,
+                reframework_cached_archive=reframework_cached_archive,
                 unreal5_cached_archive=unreal5_cached_archive,
             )
             self._root.after(

@@ -7,7 +7,7 @@ from queue import Empty, SimpleQueue
 from tkinter import messagebox
 from typing import Any
 
-from installer.data import gpu_bundle_loader, message_loader, new_game_support_loader, sheet_loader
+from installer.data import gpu_bundle_loader, message_loader, new_game_support_loader, profile_loader, runtime_data_loader, sheet_loader
 from installer.install import services as installer_services
 from installer.system import gpu_service
 
@@ -50,10 +50,8 @@ from .ui_shell_actions import (
 class AppControllerFactoryConfig:
     create_prefixed_logger: Callable[[str], Any]
     gpu_bundle_url: str
-    game_master_url: str
-    resource_master_url: str
-    message_binding_url: str
-    message_center_url: str
+    gpu_bundle_manifest_url: str
+    runtime_data_url: str
     new_game_support_url: str
     gpu_notice_theme: Any
     max_supported_gpu_count: int
@@ -61,12 +59,6 @@ class AppControllerFactoryConfig:
     root_height_fallback: int
     root_width_fallback: int
     supported_games_wiki_url: str
-    game_ini_profile_url: str = ""
-    game_unreal_ini_profile_url: str = ""
-    engine_ini_profile_url: str = ""
-    game_xml_profile_url: str = ""
-    registry_profile_url: str = ""
-    game_json_profile_url: str = ""
     gpu_bundle_debug: bool = False
 
 
@@ -209,6 +201,17 @@ def bind_app_controllers(app: Any, controllers: AppControllers) -> None:
 
 
 def _build_app_notice_controller(app: Any, config: AppControllerFactoryConfig) -> AppNoticeController:
+    is_korean = str(getattr(app, "lang", "")).lower().startswith("ko")
+    runtime_data_failure_title = "데이터 서버 연결 실패" if is_korean else "Data server connection failed"
+    runtime_data_failure_body = (
+        "Cloudflare 서비스 장애 또는 인터넷 연결 불안정으로 인해\n"
+        "필수 데이터를 불러오지 못했습니다.\n\n"
+        "인터넷 연결을 확인한 뒤 잠시 후 다시 실행해 주세요."
+        if is_korean
+        else "Required data could not be loaded due to a Cloudflare service issue\n"
+        "or an unstable internet connection.\n\n"
+        "Please check your internet connection and try again later."
+    )
     return AppNoticeController(
         root=app.root,
         popup_theme=config.message_popup_theme,
@@ -222,6 +225,8 @@ def _build_app_notice_controller(app: Any, config: AppControllerFactoryConfig) -
         wiki_not_configured_detail=app.txt.dialogs.wiki_not_configured_detail,
         wiki_open_failed_detail=app.txt.dialogs.wiki_open_failed_detail,
         installation_completed_text=app.txt.dialogs.installation_completed,
+        runtime_data_failure_title=runtime_data_failure_title,
+        runtime_data_failure_body=runtime_data_failure_body,
         root_width_fallback=config.root_width_fallback,
         root_height_fallback=config.root_height_fallback,
         logger=logging.getLogger(),
@@ -331,6 +336,7 @@ def _build_archive_controller(app: Any, schedule_ui: Callable[[Callable[[], None
             on_fsr4_state_changed=lambda state: app._startup_runtime_coordinator.on_fsr4_archive_state_changed(state),
             on_optipatcher_state_changed=lambda state: app._startup_runtime_coordinator.on_optipatcher_archive_state_changed(state),
             on_specialk_state_changed=lambda state: app._startup_runtime_coordinator.on_specialk_archive_state_changed(state),
+            on_reframework_state_changed=lambda state: app._startup_runtime_coordinator.on_reframework_archive_state_changed(state),
             on_ual_state_changed=lambda state: app._startup_runtime_coordinator.on_ual_archive_state_changed(state),
             on_unreal5_state_changed=lambda state: app._startup_runtime_coordinator.on_unreal5_archive_state_changed(state),
         ),
@@ -354,30 +360,22 @@ def _build_game_db_controller(
     callbacks: GameDbControllerCallbacks,
     config: AppControllerFactoryConfig,
 ) -> GameDbLoadController:
-    game_master_url = _require_remote_json_url("game_master_url", config.game_master_url)
-    resource_master_url = _require_remote_json_url("resource_master_url", config.resource_master_url)
-    message_center_url = _require_remote_json_url("message_center_url", config.message_center_url)
-    message_binding_url = _require_remote_json_url("message_binding_url", config.message_binding_url)
-    game_ini_profile_url = _require_remote_json_url("game_ini_profile_url", config.game_ini_profile_url)
-    game_unreal_ini_profile_url = str(config.game_unreal_ini_profile_url or "").strip()
-    engine_ini_profile_url = _require_remote_json_url("engine_ini_profile_url", config.engine_ini_profile_url)
-    game_xml_profile_url = _require_remote_json_url("game_xml_profile_url", config.game_xml_profile_url)
-    registry_profile_url = _require_remote_json_url("registry_profile_url", config.registry_profile_url)
-    game_json_profile_url = str(config.game_json_profile_url or "").strip()
+    runtime_data_url = _require_remote_json_url("runtime_data_url", config.runtime_data_url)
     new_game_support_url = str(config.new_game_support_url or "").strip()
-    load_game_db = lambda: sheet_loader.load_game_db_from_remote_json(game_master_url)
-    load_module_download_links = lambda: sheet_loader.load_module_download_links_from_remote_json(resource_master_url)
-    def load_gpu_bundle(base_url: str, vendor: str, gpu_model: str) -> dict[str, dict[str, Any]]:
+    load_runtime_data = lambda: runtime_data_loader.load_runtime_data(runtime_data_url)
+    load_game_db = lambda rows: sheet_loader.build_game_db_from_rows(rows)
+    load_module_download_links = lambda rows: sheet_loader.build_module_download_links_from_rows(rows)
+    def load_gpu_bundle(bundle_base_url: str, manifest_url: str, vendor: str, gpu_model: str) -> dict[str, dict[str, Any]]:
         device_info = gpu_service.get_device_info()
         return gpu_bundle_loader.load_supported_game_bundle(
-            base_url,
+            bundle_base_url,
             vendor,
             gpu_model,
+            manifest_url=manifest_url,
             request_source="app",
             device_manufacturer=device_info.manufacturer,
             device_model=device_info.model,
             app_version=APP_VERSION,
-            debug=config.gpu_bundle_debug,
             logger=logging.getLogger(),
         )
 
@@ -385,23 +383,18 @@ def _build_game_db_controller(
         executor=executor,
         schedule=schedule_ui,
         callbacks=callbacks,
+        load_runtime_data=load_runtime_data,
         load_game_db=load_game_db,
         load_module_download_links=load_module_download_links,
-        message_center_url=message_center_url,
-        message_binding_url=message_binding_url,
-        load_message_center=message_loader.load_message_center,
-        load_message_binding=message_loader.load_message_binding,
+        parse_message_center_rows=message_loader.parse_message_center_rows,
+        parse_message_binding_rows=message_loader.parse_message_binding_rows,
         build_message_repository=message_loader.build_message_repository,
         materialize_bound_messages=message_loader.materialize_bound_messages_into_game_db,
         gpu_bundle_url=config.gpu_bundle_url,
+        gpu_bundle_manifest_url=config.gpu_bundle_manifest_url,
         load_gpu_bundle=load_gpu_bundle,
         merge_gpu_bundle=gpu_bundle_loader.merge_gpu_bundle_into_game_db,
-        game_ini_profile_url=game_ini_profile_url,
-        game_unreal_ini_profile_url=game_unreal_ini_profile_url,
-        engine_ini_profile_url=engine_ini_profile_url,
-        game_xml_profile_url=game_xml_profile_url,
-        registry_profile_url=registry_profile_url,
-        game_json_profile_url=game_json_profile_url,
+        build_profile_catalogs_from_rows=profile_loader.build_profile_catalogs_from_rows,
         new_game_support_url=new_game_support_url,
         load_new_game_support=new_game_support_loader.load_new_game_support,
         build_new_game_support_popup_text=new_game_support_loader.build_new_game_support_popup_text,

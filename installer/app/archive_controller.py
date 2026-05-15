@@ -45,6 +45,7 @@ class ArchivePreparationCallbacks:
     on_specialk_state_changed: ArchiveStateCallback
     on_ual_state_changed: ArchiveStateCallback
     on_unreal5_state_changed: ArchiveStateCallback
+    on_reframework_state_changed: ArchiveStateCallback
 
 
 class ArchivePreparationController:
@@ -256,6 +257,20 @@ class ArchivePreparationController:
             manifest_root=manifest_root or self._manifest_root,
             asset_key=ARCHIVE_ASSET_UAL_ENTRY_KEY,
             asset_label="Ultimate ASI Loader archive",
+        )
+
+    def prepare_reframework(
+        self,
+        entry: Mapping[str, object] | None,
+        cache_dir: Path,
+        manifest_root: Path | None = None,
+    ) -> ArchivePreparationState:
+        return self._prepare_versioned_asset(
+            entry=entry,
+            cache_dir=cache_dir,
+            manifest_root=manifest_root or self._manifest_root,
+            asset_key="reframework",
+            asset_label="REFramework archive",
         )
 
     def prepare_unreal5(
@@ -565,6 +580,9 @@ class ArchivePreparationController:
             return
         if asset_key == "specialk":
             self._callbacks.on_specialk_state_changed(state)
+            return
+        if asset_key == "reframework":
+            self._callbacks.on_reframework_state_changed(state)
             return
         # Startup runtime uses the compact state key, while resource data uses
         # the historical module entry key. Keep both callback aliases valid.

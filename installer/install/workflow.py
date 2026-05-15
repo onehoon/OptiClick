@@ -55,17 +55,7 @@ def resolve_install_exclude_patterns(module_download_links: Mapping[str, object]
 
 
 def _should_install_specialk(install_ctx: InstallContext, logger) -> bool:
-    specialk_requested = bool(install_ctx.game_data.get("specialk"))
-    specialk_skipped_for_asi = (
-        specialk_requested
-        and install_ctx.final_dll_name.lower() == OPTISCALER_ASI_NAME.lower()
-    )
-    if specialk_skipped_for_asi:
-        logger.info(
-            "Special K install skipped: OptiScaler.asi install mode does not support plugins/%s loading",
-            install_ctx.final_dll_name,
-        )
-    return specialk_requested and not specialk_skipped_for_asi
+    return bool(str(install_ctx.game_data.get("specialk", "") or "").strip())
 
 
 def _is_optipatcher_requested_with_source(
@@ -109,6 +99,7 @@ def _install_additional_files(
     ual_cached_archive: str,
     optipatcher_cached_archive: str,
     specialk_cached_archive: str,
+    reframework_cached_archive: str,
     unreal5_cached_archive: str,
 ) -> _AdditionalFileInstallState:
     logger.info("Install stage: additional files")
@@ -136,16 +127,23 @@ def _install_additional_files(
             cached_archive_path=ual_cached_archive,
         )
 
+    specialk_installed = False
     if specialk_required:
-        install_specialk(
+        specialk_installed = install_specialk(
             install_ctx.target_path,
-            install_ctx.final_dll_name,
+            install_ctx.game_data,
             module_download_links,
             logger=logger,
             cached_archive_path=specialk_cached_archive,
         )
 
-    install_reframework_dinput8(install_ctx.target_path, install_ctx.game_data, logger=logger)
+    install_reframework_dinput8(
+        install_ctx.target_path,
+        install_ctx.game_data,
+        module_download_links,
+        logger=logger,
+        cached_archive_path=reframework_cached_archive,
+    )
     install_optipatcher(
         install_ctx.target_path,
         install_ctx.game_data,
@@ -167,7 +165,7 @@ def _install_additional_files(
         logger.info("Skipped FSR4 install for current GPU/game selection")
 
     return _AdditionalFileInstallState(
-        specialk_installed=specialk_required,
+        specialk_installed=specialk_installed,
         optipatcher_requested_with_source=should_install_optipatcher,
     )
 
@@ -239,11 +237,6 @@ def build_install_context(
     ual_auto_detected = bool(ual_names)
     use_ultimate_asi_loader = bool(planned_game_data.get("ultimate_asi_loader")) or ual_auto_detected
 
-    if use_ultimate_asi_loader and planned_game_data.get("reframework_url"):
-        raise RuntimeError(
-            "Ultimate ASI Loader and REFramework both require dinput8.dll, and this combination is not supported yet."
-        )
-
     if use_ultimate_asi_loader:
         if ual_auto_detected:
             # Auto-detect mode: OptiScaler must always install as OptiScaler.asi
@@ -282,6 +275,7 @@ def run_install_workflow(
     ual_cached_archive: str = "",
     optipatcher_cached_archive: str = "",
     specialk_cached_archive: str = "",
+    reframework_cached_archive: str = "",
     unreal5_cached_archive: str = "",
 ) -> dict[str, Any]:
     if callbacks is None:
@@ -300,6 +294,7 @@ def run_install_workflow(
         ual_cached_archive=ual_cached_archive,
         optipatcher_cached_archive=optipatcher_cached_archive,
         specialk_cached_archive=specialk_cached_archive,
+        reframework_cached_archive=reframework_cached_archive,
         unreal5_cached_archive=unreal5_cached_archive,
     )
     _apply_install_settings(install_ctx, ini_path, file_state, callbacks, logger)

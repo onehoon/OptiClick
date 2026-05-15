@@ -40,6 +40,7 @@ class StartupRuntimeCallbacks:
     should_apply_fsr4_for_game: Callable[[Mapping[str, Any] | None], bool]
     get_archive_controller: Callable[[], ArchivePreparationController | None]
     clear_found_games: Callable[[], None]
+    show_runtime_data_connection_failed_popup: Callable[[], None]
 
 
 @dataclass(frozen=True)
@@ -55,6 +56,7 @@ class StartupRuntimeCoordinatorDeps:
     fsr4_cache_dir: Path
     optipatcher_cache_dir: Path
     specialk_cache_dir: Path
+    reframework_cache_dir: Path
     ual_cache_dir: Path
     unreal5_cache_dir: Path
     manifest_root: Path
@@ -86,6 +88,7 @@ class StartupRuntimeCoordinator:
         fsr4_cache_dir: Path,
         optipatcher_cache_dir: Path,
         specialk_cache_dir: Path,
+        reframework_cache_dir: Path,
         ual_cache_dir: Path,
         unreal5_cache_dir: Path,
         manifest_root: Path,
@@ -102,6 +105,7 @@ class StartupRuntimeCoordinator:
         self._fsr4_cache_dir = Path(fsr4_cache_dir)
         self._optipatcher_cache_dir = Path(optipatcher_cache_dir)
         self._specialk_cache_dir = Path(specialk_cache_dir)
+        self._reframework_cache_dir = Path(reframework_cache_dir)
         self._ual_cache_dir = Path(ual_cache_dir)
         self._unreal5_cache_dir = Path(unreal5_cache_dir)
         self._manifest_root = Path(manifest_root)
@@ -139,6 +143,14 @@ class StartupRuntimeCoordinator:
                 source_archive_field="specialk_source_archive",
                 include_manifest_root=True,
             ),
+            "reframework": _ArchiveAssetConfig(
+                entry_key="reframework",
+                cache_dir_attr="_reframework_cache_dir",
+                prepare_method_name="prepare_reframework",
+                state_prefix="reframework",
+                source_archive_field="reframework_source_archive",
+                include_manifest_root=True,
+            ),
             "ual": _ArchiveAssetConfig(
                 entry_key="ultimateasiloader",
                 cache_dir_attr="_ual_cache_dir",
@@ -156,7 +168,7 @@ class StartupRuntimeCoordinator:
                 include_manifest_root=True,
             ),
         }
-        self._startup_archive_prepare_order = ("fsr4", "optipatcher", "specialk", "ual", "unreal5")
+        self._startup_archive_prepare_order = ("fsr4", "optipatcher", "specialk", "reframework", "ual", "unreal5")
 
     def apply_gpu_flow_state(self, state: GpuFlowState) -> None:
         gpu_state = self._gpu_state
@@ -221,10 +233,13 @@ class StartupRuntimeCoordinator:
             )
         else:
             self._logger.error(
-                "[APP] Failed to load Game DB for vendor=%s: %s",
+                "[APP] Failed to load Game DB for vendor=%s stage=%s: %s",
                 sheet_state.active_vendor,
+                str(result.error_stage or "unknown"),
                 redact_text(result.error),
             )
+            if str(result.error_stage or "") == "runtime_data":
+                self._callbacks.show_runtime_data_connection_failed_popup()
 
         self._callbacks.update_install_button_state()
         self._callbacks.update_sheet_status()
@@ -258,6 +273,9 @@ class StartupRuntimeCoordinator:
 
     def start_ual_archive_prepare(self) -> None:
         self._start_archive_prepare("ual")
+
+    def start_reframework_archive_prepare(self) -> None:
+        self._start_archive_prepare("reframework")
 
     def start_unreal5_archive_prepare(self) -> None:
         self._start_archive_prepare("unreal5")
@@ -324,6 +342,9 @@ class StartupRuntimeCoordinator:
     def on_ual_archive_state_changed(self, state: ArchivePreparationState) -> None:
         self._on_archive_state_changed("ual", state)
 
+    def on_reframework_archive_state_changed(self, state: ArchivePreparationState) -> None:
+        self._on_archive_state_changed("reframework", state)
+
     def on_unreal5_archive_state_changed(self, state: ArchivePreparationState) -> None:
         self._on_archive_state_changed("unreal5", state)
 
@@ -339,6 +360,7 @@ def create_startup_runtime_coordinator(deps: StartupRuntimeCoordinatorDeps) -> S
         fsr4_cache_dir=deps.fsr4_cache_dir,
         optipatcher_cache_dir=deps.optipatcher_cache_dir,
         specialk_cache_dir=deps.specialk_cache_dir,
+        reframework_cache_dir=deps.reframework_cache_dir,
         ual_cache_dir=deps.ual_cache_dir,
         unreal5_cache_dir=deps.unreal5_cache_dir,
         manifest_root=deps.manifest_root,

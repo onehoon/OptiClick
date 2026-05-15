@@ -1,12 +1,11 @@
 import json
 import os
-import re
 import subprocess
 import tempfile
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qs, quote, urlparse
+from urllib.parse import quote
 
 import requests
 
@@ -15,52 +14,10 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 GAME_MASTER_PATH = ROOT_DIR / "assets" / "data" / "game_master.json"
 NEW_GAME_SUPPORT_JSON_PATH = ROOT_DIR / "assets" / "data" / "new_game_support.json"
 WIKI_REPO_URL = "https://github.com/onehoon/OptiClick.wiki.git"
-NATIVE_XEFG_TEXT = "Native XeFG Support"
-
-INTEL_IGPU_MARKERS = {
-    "ARC GRAPHICS",
-    "INTEL ARC GRAPHICS",
-}
-INTEL_ARC_SERIES_MARKERS = {
-    "ARC",
-    "ARC SERIES",
-    "INTEL ARC",
-    "INTEL ARC SERIES",
-}
-INTEL_LUNAR_LAKE_MODELS = (
-    "130V",
-    "140V",
-    "130T",
-    "140T",
-)
-INTEL_PANTHER_LAKE_MODELS = (
-    "B390",
-    "B370",
-)
-INTEL_ARC_B_SERIES_MODELS = (
-    "B580",
-    "B570",
-)
-INTEL_ARC_A_SERIES_MODELS = (
-    "A770",
-    "A750",
-    "A730",
-    "A580",
-    "A570",
-    "A550",
-    "A530",
-    "A380",
-    "A370",
-    "A350",
-    "A310",
-)
-INTEL_ARC_MODEL_ORDER = (
-    *INTEL_LUNAR_LAKE_MODELS,
-    *INTEL_PANTHER_LAKE_MODELS,
-    *INTEL_ARC_B_SERIES_MODELS,
-    *INTEL_ARC_A_SERIES_MODELS,
-)
-INTEL_ARC_MODELS = set(INTEL_ARC_MODEL_ORDER)
+SHEET_GPU_BUNDLE_GROUP = "gpu_bundle_group"
+INTEL_FULL_GROUPS = {"intel_mtl", "intel_lnl", "intel_ptl", "intel_a_series", "intel_b_series", "intel_pro_series"}
+INTEL_NON_ARC_LABELS = {"intel_mtl": "Arc Graphics", "intel_lnl": "Lunar Lake", "intel_ptl": "Panther Lake"}
+INTEL_ARC_SERIES_GROUP_LABELS = {"intel_a_series": "A", "intel_b_series": "B", "intel_pro_series": "Pro"}
 
 NEW_GAMES_HEADING = "## 신규 지원 게임 추가 / Newly Supported Games"
 NEW_GAMES_METADATA_START = "<!-- newly-supported-games"
@@ -159,49 +116,6 @@ def is_new_games_heading(line: str) -> bool:
     return normalize_text(line) in NEW_GAMES_HEADING_ALIASES
 
 
-def split_gpu_tokens(value: Any) -> list[str]:
-    text = normalize_text(value)
-    if not text:
-        return []
-    return [token.strip() for token in text.split("|") if token.strip()]
-
-
-def compact_series_label(prefix: str, series: list[str]) -> str:
-    ordered: list[str] = []
-    for value in series:
-        normalized = normalize_text(value)
-        if normalized and normalized not in ordered:
-            ordered.append(normalized)
-    if not ordered:
-        return ""
-    if len(ordered) == 1:
-        return f"{prefix} {ordered[0]} Series"
-    return f"{prefix} {'/'.join(ordered)} Series"
-
-
-def parse_spreadsheet_url(spreadsheet_url: str) -> tuple[str, str]:
-    parsed = urlparse(spreadsheet_url)
-    match = re.search(r"/spreadsheets/d/([a-zA-Z0-9-_]+)", parsed.path)
-    if not match:
-        raise RuntimeError("INSTALL_PROFILE_SHEET_URL does not contain a valid spreadsheet id.")
-
-    spreadsheet_id = match.group(1)
-    query_params = parse_qs(parsed.query)
-    gid = normalize_text(query_params.get("gid", [""])[0])
-
-    if not gid and parsed.fragment:
-        if parsed.fragment.startswith("gid="):
-            gid = normalize_text(parsed.fragment.split("=", 1)[1])
-        else:
-            fragment_params = parse_qs(parsed.fragment)
-            gid = normalize_text(fragment_params.get("gid", [""])[0])
-
-    if not gid:
-        raise RuntimeError("INSTALL_PROFILE_SHEET_URL does not contain a gid.")
-
-    return spreadsheet_id, gid
-
-
 def build_google_session() -> requests.Session:
     from google.auth.transport.requests import Request
     from google.oauth2.service_account import Credentials
@@ -216,25 +130,6 @@ def build_google_session() -> requests.Session:
     session = requests.Session()
     session.headers.update({"Authorization": f"Bearer {credentials.token}"})
     return session
-
-
-def fetch_sheet_title(session: requests.Session, spreadsheet_id: str, gid: str) -> str:
-    response = session.get(
-        f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}",
-        params={"fields": "sheets(properties(sheetId,title))"},
-        timeout=30,
-    )
-    response.raise_for_status()
-    payload = response.json()
-
-    for sheet in payload.get("sheets", []):
-        properties = sheet.get("properties") or {}
-        if normalize_text(properties.get("sheetId")) == normalize_text(gid):
-            title = normalize_text(properties.get("title"))
-            if title:
-                return title
-
-    raise RuntimeError(f"Could not find a sheet tab for gid={gid}.")
 
 
 def fetch_sheet_rows(session: requests.Session, spreadsheet_id: str, sheet_title: str) -> list[dict[str, str]]:
@@ -283,18 +178,15 @@ def is_test_game_title(*titles: Any) -> bool:
 
 def normalize_vendor(value: Any) -> str:
     text = normalize_text(value).upper()
-    if text in {"INTEL", "AMD", "NVIDIA", "ALL"}:
+    if text in {"INTEL", "AMD", "NVIDIA"}:
         return text
     return ""
 
 
-def load_install_profile_rows() -> list[dict[str, str]]:
-    spreadsheet_url = require_env_value("INSTALL_PROFILE_SHEET_URL")
-    spreadsheet_id, gid = parse_spreadsheet_url(spreadsheet_url)
+def load_gpu_bundle_group_rows() -> list[dict[str, str]]:
+    spreadsheet_id = require_env_value("GOOGLE_SPREADSHEET_ID")
     session = build_google_session()
-    sheet_title = fetch_sheet_title(session, spreadsheet_id, gid)
-    print("Resolved install_profile tab from the configured sheet secret.")
-    return fetch_sheet_rows(session, spreadsheet_id, sheet_title)
+    return fetch_sheet_rows(session, spreadsheet_id, SHEET_GPU_BUNDLE_GROUP)
 
 
 def load_game_master() -> dict[str, dict[str, Any]]:
@@ -319,9 +211,8 @@ def load_game_master() -> dict[str, dict[str, Any]]:
     return games
 
 
-def build_sheet_index(rows: list[dict[str, str]]) -> tuple[dict[str, dict[str, list[str]]], set[str]]:
+def build_sheet_index(rows: list[dict[str, str]]) -> dict[str, dict[str, list[str]]]:
     indexed: dict[str, dict[str, list[str]]] = {}
-    all_supported_games: set[str] = set()
 
     for row in rows:
         if is_test_sheet_row(row):
@@ -333,198 +224,122 @@ def build_sheet_index(rows: list[dict[str, str]]) -> tuple[dict[str, dict[str, l
         if not game_id:
             continue
 
-        vendor = normalize_vendor(row.get("gpu_vendor"))
+        vendor = normalize_vendor(row.get("vendor"))
         if not vendor:
-            print(f"[WARN] Skipping row with unknown gpu_vendor for game_id={game_id}")
+            print(f"[WARN] Skipping row with unknown vendor for game_id={game_id}")
             continue
 
-        model_rule = normalize_text(row.get("gpu_model_match"))
-        if vendor == "ALL":
-            if model_rule.lower() in {"", "all"}:
-                all_supported_games.add(game_id)
-            else:
-                print(f"[WARN] Ignoring ALL vendor row with non-all gpu_model_match for game_id={game_id}: {model_rule}")
+        gpu_group = normalize_text(row.get("gpu_group")).lower()
+        if not gpu_group:
             continue
 
         vendor_map = indexed.setdefault(game_id, {"INTEL": [], "AMD": [], "NVIDIA": []})
-        if model_rule:
-            vendor_map[vendor].append(model_rule)
+        if gpu_group not in vendor_map[vendor]:
+            vendor_map[vendor].append(gpu_group)
 
-    return indexed, all_supported_games
+    return indexed
 
 
-def build_intel_label(tokens: list[str]) -> str:
-    igpu_found = False
-    arc_series_found = False
-    models: list[str] = []
-
-    for token in tokens:
-        stripped = token.upper().strip("*")
-        if stripped in INTEL_IGPU_MARKERS:
-            igpu_found = True
-        elif stripped in INTEL_ARC_SERIES_MARKERS:
-            arc_series_found = True
-        elif stripped in INTEL_ARC_MODELS and stripped not in models:
-            models.append(stripped)
-        else:
-            for model in INTEL_ARC_MODEL_ORDER:
-                if re.search(rf"(?<![A-Z0-9]){re.escape(model)}(?![A-Z0-9])", stripped):
-                    if model not in models:
-                        models.append(model)
-                    break
-
-    ordered_models = [model for model in INTEL_ARC_MODEL_ORDER if model in models]
-    model_set = set(ordered_models)
-    labels: list[str] = []
-
-    if igpu_found and INTEL_ARC_MODELS.issubset(model_set):
+def format_intel_groups(groups: list[str]) -> str:
+    normalized = {normalize_text(group).lower() for group in groups if normalize_text(group)}
+    if not normalized:
+        return "Not Supported"
+    if "all" in normalized or INTEL_FULL_GROUPS.issubset(normalized):
         return "Intel Arc Series"
-
-    if igpu_found:
-        labels.append("Intel iGPU")
-        model_set.difference_update(INTEL_LUNAR_LAKE_MODELS)
-        model_set.difference_update(INTEL_PANTHER_LAKE_MODELS)
-    elif model_set.intersection(INTEL_LUNAR_LAKE_MODELS):
-        labels.append("Intel LunarLake")
-
-    if not igpu_found and model_set.intersection(INTEL_PANTHER_LAKE_MODELS):
-        labels.append("Intel PantherLake")
-
-    if model_set.intersection(INTEL_ARC_B_SERIES_MODELS):
-        labels.append("Intel Arc B Series")
-
-    if model_set.intersection(INTEL_ARC_A_SERIES_MODELS):
-        labels.append("Intel Arc A Series")
-
-    if labels:
-        return ", ".join(labels)
-    if arc_series_found:
-        return "Intel Arc Series"
-    return ""
-
-
-def build_amd_label(tokens: list[str]) -> str:
     labels: list[str] = []
-    rx_series: list[str] = []
-    has_radeon_igpu = False
+    for group in ["intel_mtl", "intel_lnl", "intel_ptl"]:
+        if group in normalized:
+            label = INTEL_NON_ARC_LABELS[group]
+            if label not in labels:
+                labels.append(label)
+    arc_parts: list[str] = []
+    for group in ["intel_a_series", "intel_b_series", "intel_pro_series"]:
+        if group in normalized:
+            arc_parts.append(INTEL_ARC_SERIES_GROUP_LABELS[group])
+    if arc_parts:
+        labels.append("Arc " + "/".join(arc_parts) + " Series")
+    for group in sorted(normalized - (INTEL_FULL_GROUPS | {"all"})):
+        print(f"[WARN] Unknown Intel gpu_group: {group}")
+    if not labels:
+        return "Supported"
+    return "Intel " + ", ".join(labels)
 
-    def add(label: str) -> None:
-        if label not in labels:
-            labels.append(label)
 
-    def add_rx(label: str) -> None:
-        if label not in rx_series:
-            rx_series.append(label)
-
-    for token in tokens:
-        upper = token.upper()
-        if upper in {"*780M*", "*880M*", "*890M*", "*8050S*", "*8060S*"}:
-            has_radeon_igpu = True
-        elif upper in {"*RX 6*", "*RX 60*"}:
-            add_rx("6000")
-        elif upper in {"*RX 7*", "*RX 70*"}:
-            add_rx("7000")
-        elif upper in {"*RX 9*", "*RX 90*"}:
-            add_rx("9000")
-
-    if has_radeon_igpu:
-        add("Radeon iGPU*")
-
-    rx_label = compact_series_label("RX", rx_series)
-    if rx_label:
-        add(rx_label)
-
+def format_amd_groups(groups: list[str]) -> str:
+    normalized = {normalize_text(group).lower() for group in groups if normalize_text(group)}
+    if not normalized:
+        return "Not Supported"
+    if "all" in normalized:
+        normalized.update({"radeon_igpu", "radeon_rx60_70", "radeon_rx90"})
+    labels: list[str] = []
+    if "radeon_igpu" in normalized:
+        labels.append("Radeon iGPU*")
+    has_rx60_70 = "radeon_rx60_70" in normalized
+    has_rx90 = "radeon_rx90" in normalized
+    if has_rx60_70 and has_rx90:
+        labels.append("RX 6/7/9000 Series")
+    elif has_rx60_70:
+        labels.append("RX 6000/7000 Series")
+    elif has_rx90:
+        labels.append("RX 9000 Series")
+    for group in sorted(normalized - {"radeon_igpu", "radeon_rx60_70", "radeon_rx90", "all"}):
+        print(f"[WARN] Unknown AMD gpu_group: {group}")
+    if not labels:
+        return "Supported"
     return ", ".join(labels)
 
 
-def build_nvidia_label(tokens: list[str]) -> str:
-    series_map = {"2": "20", "3": "30", "4": "40", "5": "50"}
-    found: list[str] = []
-
-    for token in tokens:
-        upper = token.upper()
-        match = re.match(r"\*RTX\s*(\d{2})\*", upper)
-        if not match:
-            continue
-        key = match.group(1)[0]
-        label = series_map.get(key)
-        if label and label not in found:
-            found.append(label)
-
-    return compact_series_label("RTX", found)
-
-
-def build_label_from_tokens(vendor: str, token_groups: list[str]) -> str:
-    tokens: list[str] = []
-    for group in token_groups:
-        for token in split_gpu_tokens(group):
-            upper = token.upper()
-            if upper not in tokens:
-                tokens.append(upper)
-
-    if not tokens:
-        return ""
-
-    if vendor == "INTEL":
-        label = build_intel_label(tokens)
-    elif vendor == "AMD":
-        label = build_amd_label(tokens)
-    elif vendor == "NVIDIA":
-        label = build_nvidia_label(tokens)
-    else:
-        label = ""
-
-    if label:
-        return label
-
-    print(f"[WARN] Could not convert gpu_model_match tokens for vendor={vendor}: {tokens}")
+def format_nvidia_groups(groups: list[str]) -> str:
+    normalized = {normalize_text(group).lower() for group in groups if normalize_text(group)}
+    if not normalized:
+        return "Not Supported"
+    if "all" in normalized:
+        normalized.update({"rtx_2030", "rtx_4050"})
+    has_2030 = "rtx_2030" in normalized
+    has_4050 = "rtx_4050" in normalized
+    if has_2030 and has_4050:
+        return "RTX 20/30/40/50 Series"
+    if has_2030:
+        return "RTX 20/30 Series"
+    if has_4050:
+        return "RTX 40/50 Series"
+    for group in sorted(normalized - {"rtx_2030", "rtx_4050", "all"}):
+        print(f"[WARN] Unknown NVIDIA gpu_group: {group}")
     return "Supported"
 
 
 def build_vendor_display(
     game: dict[str, Any],
-    sheet_vendor_rules: list[str],
+    sheet_vendor_groups: list[str],
     *,
     vendor: str,
-    all_supported: bool,
 ) -> str:
-    support_text = normalize_text(game.get(f"support_{vendor.lower()}"))
-    if vendor == "intel" and support_text.lower() == "native xefg":
-        return NATIVE_XEFG_TEXT
-
-    vendor_key = vendor.upper()
-    label = build_label_from_tokens(vendor_key, sheet_vendor_rules)
-    has_install_profile_support = bool(all_supported or sheet_vendor_rules)
-
-    if not has_install_profile_support:
-        return "Not Supported"
-
-    if label:
-        return label
-
-    if all_supported:
-        return "Supported"
-
+    _ = game
+    vendor_key = normalize_vendor(vendor)
+    if vendor_key == "INTEL":
+        return format_intel_groups(sheet_vendor_groups)
+    if vendor_key == "AMD":
+        return format_amd_groups(sheet_vendor_groups)
+    if vendor_key == "NVIDIA":
+        return format_nvidia_groups(sheet_vendor_groups)
     return "Not Supported"
 
 
 def build_games() -> list[dict[str, str]]:
     game_master = load_game_master()
-    install_profile_rows = load_install_profile_rows()
-    sheet_index, all_supported_games = build_sheet_index(install_profile_rows)
+    gpu_bundle_group_rows = load_gpu_bundle_group_rows()
+    sheet_index = build_sheet_index(gpu_bundle_group_rows)
 
     unknown_sheet_games = sorted(game_id for game_id in sheet_index if game_id not in game_master)
     for game_id in unknown_sheet_games:
-        print(f"[WARN] install_profile references unknown game_id in game_master.json: {game_id}")
+        print(f"[WARN] gpu_bundle_group references unknown game_id in game_master.json: {game_id}")
 
     games: list[dict[str, str]] = []
     for game_id, game in game_master.items():
-        vendor_rules = sheet_index.get(game_id, {"INTEL": [], "AMD": [], "NVIDIA": []})
-        all_supported = game_id in all_supported_games
-
-        intel = build_vendor_display(game, vendor_rules["INTEL"], vendor="intel", all_supported=all_supported)
-        amd = build_vendor_display(game, vendor_rules["AMD"], vendor="amd", all_supported=all_supported)
-        nvidia = build_vendor_display(game, vendor_rules["NVIDIA"], vendor="nvidia", all_supported=all_supported)
+        vendor_groups = sheet_index.get(game_id, {"INTEL": [], "AMD": [], "NVIDIA": []})
+        intel = build_vendor_display(game, vendor_groups["INTEL"], vendor="INTEL")
+        amd = build_vendor_display(game, vendor_groups["AMD"], vendor="AMD")
+        nvidia = build_vendor_display(game, vendor_groups["NVIDIA"], vendor="NVIDIA")
 
         if all(display == "Not Supported" for display in (intel, amd, nvidia)):
             continue
@@ -972,6 +787,21 @@ def apply_new_games_block_from_records(
         return markdown_without_existing_new_games
 
     return f"{new_games_block}\n\n{markdown_without_existing_new_games}"
+
+
+def apply_new_games_block(
+    markdown_text: str,
+    games: list[dict[str, str]],
+    existing_markdown_text: str,
+    *,
+    retention_days: int,
+) -> str:
+    new_game_records = build_new_game_records_for_outputs(
+        games,
+        existing_markdown_text,
+        retention_days=retention_days,
+    )
+    return apply_new_games_block_from_records(markdown_text, new_game_records)
 
 
 def run_git(args: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
