@@ -144,22 +144,6 @@
     "memo": ""
   },
   {
-    "game_id": "TEST",
-    "gpu_vendor": "INTEL",
-    "stage": "install_pre",
-    "message_id": "install_pre_SK_reshade",
-    "priority": 90,
-    "memo": ""
-  },
-  {
-    "game_id": "TEST",
-    "gpu_vendor": "INTEL",
-    "stage": "install_post",
-    "message_id": "install_post_ingamesetting",
-    "priority": 100,
-    "memo": ""
-  },
-  {
     "game_id": "KCD2",
     "gpu_vendor": "ALL",
     "stage": "install_pre",
@@ -865,23 +849,7 @@
   },
   {
     "game_id": "oblivion",
-    "gpu_vendor": "INTEL",
-    "stage": "install_pre",
-    "message_id": "install_pre.borderless_fsr3_required",
-    "priority": 100,
-    "memo": ""
-  },
-  {
-    "game_id": "oblivion",
-    "gpu_vendor": "AMD",
-    "stage": "install_pre",
-    "message_id": "install_pre.borderless_fsr3_required",
-    "priority": 100,
-    "memo": ""
-  },
-  {
-    "game_id": "oblivion",
-    "gpu_vendor": "NVIDIA",
+    "gpu_vendor": "ALL",
     "stage": "install_post",
     "message_id": "install_post.dlss_relaunch",
     "priority": 100,
