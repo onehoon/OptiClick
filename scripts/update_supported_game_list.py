@@ -159,6 +159,31 @@ def fetch_sheet_rows(session: requests.Session, spreadsheet_id: str, sheet_title
     return rows
 
 
+def resolve_sheet_title(session: requests.Session, spreadsheet_id: str, requested_title: str) -> str:
+    response = session.get(
+        f"https://sheets.googleapis.com/v4/spreadsheets/{spreadsheet_id}",
+        params={"fields": "sheets(properties(title))"},
+        timeout=30,
+    )
+    response.raise_for_status()
+    payload = response.json()
+
+    requested_key = normalize_text(requested_title).lower()
+    available_titles: list[str] = []
+    for sheet in payload.get("sheets", []):
+        properties = sheet.get("properties") or {}
+        title = normalize_text(properties.get("title"))
+        if not title:
+            continue
+        available_titles.append(title)
+        if title.lower() == requested_key:
+            return title
+
+    raise RuntimeError(
+        f"Sheet tab not found: {requested_title}. Available tabs: {', '.join(available_titles)}"
+    )
+
+
 def is_test_sheet_row(row: dict[str, str]) -> bool:
     targets = (
         normalize_text(row.get("profile_id")),
@@ -186,7 +211,8 @@ def normalize_vendor(value: Any) -> str:
 def load_gpu_bundle_group_rows() -> list[dict[str, str]]:
     spreadsheet_id = require_env_value("GOOGLE_SPREADSHEET_ID")
     session = build_google_session()
-    return fetch_sheet_rows(session, spreadsheet_id, SHEET_GPU_BUNDLE_GROUP)
+    resolved_title = resolve_sheet_title(session, spreadsheet_id, SHEET_GPU_BUNDLE_GROUP)
+    return fetch_sheet_rows(session, spreadsheet_id, resolved_title)
 
 
 def load_game_master() -> dict[str, dict[str, Any]]:
