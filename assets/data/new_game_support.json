@@ -1,13 +1,13 @@
 [
   {
+    "game_name_kr": "포르자 호라이즌 6",
+    "game_name_en": "Forza Horizon 6",
+    "detected_on": "2026-05-16"
+  },
+  {
     "game_name_kr": "Directive 8020",
     "game_name_en": "Directive 8020",
     "detected_on": "2026-05-13"
-  },
-  {
-    "game_name_kr": "포르자 호라이즌 6",
-    "game_name_en": "Forza Horizon 6",
-    "detected_on": "2026-05-12"
   },
   {
     "game_name_kr": "Dead as Disco",
@@ -43,15 +43,5 @@
     "game_name_kr": "프래그마타",
     "game_name_en": "Pragmata",
     "detected_on": "2026-05-01"
-  },
-  {
-    "game_name_kr": "연운 (스팀)",
-    "game_name_en": "Where Winds Meet (Steam)",
-    "detected_on": "2026-04-30"
-  },
-  {
-    "game_name_kr": "이환",
-    "game_name_en": "Neverness to Everness",
-    "detected_on": "2026-04-30"
   }
 ]
