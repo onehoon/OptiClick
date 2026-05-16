@@ -237,7 +237,18 @@ def _normalize_game_master_rows(rows: list[dict[str, Any]]) -> dict[str, dict[st
     return games
 
 
-def load_game_master() -> dict[str, dict[str, Any]]:
+def _collect_all_game_ids(rows: list[dict[str, Any]]) -> set[str]:
+    game_ids: set[str] = set()
+    for raw_game in rows:
+        if not isinstance(raw_game, dict):
+            continue
+        game_id = normalize_text(raw_game.get("game_id"))
+        if game_id:
+            game_ids.add(game_id)
+    return game_ids
+
+
+def load_runtime_data_game_master_rows() -> list[dict[str, Any]]:
     if not RUNTIME_DATA_URL:
         raise RuntimeError("Missing required environment variable: OPTICLICK_RUNTIME_DATA_URL")
     response = requests.get(
@@ -255,6 +266,11 @@ def load_game_master() -> dict[str, dict[str, Any]]:
     rows = data.get("game_master")
     if not isinstance(rows, list):
         raise RuntimeError("runtime-data.data.game_master must be a list.")
+    return [row for row in rows if isinstance(row, dict)]
+
+
+def load_game_master() -> dict[str, dict[str, Any]]:
+    rows = load_runtime_data_game_master_rows()
     return _normalize_game_master_rows(rows)
 
 
@@ -373,11 +389,13 @@ def build_vendor_display(
 
 
 def build_games() -> list[dict[str, str]]:
-    game_master = load_game_master()
+    game_master_rows = load_runtime_data_game_master_rows()
+    known_game_ids = _collect_all_game_ids(game_master_rows)
+    game_master = _normalize_game_master_rows(game_master_rows)
     gpu_bundle_group_rows = load_gpu_bundle_group_rows()
     sheet_index = build_sheet_index(gpu_bundle_group_rows)
 
-    unknown_sheet_games = sorted(game_id for game_id in sheet_index if game_id not in game_master)
+    unknown_sheet_games = sorted(game_id for game_id in sheet_index if game_id not in known_game_ids)
     for game_id in unknown_sheet_games:
         print(f"[WARN] gpu_bundle_group references unknown game_id in game_master.json: {game_id}")
     if unknown_sheet_games:
