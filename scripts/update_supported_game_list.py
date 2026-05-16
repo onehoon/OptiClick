@@ -15,6 +15,7 @@ GAME_MASTER_PATH = ROOT_DIR / "assets" / "data" / "game_master.json"
 NEW_GAME_SUPPORT_JSON_PATH = ROOT_DIR / "assets" / "data" / "new_game_support.json"
 WIKI_REPO_URL = "https://github.com/onehoon/OptiClick.wiki.git"
 SHEET_GPU_BUNDLE_GROUP = "gpu_bundle_group"
+RUNTIME_DATA_URL = str(os.environ.get("OPTICLICK_RUNTIME_DATA_URL", "") or "").strip()
 INTEL_FULL_GROUPS = {"intel_mtl", "intel_lnl", "intel_ptl", "intel_a_series", "intel_b_series", "intel_pro_series"}
 INTEL_NON_ARC_LABELS = {"intel_mtl": "Arc Graphics", "intel_lnl": "Lunar Lake", "intel_ptl": "Panther Lake"}
 INTEL_ARC_SERIES_GROUP_LABELS = {"intel_a_series": "A", "intel_b_series": "B", "intel_pro_series": "Pro"}
@@ -215,10 +216,9 @@ def load_gpu_bundle_group_rows() -> list[dict[str, str]]:
     return fetch_sheet_rows(session, spreadsheet_id, resolved_title)
 
 
-def load_game_master() -> dict[str, dict[str, Any]]:
-    payload = json.loads(GAME_MASTER_PATH.read_text(encoding="utf-8"))
+def _normalize_game_master_rows(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     games: dict[str, dict[str, Any]] = {}
-    for raw_game in payload:
+    for raw_game in rows:
         if not isinstance(raw_game, dict):
             continue
         if not parse_bool(raw_game.get("enabled"), default=False):
@@ -235,6 +235,27 @@ def load_game_master() -> dict[str, dict[str, Any]]:
             continue
         games[game_id] = dict(raw_game)
     return games
+
+
+def load_game_master() -> dict[str, dict[str, Any]]:
+    if not RUNTIME_DATA_URL:
+        raise RuntimeError("Missing required environment variable: OPTICLICK_RUNTIME_DATA_URL")
+    response = requests.get(
+        RUNTIME_DATA_URL,
+        timeout=30,
+        headers={"Accept": "application/json", "User-Agent": "OptiClick-SupportedGameListUpdater"},
+    )
+    response.raise_for_status()
+    payload = response.json()
+    if not isinstance(payload, dict):
+        raise RuntimeError("runtime-data payload must be an object.")
+    data = payload.get("data")
+    if not isinstance(data, dict):
+        raise RuntimeError("runtime-data.data must be an object.")
+    rows = data.get("game_master")
+    if not isinstance(rows, list):
+        raise RuntimeError("runtime-data.data.game_master must be a list.")
+    return _normalize_game_master_rows(rows)
 
 
 def build_sheet_index(rows: list[dict[str, str]]) -> dict[str, dict[str, list[str]]]:
@@ -359,6 +380,11 @@ def build_games() -> list[dict[str, str]]:
     unknown_sheet_games = sorted(game_id for game_id in sheet_index if game_id not in game_master)
     for game_id in unknown_sheet_games:
         print(f"[WARN] gpu_bundle_group references unknown game_id in game_master.json: {game_id}")
+    if unknown_sheet_games:
+        raise RuntimeError(
+            "gpu_bundle_group contains game_id values not present in game_master.json: "
+            + ", ".join(unknown_sheet_games)
+        )
 
     games: list[dict[str, str]] = []
     for game_id, game in game_master.items():
