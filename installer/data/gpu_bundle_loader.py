@@ -228,18 +228,6 @@ def load_supported_game_bundle(
         games_obj = selected_group_obj.get("games")
         selected_group_count = len(games_obj) if isinstance(games_obj, (Mapping, list)) else 0
         use_logger.info("[GPU-BUNDLE] selected group=%s games count=%d", bundle_group, selected_group_count)
-    if games_obj is None and all(isinstance(v, Mapping) for v in payload.values()):
-        # Backward-compatible format: {"ffxvi": {...}, ...}
-        normalized = _normalize_bundle_games(
-            payload,
-            shared_profiles=shared_profiles,
-            request_vendor=normalized_vendor,
-            bundle_key=bundle_key,
-            bundle_group=bundle_group,
-            manifest_version=manifest_version_text,
-        )
-        use_logger.info("[GPU-BUNDLE] bundle games count=%d", len(normalized))
-        return normalized
 
     normalized = _normalize_bundle_games(
         games_obj,

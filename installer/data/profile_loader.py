@@ -1,16 +1,10 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-import json
 from typing import Any
 
-from ..common.network_utils import add_github_raw_data_cache_bust, get_shared_retry_session
 from .game_db_keys import GPU_PROFILE_ID_KEY
-
-
-_PROFILE_SESSION = get_shared_retry_session()
 
 
 @dataclass(frozen=True)
@@ -62,19 +56,6 @@ def _get_profile_rows(
     return [dict(r) for r in all_rows + specific_rows]
 
 
-def _load_profile_rows(source_url: str, *, label: str, timeout_seconds: float = 10.0) -> list[dict[str, Any]]:
-    normalized = str(source_url or "").strip()
-    if not normalized:
-        raise ValueError(f"{label} URL is empty")
-
-    response = _PROFILE_SESSION.get(add_github_raw_data_cache_bust(normalized), timeout=timeout_seconds)
-    response.raise_for_status()
-    rows = json.loads(response.content.decode("utf-8-sig"))
-    if not isinstance(rows, list):
-        raise ValueError(f"{label} must contain a list")
-    return [dict(row) for row in rows if isinstance(row, Mapping)]
-
-
 def _build_profile_index(rows: Sequence[Mapping[str, Any]]) -> dict[str, tuple[dict[str, Any], ...]]:
     indexed: dict[str, list[dict[str, Any]]] = {}
     for row in rows:
@@ -122,58 +103,6 @@ def build_profile_catalogs_from_rows(
     )
 
 
-def load_profile_catalogs(
-    game_ini_profile_url: str,
-    engine_ini_profile_url: str,
-    game_xml_profile_url: str,
-    registry_profile_url: str,
-    game_json_profile_url: str = "",
-    game_unreal_ini_profile_url: str = "",
-    *,
-    timeout_seconds: float = 10.0,
-) -> ProfileCatalogs:
-    fetch_specs = [
-        ("game_ini_profile", game_ini_profile_url, "game_ini_profile.json"),
-        ("engine_ini_profile", engine_ini_profile_url, "engine_ini_profile.json"),
-        ("game_xml_profile", game_xml_profile_url, "game_xml_profile.json"),
-        ("registry_profile", registry_profile_url, "registry_profile.json"),
-    ]
-    if str(game_unreal_ini_profile_url or "").strip():
-        fetch_specs.append(("game_unreal_ini_profile", game_unreal_ini_profile_url, "game_unreal_ini_profile.json"))
-    if str(game_json_profile_url or "").strip():
-        fetch_specs.append(("game_json_profile", game_json_profile_url, "game_json_profile.json"))
-
-    loaded_rows: dict[str, list[dict[str, Any]]] = {
-        "game_ini_profile": [],
-        "game_unreal_ini_profile": [],
-        "engine_ini_profile": [],
-        "game_xml_profile": [],
-        "registry_profile": [],
-        "game_json_profile": [],
-    }
-    with ThreadPoolExecutor(max_workers=len(fetch_specs)) as executor:
-        future_by_name = {
-            name: executor.submit(
-                _load_profile_rows,
-                url,
-                label=label,
-                timeout_seconds=timeout_seconds,
-            )
-            for name, url, label in fetch_specs
-        }
-        for name, future in future_by_name.items():
-            loaded_rows[name] = future.result()
-
-    return ProfileCatalogs(
-        game_ini_profile=_build_profile_index(loaded_rows["game_ini_profile"]),
-        game_unreal_ini_profile=_build_profile_index(loaded_rows["game_unreal_ini_profile"]),
-        engine_ini_profile=_build_profile_index(loaded_rows["engine_ini_profile"]),
-        game_xml_profile=_build_profile_index(loaded_rows["game_xml_profile"]),
-        registry_profile=_build_profile_index(loaded_rows["registry_profile"]),
-        game_json_profile=_build_profile_index(loaded_rows["game_json_profile"]),
-    )
-
-
 def attach_profile_catalogs_to_game_db(
     game_db: Mapping[str, Mapping[str, Any]],
     catalogs: ProfileCatalogs,
@@ -196,5 +125,4 @@ __all__ = [
     "ProfileCatalogs",
     "attach_profile_catalogs_to_game_db",
     "build_profile_catalogs_from_rows",
-    "load_profile_catalogs",
 ]

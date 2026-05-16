@@ -11,6 +11,9 @@ import requests
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
+# Legacy reference only:
+# game_master source of truth is runtime-data, but this path remains as
+# documentation of local data layout used by adjacent tooling.
 GAME_MASTER_PATH = ROOT_DIR / "assets" / "data" / "game_master.json"
 NEW_GAME_SUPPORT_JSON_PATH = ROOT_DIR / "assets" / "data" / "new_game_support.json"
 WIKI_REPO_URL = "https://github.com/onehoon/OptiClick.wiki.git"
@@ -23,6 +26,9 @@ INTEL_ARC_SERIES_GROUP_LABELS = {"intel_a_series": "A", "intel_b_series": "B", "
 NEW_GAMES_HEADING = "## 신규 지원 게임 추가 / Newly Supported Games"
 NEW_GAMES_METADATA_START = "<!-- newly-supported-games"
 NEW_GAMES_METADATA_END = "-->"
+# Keep legacy headers/aliases for wiki backward compatibility.
+# Some pages may still contain old headings/table-only sections and should be
+# parsed safely during transition.
 LEGACY_NEW_GAMES_TABLE_HEADER = "| Korean Title | English Title |"
 NEW_GAMES_TABLE_HEADER = "| Korean Title | English Title | Intel | AMD | NVIDIA |"
 NEW_GAMES_TABLE_SEPARATOR = "|---|---|---|---|---|"
@@ -210,6 +216,9 @@ def normalize_vendor(value: Any) -> str:
 
 
 def load_gpu_bundle_group_rows() -> list[dict[str, str]]:
+    # Intentional hybrid source:
+    # - game_master rows: Cloudflare runtime-data
+    # - gpu_bundle_group rows: Google Sheets operational source tab
     spreadsheet_id = require_env_value("GOOGLE_SPREADSHEET_ID")
     session = build_google_session()
     resolved_title = resolve_sheet_title(session, spreadsheet_id, SHEET_GPU_BUNDLE_GROUP)
@@ -249,6 +258,7 @@ def _collect_all_game_ids(rows: list[dict[str, Any]]) -> set[str]:
 
 
 def load_runtime_data_game_master_rows() -> list[dict[str, Any]]:
+    # game_master source of truth for this script is runtime-data.
     if not RUNTIME_DATA_URL:
         raise RuntimeError("Missing required environment variable: OPTICLICK_RUNTIME_DATA_URL")
     response = requests.get(
@@ -692,6 +702,8 @@ def extract_existing_new_game_records(markdown_text: str, fallback_detected_on: 
     if not block_text:
         return []
 
+    # Prefer metadata block. Fall back to legacy table parsing only for older
+    # pages that have not been normalized yet.
     records = extract_new_games_metadata_records(block_text, fallback_detected_on)
     if records:
         return records

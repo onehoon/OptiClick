@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from typing import Any
 
-from installer.common.network_utils import add_github_raw_data_cache_bust, get_shared_retry_session
 from installer.data.game_db_keys import (
     GUIDE_URL_KEY,
     INSTALL_POST_EN_KEY,
@@ -12,9 +10,6 @@ from installer.data.game_db_keys import (
     INSTALL_PRE_EN_KEY,
     INSTALL_PRE_KR_KEY,
 )
-
-
-_file_session = get_shared_retry_session()
 _BOUND_POPUP_KEY_SPECS = (
     ("install_pre", "ko", INSTALL_PRE_KR_KEY),
     ("install_pre", "en", INSTALL_PRE_EN_KEY),
@@ -68,15 +63,6 @@ def _parse_priority(value: object, default: int = 100) -> int:
         return default
 
 
-def _fetch_remote_text(url: str, *, timeout_seconds: float = 10.0) -> str:
-    normalized = _normalize_text(url)
-    if not normalized:
-        raise ValueError("Remote JSON URL is empty")
-    response = _file_session.get(add_github_raw_data_cache_bust(normalized), timeout=timeout_seconds)
-    response.raise_for_status()
-    return response.content.decode("utf-8-sig")
-
-
 def _parse_message_center_rows(rows: list[dict[str, Any]]) -> dict[str, MessageTemplate]:
     result: dict[str, MessageTemplate] = {}
     for row in rows:
@@ -118,16 +104,6 @@ def _parse_message_binding_rows(rows: list[dict[str, Any]]) -> tuple[MessageBind
     return tuple(result)
 
 
-def _parse_rows_from_text(text: str) -> list[dict[str, Any]]:
-    normalized = str(text or "").lstrip("\ufeff").strip()
-    if not normalized:
-        return []
-    payload = json.loads(normalized)
-    if not isinstance(payload, list):
-        raise ValueError("Message payload JSON must be a list")
-    return [row for row in payload if isinstance(row, dict)]
-
-
 def parse_message_center_rows(rows: object) -> dict[str, MessageTemplate]:
     if not isinstance(rows, list):
         raise ValueError("message_center payload must be a list")
@@ -138,16 +114,6 @@ def parse_message_binding_rows(rows: object) -> tuple[MessageBinding, ...]:
     if not isinstance(rows, list):
         raise ValueError("message_binding payload must be a list")
     return _parse_message_binding_rows([row for row in rows if isinstance(row, dict)])
-
-
-def load_message_center(source_url: str = "", *, timeout_seconds: float = 10.0) -> dict[str, MessageTemplate]:
-    text = _fetch_remote_text(source_url, timeout_seconds=timeout_seconds)
-    return _parse_message_center_rows(_parse_rows_from_text(text))
-
-
-def load_message_binding(source_url: str = "", *, timeout_seconds: float = 10.0) -> tuple[MessageBinding, ...]:
-    text = _fetch_remote_text(source_url, timeout_seconds=timeout_seconds)
-    return _parse_message_binding_rows(_parse_rows_from_text(text))
 
 
 def build_message_repository(
@@ -269,8 +235,6 @@ __all__ = [
     "MessageRepository",
     "MessageTemplate",
     "build_message_repository",
-    "load_message_binding",
-    "load_message_center",
     "materialize_bound_messages_into_game_db",
     "parse_message_binding_rows",
     "parse_message_center_rows",

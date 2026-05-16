@@ -313,6 +313,9 @@ class GameDbLoadController:
         )
 
     def _inject_new_game_support_links(self, module_links: dict[str, Any]) -> None:
+        # Optional side-channel notice:
+        # `new_game_support`는 runtime-data 필수 로딩 경로와 분리되어 있으며,
+        # 실패 시 앱 시작을 막지 않는다. (main.py의 A안 전환 체크리스트 참고)
         if not self._new_game_support_url:
             self._logger.info("New game support URL is not configured; skipping startup new game support block")
             return

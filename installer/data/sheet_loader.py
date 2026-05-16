@@ -1,4 +1,3 @@
-import json
 import logging
 import re
 from pathlib import Path
@@ -7,10 +6,6 @@ from urllib.parse import parse_qs, urlparse
 from ..common.cover_utils import normalize_cover_filename, normalize_cover_steam_app_id
 from ..common.flag_parser import parse_bool_token
 from ..common.log_sanitizer import redact_text
-from ..common.network_utils import add_github_raw_data_cache_bust, get_shared_retry_session
-
-
-_file_session = get_shared_retry_session()
 
 
 def _split_match_files(match_text: str) -> list[str]:
@@ -32,22 +27,8 @@ def _pick_match_anchor(match_files: list[str]) -> str:
     return match_files[0] if match_files else ""
 
 
-def load_game_db_from_remote_json(source_url: str, *, timeout_seconds: float = 10.0):
-    normalized = str(source_url or "").strip()
-    if not normalized:
-        raise ValueError("Game master URL is empty")
-    rows = _load_remote_json(normalized, timeout_seconds=timeout_seconds)
-    return _build_game_db_from_rows(rows)
-
-
 def build_game_db_from_rows(rows: object) -> dict[str, dict[str, object]]:
     return _build_game_db_from_rows(rows)
-
-
-def _load_remote_json(source_url: str, *, timeout_seconds: float) -> object:
-    response = _file_session.get(add_github_raw_data_cache_bust(source_url), timeout=timeout_seconds)
-    response.raise_for_status()
-    return json.loads(response.content.decode("utf-8-sig"))
 
 
 def _build_game_db_from_rows(rows: object) -> dict[str, dict[str, object]]:
@@ -106,14 +87,6 @@ def _build_game_db_from_rows(rows: object) -> dict[str, dict[str, object]]:
         }
 
     return db
-
-
-def load_module_download_links_from_remote_json(source_url: str, *, timeout_seconds: float = 10.0):
-    normalized = str(source_url or "").strip()
-    if not normalized:
-        raise ValueError("Resource master URL is empty")
-    rows = _load_remote_json(normalized, timeout_seconds=timeout_seconds)
-    return _build_module_download_links_from_rows(rows)
 
 
 def build_module_download_links_from_rows(rows: object) -> dict[str, dict[str, str] | str]:

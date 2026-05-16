@@ -70,6 +70,15 @@ load_dev_env_file(load_dotenv, entry_file=__file__)
 # Allow overriding these values via build-time config for frozen builds
 # and via environment variables/.env during source development.
 SUPPORTED_GAMES_WIKI_URL = get_runtime_config_value("SUPPORTED_GAMES_WIKI_URL", "").strip()
+# NOTE(new_game_support):
+# 신규 지원 게임 팝업 데이터는 현재 runtime-data 필수 키가 아니라
+# 별도 side-channel(원격 JSON URL)로 로드한다.
+# A안 전환 체크리스트:
+# 1) DataOps/Worker runtime-data.data에 `new_game_support` list 추가
+# 2) 앱에서 `OPTICLICK_NEW_GAME_SUPPORT_URL` 기본값/설정 제거
+# 3) loader를 remote fetch가 아닌 rows parser + popup builder로 축소
+# 4) GameDbLoadController가 runtime_data["new_game_support"]를 사용하도록 전환
+# 5) 실패 정책 유지: 신규게임 공지 로딩 실패는 앱 시작 실패로 승격하지 않음
 OPTICLICK_NEW_GAME_SUPPORT_URL = get_runtime_config_value(
     "OPTICLICK_NEW_GAME_SUPPORT_URL",
     "https://raw.githubusercontent.com/onehoon/OptiClick/main/assets/data/new_game_support.json",
