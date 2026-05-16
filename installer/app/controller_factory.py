@@ -52,7 +52,6 @@ class AppControllerFactoryConfig:
     gpu_bundle_url: str
     gpu_bundle_manifest_url: str
     runtime_data_url: str
-    new_game_support_url: str
     gpu_notice_theme: Any
     max_supported_gpu_count: int
     message_popup_theme: Any
@@ -361,7 +360,6 @@ def _build_game_db_controller(
     config: AppControllerFactoryConfig,
 ) -> GameDbLoadController:
     runtime_data_url = _require_remote_json_url("runtime_data_url", config.runtime_data_url)
-    new_game_support_url = str(config.new_game_support_url or "").strip()
     load_runtime_data = lambda: runtime_data_loader.load_runtime_data(runtime_data_url)
     load_game_db = lambda rows: sheet_loader.build_game_db_from_rows(rows)
     load_module_download_links = lambda rows: sheet_loader.build_module_download_links_from_rows(rows)
@@ -395,8 +393,7 @@ def _build_game_db_controller(
         load_gpu_bundle=load_gpu_bundle,
         merge_gpu_bundle=gpu_bundle_loader.merge_gpu_bundle_into_game_db,
         build_profile_catalogs_from_rows=profile_loader.build_profile_catalogs_from_rows,
-        new_game_support_url=new_game_support_url,
-        load_new_game_support=new_game_support_loader.load_new_game_support,
+        parse_new_game_support_rows=new_game_support_loader.parse_new_game_support_rows,
         build_new_game_support_popup_text=new_game_support_loader.build_new_game_support_popup_text,
         logger=logging.getLogger(),
     )

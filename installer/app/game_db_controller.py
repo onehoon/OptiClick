@@ -20,7 +20,7 @@ MessageRepoBuilder = Callable[[dict[str, message_loader.MessageTemplate], tuple[
 GpuBundleMerger = Callable[[dict[str, dict[str, Any]], dict[str, dict[str, Any]]], dict[str, dict[str, Any]]]
 ProfileCatalogRowsLoader = Callable[..., profile_loader.ProfileCatalogs]
 ProfileCatalogAttacher = Callable[[dict[str, dict[str, Any]], profile_loader.ProfileCatalogs], dict[str, dict[str, Any]]]
-NewGameSupportLoader = Callable[[str], tuple[new_game_support_loader.NewGameSupportEntry, ...]]
+NewGameSupportRowsParser = Callable[[object], tuple[new_game_support_loader.NewGameSupportEntry, ...]]
 
 
 class MessageMaterializer(Protocol):
@@ -97,8 +97,7 @@ class GameDbLoadController:
         load_gpu_bundle: GpuBundleLoader = gpu_bundle_loader.load_supported_game_bundle,
         merge_gpu_bundle: GpuBundleMerger = gpu_bundle_loader.merge_gpu_bundle_into_game_db,
         build_profile_catalogs_from_rows: ProfileCatalogRowsLoader = profile_loader.build_profile_catalogs_from_rows,
-        new_game_support_url: str = "",
-        load_new_game_support: NewGameSupportLoader = new_game_support_loader.load_new_game_support,
+        parse_new_game_support_rows: NewGameSupportRowsParser = new_game_support_loader.parse_new_game_support_rows,
         build_new_game_support_popup_text: NewGameSupportPopupBuilder = new_game_support_loader.build_new_game_support_popup_text,
         attach_profile_catalogs: ProfileCatalogAttacher = profile_loader.attach_profile_catalogs_to_game_db,
         logger=None,
@@ -118,8 +117,7 @@ class GameDbLoadController:
         self._load_gpu_bundle = load_gpu_bundle
         self._merge_gpu_bundle = merge_gpu_bundle
         self._build_profile_catalogs_from_rows = build_profile_catalogs_from_rows
-        self._new_game_support_url = str(new_game_support_url or "").strip()
-        self._load_new_game_support = load_new_game_support
+        self._parse_new_game_support_rows = parse_new_game_support_rows
         self._build_new_game_support_popup_text = build_new_game_support_popup_text
         self._attach_profile_catalogs = attach_profile_catalogs
         self._logger = logger or logging.getLogger()
@@ -187,7 +185,7 @@ class GameDbLoadController:
                 message_repo,
                 game_db_vendor=game_db_vendor,
             )
-            self._inject_new_game_support_links(module_links)
+            self._inject_new_game_support_links(module_links, runtime_data)
             result = self._build_success_result(
                 game_db,
                 module_links,
@@ -312,19 +310,24 @@ class GameDbLoadController:
             lang=lang,
         )
 
-    def _inject_new_game_support_links(self, module_links: dict[str, Any]) -> None:
-        # Optional side-channel notice:
-        # `new_game_support`는 runtime-data 필수 로딩 경로와 분리되어 있으며,
-        # 실패 시 앱 시작을 막지 않는다. (main.py의 A안 전환 체크리스트 참고)
-        if not self._new_game_support_url:
-            self._logger.info("New game support URL is not configured; skipping startup new game support block")
+    def _inject_new_game_support_links(
+        self,
+        module_links: dict[str, Any],
+        runtime_data: dict[str, Any],
+    ) -> None:
+        # Optional runtime-data notice:
+        # `new_game_support`는 runtime-data에 포함되지만 앱 시작 필수 데이터는 아니다.
+        # 누락/파싱 실패 시 신규 지원 게임 공지만 생략하고 앱 시작은 계속한다.
+        rows = runtime_data.get("new_game_support", [])
+        if not rows:
+            self._logger.info("No new game support rows in runtime-data; skipping startup new game support block")
             return
 
         try:
-            entries = self._load_new_game_support(self._new_game_support_url)
-            self._logger.info("Loaded new game support entries: %d", len(entries))
+            entries = self._parse_new_game_support_rows(rows)
+            self._logger.info("Loaded new game support entries from runtime-data: %d", len(entries))
         except Exception as exc:
-            self._logger.info("Failed to load new game support data: %s", redact_text(exc))
+            self._logger.info("Failed to parse new game support rows: %s", redact_text(exc))
             return
 
         try:

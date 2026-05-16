@@ -1,14 +1,8 @@
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from datetime import date
 from typing import Any
-
-from installer.common.network_utils import add_github_raw_data_cache_bust, get_shared_retry_session
-
-
-_file_session = get_shared_retry_session()
 
 
 @dataclass(frozen=True)
@@ -29,30 +23,6 @@ def _parse_iso_date(value: object) -> date | None:
         return None
 
 
-def _fetch_remote_text(url: str, *, timeout_seconds: float = 10.0) -> str:
-    normalized = _normalize_text(url)
-    if not normalized:
-        raise ValueError("New game support JSON URL is empty")
-
-    response = _file_session.get(
-        add_github_raw_data_cache_bust(normalized),
-        timeout=timeout_seconds,
-    )
-    response.raise_for_status()
-    return response.content.decode("utf-8-sig")
-
-
-def _parse_rows_from_text(text: str) -> list[dict[str, Any]]:
-    normalized = str(text or "").lstrip("\ufeff").strip()
-    if not normalized:
-        return []
-
-    payload = json.loads(normalized)
-    if not isinstance(payload, list):
-        raise ValueError("New game support payload JSON must be a list")
-    return [row for row in payload if isinstance(row, dict)]
-
-
 def _parse_entry(row: dict[str, Any]) -> NewGameSupportEntry | None:
     game_name_kr = _normalize_text(row.get("game_name_kr"))
     game_name_en = _normalize_text(row.get("game_name_en"))
@@ -70,14 +40,14 @@ def _parse_entry(row: dict[str, Any]) -> NewGameSupportEntry | None:
     )
 
 
-def load_new_game_support(
-    source_url: str = "",
-    *,
-    timeout_seconds: float = 5.0,
-) -> tuple[NewGameSupportEntry, ...]:
-    text = _fetch_remote_text(source_url, timeout_seconds=timeout_seconds)
+def parse_new_game_support_rows(rows: object) -> tuple[NewGameSupportEntry, ...]:
+    if not isinstance(rows, list):
+        return tuple()
+
     entries: list[NewGameSupportEntry] = []
-    for row in _parse_rows_from_text(text):
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
         entry = _parse_entry(row)
         if entry is not None:
             entries.append(entry)
@@ -123,5 +93,5 @@ def build_new_game_support_popup_text(
 __all__ = [
     "NewGameSupportEntry",
     "build_new_game_support_popup_text",
-    "load_new_game_support",
+    "parse_new_game_support_rows",
 ]
