@@ -80,15 +80,12 @@ OPTICLICK_GPU_BUNDLE_MANIFEST_URL = get_runtime_config_value(
 ).strip()
 OPTICLICK_GPU_BUNDLE_URL = get_runtime_config_value(
     "OPTICLICK_GPU_BUNDLE_URL",
-    get_runtime_config_value(
-        "OPTISCALER_GPU_BUNDLE_URL",
-        "https://opticlick-data-api.onehoon.workers.dev/v1/gpu-bundle",
-    ),
+    "https://opticlick-data-api.onehoon.workers.dev/v1/gpu-bundle",
 ).strip()
 OPTISCALER_GPU_BUNDLE_DEBUG = False if getattr(sys, "frozen", False) else get_bool_env("OPTISCALER_GPU_BUNDLE_DEBUG", False)
 OPTICLICK_RUNTIME_DATA_URL = get_runtime_config_value(
     "OPTICLICK_RUNTIME_DATA_URL",
-    get_runtime_config_value("OPTISCALER_RUNTIME_DATA_URL", ""),
+    "",
 ).strip()
 
 configure_logging(app_version=APP_VERSION, source_root=Path(__file__).resolve().parent)
