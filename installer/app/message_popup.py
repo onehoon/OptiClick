@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import logging
 import math
-from typing import Callable, Optional
+from typing import Callable
 
 import customtkinter as ctk
 
@@ -40,7 +40,7 @@ def _apply_popup_geometry(
     screen_w: int,
     screen_h: int,
     debug_name: str,
-    desired_popup_w: Optional[int] = None,
+    desired_popup_w: int | None = None,
     min_popup_w: int = 200,
     min_popup_h: int = 120,
     use_requested_size: bool = False,
@@ -91,15 +91,15 @@ def show_message_popup(
     *,
     title: str,
     confirm_text: str,
-    on_close: Optional[Callable[[], None]] = None,
+    on_close: Callable[[], None] | None = None,
     allow_window_close: bool = True,
     scrollable: bool = False,
     debug_name: str = "message popup",
-    preferred_text_chars: Optional[int] = None,
+    preferred_text_chars: int | None = None,
     min_text_chars: int = 34,
     max_text_chars: int = 110,
     base_font_size: int = 13,
-    emphasis_font_size: Optional[int] = None,
+    emphasis_font_size: int | None = None,
     emphasis_weight: str = "bold",
     root_width_fallback: int = 512,
     root_height_fallback: int = 512,
@@ -309,7 +309,7 @@ def show_message_popup(
     button_row = ctk.CTkFrame(container, fg_color="transparent")
     button_row.pack(fill="x", pady=(10, 0))
 
-    close_button: Optional[ctk.CTkButton] = None
+    close_button: ctk.CTkButton | None = None
     fade_controller = PopupFadeController(popup, debug_name=debug_name)
 
     def _after_close() -> None:

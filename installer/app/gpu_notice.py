@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import logging
-from typing import Optional, Sequence, TYPE_CHECKING
+from typing import Sequence, TYPE_CHECKING
 
 import customtkinter as ctk
 from .popup_markup import create_popup_markup_text, estimate_wrapped_text_lines
@@ -92,7 +92,7 @@ def _get_vendor_button_theme(vendor: str, theme: GpuNoticeTheme) -> GpuVendorBut
 def _center_gpu_popup_on_root(
     root: ctk.CTk,
     popup: ctk.CTkToplevel,
-    target_width_px: Optional[int] = None,
+    target_width_px: int | None = None,
     use_requested_size: bool = False,
 ) -> None:
     try:
@@ -204,12 +204,12 @@ def select_dual_gpu_adapter(
     adapters: Sequence["GpuAdapterChoice"],
     strings: AppStrings,
     theme: GpuNoticeTheme,
-) -> Optional["GpuAdapterChoice"]:
+) -> GpuAdapterChoice | None:
     adapter_choices = list(adapters[:2])
     if len(adapter_choices) < 2:
         return None
 
-    selected_adapter: Optional["GpuAdapterChoice"] = None
+    selected_adapter: GpuAdapterChoice | None = None
     screen_w = max(1, int(root.winfo_screenwidth() or 512))
     max_message_width = max(320, min(420, screen_w - 140))
     button_row_width = (DUAL_GPU_BUTTON_W * 2) + (DUAL_GPU_BUTTON_GAP * 2)

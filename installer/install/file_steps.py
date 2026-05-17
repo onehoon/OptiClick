@@ -9,6 +9,7 @@ import tempfile as tempfile_module
 from typing import Any
 
 from ..config import ini_utils, json_utils, xml_utils
+from ._log_utils import _SuppressInfoLogger
 from . import services as installer_services
 from .payload_utils import resolve_payload_source_dir, validate_optiscaler_payload_dir
 from .profile_paths import resolve_profile_path as _resolve_profile_path
@@ -34,17 +35,6 @@ _REGISTRY_TYPE_MAP = {
     "reg_dword": "REG_DWORD",
     "reg_qword": "REG_QWORD",
 }
-
-
-class _SuppressInfoLogger:
-    def __init__(self, logger) -> None:
-        self._logger = logger
-
-    def info(self, *args, **kwargs) -> None:
-        return None
-
-    def __getattr__(self, name: str):
-        return getattr(self._logger, name)
 
 
 def resolve_ingame_ini_path(target_path: str, ingame_ini_name: str, logger=None) -> str | None:

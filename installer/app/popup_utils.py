@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Callable, Optional
+from typing import Callable
 
 import customtkinter as ctk
 
@@ -31,10 +31,10 @@ def close_modal_popup(popup: ctk.CTkToplevel) -> None:
 def present_modal_popup(
     popup: ctk.CTkToplevel,
     *,
-    initial_layout: Optional[Callable[[], None]] = None,
-    post_show_layout: Optional[Callable[[], None]] = None,
-    after_idle_layout: Optional[Callable[[], None]] = None,
-    fade_controller: Optional["PopupFadeController"] = None,
+    initial_layout: Callable[[], None] | None = None,
+    post_show_layout: Callable[[], None] | None = None,
+    after_idle_layout: Callable[[], None] | None = None,
+    fade_controller: PopupFadeController | None = None,
 ) -> None:
     if callable(initial_layout):
         initial_layout()
@@ -58,10 +58,10 @@ def present_modal_popup(
 
 def resolve_popup_font_size(
     popup: ctk.CTkToplevel,
-    size: Optional[int],
+    size: int | None,
     *,
     log_message: str = "Failed to resolve popup font scaling",
-) -> Optional[int]:
+) -> int | None:
     if size is None:
         return None
 
@@ -102,7 +102,7 @@ class PopupFadeController:
         self.fade_supported = False
         self._fade_in_after_id = None
         self._closing = False
-        self._on_complete: Optional[Callable[[], None]] = None
+        self._on_complete: Callable[[], None] | None = None
 
     @property
     def is_closing(self) -> bool:
@@ -117,7 +117,7 @@ class PopupFadeController:
             logging.debug("Popup alpha fade is not supported for %s", self.debug_name, exc_info=True)
         return self.fade_supported
 
-    def start_fade_in(self, delay_ms: Optional[int] = None) -> None:
+    def start_fade_in(self, delay_ms: int | None = None) -> None:
         if delay_ms is None:
             delay_ms = self.fade_in_delay_ms
         if not self.fade_supported or self._closing or not self._popup_exists():
@@ -134,7 +134,7 @@ class PopupFadeController:
             pass
         self._fade_in_after_id = None
 
-    def close(self, on_complete: Optional[Callable[[], None]] = None) -> bool:
+    def close(self, on_complete: Callable[[], None] | None = None) -> bool:
         if self._closing:
             return False
         self._closing = True

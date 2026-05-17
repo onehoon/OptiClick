@@ -8,7 +8,7 @@ import re
 import subprocess
 import sys
 from tkinter import messagebox
-from typing import Callable, Mapping, Optional
+from typing import Callable, Mapping
 from urllib.parse import urlparse
 import webbrowser
 import zipfile
@@ -54,7 +54,7 @@ def build_expected_installer_exe_name(version_text: str, fallback_url: str = "")
     return ""
 
 
-def resolve_safe_child_path(base_dir: Path, child_path: str) -> Optional[Path]:
+def resolve_safe_child_path(base_dir: Path, child_path: str) -> Path | None:
     raw_name = str(child_path or "").replace("\\", "/").strip()
     if not raw_name:
         return None
@@ -153,9 +153,9 @@ class InstallerUpdateManager:
         *,
         current_version: str,
         strings: AppStrings,
-        on_busy_state_changed: Optional[Callable[[], None]] = None,
-        on_update_failed: Optional[Callable[[], None]] = None,
-        on_exit_requested: Optional[Callable[[], None]] = None,
+        on_busy_state_changed: Callable[[], None] | None = None,
+        on_update_failed: Callable[[], None] | None = None,
+        on_exit_requested: Callable[[], None] | None = None,
     ) -> None:
         self.root = root
         self.current_version = str(current_version or "")
@@ -297,7 +297,7 @@ class InstallerUpdateManager:
             except Exception:
                 logging.debug("[APP] Failed to grant foreground permission to updated installer", exc_info=True)
 
-    def _on_update_ready(self, launch_path: str, latest_version: str, error_message: Optional[str]) -> None:
+    def _on_update_ready(self, launch_path: str, latest_version: str, error_message: str | None) -> None:
         self._set_in_progress(False)
 
         if error_message:

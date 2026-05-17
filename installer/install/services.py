@@ -495,14 +495,3 @@ def download_to_file(url, dest_path, timeout=60, logger=None):
         raise
 
 
-def install_optipatcher(target_path, url, logger=None, cached_archive_path=""):
-    from .components.optipatcher import install_optipatcher_payload
-
-    install_optipatcher_payload(target_path, url, logger=logger, cached_archive_path=cached_archive_path)
-
-
-def install_unreal5_from_url(url, target_path, logger=None, cached_archive_path=""):
-    from .components.unreal5 import install_unreal5_payload
-
-    return install_unreal5_payload(url, target_path, logger=logger, cached_archive_path=cached_archive_path)
-

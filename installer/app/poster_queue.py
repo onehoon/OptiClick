@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from concurrent.futures import Executor, Future
 from dataclasses import dataclass, replace
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from ..common.log_sanitizer import redact_text
 
@@ -48,7 +48,7 @@ class PosterQueueController:
         self._failed_jobs: dict[int, PosterQueueJob] = {}
         self._delayed_retry_after_ids: dict[int, str] = {}
         self._render_generation = 0
-        self._image_queue_after_id: Optional[str] = None
+        self._image_queue_after_id: str | None = None
         self._initial_image_pass = True
         self._retry_attempted = False
 
