@@ -1,4 +1,4 @@
-[
+﻿[
   {
     "game_id": "CP2077",
     "match_exe": "Cyberpunk2077.exe",
@@ -6,10 +6,10 @@
     "game_name_en": "Cyberpunk 2077",
     "cover_steam_app_id": "1091500",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "DWORIGINS",
@@ -18,10 +18,10 @@
     "game_name_en": "Dynasty Warriors: Origins",
     "cover_steam_app_id": "2384580",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "FFXVI",
@@ -30,10 +30,10 @@
     "game_name_en": "Final Fantasy XVI",
     "cover_steam_app_id": "2515020",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "SB",
@@ -42,10 +42,10 @@
     "game_name_en": "Stellar Blade",
     "cover_steam_app_id": "3489700",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "FF7R",
@@ -54,10 +54,10 @@
     "game_name_en": "Final Fantasy VII Rebirth",
     "cover_steam_app_id": "2909400",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "GOT",
@@ -66,10 +66,10 @@
     "game_name_en": "Ghost of Tsushima Director's Cut",
     "cover_steam_app_id": "2215430",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "GOWR",
@@ -78,10 +78,10 @@
     "game_name_en": "God of War Ragnarok",
     "cover_steam_app_id": "2322010",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "HFW",
@@ -90,10 +90,10 @@
     "game_name_en": "Horizon Forbidden West Complete Edition",
     "cover_steam_app_id": "2420110",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "HZDR",
@@ -102,10 +102,10 @@
     "game_name_en": "Horizon Zero Dawn Remastered",
     "cover_steam_app_id": "2561580",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "KCD2",
@@ -114,10 +114,10 @@
     "game_name_en": "Kingdom Come: Deliverance II",
     "cover_steam_app_id": "1771300",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "LOP",
@@ -126,10 +126,10 @@
     "game_name_en": "Lies of P",
     "cover_steam_app_id": "1627720",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "LOP",
@@ -138,10 +138,10 @@
     "game_name_en": "Lies of P",
     "cover_steam_app_id": "1627720",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "SMR",
@@ -150,10 +150,10 @@
     "game_name_en": "Marvel's Spider-Man Remastered",
     "cover_steam_app_id": "1817070",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "SM2",
@@ -162,10 +162,10 @@
     "game_name_en": "Marvel's Spider-Man 2",
     "cover_steam_app_id": "2651280",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "DSD",
@@ -174,10 +174,10 @@
     "game_name_en": "Death Stranding Director's Cut",
     "cover_steam_app_id": "1850570",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "FH5",
@@ -186,10 +186,10 @@
     "game_name_en": "Forza Horizon 5",
     "cover_steam_app_id": "1551360",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "PAL",
@@ -222,10 +222,10 @@
     "game_name_en": "Silent Hill 2",
     "cover_steam_app_id": "2124490",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "SH2",
@@ -234,10 +234,10 @@
     "game_name_en": "Silent Hill 2",
     "cover_steam_app_id": "2124490",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "SHF",
@@ -246,10 +246,10 @@
     "game_name_en": "Silent Hill f",
     "cover_steam_app_id": "2947440",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "SHF",
@@ -258,10 +258,10 @@
     "game_name_en": "Silent Hill f",
     "cover_steam_app_id": "2947440",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "TLOU2",
@@ -270,10 +270,10 @@
     "game_name_en": "The Last of Us Part II",
     "cover_steam_app_id": "2531310",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Jedisurvivor",
@@ -282,10 +282,10 @@
     "game_name_en": "STAR WARS Jedi: Survivor",
     "cover_steam_app_id": "1774580",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "AW2",
@@ -294,10 +294,10 @@
     "game_name_en": "Alan Wake 2",
     "cover_steam_app_id": "",
     "cover_url": "https://cdn2.steamgriddb.com/grid/a7147fd59ab64d16e49e819733ad2187.png",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Avowed",
@@ -306,10 +306,10 @@
     "game_name_en": "Avowed",
     "cover_steam_app_id": "2457220",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Avowed",
@@ -318,10 +318,10 @@
     "game_name_en": "Avowed",
     "cover_steam_app_id": "2457220",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Control",
@@ -330,10 +330,10 @@
     "game_name_en": "Control",
     "cover_steam_app_id": "870780",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "DRG",
@@ -342,10 +342,10 @@
     "game_name_en": "Deep Rock Galactic",
     "cover_steam_app_id": "548430",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "DRG",
@@ -354,10 +354,10 @@
     "game_name_en": "Deep Rock Galactic",
     "cover_steam_app_id": "548430",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "FP2",
@@ -366,10 +366,10 @@
     "game_name_en": "Frostpunk 2",
     "cover_steam_app_id": "1601580",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "FP2",
@@ -378,10 +378,10 @@
     "game_name_en": "Frostpunk 2",
     "cover_steam_app_id": "1601580",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "RiftApart",
@@ -390,10 +390,10 @@
     "game_name_en": "Ratchet & Clank: Rift Apart",
     "cover_steam_app_id": "1895880",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Remnant2",
@@ -402,10 +402,10 @@
     "game_name_en": "Remnant II",
     "cover_steam_app_id": "1282100",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Remnant2",
@@ -414,10 +414,10 @@
     "game_name_en": "Remnant II",
     "cover_steam_app_id": "1282100",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Stalker2",
@@ -426,10 +426,10 @@
     "game_name_en": "S.T.A.L.K.E.R. 2: Heart of Chornobyl",
     "cover_steam_app_id": "1643320",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Stalker2",
@@ -438,10 +438,10 @@
     "game_name_en": "S.T.A.L.K.E.R. 2: Heart of Chornobyl",
     "cover_steam_app_id": "1643320",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "TheAlters",
@@ -450,10 +450,10 @@
     "game_name_en": "The Alters",
     "cover_steam_app_id": "1601570",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "TheAlters",
@@ -462,10 +462,10 @@
     "game_name_en": "The Alters",
     "cover_steam_app_id": "1601570",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "TQ2",
@@ -474,10 +474,10 @@
     "game_name_en": "Titan Quest II",
     "cover_steam_app_id": "1154030",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "starfield",
@@ -486,10 +486,10 @@
     "game_name_en": "Starfield",
     "cover_steam_app_id": "1716740",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Wuchang",
@@ -498,10 +498,10 @@
     "game_name_en": "Wuchang: Fallen Feathers",
     "cover_steam_app_id": "2277560",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Wuchang",
@@ -510,10 +510,10 @@
     "game_name_en": "Wuchang: Fallen Feathers",
     "cover_steam_app_id": "2277560",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "ROTTR",
@@ -522,10 +522,10 @@
     "game_name_en": "Rise of the Tomb Raider",
     "cover_steam_app_id": "391220",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "UNCHARTED",
@@ -534,10 +534,10 @@
     "game_name_en": "UNCHARTED: Legacy of Thieves Collection",
     "cover_steam_app_id": "1659420",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "HITMAN3",
@@ -546,10 +546,10 @@
     "game_name_en": "Hitman: World of Assassination",
     "cover_steam_app_id": "1659040",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "CrimsonDesert",
@@ -558,10 +558,10 @@
     "game_name_en": "Crimson Desert",
     "cover_steam_app_id": "3321460",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "TW3",
@@ -570,10 +570,10 @@
     "game_name_en": "The Witcher 3: Wild Hunt",
     "cover_steam_app_id": "292030",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "MHS3",
@@ -582,8 +582,8 @@
     "game_name_en": "Monster Hunter Stories 3: Twisted Reflection",
     "cover_steam_app_id": "2852190",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
+    "enabled": false,
+    "support_intel": false,
     "support_amd": false,
     "support_nvidia": false
   },
@@ -594,8 +594,8 @@
     "game_name_en": "Monster Hunter Wilds",
     "cover_steam_app_id": "2246340",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
+    "enabled": false,
+    "support_intel": false,
     "support_amd": false,
     "support_nvidia": false
   },
@@ -606,10 +606,10 @@
     "game_name_en": "Black Myth Wukong",
     "cover_steam_app_id": "2358720",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "E33",
@@ -618,10 +618,10 @@
     "game_name_en": "Clair Obscur: Expedition 33",
     "cover_steam_app_id": "1903340",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "E33",
@@ -630,10 +630,10 @@
     "game_name_en": "Clair Obscur: Expedition 33",
     "cover_steam_app_id": "1903340",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "RDR2",
@@ -642,10 +642,10 @@
     "game_name_en": "Red Dead Redemption 2",
     "cover_steam_app_id": "1174180",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Avatar",
@@ -654,10 +654,10 @@
     "game_name_en": "Avatar: Frontiers of Pandora",
     "cover_steam_app_id": "2840770",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Morales",
@@ -666,10 +666,10 @@
     "game_name_en": "Marvel's Spider-Man: Miles Morales",
     "cover_steam_app_id": "1817190",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Styx",
@@ -678,10 +678,10 @@
     "game_name_en": "Styx: Blades of Greed",
     "cover_steam_app_id": "3290690",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Windrose",
@@ -690,10 +690,10 @@
     "game_name_en": "Windrose",
     "cover_steam_app_id": "3041230",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Samson",
@@ -702,10 +702,10 @@
     "game_name_en": "Samson",
     "cover_steam_app_id": "3634520",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Samson",
@@ -714,10 +714,10 @@
     "game_name_en": "Samson",
     "cover_steam_app_id": "3634520",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "RDR1",
@@ -726,10 +726,10 @@
     "game_name_en": "Red Dead Redemption",
     "cover_steam_app_id": "2668510",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "oblivion",
@@ -738,10 +738,10 @@
     "game_name_en": "The Elder Scrolls IV: Oblivion Remastered",
     "cover_steam_app_id": "2623190",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "oblivion",
@@ -750,10 +750,10 @@
     "game_name_en": "The Elder Scrolls IV: Oblivion Remastered",
     "cover_steam_app_id": "2623190",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "WWM",
@@ -762,10 +762,10 @@
     "game_name_en": "Where Winds Meet (Steam)",
     "cover_steam_app_id": "3564740",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "NTE",
@@ -774,10 +774,10 @@
     "game_name_en": "Neverness to Everness",
     "cover_steam_app_id": "",
     "cover_url": "https://static.actugaming.net/media/2024/10/neverness-to-evenerss-nte-jaquette.jpg",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "PRAGMATA",
@@ -786,8 +786,8 @@
     "game_name_en": "Pragmata",
     "cover_steam_app_id": "3357650",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
+    "enabled": false,
+    "support_intel": false,
     "support_amd": false,
     "support_nvidia": false
   },
@@ -798,10 +798,10 @@
     "game_name_en": "Far Far West",
     "cover_steam_app_id": "3124540",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Industria2",
@@ -810,10 +810,10 @@
     "game_name_en": "Industria 2",
     "cover_steam_app_id": "2154070",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "HighOnLife2",
@@ -822,10 +822,10 @@
     "game_name_en": "High On Life 2",
     "cover_steam_app_id": "2069250",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "HighOnLife2",
@@ -834,10 +834,10 @@
     "game_name_en": "High On Life 2",
     "cover_steam_app_id": "2069250",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "WUWA",
@@ -846,10 +846,10 @@
     "game_name_en": "Wuthering Waves (Steam)",
     "cover_steam_app_id": "3513350",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "inZOI",
@@ -858,10 +858,10 @@
     "game_name_en": "inZOI",
     "cover_steam_app_id": "2456740",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "DeadasDisco",
@@ -870,10 +870,10 @@
     "game_name_en": "Dead as Disco",
     "cover_steam_app_id": "3404260",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "FH6",
@@ -882,10 +882,10 @@
     "game_name_en": "Forza Horizon 6",
     "cover_steam_app_id": "2483190",
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Directive8020",
@@ -894,10 +894,10 @@
     "game_name_en": "Directive 8020",
     "cover_steam_app_id": 2255370,
     "cover_url": "",
-    "enabled": true,
-    "support_intel": true,
-    "support_amd": true,
-    "support_nvidia": true
+    "enabled": false,
+    "support_intel": false,
+    "support_amd": false,
+    "support_nvidia": false
   },
   {
     "game_id": "Requiem",
@@ -996,3 +996,4 @@
     "support_nvidia": false
   }
 ]
+

@@ -8,22 +8,6 @@
     "memo": ""
   },
   {
-    "game_id": "*",
-    "gpu_vendor": "ALL",
-    "stage": "startup",
-    "message_id": "global.startup_warning2",
-    "priority": 200,
-    "memo": ""
-  },
-  {
-    "game_id": "*",
-    "gpu_vendor": "ALL",
-    "stage": "startup",
-    "message_id": "global.startup_warning3",
-    "priority": 300,
-    "memo": ""
-  },
-  {
     "game_id": "FH6",
     "gpu_vendor": "ALL",
     "stage": "install_post",
