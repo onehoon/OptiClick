@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from ..data.game_db_keys import INSTALLED_PROXY_NAME_KEY
@@ -19,7 +18,7 @@ from .components import (
     install_unreal5_patch,
 )
 from .components._link_utils import extract_module_url
-from .components.specialk import is_specialk_plugins_mode
+from .components.specialk import cleanup_root_specialk_before_proxy_resolution
 
 
 @dataclass(frozen=True)
@@ -68,52 +67,6 @@ def _is_optipatcher_requested_with_source(
     if not bool(game_data.get("optipatcher")):
         return False
     return bool(extract_module_url(module_download_links, "optipatcher") or cached_archive_path)
-
-
-def _is_specialk_dll(file_path: Path) -> bool:
-    version_info = installer_services.read_windows_version_strings(file_path)
-    if not version_info:
-        return False
-    text = " ".join(str(value or "") for value in version_info.values()).casefold()
-    return "special k" in text or "specialk" in text
-
-
-def cleanup_root_specialk_before_proxy_resolution(
-    target_path: str,
-    game_data: Mapping[str, object],
-    optiscaler_preferred_dll_name: str,
-    *,
-    use_ultimate_asi_loader: bool,
-    ual_auto_detected: bool,
-    logger=None,
-) -> None:
-    if use_ultimate_asi_loader or ual_auto_detected:
-        return
-    if not is_specialk_plugins_mode(game_data.get("specialk")):
-        return
-    if str(optiscaler_preferred_dll_name or "").strip().casefold() != "dxgi.dll":
-        return
-
-    target_dir = Path(target_path).resolve(strict=False)
-    dxgi_path = target_dir / "dxgi.dll"
-    if not dxgi_path.exists():
-        return
-    if not dxgi_path.is_file():
-        if logger:
-            logger.info("Skipped pre-cleanup for root dxgi.dll because candidate is not a file: %s", dxgi_path)
-        return
-    if not _is_specialk_dll(dxgi_path):
-        if logger:
-            logger.info("Skipped pre-cleanup for root dxgi.dll because it is not identified as Special K")
-        return
-
-    try:
-        installer_services.ensure_writable(dxgi_path)
-        dxgi_path.unlink()
-    except OSError as exc:
-        raise RuntimeError("Failed to remove root Special K dxgi.dll before OptiScaler proxy resolution") from exc
-    if logger:
-        logger.info("Removed root Special K dxgi.dll before OptiScaler proxy resolution")
 
 
 def _install_core_files(

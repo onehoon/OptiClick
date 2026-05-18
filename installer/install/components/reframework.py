@@ -8,10 +8,6 @@ from ._link_utils import extract_module_url
 from .dll_payload import install_dll_payload_from_archive, normalize_dll_destination_path
 
 REFRAMEWORK_SOURCE_DLL_NAME = "dinput8.dll"
-REFRAMEWORK_KNOWN_DESTINATIONS = (
-    "dinput8.dll",
-    "ReShade64.dll",
-)
 
 
 def _is_real_reshade_dll(file_path: Path) -> bool:
