@@ -11,6 +11,7 @@ from .install_precheck import (
     build_mod_conflict_findings,
     build_mod_conflict_notice,
     scan_mod_precheck_state,
+    suppress_managed_specialk_findings,
 )
 
 
@@ -94,6 +95,9 @@ class BaseGameHandler:
         preferred_dll = str(game_data.get("optiscaler_dll_name", "")).strip()
         mod_state = scan_mod_precheck_state(target_path, logger=logger)
         conflict_findings = build_mod_conflict_findings(mod_state)
+        filtered_findings = suppress_managed_specialk_findings(conflict_findings, game_data)
+        if logger and len(filtered_findings) != len(conflict_findings):
+            logger.info("[MOD] Special K detected but suppressed because this game installs Special K")
         try:
             resolved_name = installer_services.resolve_proxy_dll_name(
                 target_path,
@@ -103,13 +107,13 @@ class BaseGameHandler:
             return InstallPrecheckResult(
                 ok=True,
                 resolved_dll_name=resolved_name,
-                conflict_findings=conflict_findings,
+                conflict_findings=filtered_findings,
             )
         except Exception as exc:
             return InstallPrecheckResult(
                 ok=False,
                 raw_error_message=str(exc),
-                conflict_findings=conflict_findings,
+                conflict_findings=filtered_findings,
             )
 
     def prepare_install_plan(

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import fnmatch
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Mapping
 
 from ...i18n import build_mod_conflict_finding_text, build_mod_conflict_notice_text, lang_from_bool
 from ...install import services as installer_services
@@ -234,6 +234,24 @@ def build_mod_conflict_findings(state: ModPrecheckState) -> tuple[ModConflictFin
     return tuple(findings)
 
 
+def is_specialk_managed_by_installer(game_data: Mapping[str, object]) -> bool:
+    return bool(str(game_data.get("specialk", "") or "").strip())
+
+
+def suppress_managed_specialk_findings(
+    findings: Iterable[ModConflictFinding],
+    game_data: Mapping[str, object],
+) -> tuple[ModConflictFinding, ...]:
+    normalized_findings = tuple(findings)
+    if not is_specialk_managed_by_installer(game_data):
+        return normalized_findings
+    return tuple(
+        finding
+        for finding in normalized_findings
+        if str(finding.kind or "").strip().lower() != "special_k"
+    )
+
+
 def scan_target_mod_conflicts(target_path: str, logger=None) -> tuple[ModConflictFinding, ...]:
     state = scan_mod_precheck_state(target_path, logger=logger)
     return build_mod_conflict_findings(state)
@@ -266,6 +284,8 @@ __all__ = [
     "build_mod_conflict_findings",
     "build_mod_conflict_notice",
     "empty_mod_precheck_state",
+    "is_specialk_managed_by_installer",
     "scan_mod_precheck_state",
+    "suppress_managed_specialk_findings",
     "scan_target_mod_conflicts",
 ]

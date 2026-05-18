@@ -238,7 +238,9 @@ def build_install_context(
     ual_names = tuple(ual_detected_names or ())
     ual_auto_detected = bool(ual_names)
     use_ultimate_asi_loader = bool(planned_game_data.get("ultimate_asi_loader")) or ual_auto_detected
-    preferred_proxy_name = planned_resolved_dll_name or str(planned_game_data.get("optiscaler_dll_name", "")).strip()
+    preferred_proxy_name = str(planned_game_data.get("optiscaler_dll_name", "")).strip()
+    if not preferred_proxy_name:
+        preferred_proxy_name = planned_resolved_dll_name
 
     if use_ultimate_asi_loader:
         if ual_auto_detected:
