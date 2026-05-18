@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import re
 import tkinter as tk
 import tkinter.font as tkfont
-from typing import Iterator, Optional
+from typing import Iterator
 
 
 _OPEN_MARKUP_PATTERN = re.compile(r"\[\s*RED\s*\]", re.IGNORECASE)
@@ -120,9 +120,9 @@ def estimate_wrapped_text_lines(text: str, font: tkfont.Font, max_width_px: int)
 def _clone_font(
     font_source: object,
     *,
-    family: Optional[str] = None,
-    size: Optional[int] = None,
-    weight: Optional[str] = None,
+    family: str | None = None,
+    size: int | None = None,
+    weight: str | None = None,
 ) -> tkfont.Font:
     font_spec = font_source
     if hasattr(font_source, "cget"):
@@ -161,10 +161,10 @@ def render_markup_to_text_widget(
     emphasis_tag: str = "popup_red_emphasis",
     emphasis_color: str = "#FFCB62",
     base_font_source: object = None,
-    base_font_family: Optional[str] = None,
-    base_font_size: Optional[int] = None,
-    base_font_weight: Optional[str] = None,
-    emphasis_font_size: Optional[int] = None,
+    base_font_family: str | None = None,
+    base_font_size: int | None = None,
+    base_font_weight: str | None = None,
+    emphasis_font_size: int | None = None,
     emphasis_weight: str = "bold",
     emphasis_size_offset: int = 0,
     clear: bool = True,
@@ -236,7 +236,7 @@ def create_popup_markup_text(
     height: int = 1,
     base_font_size: int = 13,
     emphasis_color: str = "#FFCB62",
-    emphasis_font_size: Optional[int] = None,
+    emphasis_font_size: int | None = None,
     emphasis_weight: str = "bold",
     emphasis_size_offset: int = 0,
     wrap: str = "word",

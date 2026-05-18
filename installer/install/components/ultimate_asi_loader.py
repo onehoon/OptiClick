@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Mapping
 from urllib.parse import urlparse
 
+from .._log_utils import _SuppressInfoLogger
 from .. import services as installer_services
 from ..archive_source import resolve_cached_archive_path
 from ._link_utils import extract_module_url
@@ -15,17 +16,6 @@ from ._link_utils import extract_module_url
 OPTISCALER_ASI_NAME = "OptiScaler.asi"
 ULTIMATE_ASI_LOADER_DLL_NAME = "dinput8.dll"
 _ULTIMATE_ASI_LOADER_SIGNATURE = "ultimate asi loader"
-
-
-class _SuppressInfoLogger:
-    def __init__(self, logger) -> None:
-        self._logger = logger
-
-    def info(self, *args, **kwargs) -> None:
-        return None
-
-    def __getattr__(self, name: str):
-        return getattr(self._logger, name)
 
 
 def is_ultimate_asi_loader_dinput8(file_path: Path) -> bool:

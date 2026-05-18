@@ -5,7 +5,7 @@ import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 if os.name == "nt":
     import winreg
@@ -75,7 +75,7 @@ def _get_rtss_install_path() -> Path:
     return Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")) / "RivaTuner Statistics Server"
 
 
-def _read_rtss_global_settings(global_path: Path) -> tuple[Optional[str], Optional[str]]:
+def _read_rtss_global_settings(global_path: Path) -> tuple[str | None, str | None]:
     ref_val, detours_val = None, None
     lines = global_path.read_text(encoding="utf-8-sig", errors="ignore").splitlines()
     for line in lines:
@@ -92,7 +92,7 @@ def _read_rtss_global_settings(global_path: Path) -> tuple[Optional[str], Option
     return ref_val, detours_val
 
 
-def _is_rtss_config_ok(ref_val: Optional[str], detours_val: Optional[str]) -> bool:
+def _is_rtss_config_ok(ref_val: str | None, detours_val: str | None) -> bool:
     return ref_val == "0" and detours_val == "1"
 
 

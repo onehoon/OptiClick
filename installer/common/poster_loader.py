@@ -7,7 +7,7 @@ import logging
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Mapping, Optional
+from typing import Mapping
 from urllib.parse import quote, urlparse
 
 import requests
@@ -223,7 +223,7 @@ class PosterImageLoader:
             should_retry=repo_failed or steam_failed_retryable or cover_url_failed_retryable
         )
 
-    def _load_from_steam_cover(self, *, title: str, cover_steam_app_id: str) -> tuple[Optional[PosterLoadResult], bool]:
+    def _load_from_steam_cover(self, *, title: str, cover_steam_app_id: str) -> tuple[PosterLoadResult | None, bool]:
         if not cover_steam_app_id:
             return None, False
         cache_filename = f"{cover_steam_app_id}.webp"
@@ -272,7 +272,7 @@ class PosterImageLoader:
 
     def _try_download_to_cache(
         self, source_url: str, cache_filename: str, cache_key: str
-    ) -> tuple[Optional[PosterLoadResult], bool]:
+    ) -> tuple[PosterLoadResult | None, bool]:
         try:
             image_bytes = self._download_image_bytes(source_url)
             prepared = self._load_prepared_image_from_bytes(image_bytes, cache_key)
@@ -287,7 +287,7 @@ class PosterImageLoader:
 
     def _load_from_cover_url_cache_and_source(
         self, *, title: str, url: str, cache_filename: str
-    ) -> tuple[Optional[PosterLoadResult], bool]:
+    ) -> tuple[PosterLoadResult | None, bool]:
         if not url:
             return None, False
         cache_key = self._poster_cache_key("cover_url", url, title=title)
@@ -314,7 +314,7 @@ class PosterImageLoader:
         *,
         normalized_cover_filename: str,
         cover_cache_key: str,
-    ) -> tuple[Optional[PosterLoadResult], bool]:
+    ) -> tuple[PosterLoadResult | None, bool]:
         """Resolve cover filename path sources and report repo fallback failure state."""
         repo_failed = False
         if not normalized_cover_filename:
@@ -345,7 +345,7 @@ class PosterImageLoader:
         *,
         normalized_cover_filename: str,
         cover_cache_key: str,
-    ) -> Optional[PosterLoadResult]:
+    ) -> PosterLoadResult | None:
         """Try bundled asset mapped by normalized cover filename."""
         bundled_cover_path = self._find_bundled_cover_asset(normalized_cover_filename)
         if bundled_cover_path is None:
@@ -361,7 +361,7 @@ class PosterImageLoader:
         *,
         normalized_cover_filename: str,
         cover_cache_key: str,
-    ) -> Optional[PosterLoadResult]:
+    ) -> PosterLoadResult | None:
         """Try filename-based disk cache and delete corrupt cache file on decode failure."""
         disk_cache_path = self._get_cover_cache_path(normalized_cover_filename)
         if disk_cache_path is None or not disk_cache_path.exists():
@@ -382,7 +382,7 @@ class PosterImageLoader:
         *,
         normalized_cover_filename: str,
         cover_cache_key: str,
-    ) -> tuple[Optional[PosterLoadResult], bool]:
+    ) -> tuple[PosterLoadResult | None, bool]:
         """Try repo raw cover URL and return (result, repo_failed_for_retry_signal)."""
         repo_url = self._build_cover_repo_raw_url(normalized_cover_filename)
         if not repo_url:
@@ -401,7 +401,7 @@ class PosterImageLoader:
         except Exception:
             return None, True
 
-    def _encode_cover_cache_webp_bytes(self, image_bytes: bytes) -> Optional[bytes]:
+    def _encode_cover_cache_webp_bytes(self, image_bytes: bytes) -> bytes | None:
         try:
             with Image.open(io.BytesIO(image_bytes)) as source_img:
                 converted = source_img.convert("RGB")
@@ -430,7 +430,7 @@ class PosterImageLoader:
         session.mount("http://", adapter)
         return session
 
-    def _find_bundled_cover_asset(self, cover_filename: str) -> Optional[Path]:
+    def _find_bundled_cover_asset(self, cover_filename: str) -> Path | None:
         normalized = normalize_cover_filename(cover_filename)
         if not normalized:
             return None
@@ -444,7 +444,7 @@ class PosterImageLoader:
             return candidate
         return None
 
-    def _get_cover_cache_path(self, cover_filename: str) -> Optional[Path]:
+    def _get_cover_cache_path(self, cover_filename: str) -> Path | None:
         normalized = normalize_cover_filename(cover_filename)
         if not normalized:
             return None
@@ -478,7 +478,7 @@ class PosterImageLoader:
         )
         return hashlib.sha256(cache_source.encode("utf-8")).hexdigest()
 
-    def _load_prepared_image_from_path(self, image_path: Path, cache_key: str) -> Optional[Image.Image]:
+    def _load_prepared_image_from_path(self, image_path: Path, cache_key: str) -> Image.Image | None:
         cached_image = self._image_cache_get(cache_key) if self._config.enable_memory_cache else None
         if cached_image is not None:
             return cached_image
@@ -494,7 +494,7 @@ class PosterImageLoader:
         except Exception:
             return None
 
-    def _load_prepared_image_from_bytes(self, image_bytes: bytes, cache_key: str) -> Optional[Image.Image]:
+    def _load_prepared_image_from_bytes(self, image_bytes: bytes, cache_key: str) -> Image.Image | None:
         cached_image = self._image_cache_get(cache_key) if self._config.enable_memory_cache else None
         if cached_image is not None:
             return cached_image
@@ -513,7 +513,7 @@ class PosterImageLoader:
             response.raise_for_status()
             return b"".join(response.iter_content(chunk_size=65536))
 
-    def _store_cover_cache_bytes(self, cover_filename: str, image_bytes: bytes) -> Optional[Path]:
+    def _store_cover_cache_bytes(self, cover_filename: str, image_bytes: bytes) -> Path | None:
         cache_path = self._get_cover_cache_path(cover_filename)
         if cache_path is None:
             return None
@@ -525,7 +525,7 @@ class PosterImageLoader:
         temp_path.replace(cache_path)
         return cache_path
 
-    def _image_cache_get(self, key: str) -> Optional[Image.Image]:
+    def _image_cache_get(self, key: str) -> Image.Image | None:
         try:
             with self._image_cache_lock:
                 pil_img = self._image_cache.get(key)

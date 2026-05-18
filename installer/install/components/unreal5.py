@@ -53,7 +53,7 @@ def install_unreal5_patch(
     if not (unreal_url or cached_archive_path):
         return False
 
-    unreal_installed = bool(installer_services.install_unreal5_from_url(
+    unreal_installed = bool(install_unreal5_payload(
         unreal_url, target_path, logger=logger, cached_archive_path=cached_archive_path
     ))
     if logger:

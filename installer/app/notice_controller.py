@@ -3,8 +3,6 @@ from __future__ import annotations
 from collections.abc import Callable
 import logging
 import webbrowser
-from typing import Optional
-
 from tkinter import messagebox
 
 from ..common.log_sanitizer import redact_text
@@ -65,7 +63,7 @@ class AppNoticeController:
     def show_selection_popup(
         self,
         message_text: str,
-        on_confirm: Optional[Callable[[], None]] = None,
+        on_confirm: Callable[[], None] | None = None,
     ) -> None:
         self._show_popup(
             message_text=message_text,
@@ -79,7 +77,7 @@ class AppNoticeController:
     def show_precheck_popup(
         self,
         message_text: str,
-        on_close: Optional[Callable[[], None]] = None,
+        on_close: Callable[[], None] | None = None,
     ) -> None:
         self._show_popup(
             message_text=message_text,
@@ -93,7 +91,7 @@ class AppNoticeController:
     def show_startup_warning_popup(
         self,
         warning_text: str,
-        on_close: Optional[Callable[[], None]] = None,
+        on_close: Callable[[], None] | None = None,
     ) -> None:
         self._show_popup(
             message_text=warning_text,
@@ -106,7 +104,7 @@ class AppNoticeController:
 
     def show_runtime_data_connection_failed_popup(
         self,
-        on_close: Optional[Callable[[], None]] = None,
+        on_close: Callable[[], None] | None = None,
     ) -> None:
         self._show_popup(
             message_text=self._runtime_data_failure_body,
@@ -122,7 +120,7 @@ class AppNoticeController:
         *,
         message_text: str,
         title: str,
-        on_close: Optional[Callable[[], None]],
+        on_close: Callable[[], None] | None,
         allow_window_close: bool,
         debug_name: str,
         schedule_on_close: bool,
@@ -192,10 +190,10 @@ class AppNoticeController:
 
     def _resolve_popup_on_close(
         self,
-        callback: Optional[Callable[[], None]],
+        callback: Callable[[], None] | None,
         *,
         schedule_on_close: bool,
-    ) -> Optional[Callable[[], None]]:
+    ) -> Callable[[], None] | None:
         if not callable(callback):
             return None
         if not schedule_on_close:

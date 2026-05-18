@@ -5,6 +5,7 @@ from concurrent.futures import Executor
 from dataclasses import dataclass
 import logging
 from pathlib import Path
+import shutil
 from typing import Any
 from urllib.parse import urlparse
 import zipfile
@@ -632,8 +633,6 @@ class ArchivePreparationController:
                 continue
             try:
                 if cache_path.is_dir():
-                    import shutil
-
                     shutil.rmtree(cache_path, ignore_errors=False)
                 else:
                     cache_path.unlink()
