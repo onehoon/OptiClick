@@ -18,6 +18,7 @@ from .components import (
     install_unreal5_patch,
 )
 from .components._link_utils import extract_module_url
+from .components.specialk import cleanup_root_specialk_before_proxy_resolution
 
 
 @dataclass(frozen=True)
@@ -135,6 +136,7 @@ def _install_additional_files(
             module_download_links,
             logger=logger,
             cached_archive_path=specialk_cached_archive,
+            optiscaler_final_dll_name=install_ctx.final_dll_name,
         )
 
     install_reframework_dinput8(
@@ -236,6 +238,9 @@ def build_install_context(
     ual_names = tuple(ual_detected_names or ())
     ual_auto_detected = bool(ual_names)
     use_ultimate_asi_loader = bool(planned_game_data.get("ultimate_asi_loader")) or ual_auto_detected
+    preferred_proxy_name = str(planned_game_data.get("optiscaler_dll_name", "")).strip()
+    if not preferred_proxy_name:
+        preferred_proxy_name = planned_resolved_dll_name
 
     if use_ultimate_asi_loader:
         if ual_auto_detected:
@@ -246,9 +251,17 @@ def build_install_context(
             final_dll_name = planned_resolved_dll_name or OPTISCALER_ASI_NAME
             logger.info("Install mode: Ultimate ASI Loader (%s)", final_dll_name)
     else:
+        cleanup_root_specialk_before_proxy_resolution(
+            target_path,
+            planned_game_data,
+            preferred_proxy_name,
+            use_ultimate_asi_loader=use_ultimate_asi_loader,
+            ual_auto_detected=ual_auto_detected,
+            logger=logger,
+        )
         final_dll_name = installer_services.resolve_proxy_dll_name(
             target_path,
-            planned_resolved_dll_name or str(planned_game_data.get("optiscaler_dll_name", "")).strip(),
+            preferred_proxy_name,
             logger=logger,
         )
 
