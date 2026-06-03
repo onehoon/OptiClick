@@ -66,6 +66,9 @@ public sealed class SupportedGamesSectionViewModel : ViewModelBase
         _openGameSupportRequestCommandAccessor = openGameSupportRequestCommandAccessor ?? throw new ArgumentNullException(nameof(openGameSupportRequestCommandAccessor));
         _updateStartupPreparationState = updateStartupPreparationState ?? throw new ArgumentNullException(nameof(updateStartupPreparationState));
         SupportedGamesWikiRows = new ObservableCollection<SupportedGamesWikiRowViewModel>();
+        ClearSupportedGamesWikiSearchCommand = new RelayCommand(
+            _ => ClearSupportedGamesWikiSearch(),
+            _ => HasSupportedGamesWikiSearchText);
     }
 
     public ObservableCollection<SupportedGamesWikiRowViewModel> SupportedGamesWikiRows { get; }
@@ -86,8 +89,13 @@ public sealed class SupportedGamesSectionViewModel : ViewModelBase
             {
                 ApplyFilter();
             }
+
+            OnPropertyChanged(nameof(HasSupportedGamesWikiSearchText));
+            ClearSupportedGamesWikiSearchCommand.RaiseCanExecuteChanged();
         }
     }
+
+    public bool HasSupportedGamesWikiSearchText => !string.IsNullOrWhiteSpace(SupportedGamesWikiSearchText);
 
     public string SupportedGamesWikiStatusText
     {
@@ -141,7 +149,14 @@ public sealed class SupportedGamesSectionViewModel : ViewModelBase
 
     public ICommand OpenGameSupportRequestCommand => _openGameSupportRequestCommandAccessor();
 
+    public RelayCommand ClearSupportedGamesWikiSearchCommand { get; }
+
     private AppLanguage Language => _languageAccessor();
+
+    private void ClearSupportedGamesWikiSearch()
+    {
+        SupportedGamesWikiSearchText = "";
+    }
 
     public void LoadFromCache()
     {

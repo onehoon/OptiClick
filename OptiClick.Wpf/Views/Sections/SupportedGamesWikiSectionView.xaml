@@ -39,13 +39,31 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
             <Setter Property="CaretBrush" Value="{DynamicResource AccentPrimaryBrush}" />
-            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Padding" Value="10,6,38,6" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}" />
                 </Trigger>
                 <Trigger Property="IsKeyboardFocused" Value="True">
                     <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="SupportedGamesSearchClearButtonStyle" TargetType="Button" BasedOn="{StaticResource IconButtonStyle}">
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="MinWidth" Value="28" />
+            <Setter Property="MinHeight" Value="28" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource AccentPrimaryBrush}" />
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -174,6 +192,20 @@
                         </Style>
                     </TextBlock.Style>
                 </TextBlock>
+                <Button Margin="0,0,6,0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource SupportedGamesSearchClearButtonStyle}"
+                        Command="{Binding ClearSupportedGamesWikiSearchCommand}"
+                        Visibility="{Binding HasSupportedGamesWikiSearchText, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        ToolTip="{Binding Strings.SupportedGamesWikiClearSearchTooltip}"
+                        AutomationProperties.Name="{Binding Strings.SupportedGamesWikiClearSearchTooltip}">
+                    <ui:SymbolIcon Symbol="Dismiss24"
+                                   Width="16"
+                                   Height="16"
+                                   FontSize="16"
+                                   Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                </Button>
             </Grid>
         </Grid>
 

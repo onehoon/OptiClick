@@ -24,6 +24,7 @@ public sealed record AppStrings
     public string SupportedGamesWikiTitle { get; init; } = "";
     public string SupportedGamesWikiSearchPlaceholder { get; init; } = "";
     public string SupportedGamesWikiSearchWatermark { get; init; } = "";
+    public string SupportedGamesWikiClearSearchTooltip { get; init; } = "";
     public string SupportedGamesWikiRequestGame { get; init; } = "";
     public string SupportedGamesWikiRequestGameTooltip { get; init; } = "";
 
