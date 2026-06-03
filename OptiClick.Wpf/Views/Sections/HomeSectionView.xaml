@@ -70,7 +70,7 @@
                 </StackPanel>
 
                 <Grid Grid.Column="1"
-                      Margin="0,0,38,0"
+                      Margin="{StaticResource HomeGridRightInset}"
                       VerticalAlignment="Center"
                       HorizontalAlignment="Right">
                     <Grid>
