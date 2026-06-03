@@ -65,7 +65,6 @@ public sealed class UninstallFlowCoordinator
                 }
 
                 var confirmationDialog = BuildUninstallConfirmationDialogRequest(plan, request.Strings);
-                LogInfo(MainViewModelLogCategories.UninstallUi, "uninstall confirmation dialog shown");
                 var confirmationResult = await _dialogPresenter.ShowSafelyAsync(confirmationDialog, cancellationToken);
                 var confirmed = confirmationResult == AppDialogResult.Continue;
                 LogInfo(
@@ -102,7 +101,6 @@ public sealed class UninstallFlowCoordinator
         InfrastructureUninstall.UninstallExecutionResult executionResult;
         try
         {
-            LogInfo(MainViewModelLogCategories.UninstallFlow, "uninstall execute start");
             executionResult = await _executor.ExecuteAsync(plan, cancellationToken);
         }
         finally

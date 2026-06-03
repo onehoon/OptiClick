@@ -169,13 +169,9 @@ public sealed class ShellGameScanPipeline : IShellGameScanPipeline
             {
                 options.CancellationToken.ThrowIfCancellationRequested();
                 var folderPath = scanFolders[index];
-                _logger.Info("scan", $"scan folder started path={folderPath}");
 
                 var scanResult = ScanFolder(folderPath, allowedExeNames, options.CancellationToken);
                 results[index] = new ScanFolderPipelineResult(folderPath, scanResult);
-                _logger.Info(
-                    "scan",
-                    $"scan folder completed path={folderPath} scanned_exe_count={scanResult.ScannedExecutableCount} candidate_exe_count={scanResult.Executables.Count} skipped_dirs={scanResult.SkippedDirectoryCount}");
             });
 
         return results

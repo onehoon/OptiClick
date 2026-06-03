@@ -44,11 +44,9 @@ public sealed class ArchiveReadinessFlowController
             var merged = ArchivePreparationSnapshotMerger.Merge(optiScalerSnapshot, startupSnapshot);
             var readiness = ArchivePreparationSnapshotMapper.ToInstallPlanSnapshot(merged);
 
-            logs.Add(Info("archive", $"optiscaler state={readiness.OptiScalerState}"));
-            logs.Add(Info("archive", $"optipatcher state={readiness.OptiPatcherState}"));
-            logs.Add(Info("archive", $"fsr4 state={readiness.Fsr4State}"));
-            logs.Add(Info("archive", $"unreal5 state={readiness.Unreal5State}"));
-            logs.Add(Info("archive", "refresh completed"));
+            logs.Add(Info(
+                "archive",
+                $"refresh completed optiscaler={readiness.OptiScalerState} optipatcher={readiness.OptiPatcherState} fsr4={readiness.Fsr4State} unreal5={readiness.Unreal5State}"));
 
             return new ArchiveReadinessFlowResult
             {

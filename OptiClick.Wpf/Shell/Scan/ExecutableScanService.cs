@@ -25,7 +25,6 @@ public sealed class ExecutableScanService : IExecutableScanService
         if (allowedExeNames is null || allowedExeNames.Count == 0)
         {
             var normalizedFolderPath = (folderPath ?? "").Trim();
-            _logger.Info("scan", $"scan completed folder={normalizedFolderPath} candidate_exe_count=0 scanned_exe_count=0 skipped_dirs=0");
             return Task.FromResult(new ShellScanResult
             {
                 FolderPath = normalizedFolderPath,
@@ -45,7 +44,6 @@ public sealed class ExecutableScanService : IExecutableScanService
         CancellationToken cancellationToken)
     {
         var normalizedFolderPath = (folderPath ?? "").Trim();
-        _logger.Info("scan", $"scan start folder={normalizedFolderPath}");
         if (string.IsNullOrWhiteSpace(normalizedFolderPath) || !Directory.Exists(normalizedFolderPath))
         {
             _logger.Warning("scan", "skipped invalid_or_missing_folder");
@@ -154,10 +152,6 @@ public sealed class ExecutableScanService : IExecutableScanService
                 continue;
             }
         }
-
-        _logger.Info(
-            "scan",
-            $"scan completed folder={normalizedFolderPath} candidate_exe_count={executables.Count} scanned_exe_count={scannedExecutableCount} skipped_dirs={skippedDirectoryCount}");
 
         return Task.FromResult(new ShellScanResult
         {

@@ -83,17 +83,12 @@ public sealed partial class MainViewModel : ViewModelBase
             return false;
         }
 
-        LogInfo(
-            MainViewModelLogCategories.UninstallUi,
-            $"install button clicked state=installed status={statusCode}");
         var request = BuildInstallManagementDialogRequest(statusCode);
-        LogInfo(
-            MainViewModelLogCategories.UninstallUi,
-            $"popup show source=install_management game_id={NormalizeStatusCode(_selectionState.SelectedGameId, "none")} status={statusCode}");
+        var selectedGameId = NormalizeStatusCode(_selectionState.SelectedGameId, "none");
         var action = await _installManagementDialogService.ShowDialogAsync(request, cancellationToken);
         LogInfo(
             MainViewModelLogCategories.UninstallUi,
-            $"popup result source=install_management result={action}");
+            $"popup result source=install_management game_id={selectedGameId} status={statusCode} result={action}");
 
         if (action == InstallManagementDialogResult.Cancel)
         {
@@ -172,9 +167,6 @@ public sealed partial class MainViewModel : ViewModelBase
         GameCardViewModel selectedGame,
         CancellationToken cancellationToken)
     {
-        LogInfo(
-            MainViewModelLogCategories.UninstallFlow,
-            $"uninstall status refresh start game_id={NormalizeStatusCode(selectedGame.SourceModel?.GameId ?? selectedGame.GameEntry.GameId, "none")}");
         var buttonBefore = SelectedGameAction.InstallButtonText;
         try
         {
