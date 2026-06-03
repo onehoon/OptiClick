@@ -202,7 +202,8 @@ public partial class HomeSectionView : UserControl
             return false;
         }
 
-        var layout = HomeCoverGridLayoutCalculator.Calculate(availableWidth);
+        var layoutWidth = HomeCoverGridLayoutCalculator.AdjustAvailableWidthForReservedCoverBorder(availableWidth);
+        var layout = HomeCoverGridLayoutCalculator.Calculate(layoutWidth);
         var layoutChanged = HasLayoutChanged(layout);
         if (!force && !layoutChanged)
         {
@@ -213,7 +214,9 @@ public partial class HomeSectionView : UserControl
         var changedCards = 0;
         foreach (var game in _boundViewModel.Games)
         {
-            if (game.ApplyCardSize(layout.CoverWidth, layout.CoverHeight))
+            if (game.ApplyCardSize(
+                HomeCoverGridLayoutCalculator.ExpandSizeForReservedCoverBorder(layout.CoverWidth),
+                HomeCoverGridLayoutCalculator.ExpandSizeForReservedCoverBorder(layout.CoverHeight)))
             {
                 changedCards++;
             }
@@ -250,7 +253,8 @@ public partial class HomeSectionView : UserControl
             return;
         }
 
-        var layout = HomeCoverGridLayoutCalculator.Calculate(availableWidth);
+        var layoutWidth = HomeCoverGridLayoutCalculator.AdjustAvailableWidthForReservedCoverBorder(availableWidth);
+        var layout = HomeCoverGridLayoutCalculator.Calculate(layoutWidth);
         if (layout.Columns <= 0 || layout.CoverWidth <= 0 || layout.CoverHeight <= 0)
         {
             Debug.WriteLine("home_cover_reload skipped reason=layout_not_ready");
@@ -264,7 +268,8 @@ public partial class HomeSectionView : UserControl
             return;
         }
 
-        var rowStride = layout.CoverHeight + layout.RowGap;
+        var rowStride = HomeCoverGridLayoutCalculator.ExpandSizeForReservedCoverBorder(layout.CoverHeight)
+                        + HomeCoverGridLayoutCalculator.AdjustGapForReservedCoverBorder(layout.RowGap);
         if (rowStride <= 0)
         {
             Debug.WriteLine("home_cover_reload skipped reason=layout_not_ready");

@@ -169,8 +169,10 @@ public sealed class GameCardViewModel : ViewModelBase
 
     public bool ApplyCardSize(double width, double height)
     {
-        var safeWidth = Math.Clamp(width, 1, SupportedGamesWikiLayoutProfile.MainCardWidthDip);
-        var safeHeight = Math.Clamp(height, 1, SupportedGamesWikiLayoutProfile.MainCardHeightDip);
+        var maxWidth = HomeCoverGridLayoutCalculator.ExpandSizeForReservedCoverBorder(SupportedGamesWikiLayoutProfile.MainCardWidthDip);
+        var maxHeight = HomeCoverGridLayoutCalculator.ExpandSizeForReservedCoverBorder(SupportedGamesWikiLayoutProfile.MainCardHeightDip);
+        var safeWidth = Math.Clamp(width, 1, maxWidth);
+        var safeHeight = Math.Clamp(height, 1, maxHeight);
         var nextWidth = Math.Round(safeWidth, 2);
         var nextHeight = Math.Round(safeHeight, 2);
 
