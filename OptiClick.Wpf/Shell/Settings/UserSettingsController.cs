@@ -25,49 +25,41 @@ public sealed class UserSettingsController
         return _userSettingsStore.Load() ?? new AppUserSettings();
     }
 
-    public void SavePreferences(bool alwaysRunAsAdministrator, bool checkUpdatesOnStartup)
+    public void SavePreferences(bool checkUpdatesOnStartup)
     {
         var current = Load();
-        SavePreferences(alwaysRunAsAdministrator, checkUpdatesOnStartup, current.LanguagePreference);
+        SavePreferences(checkUpdatesOnStartup, current.LanguagePreference);
     }
 
-    public void SavePreferences(bool alwaysRunAsAdministrator, bool checkUpdatesOnStartup, string languagePreference)
+    public void SavePreferences(bool checkUpdatesOnStartup, string languagePreference)
     {
         _userSettingsStore.Save(new AppUserSettings
         {
             Version = 1,
-            AlwaysRunAsAdministrator = alwaysRunAsAdministrator,
             CheckUpdatesOnStartup = checkUpdatesOnStartup,
             LanguagePreference = string.IsNullOrWhiteSpace(languagePreference) ? "auto" : languagePreference
         });
     }
 
-    public void SavePreferencesNonBlocking(bool alwaysRunAsAdministrator, bool checkUpdatesOnStartup)
+    public void SavePreferencesNonBlocking(bool checkUpdatesOnStartup)
     {
         var current = Load();
-        SavePreferencesNonBlocking(alwaysRunAsAdministrator, checkUpdatesOnStartup, current.LanguagePreference);
+        SavePreferencesNonBlocking(checkUpdatesOnStartup, current.LanguagePreference);
     }
 
-    public void SavePreferencesNonBlocking(bool alwaysRunAsAdministrator, bool checkUpdatesOnStartup, string languagePreference)
+    public void SavePreferencesNonBlocking(bool checkUpdatesOnStartup, string languagePreference)
     {
         lock (_pendingSaveSync)
         {
             _pendingSettings = new AppUserSettings
             {
                 Version = 1,
-                AlwaysRunAsAdministrator = alwaysRunAsAdministrator,
                 CheckUpdatesOnStartup = checkUpdatesOnStartup,
                 LanguagePreference = string.IsNullOrWhiteSpace(languagePreference) ? "auto" : languagePreference
             };
         }
 
         StartBackgroundSaveWorkerIfNeeded();
-    }
-
-    public void SaveAlwaysRunAsAdministrator(bool enabled)
-    {
-        var current = Load();
-        SavePreferences(enabled, current.CheckUpdatesOnStartup, current.LanguagePreference);
     }
 
     public void FlushPendingSaves(TimeSpan? timeout = null)

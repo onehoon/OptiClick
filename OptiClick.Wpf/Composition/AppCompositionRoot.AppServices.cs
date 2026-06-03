@@ -118,23 +118,11 @@ public sealed partial class AppCompositionRoot
         return new ProcessElevationService(appLogger);
     }
 
-    public AppUserSettings LoadUserSettingsForStartup(
-        IAppLocalDataPathProvider? localDataPathProvider = null,
-        IAppLogger? appLogger = null)
-    {
-        var provider = localDataPathProvider ?? CreateAppLocalDataPathProvider();
-        var logger = appLogger ?? CreateAppLogger();
-        var store = CreateAppUserSettingsStore(provider, logger);
-        return store.Load();
-    }
-
     public bool ShouldRelaunchElevated(
         string[] args,
-        IProcessElevationService? processElevationService = null,
-        AppUserSettings? settings = null)
+        IProcessElevationService? processElevationService = null)
     {
         var safeArgs = args ?? [];
-        _ = settings;
 
         if (safeArgs.Any(arg => string.Equals(arg, ProcessElevationService.ElevatedRelaunchArgument, StringComparison.OrdinalIgnoreCase)))
         {

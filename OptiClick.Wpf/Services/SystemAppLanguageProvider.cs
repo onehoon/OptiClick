@@ -41,7 +41,6 @@ public sealed class SystemAppLanguageProvider : IWritableAppLanguageProvider
     public void SetLanguage(AppLanguage language)
     {
         CurrentLanguage = language;
-        _logger.Info("i18n", $"ui_language_changed source=settings value={ToCode(language)}");
     }
 
     private AppLanguage ResolveInitialLanguage()
@@ -49,7 +48,6 @@ public sealed class SystemAppLanguageProvider : IWritableAppLanguageProvider
         var rawValue = (_environmentReader(EnvironmentVariableName) ?? "").Trim();
         if (TryResolveFromEnvironment(rawValue, out var forcedLanguage))
         {
-            _logger.Info("i18n", $"ui_language_source=env value={ToCode(forcedLanguage)}");
             return forcedLanguage;
         }
 
@@ -63,18 +61,15 @@ public sealed class SystemAppLanguageProvider : IWritableAppLanguageProvider
         var uiCulture = _uiCultureReader();
         if (TryResolveFromCulture(uiCulture, out var uiLanguage))
         {
-            _logger.Info("i18n", $"ui_language_source=culture value={ToCode(uiLanguage)} culture={uiCulture.Name}");
             return uiLanguage;
         }
 
         var culture = _cultureReader();
         if (TryResolveFromCulture(culture, out var cultureLanguage))
         {
-            _logger.Info("i18n", $"ui_language_source=culture value={ToCode(cultureLanguage)} culture={culture.Name}");
             return cultureLanguage;
         }
 
-        _logger.Warning("i18n", "ui_language_source=fallback value=en");
         return AppLanguage.English;
     }
 
@@ -125,8 +120,4 @@ public sealed class SystemAppLanguageProvider : IWritableAppLanguageProvider
         return false;
     }
 
-    private static string ToCode(AppLanguage language)
-    {
-        return language == AppLanguage.Korean ? "ko" : "en";
-    }
 }

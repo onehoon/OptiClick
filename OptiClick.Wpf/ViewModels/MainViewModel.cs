@@ -326,7 +326,6 @@ public sealed partial class MainViewModel : ViewModelBase
                 ApplySettingsLanguageOption = ApplySettingsLanguageOption,
                 SaveUserSettings = SaveUserSettings,
                 LogCheckUpdatesOnStartupChanged = value => LogInfo(MainViewModelLogCategories.Settings, $"check_updates_on_startup={(value ? "true" : "false")}"),
-                LogAlwaysRunAsAdministratorChanged = value => LogInfo(MainViewModelLogCategories.Settings, $"always_run_as_administrator={(value ? "true" : "false")}"),
                 SettingsActionCoordinator = settingsActionCoordinator,
                 IsInstallExecutionInProgress = () => _isInstallExecutionInProgress,
                 OpenLogFolderCommand = new RelayCommand(_ => OpenLogFolder()),
@@ -590,6 +589,7 @@ public sealed partial class MainViewModel : ViewModelBase
         try
         {
             _languageProvider.SetLanguage(language);
+            LogInfo(MainViewModelLogCategories.I18n, $"ui_language_changed source=settings value={ToLanguageCode(language)}");
             RefreshLocalizedStrings();
             SelectedGameAction.ApplyLocalization(Strings);
             RefreshSupportedGamesAfterLanguageChange();
@@ -606,6 +606,11 @@ public sealed partial class MainViewModel : ViewModelBase
     }
 
     private bool IsKoreanUi => SelectedLanguage == AppLanguage.Korean;
+
+    private static string ToLanguageCode(AppLanguage language)
+    {
+        return language == AppLanguage.Korean ? "ko" : "en";
+    }
 
     private static string NormalizeLanguageOption(string? option)
     {

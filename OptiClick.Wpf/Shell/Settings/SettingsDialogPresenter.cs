@@ -16,7 +16,6 @@ public sealed class SettingsDialogPresenter
             BulletItems =
             [
                 strings.SettingsInfoBulletPreviewOnly,
-                strings.SettingsInfoBulletAdminSaved,
                 strings.SettingsInfoBulletNoConfigMutation,
                 strings.SettingsInfoBulletStableUxLater
             ]

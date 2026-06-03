@@ -87,9 +87,6 @@ public sealed record AppStrings
     public string SettingsDataDescription { get; init; } = "";
     public string SettingsClearCoverCache { get; init; } = "";
     public string SettingsOpenLogFolder { get; init; } = "";
-    public string SettingsAdminTitle { get; init; } = "";
-    public string SettingsAdminDescription { get; init; } = "";
-    public string SettingsAlwaysRunAsAdmin { get; init; } = "";
     public string SettingsDialogSamplesTitle { get; init; } = "";
     public string SettingsDialogSamplesDescription { get; init; } = "";
     public string SettingsWarning { get; init; } = "";
@@ -100,8 +97,6 @@ public sealed record AppStrings
     public string SettingsCoverSizePreviewSelected { get; init; } = "";
     public string SettingsLanguageChangedTo { get; init; } = "";
     public string SettingsStartupUpdatePreferenceChanged { get; init; } = "";
-    public string SettingsAdminLaunchEnabled { get; init; } = "";
-    public string SettingsAdminLaunchDisabled { get; init; } = "";
     public string SettingsOpenedGitHubSupportRequest { get; init; } = "";
     public string SettingsFailedOpenGitHubSupportRequest { get; init; } = "";
     public string SettingsFailedOpenLogFolder { get; init; } = "";
@@ -109,7 +104,6 @@ public sealed record AppStrings
     public string SettingsInfoTitle { get; init; } = "";
     public string SettingsInfoSummary { get; init; } = "";
     public string SettingsInfoBulletPreviewOnly { get; init; } = "";
-    public string SettingsInfoBulletAdminSaved { get; init; } = "";
     public string SettingsInfoBulletNoConfigMutation { get; init; } = "";
     public string SettingsInfoBulletStableUxLater { get; init; } = "";
 

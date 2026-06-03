@@ -27,39 +27,6 @@ public sealed class SettingsActionCoordinator
         _appCacheResetService = new AppCacheResetService(safeLocalDataPathProvider, _appLogger);
     }
 
-    public async Task HandleAlwaysRunAsAdministratorEnabledAsync(
-        AppStrings strings,
-        bool isKoreanUi,
-        Action<string> applySettingsStatusText,
-        CancellationToken cancellationToken = default)
-    {
-        if (Application.Current is null)
-        {
-            return;
-        }
-
-        var result = await _dialogPresenter.ShowSafelyAsync(
-            BuildAdministratorModeRestartDialog(strings, isKoreanUi),
-            cancellationToken);
-        if (result != AppDialogResult.Ok)
-        {
-            return;
-        }
-
-        var elevationService = new ProcessElevationService(_appLogger);
-        var restarted = elevationService.IsCurrentProcessElevated()
-            ? TryRestartCurrentProcess()
-            : elevationService.TryRelaunchAsAdministrator(Environment.GetCommandLineArgs().Skip(1).ToArray());
-
-        if (restarted)
-        {
-            Application.Current.Shutdown();
-            return;
-        }
-
-        applySettingsStatusText(strings.StartupAdminCancelledStatus);
-    }
-
     public async Task RefreshInstallFilesAsync(
         AppStrings strings,
         bool isKoreanUi,
@@ -149,25 +116,6 @@ public sealed class SettingsActionCoordinator
         return text.IndexOfAny([' ', '\t', '"']) >= 0
             ? $"\"{text.Replace("\"", "\\\"", StringComparison.Ordinal)}\""
             : text;
-    }
-
-    private static AppDialogRequest BuildAdministratorModeRestartDialog(
-        AppStrings strings,
-        bool isKoreanUi)
-    {
-        return new AppDialogRequest
-        {
-            Kind = AppDialogKind.Warning,
-            Severity = DialogSeverity.Warning,
-            Title = isKoreanUi ? "\uAD00\uB9AC\uC790 \uAD8C\uD55C \uC2E4\uD589" : "Administrator mode",
-            Summary = isKoreanUi
-                ? "\uAD00\uB9AC\uC790 \uAD8C\uD55C \uC124\uC815\uC744 \uC801\uC6A9\uD558\uB824\uBA74 \uC571\uC744 \uB2E4\uC2DC \uC2DC\uC791\uD574\uC57C \uD569\uB2C8\uB2E4.\n\uD655\uC778\uC744 \uB204\uB974\uBA74 \uAD00\uB9AC\uC790 \uAD8C\uD55C\uC73C\uB85C \uB2E4\uC2DC \uC2DC\uC791\uD569\uB2C8\uB2E4."
-                : "The app needs to restart to apply administrator mode.\nClick OK to restart OptiClick as administrator.",
-            PrimaryButtonText = isKoreanUi ? "\uD655\uC778" : "OK",
-            SecondaryButtonText = isKoreanUi ? "\uCDE8\uC18C" : "Cancel",
-            PrimaryResult = AppDialogResult.Ok,
-            SecondaryResult = AppDialogResult.Cancel
-        };
     }
 
     private static AppDialogRequest BuildRefreshInstallFilesConfirmationDialog(bool isKoreanUi)

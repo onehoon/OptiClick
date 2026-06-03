@@ -89,12 +89,10 @@ public sealed partial class MainViewModel : ViewModelBase
 
         Settings.ApplyLoadedSettings(
             ResolveLanguageOptionFromState(_languagePreference),
-            safeSettings.AlwaysRunAsAdministrator,
             safeSettings.CheckUpdatesOnStartup);
     }
 
     private void SaveUserSettings() => _userSettingsController.SavePreferencesNonBlocking(
-        Settings.AlwaysRunAsAdministrator,
         Settings.CheckUpdatesOnStartup,
         _languagePreference);
 
