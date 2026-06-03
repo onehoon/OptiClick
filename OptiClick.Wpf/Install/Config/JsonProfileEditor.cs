@@ -1,5 +1,4 @@
 using System.IO;
-using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -133,9 +132,8 @@ public sealed class JsonProfileEditor
         List<ConfigProfileAppliedRow> applied,
         List<ConfigProfileSkippedRow> skipped)
     {
-        var raw = File.ReadAllBytes(filePath);
-        var text = DecodeUtf8Sig(raw);
-        var rootNode = JsonNode.Parse(text);
+        var readResult = JsonTextCodec.ReadWithFallback(filePath);
+        var rootNode = JsonNode.Parse(readResult.Text);
         if (rootNode is null)
         {
             return false;
@@ -244,7 +242,7 @@ public sealed class JsonProfileEditor
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
         var rebuilt = rootNode.ToJsonString(options) + "\n";
-        File.WriteAllText(filePath, rebuilt, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        JsonTextCodec.WriteWithOriginalEncoding(filePath, rebuilt, readResult.EncodingInfo);
         return true;
     }
 
@@ -453,16 +451,6 @@ public sealed class JsonProfileEditor
         {
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         });
-    }
-
-    private static string DecodeUtf8Sig(byte[] raw)
-    {
-        if (raw.Length >= 3 && raw[0] == 0xEF && raw[1] == 0xBB && raw[2] == 0xBF)
-        {
-            return Encoding.UTF8.GetString(raw, 3, raw.Length - 3);
-        }
-
-        return Encoding.UTF8.GetString(raw);
     }
 
     private sealed record JsonProfileRow
