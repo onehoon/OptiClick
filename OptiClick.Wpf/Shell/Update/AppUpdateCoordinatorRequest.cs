@@ -1,0 +1,13 @@
+﻿using OptiClick.Wpf.Localization;
+using OptiClick.Wpf.Shell.RuntimeData;
+
+namespace OptiClick.Wpf.Shell.Update;
+
+public sealed record AppUpdateCoordinatorRequest
+{
+    public AppUpdateTrigger Trigger { get; init; } = AppUpdateTrigger.Manual;
+    public RemoteRuntimeData LatestRuntimeData { get; init; } = RemoteRuntimeData.Empty;
+    public string CurrentVersion { get; init; } = "";
+    public AppStrings Strings { get; init; } = new();
+    public bool IsAppUpdateInProgress { get; init; }
+}

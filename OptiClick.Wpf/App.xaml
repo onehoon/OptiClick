@@ -1,0 +1,26 @@
+<Application x:Class="OptiClickShell.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:OptiClick.Wpf.Converters"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ThemesDictionary Theme="Dark" />
+                <ui:ControlsDictionary />
+                <ResourceDictionary Source="Resources/Theme.Tokens.xaml" />
+                <ResourceDictionary Source="Resources/Theme.Brushes.xaml" />
+                <ResourceDictionary Source="Resources/Controls/Forms.xaml" />
+                <ResourceDictionary Source="Resources/Controls/Buttons.xaml" />
+                <ResourceDictionary Source="Resources/Controls/Cards.xaml" />
+                <ResourceDictionary Source="Resources/Controls/Navigation.xaml" />
+                <ResourceDictionary Source="Resources/Controls/ScrollBar.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <converters:ShellViewKindToVisibilityConverter x:Key="ShellViewKindToVisibilityConverter" />
+            <converters:DialogPrimaryButtonStyleConverter x:Key="DialogPrimaryButtonStyleConverter" />
+            <converters:LessThanDoubleConverter x:Key="LessThanDoubleConverter" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

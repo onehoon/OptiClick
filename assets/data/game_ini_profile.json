@@ -1,0 +1,506 @@
+[
+  {
+    "profile_id": "Industria2_ALL",
+    "path": "%LOCALAPPDATA%\\Industria_2\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Engine.GameUserSettings",
+    "key": "FullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "Industria2_ALL",
+    "path": "%LOCALAPPDATA%\\Industria_2\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Engine.GameUserSettings",
+    "key": "bUseDynamicResolution",
+    "value": "False"
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "FrameRateLimit_OnBattery",
+    "value": 0
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "FrameRateLimit_InMenu",
+    "value": 0
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "FrameRateLimit_WhenBackgrounded",
+    "value": 0
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "UpscalerType",
+    "value": "DLSS"
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "FrameGenerationMode",
+    "value": "DLSS_Auto"
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "DLSSMode",
+    "value": "Performance"
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "bUseVSync",
+    "value": "False"
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "FullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "PreferredFullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "DeadasDisco_ALL",
+    "path": "%LOCALAPPDATA%\\Pagoda\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Pagoda.PagodaSettingsLocal",
+    "key": "FrameRateLimit",
+    "value": 0
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "MotionBlur",
+    "value": 0
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "FrameRateLimit",
+    "value": 0
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "bUseVSync",
+    "value": "False"
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "UpscalingMode",
+    "value": "None"
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "DLSSValue",
+    "value": 2
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "DLSSG_Mode",
+    "value": 2
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "FSRValue",
+    "value": 0
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "FSRFI",
+    "value": "False"
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "XeSSValue",
+    "value": 0
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "bUseDynamicResolution",
+    "value": "False"
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "PreferredFullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "LastConfirmedFullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "inZOI_ALL",
+    "path": "%LOCALAPPDATA%\\BlueClient\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/BlueClient.B1GameUserSettings",
+    "key": "FullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "FFWEST_ALL",
+    "path": "%LOCALAPPDATA%\\FarFarWest\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Engine.GameUserSettings",
+    "key": "FullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "FFWEST_ALL",
+    "path": "%LOCALAPPDATA%\\FarFarWest\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Engine.GameUserSettings",
+    "key": "bUseDynamicResolution",
+    "value": "False"
+  },
+  {
+    "profile_id": "HighOnLife2_ALL",
+    "path": "%LOCALAPPDATA%\\HighOnLife2\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Washington.WAGameUserSettings",
+    "key": "FullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "HighOnLife2_ALL",
+    "path": "%LOCALAPPDATA%\\HighOnLife2\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/Washington.WAGameUserSettings",
+    "key": "bUseDynamicResolution",
+    "value": "False"
+  },
+  {
+    "profile_id": "HighOnLife2_ALL",
+    "path": "%LOCALAPPDATA%\\HighOnLife2\\Saved\\Config\\WinGDK\\GameUserSettings.ini",
+    "section": "/Script/Washington.WAGameUserSettings",
+    "key": "FullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "HighOnLife2_ALL",
+    "path": "%LOCALAPPDATA%\\HighOnLife2\\Saved\\Config\\WinGDK\\GameUserSettings.ini",
+    "section": "/Script/Washington.WAGameUserSettings",
+    "key": "bUseDynamicResolution",
+    "value": "False"
+  },
+  {
+    "profile_id": "SHF_ALL",
+    "path": "%LOCALAPPDATA%\\SHf\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/GameNoce.NoceLocalGameUserSettings",
+    "key": "AASuperSampling",
+    "value": "NVIDIA_DLSS"
+  },
+  {
+    "profile_id": "SHF_ALL",
+    "path": "%LOCALAPPDATA%\\SHf\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/GameNoce.NoceLocalGameUserSettings",
+    "key": "FullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "SHF_ALL",
+    "path": "%LOCALAPPDATA%\\SHf\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/GameNoce.NoceLocalGameUserSettings",
+    "key": "PreferredFullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "SHF_ALL",
+    "path": "%LOCALAPPDATA%\\SHf\\Saved\\Config\\WinGDK\\GameUserSettings.ini",
+    "section": "/Script/GameNoce.NoceLocalGameUserSettings",
+    "key": "AASuperSampling",
+    "value": "NVIDIA_DLSS"
+  },
+  {
+    "profile_id": "SHF_ALL",
+    "path": "%LOCALAPPDATA%\\SHf\\Saved\\Config\\WinGDK\\GameUserSettings.ini",
+    "section": "/Script/GameNoce.NoceLocalGameUserSettings",
+    "key": "FullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "SHF_ALL",
+    "path": "%LOCALAPPDATA%\\SHf\\Saved\\Config\\WinGDK\\GameUserSettings.ini",
+    "section": "/Script/GameNoce.NoceLocalGameUserSettings",
+    "key": "PreferredFullscreenMode",
+    "value": 1
+  },
+  {
+    "profile_id": "MHW_ALL",
+    "path": "config.ini",
+    "section": "Graphics",
+    "key": "Algorithm",
+    "value": "XESS"
+  },
+  {
+    "profile_id": "MHW_ALL",
+    "path": "config.ini",
+    "section": "Graphics",
+    "key": "AlgorithmFG",
+    "value": "DLSS"
+  },
+  {
+    "profile_id": "MHW_ALL",
+    "path": "config.ini",
+    "section": "Graphics/DLSS_FG",
+    "key": "FrameGenerationMode",
+    "value": "On"
+  },
+  {
+    "profile_id": "MHW_ALL",
+    "path": "config.ini",
+    "section": "Graphics/DLSS_FG",
+    "key": "GenerateFramesCount",
+    "value": 1
+  },
+  {
+    "profile_id": "MHW_ALL",
+    "path": "config.ini",
+    "section": "Graphics/Reflex",
+    "key": "LatencyMode",
+    "value": "On"
+  },
+  {
+    "profile_id": "GOWR_ALL",
+    "path": "settings.ini",
+    "section": "Settings",
+    "key": "ScalerMethod",
+    "value": "NVIDA_DLSS"
+  },
+  {
+    "profile_id": "GOWR_ALL",
+    "path": "settings.ini",
+    "section": "Settings",
+    "key": "ScalerQuality",
+    "value": "Performance"
+  },
+  {
+    "profile_id": "GOWR_ALL",
+    "path": "settings.ini",
+    "section": "Settings",
+    "key": "DynamicScalingMode",
+    "value": "Off"
+  },
+  {
+    "profile_id": "GOWR_ALL",
+    "path": "settings.ini",
+    "section": "Settings",
+    "key": "LatencyReductionMode",
+    "value": "reflex"
+  },
+  {
+    "profile_id": "GOWR_ALL",
+    "path": "settings.ini",
+    "section": "Settings",
+    "key": "FrameGen",
+    "value": "NV_DLSS_FG"
+  },
+  {
+    "profile_id": "Samson_ALL",
+    "path": "%LOCALAPPDATA%\\Samson\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/CJLyraBase.LyraSettingsLocal",
+    "key": "UpsamplingMethod",
+    "value": "DLSS"
+  },
+  {
+    "profile_id": "Samson_ALL",
+    "path": "%LOCALAPPDATA%\\Samson\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/CJLyraBase.LyraSettingsLocal",
+    "key": "DLSSFrameGenerationMode",
+    "value": "On2X"
+  },
+  {
+    "profile_id": "Samson_ALL",
+    "path": "%LOCALAPPDATA%\\Samson\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/CJLyraBase.LyraSettingsLocal",
+    "key": "NVIDIAReflexMode",
+    "value": "On"
+  },
+  {
+    "profile_id": "PRAGMATA_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "FSR3Quality",
+    "value": "Performance"
+  },
+  {
+    "profile_id": "PRAGMATA_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "FrameGeneration",
+    "value": "Fsr"
+  },
+  {
+    "profile_id": "PRAGMATA_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "MotionBlur",
+    "value": "OFF"
+  },
+  {
+    "profile_id": "PRAGMATA_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "PathTracing",
+    "value": "OFF"
+  },
+  {
+    "profile_id": "PRAGMATA_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "RayTracing",
+    "value": "OFF"
+  },
+  {
+    "profile_id": "PRAGMATA_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "UpscalingAlgorithm",
+    "value": "FSR3"
+  },
+  {
+    "profile_id": "PRAGMATA_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "VSync",
+    "value": "OFF"
+  },
+  {
+    "profile_id": "PRAGMATA_INTEL",
+    "path": "config.ini",
+    "section": "GraphicsOption",
+    "key": "WindowMode",
+    "value": "Borderless"
+  },
+  {
+    "profile_id": "PRAGMATA_INTEL",
+    "path": "config.ini",
+    "section": "Render",
+    "key": "Capability",
+    "value": "DirectX12"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "FrameGenerationMode",
+    "value": "NVIDIA_DLSS"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "LowLatencyMode",
+    "value": "NVIDIA_Reflex"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "AntiAliasingMethod",
+    "value": "DLSS"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "DLSSSuperResolution",
+    "value": "Performance"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "DLSSFrameGeneration",
+    "value": "FrameGen_2X"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "NVIDIAReflexLowLatency",
+    "value": "On"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "FSRFrameGeneration",
+    "value": "Off"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "FSRAntiLag",
+    "value": "Off"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "XeSSFrameGeneration",
+    "value": "Off"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "XeSSLowLatency",
+    "value": "Off"
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "MotionBlurIntensity",
+    "value": 0
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "bUseDynamicResolution",
+    "value": false
+  },
+  {
+    "profile_id": "Directive8020_ALL",
+    "path": "%LOCALAPPDATA%\\Directive8020\\Saved\\Config\\Windows\\GameUserSettings.ini",
+    "section": "/Script/SMGRuntime.GamePCSettings",
+    "key": "FullscreenMode",
+    "value": 1
+  }
+]

@@ -1,0 +1,25 @@
+namespace OptiClick.Wpf.Services;
+
+public enum AppUpdatePackageType
+{
+    Unknown = 0,
+    Exe,
+    Zip,
+    SevenZip
+}
+
+public sealed record AppUpdateInfo(
+    string CurrentVersion,
+    string LatestVersion,
+    string DisplayVersion,
+    string DownloadUrl,
+    string DownloadFileName,
+    string Note,
+    string? Sha256,
+    AppUpdatePackageType PackageType);
+
+public sealed record AppUpdatePreparedFile(
+    string DownloadedOriginalPath,
+    string ResolvedUpdateExePath,
+    string ResolvedUpdateExeFileName,
+    string FinalCopiedExePath);

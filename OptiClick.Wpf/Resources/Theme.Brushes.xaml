@@ -1,0 +1,116 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="AppBackgroundBrush" Color="{StaticResource AppBackgroundColor}" />
+    <SolidColorBrush x:Key="SupportedGamesPageBackgroundBrush" Color="{StaticResource SupportedGamesPageBackgroundColor}" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
+    <SolidColorBrush x:Key="SupportedGamesPanelBackgroundBrush" Color="{StaticResource SupportedGamesPanelBackgroundColor}" />
+    <SolidColorBrush x:Key="SupportedGamesCardBackgroundBrush" Color="{StaticResource SupportedGamesCardBackgroundColor}" />
+    <SolidColorBrush x:Key="SupportedGamesInputBackgroundBrush" Color="{StaticResource SupportedGamesInputBackgroundColor}" />
+    <SolidColorBrush x:Key="SurfaceElevatedBrush" Color="{StaticResource SurfaceRaisedColor}" />
+    <SolidColorBrush x:Key="SurfaceHoverBrush" Color="{StaticResource SurfaceHoverColor}" />
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+    <SolidColorBrush x:Key="AccentPrimaryBrush" Color="{StaticResource AccentPrimaryColor}" />
+    <SolidColorBrush x:Key="AccentSecondaryBrush" Color="{StaticResource AccentSecondaryColor}" />
+    <SolidColorBrush x:Key="AccentCyanBrush" Color="{StaticResource AccentCyanColor}" />
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
+    <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}" />
+
+    <SolidColorBrush x:Key="ShellAmbientBlueBrush" Color="{StaticResource ShellAmbientBlueColor}" />
+    <SolidColorBrush x:Key="ShellAmbientPurpleBrush" Color="{StaticResource ShellAmbientPurpleColor}" />
+    <SolidColorBrush x:Key="DeviceInfoCardBackgroundBrush" Color="{StaticResource DeviceInfoCardBackgroundColor}" />
+    <SolidColorBrush x:Key="DeviceInfoCardBorderBrush" Color="{StaticResource DeviceInfoCardBorderColor}" />
+    <SolidColorBrush x:Key="CaptionButtonHoverBrush" Color="{StaticResource CaptionButtonHoverColor}" />
+    <SolidColorBrush x:Key="CaptionButtonPressedBrush" Color="{StaticResource CaptionButtonPressedColor}" />
+    <SolidColorBrush x:Key="CaptionCloseHoverBrush" Color="{StaticResource CaptionCloseHoverColor}" />
+    <SolidColorBrush x:Key="CaptionClosePressedBrush" Color="{StaticResource CaptionClosePressedColor}" />
+    <SolidColorBrush x:Key="NavIconMutedBrush" Color="{StaticResource NavIconMutedColor}" />
+    <SolidColorBrush x:Key="NavBackgroundBrush" Color="{StaticResource AppBackgroundColor}" />
+    <SolidColorBrush x:Key="PanelBrush" Color="{StaticResource SurfaceColor}" />
+    <SolidColorBrush x:Key="PanelRaisedBrush" Color="{StaticResource SurfaceRaisedColor}" />
+    <SolidColorBrush x:Key="InkBrush" Color="{StaticResource InkColor}" />
+    <SolidColorBrush x:Key="MutedBrush" Color="{StaticResource MutedColor}" />
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
+    <SolidColorBrush x:Key="BlockingBrush" Color="{StaticResource BlockingColor}" />
+    <SolidColorBrush x:Key="SubtleBrush" Color="{StaticResource SubtleColor}" />
+    <SolidColorBrush x:Key="DisabledBrush" Color="{StaticResource DisabledColor}" />
+    <SolidColorBrush x:Key="NavItemHoverBrush" Color="{StaticResource NavItemHoverColor}" />
+    <SolidColorBrush x:Key="NavItemHoverBorderBrush" Color="{StaticResource NavItemHoverBorderColor}" />
+    <SolidColorBrush x:Key="NavItemPressedBrush" Color="{StaticResource NavItemPressedColor}" />
+    <SolidColorBrush x:Key="NavItemPressedBorderBrush" Color="{StaticResource NavItemPressedBorderColor}" />
+    <SolidColorBrush x:Key="NavItemActiveBrush" Color="{StaticResource NavItemActiveColor}" />
+    <SolidColorBrush x:Key="NavItemActiveBorderBrush" Color="{StaticResource NavItemActiveBorderColor}" />
+    <SolidColorBrush x:Key="NavItemActiveHoverBrush" Color="{StaticResource NavItemActiveHoverColor}" />
+    <SolidColorBrush x:Key="NavItemActiveHoverBorderBrush" Color="{StaticResource NavItemActiveHoverBorderColor}" />
+    <SolidColorBrush x:Key="NavItemActivePressedBrush" Color="{StaticResource NavItemActivePressedColor}" />
+    <SolidColorBrush x:Key="NavItemActivePressedBorderBrush" Color="{StaticResource NavItemActivePressedBorderColor}" />
+    <SolidColorBrush x:Key="NavItemActiveHighlightBrush" Color="{StaticResource NavItemActiveHighlightColor}" />
+    <SolidColorBrush x:Key="ShellBrandCardBrush" Color="{StaticResource ShellBrandCardColor}" />
+    <SolidColorBrush x:Key="SelectedGameStatusBadgeBrush" Color="{StaticResource SelectedGameStatusBadgeColor}" />
+    <SolidColorBrush x:Key="SelectedGameStatusBadgeForegroundBrush" Color="{StaticResource SelectedGameStatusBadgeForegroundColor}" />
+    <SolidColorBrush x:Key="CoverSelectedStrokeBrush" Color="{StaticResource CoverSelectedStrokeColor}" />
+    <SolidColorBrush x:Key="CoverSelectedGlowBrush" Color="{StaticResource CoverSelectedGlowColor}" />
+    <SolidColorBrush x:Key="CoverSelectedOverlayBrush" Color="{StaticResource CoverSelectedOverlayColor}" />
+    <SolidColorBrush x:Key="CoverSelectedInnerStrokeBrush" Color="{StaticResource CoverSelectedInnerStrokeColor}" />
+    <SolidColorBrush x:Key="CoverHoverStrokeBrush" Color="{StaticResource CoverHoverStrokeColor}" />
+    <SolidColorBrush x:Key="CoverHoverOverlayBrush" Color="{StaticResource CoverHoverOverlayColor}" />
+    <SolidColorBrush x:Key="NavSelectedAccentBrush" Color="{StaticResource NavSelectedAccentColor}" />
+    <SolidColorBrush x:Key="NavSelectedBackgroundBrush" Color="{StaticResource NavSelectedBackgroundColor}" />
+    <SolidColorBrush x:Key="NavSelectedBorderBrush" Color="{StaticResource NavSelectedBorderColor}" />
+    <SolidColorBrush x:Key="NavSelectedGlowBrush" Color="{StaticResource NavSelectedGlowColor}" />
+    <SolidColorBrush x:Key="ReadyBadgeBorderBrush" Color="{StaticResource ReadyBadgeBorderColor}" />
+    <SolidColorBrush x:Key="ShellTitleBarBackgroundBrush" Color="{StaticResource AppBackgroundColor}" />
+    <SolidColorBrush x:Key="ShellTitleBarBorderBrush" Color="{StaticResource BorderColor}" />
+    <SolidColorBrush x:Key="ShellMainSurfaceBrush" Color="{StaticResource AppBackgroundColor}" />
+    <SolidColorBrush x:Key="ShellMainSurfaceBorderBrush" Color="{StaticResource BorderColor}" />
+    <SolidColorBrush x:Key="OptiDialogBackgroundBrush" Color="{StaticResource SurfaceColor}" />
+    <SolidColorBrush x:Key="OptiDialogBorderBrush" Color="{StaticResource BorderColor}" />
+    <SolidColorBrush x:Key="OptiDialogTitleBrush" Color="{StaticResource TextPrimaryColor}" />
+    <SolidColorBrush x:Key="OptiDialogBodyBrush" Color="{StaticResource TextSecondaryColor}" />
+    <SolidColorBrush x:Key="OptiDialogMutedBrush" Color="{StaticResource TextMutedColor}" />
+    <SolidColorBrush x:Key="StrokeBrush" Color="{StaticResource BorderColor}" />
+    <SolidColorBrush x:Key="ButtonBaseBrush" Color="{StaticResource SurfaceColor}" />
+    <SolidColorBrush x:Key="ButtonBaseHoverBrush" Color="{StaticResource SurfaceRaisedColor}" />
+    <SolidColorBrush x:Key="ButtonBasePressedBrush" Color="{StaticResource SurfaceHoverColor}" />
+    <SolidColorBrush x:Key="ButtonBorderBrush" Color="{StaticResource BorderColor}" />
+    <SolidColorBrush x:Key="ButtonBorderHoverBrush" Color="{StaticResource AccentPrimaryColor}" />
+    <SolidColorBrush x:Key="ButtonBorderPressedBrush" Color="{StaticResource AccentPrimaryColor}" />
+    <SolidColorBrush x:Key="GpuChoiceButtonBackgroundBrush" Color="{StaticResource SurfaceColor}" />
+    <SolidColorBrush x:Key="GpuChoiceButtonHoverBackgroundBrush" Color="{StaticResource SurfaceRaisedColor}" />
+    <SolidColorBrush x:Key="GpuChoiceButtonPressedBackgroundBrush" Color="{StaticResource SurfaceHoverColor}" />
+    <SolidColorBrush x:Key="GpuChoiceButtonHoverOverlayBrush" Color="{StaticResource SurfaceRaisedColor}" />
+    <SolidColorBrush x:Key="GpuChoiceButtonBorderBrush" Color="{StaticResource BorderColor}" />
+    <SolidColorBrush x:Key="GpuChoiceButtonTextBrush" Color="{StaticResource TextPrimaryColor}" />
+    <SolidColorBrush x:Key="GpuVendorNvidiaBrush" Color="#76B900" />
+    <SolidColorBrush x:Key="GpuVendorAmdBrush" Color="#ED1C24" />
+    <SolidColorBrush x:Key="GpuVendorIntelBrush" Color="#0071C5" />
+    <SolidColorBrush x:Key="GpuVendorUnknownBrush" Color="#6B7280" />
+    <SolidColorBrush x:Key="DangerButtonBackgroundBrush" Color="{StaticResource DangerButtonBackgroundColor}" />
+    <SolidColorBrush x:Key="DangerButtonHoverBrush" Color="{StaticResource DangerButtonHoverColor}" />
+    <SolidColorBrush x:Key="DangerButtonPressedBrush" Color="{StaticResource DangerButtonPressedColor}" />
+    <SolidColorBrush x:Key="DangerButtonForegroundBrush" Color="{StaticResource DangerButtonForegroundColor}" />
+    <SolidColorBrush x:Key="SuccessButtonBackgroundBrush" Color="{StaticResource SuccessButtonBackgroundColor}" />
+    <SolidColorBrush x:Key="SuccessButtonHoverBrush" Color="{StaticResource SuccessButtonHoverColor}" />
+    <SolidColorBrush x:Key="SuccessButtonPressedBrush" Color="{StaticResource SuccessButtonPressedColor}" />
+    <SolidColorBrush x:Key="SuccessButtonForegroundBrush" Color="{StaticResource SuccessButtonForegroundColor}" />
+
+    <LinearGradientBrush x:Key="PrimaryButtonBackgroundBrush"
+                         StartPoint="0,0"
+                         EndPoint="1,1">
+        <GradientStop Color="#6EA8FF" Offset="0" />
+        <GradientStop Color="#A78BFA" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="PrimaryButtonHoverBrush"
+                         StartPoint="0,0"
+                         EndPoint="1,1">
+        <GradientStop Color="#7DB6FF" Offset="0" />
+        <GradientStop Color="#B39AFE" Offset="1" />
+    </LinearGradientBrush>
+    <LinearGradientBrush x:Key="PrimaryButtonPressedBrush"
+                         StartPoint="0,0"
+                         EndPoint="1,1">
+        <GradientStop Color="#4A84DD" Offset="0" />
+        <GradientStop Color="#7B73D0" Offset="1" />
+    </LinearGradientBrush>
+</ResourceDictionary>

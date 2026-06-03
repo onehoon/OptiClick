@@ -1,0 +1,54 @@
+using OptiClick.Core.Runtime;
+using OptiClick.Core.Abstractions;
+
+namespace OptiClick.Wpf.Services;
+
+public sealed class MockGpuInfoProvider : IGpuInfoProvider
+{
+    private readonly IReadOnlyList<GpuInfo> _gpus;
+
+    public MockGpuInfoProvider()
+        : this(
+            [
+                new GpuInfo
+                {
+                    Name = "AMD Radeon 780M",
+                    Vendor = "AMD",
+                    AdapterId = "GPU-AMD-780M",
+                    IsPrimary = true
+                }
+            ])
+    {
+    }
+
+    public MockGpuInfoProvider(IReadOnlyList<GpuInfo> gpus)
+    {
+        _gpus = gpus ?? Array.Empty<GpuInfo>();
+    }
+
+    public static MockGpuInfoProvider CreateDualGpuSample()
+    {
+        return new MockGpuInfoProvider(
+            [
+                new GpuInfo
+                {
+                    Name = "AMD Radeon 780M",
+                    Vendor = "AMD",
+                    AdapterId = "GPU-AMD-780M",
+                    IsPrimary = true
+                },
+                new GpuInfo
+                {
+                    Name = "NVIDIA GeForce RTX 4070",
+                    Vendor = "NVIDIA",
+                    AdapterId = "GPU-NVIDIA-4070",
+                    IsPrimary = false
+                }
+            ]);
+    }
+
+    public IReadOnlyList<GpuInfo> GetGpus()
+    {
+        return _gpus;
+    }
+}

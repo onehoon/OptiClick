@@ -1,0 +1,67 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\OptiClick.Core\OptiClick.Core.csproj" />
+    <ProjectReference Include="..\OptiClick.Infrastructure\OptiClick.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\Covers\default-cover.webp" />
+    <Resource Include="Assets\Covers\default-cover.png" />
+    <Resource Include="Assets\AppIcon.png" />
+    <Resource Include="Assets\AppIcon.ico" />
+    <Resource Include="Assets\Logos\*.png" />
+    <Resource Include="Assets\Logos\*.webp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="appsettings.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WPF-UI" Version="4.3.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- windows10.0.22000.0 is the Windows 11 SDK baseline build; runtime policy still blocks Windows 10. -->
+    <AssemblyName>OptiClick</AssemblyName>
+    <TargetFramework>net10.0-windows10.0.22000.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+    <AssemblyTitle>OptiClick - Non official OptiScaler Installer</AssemblyTitle>
+    <AssemblyDescription>OptiClick - Non official OptiScaler Installer</AssemblyDescription>
+    <AssemblyProduct>OptiClick</AssemblyProduct>
+    <Company>onehoon</Company>
+    <Copyright>© 2026 onehoon</Copyright>
+    <AppVersion>0.6.0</AppVersion>
+    <AppFileVersion>0.6.0.0</AppFileVersion>
+    <Version>$(AppVersion)</Version>
+    <AssemblyVersion>$(AppFileVersion)</AssemblyVersion>
+    <FileVersion>$(AppFileVersion)</FileVersion>
+    <InformationalVersion>$(AppVersion)</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <EnforceGeneratedRemoteConfig>false</EnforceGeneratedRemoteConfig>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release' and '$(RuntimeIdentifier)' == 'win-x64'">
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <Target Name="EnsureLocalAppSettingsExists" BeforeTargets="BeforeBuild">
+    <Error
+      Condition="!Exists('appsettings.json')"
+      Text="Missing appsettings.json. Copy appsettings.example.json to appsettings.json and fill local values." />
+  </Target>
+
+</Project>

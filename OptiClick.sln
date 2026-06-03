@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OptiClick.Core", "OptiClick.Core\OptiClick.Core.csproj", "{200E7716-5673-43C4-BDB9-04AE2EA207F1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OptiClick.Wpf", "OptiClick.Wpf\OptiClick.Wpf.csproj", "{4FA29BA4-82D8-4B50-A8C1-2DDAD9F52601}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OptiClick.Infrastructure", "OptiClick.Infrastructure\OptiClick.Infrastructure.csproj", "{E48B3030-FAC0-4CCC-9BE3-E0181E45677A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{200E7716-5673-43C4-BDB9-04AE2EA207F1}.Debug|x64.ActiveCfg = Debug|x64
+		{200E7716-5673-43C4-BDB9-04AE2EA207F1}.Debug|x64.Build.0 = Debug|x64
+		{200E7716-5673-43C4-BDB9-04AE2EA207F1}.Release|x64.ActiveCfg = Release|x64
+		{200E7716-5673-43C4-BDB9-04AE2EA207F1}.Release|x64.Build.0 = Release|x64
+		{4FA29BA4-82D8-4B50-A8C1-2DDAD9F52601}.Debug|x64.ActiveCfg = Debug|x64
+		{4FA29BA4-82D8-4B50-A8C1-2DDAD9F52601}.Debug|x64.Build.0 = Debug|x64
+		{4FA29BA4-82D8-4B50-A8C1-2DDAD9F52601}.Release|x64.ActiveCfg = Release|x64
+		{4FA29BA4-82D8-4B50-A8C1-2DDAD9F52601}.Release|x64.Build.0 = Release|x64
+		{E48B3030-FAC0-4CCC-9BE3-E0181E45677A}.Debug|x64.ActiveCfg = Debug|x64
+		{E48B3030-FAC0-4CCC-9BE3-E0181E45677A}.Debug|x64.Build.0 = Debug|x64
+		{E48B3030-FAC0-4CCC-9BE3-E0181E45677A}.Release|x64.ActiveCfg = Release|x64
+		{E48B3030-FAC0-4CCC-9BE3-E0181E45677A}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

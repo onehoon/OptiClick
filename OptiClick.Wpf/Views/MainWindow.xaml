@@ -1,0 +1,396 @@
+<ui:FluentWindow x:Class="OptiClickShell.MainWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:controls="clr-namespace:OptiClick.Wpf.Controls"
+                 xmlns:navigation="clr-namespace:OptiClick.Wpf.Shell.Navigation"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 xmlns:sections="clr-namespace:OptiClick.Wpf.Views.Sections"
+                 x:Name="ShellWindow"
+                 Title="{Binding WindowTitleWithVersion}"
+                 Icon="pack://application:,,,/Assets/AppIcon.ico"
+                 Width="1130"
+                 Height="655"
+                 MinWidth="920"
+                 MinHeight="620"
+                 WindowStartupLocation="CenterScreen"
+                 UseLayoutRounding="True"
+                 SnapsToDevicePixels="True"
+                 TextOptions.TextFormattingMode="Display"
+                 TextOptions.TextRenderingMode="ClearType"
+                 Background="{StaticResource AppBackgroundBrush}"
+                 WindowCornerPreference="DoNotRound"
+                 WindowBackdropType="Mica"
+                 ExtendsContentIntoTitleBar="True"
+                 StateChanged="Window_OnStateChanged"
+                 PreviewKeyDown="Window_OnPreviewKeyDown">
+    <ui:FluentWindow.Resources>
+        <DataTemplate x:Key="HomeSectionTemplate">
+            <sections:HomeSectionView DataContext="{Binding Home}" />
+        </DataTemplate>
+        <DataTemplate x:Key="SupportedGamesWikiSectionTemplate">
+            <sections:SupportedGamesWikiSectionView DataContext="{Binding SupportedGames}" />
+        </DataTemplate>
+        <DataTemplate x:Key="ScanSectionTemplate">
+            <sections:ScanSectionView DataContext="{Binding Scan}" />
+        </DataTemplate>
+        <DataTemplate x:Key="SettingsSectionTemplate">
+            <sections:SettingsSectionView DataContext="{Binding Settings}" />
+        </DataTemplate>
+    </ui:FluentWindow.Resources>
+    <Grid Background="{StaticResource AppBackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="28" />
+        </Grid.RowDefinitions>
+
+        <Ellipse Width="520"
+                 Height="520"
+                 Grid.Row="1"
+                 HorizontalAlignment="Left"
+                 VerticalAlignment="Top"
+                Margin="-120,-220,0,0"
+                IsHitTestVisible="False"
+                 Opacity="0.14">
+            <Ellipse.Fill>
+                <RadialGradientBrush RadiusX="0.5" RadiusY="0.5">
+                    <GradientStop Color="{StaticResource ShellAmbientBlueColor}" Offset="0" />
+                    <GradientStop Color="{StaticResource ShellAmbientBlueFadeColor}" Offset="1" />
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+        </Ellipse>
+
+        <Ellipse Width="460"
+                 Height="460"
+                 Grid.Row="1"
+                 HorizontalAlignment="Right"
+                 VerticalAlignment="Top"
+                Margin="0,-200,-90,0"
+                IsHitTestVisible="False"
+                 Opacity="0.12">
+            <Ellipse.Fill>
+                <RadialGradientBrush RadiusX="0.5" RadiusY="0.5">
+                    <GradientStop Color="{StaticResource ShellAmbientPurpleColor}" Offset="0" />
+                    <GradientStop Color="{StaticResource ShellAmbientPurpleFadeColor}" Offset="1" />
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+        </Ellipse>
+
+        <Border Grid.Row="0"
+                Margin="0"
+                Background="{StaticResource AppBackgroundBrush}"
+                BorderBrush="{StaticResource ShellTitleBarBorderBrush}"
+                BorderThickness="0"
+                CornerRadius="0"
+                MouseLeftButtonDown="TopBar_OnMouseLeftButtonDown">
+            <Border.Resources>
+                <Style x:Key="CaptionButtonStyle" TargetType="Button">
+                    <Setter Property="Width" Value="46" />
+                    <Setter Property="Height" Value="36" />
+                    <Setter Property="Margin" Value="0" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="BorderBrush" Value="Transparent" />
+                    <Setter Property="BorderThickness" Value="0" />
+                    <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+                    <Setter Property="FontFamily" Value="{StaticResource IconFontFamily}" />
+                    <Setter Property="FontSize" Value="12" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <Border x:Name="Root"
+                                        Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}">
+                                    <ContentPresenter HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      RecognizesAccessKey="False" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Root" Property="Background" Value="{StaticResource CaptionButtonHoverBrush}" />
+                                    </Trigger>
+                                    <Trigger Property="IsPressed" Value="True">
+                                        <Setter TargetName="Root" Property="Background" Value="{StaticResource CaptionButtonPressedBrush}" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+                <Style x:Key="CaptionCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource CaptionButtonStyle}">
+                    <Setter Property="FontSize" Value="12" />
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{StaticResource CaptionCloseHoverBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="{StaticResource CaptionClosePressedBrush}" />
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Resources>
+                <Grid Height="40">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="{Binding WindowTitleWithVersion}"
+                           Margin="17,0,0,0"
+                           VerticalAlignment="Center"
+                           Foreground="#DDE6F8"
+                           FontSize="13.5"
+                           FontWeight="SemiBold" />
+
+                <Button Grid.Column="1"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource CaptionButtonStyle}"
+                        ToolTip="Minimize"
+                        Click="MinimizeButton_OnClick">
+                    <TextBlock Text="&#xE921;"
+                               FontFamily="{StaticResource IconFontFamily}"
+                               FontSize="12"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               TextAlignment="Center" />
+                </Button>
+
+                <Button x:Name="MaximizeRestoreButton"
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource CaptionButtonStyle}"
+                        ToolTip="Maximize / Restore"
+                        Click="MaximizeRestoreButton_OnClick">
+                    <TextBlock x:Name="MaximizeRestoreGlyph"
+                               Text="&#xE922;"
+                               FontFamily="{StaticResource IconFontFamily}"
+                               FontSize="12"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               TextAlignment="Center" />
+                </Button>
+
+                <Button Grid.Column="3"
+                        Margin="0"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource CaptionCloseButtonStyle}"
+                        ToolTip="Close"
+                        Click="CloseButton_OnClick">
+                    <TextBlock Text="&#xE8BB;"
+                               FontFamily="{StaticResource IconFontFamily}"
+                               FontSize="12"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               TextAlignment="Center" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" Background="{StaticResource AppBackgroundBrush}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{StaticResource ShellSideRailWidth}" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0"
+                    Style="{StaticResource SideRailShellStyle}">
+                <Grid Margin="0,5,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0"
+                                Margin="8,3,8,0">
+                        <ui:Button Command="{Binding ShowHomeCommand}"
+                                   Tag="{Binding IsHomeViewActive}"
+                                   ToolTip="{Binding Strings.NavHome}"
+                                   AutomationProperties.Name="{Binding Strings.NavHome}"
+                                   AutomationProperties.PositionInSet="1"
+                                   AutomationProperties.SizeOfSet="4"
+                                   TabIndex="0"
+                                   Style="{StaticResource SideRailIconButtonStyle}">
+                            <ui:SymbolIcon Symbol="Home24"
+                                           Filled="True"
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                           FontSize="24"
+                                           Width="26"
+                                           Height="26" />
+                        </ui:Button>
+
+                        <ui:Button Command="{Binding ShowScanViewCommand}"
+                                   Tag="{Binding IsScanViewActive}"
+                                   ToolTip="{Binding Strings.NavScan}"
+                                   AutomationProperties.Name="{Binding Strings.NavScan}"
+                                   AutomationProperties.PositionInSet="2"
+                                   AutomationProperties.SizeOfSet="4"
+                                   TabIndex="1"
+                                   Style="{StaticResource SideRailIconButtonStyle}">
+                            <ui:SymbolIcon Symbol="Search24"
+                                           Filled="True"
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                           FontSize="24"
+                                           Width="26"
+                                           Height="26" />
+                        </ui:Button>
+
+                        <ui:Button Command="{Binding ShowSupportedGamesWikiViewCommand}"
+                                   Tag="{Binding IsSupportedGamesWikiViewActive}"
+                                   ToolTip="{Binding Strings.NavSupportedGamesWiki}"
+                                   AutomationProperties.Name="{Binding Strings.NavSupportedGamesWiki}"
+                                   AutomationProperties.PositionInSet="3"
+                                   AutomationProperties.SizeOfSet="4"
+                                   TabIndex="2"
+                                   Style="{StaticResource SideRailIconButtonStyle}">
+                            <ui:SymbolIcon Symbol="XboxController24"
+                                           Filled="True"
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                           FontSize="24"
+                                           Width="26"
+                                           Height="26" />
+                        </ui:Button>
+                    </StackPanel>
+
+                    <ui:Button Grid.Row="1"
+                               Command="{Binding ShowSettingsCommand}"
+                               Tag="{Binding IsSettingsViewActive}"
+                               ToolTip="{Binding Strings.NavSettings}"
+                               AutomationProperties.Name="{Binding Strings.NavSettings}"
+                               AutomationProperties.PositionInSet="4"
+                               AutomationProperties.SizeOfSet="4"
+                               TabIndex="3"
+                               Style="{StaticResource SideRailFooterIconButtonStyle}">
+                        <ui:SymbolIcon Symbol="Settings24"
+                                       Filled="True"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                       FontSize="24"
+                                       Width="26"
+                                       Height="26" />
+                    </ui:Button>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1"
+                    Style="{StaticResource ShellMainSurfaceStyle}">
+                <Grid Margin="{StaticResource ShellMainContentMargin}">
+                <Grid Margin="{StaticResource ShellViewContainerMargin}">
+                    <ContentControl Content="{Binding DataContext, ElementName=ShellWindow}">
+                        <ContentControl.Style>
+                            <Style TargetType="ContentControl">
+                                <Setter Property="ContentTemplate" Value="{StaticResource HomeSectionTemplate}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding DataContext.Navigation.CurrentViewKind, ElementName=ShellWindow}"
+                                                 Value="{x:Static navigation:ShellViewKind.SupportedGamesWiki}">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource SupportedGamesWikiSectionTemplate}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding DataContext.Navigation.CurrentViewKind, ElementName=ShellWindow}"
+                                                 Value="{x:Static navigation:ShellViewKind.Scan}">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource ScanSectionTemplate}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding DataContext.Navigation.CurrentViewKind, ElementName=ShellWindow}"
+                                                 Value="{x:Static navigation:ShellViewKind.Settings}">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource SettingsSectionTemplate}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ContentControl.Style>
+                    </ContentControl>
+                </Grid>
+                </Grid>
+            </Border>
+
+            <controls:DialogHost Grid.Column="0"
+                                 Grid.ColumnSpan="2"
+                                 HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Stretch"
+                                 Panel.ZIndex="999"
+                                 DataContext="{Binding DialogHost}" />
+            <controls:InstallManagementDialogHost Grid.Column="0"
+                                                  Grid.ColumnSpan="2"
+                                                  HorizontalAlignment="Stretch"
+                                                  VerticalAlignment="Stretch"
+                                                  Panel.ZIndex="1000"
+                                                  DataContext="{Binding InstallManagementDialogHost}" />
+        </Grid>
+
+        <Border Grid.Row="2"
+                Background="{StaticResource AppBackgroundBrush}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0"
+                Margin="0">
+            <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{StaticResource ShellSideRailWidth}" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="1"
+                       Text="{Binding RuntimeHeader.DeviceGpuInlineText}"
+                       Style="{StaticResource DeviceMetaTextStyle}"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Center"
+                       Margin="0,0,24,0"
+                       TextAlignment="Right"
+                       MaxWidth="700"
+                       TextTrimming="CharacterEllipsis" />
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="0"
+              Grid.RowSpan="3"
+              Panel.ZIndex="1900"
+              Background="#CC000000"
+              IsHitTestVisible="True"
+              Visibility="{Binding ShellBusyState.OperationOverlayVisibility}">
+            <StackPanel Width="440"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                <TextBlock Text="{Binding ShellBusyState.OperationOverlayMessage}"
+                           Foreground="{StaticResource TextPrimaryBrush}"
+                           FontSize="22"
+                           FontWeight="SemiBold"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap" />
+                <ProgressBar Width="360"
+                             Height="4"
+                             Margin="0,16,0,0"
+                             HorizontalAlignment="Center"
+                             Foreground="{StaticResource AccentPrimaryBrush}"
+                             IsIndeterminate="True" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="0"
+              Grid.RowSpan="3"
+              Panel.ZIndex="2000"
+              Background="#CC000000"
+              IsHitTestVisible="True"
+              Visibility="{Binding StartupOverlay.FirstRunPreparationOverlayVisibility}">
+            <StackPanel Width="440"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                <TextBlock Text="{Binding Strings.FirstRunPreparationTitle}"
+                           Foreground="{StaticResource TextPrimaryBrush}"
+                           FontSize="20"
+                           FontWeight="SemiBold"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="{Binding Strings.FirstRunPreparationBody}"
+                           Margin="0,12,0,18"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           FontSize="14"
+                           LineHeight="21"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap" />
+                <ProgressBar Width="360"
+                             Height="4"
+                             HorizontalAlignment="Center"
+                             Foreground="{StaticResource AccentPrimaryBrush}"
+                             IsIndeterminate="True" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

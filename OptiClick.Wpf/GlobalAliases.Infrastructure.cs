@@ -1,0 +1,10 @@
+﻿global using AppLocalDataPathProvider = OptiClick.Infrastructure.FileSystem.AppLocalDataPathProvider;
+global using ExternalUrlLauncher = OptiClick.Infrastructure.Windows.ExternalUrlLauncher;
+global using IAppLocalDataPathProvider = OptiClick.Infrastructure.FileSystem.IAppLocalDataPathProvider;
+global using IExternalUrlLauncher = OptiClick.Infrastructure.Windows.IExternalUrlLauncher;
+global using IOperatingSystemSupportPolicy = OptiClick.Infrastructure.Windows.IOperatingSystemSupportPolicy;
+global using OverrideableOperatingSystemSupportPolicy = OptiClick.Infrastructure.Windows.OverrideableOperatingSystemSupportPolicy;
+global using Windows11OnlyOperatingSystemSupportPolicy = OptiClick.Infrastructure.Windows.Windows11OnlyOperatingSystemSupportPolicy;
+global using WindowsDeviceInfoProvider = OptiClick.Infrastructure.Windows.WindowsDeviceInfoProvider;
+global using WindowsGpuInfoProvider = OptiClick.Infrastructure.Windows.WindowsGpuInfoProvider;
+global using WindowsOperatingSystemSupportPolicy = OptiClick.Infrastructure.Windows.WindowsOperatingSystemSupportPolicy;

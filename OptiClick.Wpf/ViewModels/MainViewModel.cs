@@ -1,0 +1,688 @@
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Globalization;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Media;
+using OptiClick.Core.Abstractions;
+using OptiClick.Core.Models;
+using OptiClick.Core.Runtime;
+using OptiClick.Wpf.Collections;
+using OptiClick.Wpf.Install.Archives;
+using OptiClick.Wpf.Install.Flow;
+using OptiClick.Wpf.Install.Planning;
+using OptiClick.Wpf.Install.Presentation;
+using OptiClick.Wpf.Install.Uninstall;
+using OptiClick.Wpf.Localization;
+using OptiClick.Wpf.Logging;
+using OptiClick.Wpf.Models;
+using OptiClick.Wpf.Shell.Runtime.DeviceIdentity;
+using OptiClick.Wpf.Shell.RuntimeData;
+using OptiClick.Wpf.Services;
+using OptiClick.Wpf.Shell.Actions;
+using OptiClick.Wpf.Shell.Dialogs;
+using OptiClick.Wpf.Shell.Flow;
+using OptiClick.Wpf.Shell.Games;
+using OptiClick.Wpf.Shell.Gpu;
+using OptiClick.Wpf.Shell.Games.GpuBundle;
+using OptiClick.Wpf.Shell.Localization;
+using OptiClick.Wpf.Shell.Navigation;
+using OptiClick.Wpf.Shell.Runtime;
+using OptiClick.Wpf.Shell.Scan;
+using OptiClick.Wpf.Shell.Selection;
+using OptiClick.Wpf.Shell.Settings;
+using OptiClick.Wpf.Shell.Startup;
+using OptiClick.Wpf.Shell.Support;
+using OptiClick.Wpf.Shell.Update;
+using OptiClick.Wpf.Shell.Wiki;
+using OptiClick.Wpf.ViewModels.Sections.Home;
+using OptiClick.Wpf.ViewModels.Sections.Scan;
+using OptiClick.Wpf.ViewModels.Sections.Settings;
+using OptiClick.Wpf.ViewModels.Sections.SupportedGames;
+using OptiClick.Wpf.ViewModels.Shell;
+using OptiClick.Infrastructure.FileSystem;
+using OperatingSystemSupportState = OptiClick.Infrastructure.Windows.OperatingSystemSupportState;
+
+namespace OptiClick.Wpf.ViewModels;
+
+public sealed partial class MainViewModel : ViewModelBase
+{
+    private const int MaxSupportedGpuCount = 2;
+    private const string LanguagePreferenceAuto = "auto";
+    private const string LanguagePreferenceKorean = "ko";
+    private const string LanguagePreferenceEnglish = "en";
+    private const string LanguageOptionAuto = "Auto";
+    private const string LanguageOptionKorean = "\uD55C\uAD6D\uC5B4";
+    private const string LanguageOptionEnglish = "English";
+    private const string GpuManifestRestartRequiredErrorCode = "gpu_bundle_manifest_restart_required";
+
+    private static readonly Brush AddedFolderStatusBrush = new SolidColorBrush(Color.FromRgb(185, 226, 250));
+    private static readonly Brush MissingFolderStatusBrush = new SolidColorBrush(Color.FromRgb(212, 180, 142));
+    // Core services
+    private readonly IWritableAppLanguageProvider _languageProvider;
+    private readonly IShellMockDataProvider _mockDataProvider;
+
+    // Runtime/catalog services
+    private readonly IOperatingSystemSupportPolicy _operatingSystemSupportPolicy;
+    private readonly IShellGameCardViewModelFactory? _shellGameCardViewModelFactory;
+    private readonly DeviceIdentityRulesFlowController _deviceIdentityRulesFlowController;
+    private readonly RuntimeContextCoordinator _runtimeContextCoordinator;
+    private readonly RuntimeCatalogCoordinator _runtimeCatalogCoordinator;
+    private readonly IRemoteGpuBundleManifestClient _gpuBundleManifestClient;
+    private readonly IGpuBundleManifestRuleResolver _gpuBundleManifestRuleResolver;
+
+    // Install services
+    private readonly GameSelectionFlowController _gameSelectionFlowController;
+    private readonly ArchiveReadinessFlowController _archiveReadinessFlowController;
+    private readonly InstallExecutionCoordinator _installExecutionCoordinator;
+    private readonly UninstallFlowCoordinator _uninstallFlowCoordinator;
+
+    // App/update/support services
+    private readonly IAppVersionProvider _appVersionProvider;
+    private readonly AppUpdateFlowController _appUpdateFlowController;
+    private readonly GameDetailsDialogPresenter _gameDetailsDialogPresenter;
+    private readonly IAppLogger _appLogger;
+    private readonly IAppLocalDataPathProvider _localDataPathProvider;
+    private readonly IAppStringsProvider _appStringsProvider;
+    private readonly IFirstRunStateStore _firstRunStateStore;
+    private readonly ShellNavigationState _navigationState;
+    private readonly DialogPresenter _dialogPresenter;
+    private readonly IInstallManagementDialogService _installManagementDialogService;
+    private readonly OnceDialogGate _remoteCatalogDialogGate;
+    private readonly UserSettingsController _userSettingsController;
+    private readonly ScanVisibleGameResolver _scanVisibleGameResolver;
+    private readonly StartupNoticePresenter _startupNoticePresenter;
+    private readonly StartupAnnouncementFlowController _startupAnnouncementFlowController;
+    private readonly ShellCommandActionController _shellCommandActionController;
+    private readonly LocalizationStateController _localizationStateController;
+    private readonly RuntimeSummaryStateController _runtimeSummaryStateController;
+    private readonly MainViewModelBusyStateApplier _busyStateApplier;
+    private readonly InstallPopupPresenter _installPopupPresenter;
+    private readonly FlowLogDispatcher _flowLogDispatcher;
+    private readonly MainViewModelFlowRequestFactory _flowRequestFactory;
+    private readonly AppUpdateCoordinator _appUpdateCoordinator;
+    private readonly MainViewModelResultApplier _resultApplier;
+    private readonly GameCardSelectionStateController _gameCardSelectionStateController;
+    private readonly IGameMasterCoverPrefetchService _gameMasterCoverPrefetchService;
+    private readonly ICoverCacheBootstrapService _coverCacheBootstrapService;
+    private readonly StartupBackgroundTaskManager _startupBackgroundTaskManager;
+    private readonly ArchiveReadinessRefreshCoordinator _archiveReadinessRefreshCoordinator;
+    private readonly ArchiveReadinessWarmupController _archiveReadinessWarmupController;
+    private readonly StartupFlowCoordinator _startupFlowCoordinator;
+    private readonly SelectionPopupCoordinator _selectionPopupCoordinator;
+    private readonly GpuSelectionCoordinator _gpuSelectionCoordinator;
+    private readonly object _startupPreparationStateGate = new();
+    private readonly object _startupDialogsReadyGate = new();
+    private Task _startupDialogsReadyTask = Task.CompletedTask;
+
+    // Locks
+    private readonly SemaphoreSlim _deviceRulesRefreshLock = new(1, 1);
+    private readonly SemaphoreSlim _scanLock = new(1, 1);
+    private readonly SemaphoreSlim _installExecutionLock = new(1, 1);
+    // UI state
+    private readonly AppLanguage _systemPreferredLanguage = AppLanguage.English;
+    private AppLanguage _selectedLanguage = AppLanguage.English;
+    private string _languagePreference = LanguagePreferenceAuto;
+    private string _deviceText = "";
+    private string _gpuText = "";
+    private string _gpuLogoSource = "";
+    private double _gpuLogoWidth;
+    private double _gpuLogoHeight;
+    private Thickness _gpuLogoMargin = new(0);
+    private bool _isFirstRunPreparationOverlayVisible;
+    private bool _isOperationOverlayVisible;
+    private string _operationOverlayMessage = "";
+    private StartupPreparationState _startupPreparationState = StartupPreparationState.Empty;
+
+    // Runtime state
+    private readonly RuntimeShellState _runtimeShellState = new();
+    private readonly ScannedGameState _scannedGameState = new();
+    private bool _isGameMasterCoverPrefetchStarted;
+    private int _homeCoverPrefetchRunning;
+
+    // Install/update state
+    private bool _isInstallExecutionInProgress;
+    private bool _isAppUpdateInProgress;
+    private bool _gpuManifestRestartRequired;
+    private bool _gpuManifestRestartDialogShown;
+    private bool _suppressHomeNavigationForAutoSelection;
+    private bool _pendingAdministratorRelaunchCancelledNotice;
+    private ShellInstallSelectionState _selectionState = new();
+    private long _selectionRequestVersion;
+    private AppStrings _strings = new AppStringsProvider().Get(AppLanguage.English);
+
+    public MainViewModel(
+        MainViewModelRequiredDependencies requiredDependencies,
+        MainViewModelRuntimeDependencies? runtime = null,
+        MainViewModelScanDependencies? scan = null,
+        MainViewModelInstallDependencies? install = null,
+        MainViewModelAppDependencies? app = null,
+        bool allowDependencyFallbacks = true,
+        bool seedMockGameCards = true,
+        bool seedMockScanFolders = true)
+    {
+        var resolved = MainViewModelDependencyResolver.Resolve(
+            requiredDependencies,
+            runtime,
+            scan,
+            install,
+            app,
+            allowFallbackResolution: allowDependencyFallbacks);
+
+        _languageProvider = resolved.LanguageProvider;
+        _systemPreferredLanguage = _languageProvider.CurrentLanguage;
+        _mockDataProvider = resolved.MockDataProvider;
+        _operatingSystemSupportPolicy = resolved.OperatingSystemSupportPolicy;
+        _shellGameCardViewModelFactory = resolved.ShellGameCardViewModelFactory;
+        var runtimeContextFlowController = resolved.RuntimeContextFlowController;
+        _deviceIdentityRulesFlowController = resolved.DeviceIdentityRulesFlowController;
+        var runtimeCatalogFlowController = resolved.RuntimeCatalogFlowController;
+        var runtimeEndpointStatusPresenter = resolved.RuntimeEndpointStatusPresenter;
+        _gpuBundleManifestClient = resolved.GpuBundleManifestClient;
+        _gpuBundleManifestRuleResolver = resolved.GpuBundleManifestRuleResolver;
+        _gameSelectionFlowController = resolved.GameSelectionFlowController;
+        var scanFlowController = resolved.ScanFlowController;
+        _appVersionProvider = resolved.AppVersionProvider;
+        var scanFolderDiscoveryService = resolved.ScanFolderDiscoveryService;
+        _appLogger = resolved.AppLogger;
+        _localDataPathProvider = resolved.LocalDataPathProvider;
+        _appStringsProvider = resolved.AppStringsProvider;
+        _firstRunStateStore = resolved.FirstRunStateStore;
+        _flowLogDispatcher = resolved.FlowLogDispatcher;
+        _flowRequestFactory = resolved.FlowRequestFactory;
+        _navigationState = resolved.NavigationState;
+        _dialogPresenter = resolved.DialogPresenter;
+        _installManagementDialogService = resolved.InstallManagementDialogService;
+        _remoteCatalogDialogGate = resolved.RemoteCatalogDialogGate;
+        _userSettingsController = resolved.UserSettingsController;
+        var scanFolderListController = resolved.ScanFolderListController;
+        var scanFolderActionController = resolved.ScanFolderActionController;
+        _scanVisibleGameResolver = resolved.ScanVisibleGameResolver;
+        _installPopupPresenter = resolved.InstallPopupPresenter;
+        _archiveReadinessFlowController = resolved.ArchiveReadinessFlowController;
+        _resultApplier = resolved.ResultApplier;
+        _installExecutionCoordinator = new InstallExecutionCoordinator(resolved.InstallFlowController);
+        _uninstallFlowCoordinator = new UninstallFlowCoordinator(
+            resolved.OptiClickUninstallPlanBuilder,
+            resolved.OptiClickUninstallExecutor,
+            _dialogPresenter,
+            _appLogger);
+        _startupNoticePresenter = resolved.StartupNoticePresenter;
+        _startupAnnouncementFlowController = resolved.StartupAnnouncementFlowController;
+        _shellCommandActionController = resolved.ShellCommandActionController;
+        _localizationStateController = resolved.LocalizationStateController;
+        _runtimeSummaryStateController = resolved.RuntimeSummaryStateController;
+        var supportedGamesWikiMarkdownLoader = resolved.SupportedGamesWikiMarkdownLoader;
+        _busyStateApplier = resolved.BusyStateApplier;
+        _appUpdateFlowController = resolved.AppUpdateFlowController;
+        _appUpdateCoordinator = new AppUpdateCoordinator(_appUpdateFlowController);
+        _gameDetailsDialogPresenter = resolved.GameDetailsDialogPresenter;
+        _gameCardSelectionStateController = resolved.GameCardSelectionStateController;
+        _gameMasterCoverPrefetchService = resolved.GameMasterCoverPrefetchService;
+        _coverCacheBootstrapService = resolved.CoverCacheBootstrapService;
+        _startupBackgroundTaskManager = resolved.StartupBackgroundTaskManager;
+        _archiveReadinessRefreshCoordinator = resolved.ArchiveReadinessRefreshCoordinator;
+        _archiveReadinessWarmupController = resolved.ArchiveReadinessWarmupController;
+        _startupFlowCoordinator = resolved.StartupFlowCoordinator;
+        _selectionPopupCoordinator = new SelectionPopupCoordinator(
+            _gameSelectionFlowController,
+            _dialogPresenter,
+            _flowLogDispatcher,
+            _appLogger);
+        _gpuSelectionCoordinator = new GpuSelectionCoordinator(MaxSupportedGpuCount);
+        _runtimeContextCoordinator = new RuntimeContextCoordinator(
+            runtimeContextFlowController,
+            _runtimeSummaryStateController,
+            _flowLogDispatcher,
+            _gpuSelectionCoordinator);
+        _runtimeCatalogCoordinator = new RuntimeCatalogCoordinator(
+            runtimeCatalogFlowController,
+            runtimeEndpointStatusPresenter);
+        DialogHost = resolved.DialogHost;
+        InstallManagementDialogHost = resolved.InstallManagementDialogHost;
+        var games = seedMockGameCards
+            ? new BatchedObservableCollection<GameCardViewModel>(_mockDataProvider.CreateGames())
+            : new BatchedObservableCollection<GameCardViewModel>();
+        var defaultFolders = seedMockScanFolders
+            ? new ObservableCollection<ScanFolderRowViewModel>(_mockDataProvider.CreateDefaultFolders())
+            : new ObservableCollection<ScanFolderRowViewModel>(
+                scanFolderDiscoveryService?.DiscoverDefaultFolders() ?? []);
+        var addedFolders = seedMockScanFolders
+            ? new ObservableCollection<ScanFolderRowViewModel>(_mockDataProvider.CreateAddedFolders())
+            : new ObservableCollection<ScanFolderRowViewModel>(LoadAddedScanFoldersFromManifest(defaultFolders, scanFolderActionController));
+        var settingsLanguageOptions = new ObservableCollection<string> { LanguageOptionAuto, LanguageOptionKorean, LanguageOptionEnglish };
+        Navigation = new ShellNavigationViewModel(_navigationState);
+        RuntimeHeader = new RuntimeHeaderViewModel();
+        StartupOverlay = new StartupOverlayViewModel();
+        ShellBusyState = new ShellBusyStateViewModel();
+        Home = new HomeSectionViewModel(
+            new HomeSectionViewModelOptions
+            {
+                StringsAccessor = () => Strings,
+                Games = games,
+                SelectedGameAction = new SelectedGameActionViewModel(),
+                SelectGameAsync = (game, cancellationToken) => SelectGameCardAsync(game, cancellationToken),
+                ShowDetails = ShowDetailsDialog,
+                ShowInstallAsync = ShowInstallDialogAsync,
+                CanSelectGame = () => !_isInstallExecutionInProgress && !_isAppUpdateInProgress,
+                CanShowDetails = () => SelectedGame is not null,
+                CanShowInstall = () => SelectedGame is not null
+                                      && !_isInstallExecutionInProgress
+                                      && !_isAppUpdateInProgress
+                                      && !ShouldBlockStartupForUnsupportedOperatingSystem(),
+                OnSelectGameException = ex => LogError(MainViewModelLogCategories.Command, "select game command failed", ex),
+                OnShowInstallException = ex => LogError(MainViewModelLogCategories.Command, "install command failed", ex)
+            });
+        Home.PropertyChanged += OnHomeSectionPropertyChanged;
+        SupportedGames = new SupportedGamesSectionViewModel(
+            supportedGamesWikiMarkdownLoader,
+            _startupBackgroundTaskManager,
+            _appLogger,
+            () => SelectedLanguage,
+            () => Strings,
+            () => CurrentViewKind == ShellViewKind.SupportedGamesWiki,
+            () => OpenGameSupportRequestCommand,
+            UpdateStartupPreparationState);
+        Scan = new ScanSectionViewModel(
+            new ScanSectionViewModelOptions
+            {
+                StringsAccessor = () => Strings,
+                DefaultFolders = defaultFolders,
+                AddedFolders = addedFolders,
+                ScanFolderListController = scanFolderListController,
+                ScanFolderActionController = scanFolderActionController,
+                ApplyScanFolderActionResult = result => ApplyDeferredStateUpdate(
+                    _resultApplier.CreateScanFolderActionStateUpdate(result)),
+                ScanFlowController = scanFlowController,
+                ScanLock = _scanLock,
+                ScannedGameState = _scannedGameState,
+                DialogPresenter = _dialogPresenter,
+                IsMultiGpuBlocked = () => _gpuSelectionCoordinator.MultiGpuBlocked,
+                BuildScanRequest = BuildScanRequest,
+                ApplyScanFlowResultAsync = ApplyScanFlowResultAsync,
+                RunWithStartupAutoSelectionSuppressedAsync = RunWithStartupAutoSelectionSuppressedAsync,
+                ApplyStartupNoGamesNavigation = ApplyStartupNoGamesNavigation,
+                ShowStartupNoSupportedGamesGuidanceAsync = ShowStartupNoSupportedGamesGuidanceAsync,
+                ClearVisibleGameCards = () => ReplaceGameCards([]),
+                LogWarning = message => LogWarning(MainViewModelLogCategories.Scan, message),
+                ShowHome = () => SetCurrentView(ShellViewKind.Home),
+                AddedFolderStatusBrush = AddedFolderStatusBrush,
+                MissingFolderStatusBrush = MissingFolderStatusBrush,
+                OnCommandException = ex => LogError(MainViewModelLogCategories.Command, "save and scan command failed", ex)
+            });
+        Scan.PropertyChanged += OnScanSectionPropertyChanged;
+        var settingsActionCoordinator = new SettingsActionCoordinator(
+            _dialogPresenter,
+            _localDataPathProvider,
+            _appLogger);
+        Settings = new SettingsSectionViewModel(
+            new SettingsSectionViewModelOptions
+            {
+                StringsAccessor = () => Strings,
+                IsKoreanUi = () => IsKoreanUi,
+                SettingsLanguageOptions = settingsLanguageOptions,
+                InitialSettingsLanguageOption = LanguageOptionAuto,
+                ApplySettingsLanguageOption = ApplySettingsLanguageOption,
+                SaveUserSettings = SaveUserSettings,
+                LogCheckUpdatesOnStartupChanged = value => LogInfo(MainViewModelLogCategories.Settings, $"check_updates_on_startup={(value ? "true" : "false")}"),
+                LogAlwaysRunAsAdministratorChanged = value => LogInfo(MainViewModelLogCategories.Settings, $"always_run_as_administrator={(value ? "true" : "false")}"),
+                SettingsActionCoordinator = settingsActionCoordinator,
+                IsInstallExecutionInProgress = () => _isInstallExecutionInProgress,
+                OpenLogFolderCommand = new RelayCommand(_ => OpenLogFolder()),
+                OpenSupportRequestCommand = new RelayCommand(_ => OpenSupportRequest()),
+                OnRefreshInstallFilesException = ex => LogError(MainViewModelLogCategories.Command, "reset app cache command failed", ex)
+            });
+        Settings.PropertyChanged += OnSettingsSectionPropertyChanged;
+        InitializeCommandSet();
+
+        _selectedLanguage = _languageProvider.CurrentLanguage;
+        RefreshLocalizedStrings();
+        SelectedGameAction.ApplyLocalization(Strings);
+        ApplyLocalizationStateUpdate(_localizationStateController.BuildInitialState(
+            SelectedLanguage,
+            Strings,
+            SettingsStatusText,
+            ScanStatusText,
+            _deviceText,
+            _gpuText));
+        ApplyUserSettings(_userSettingsController.Load());
+    }
+
+    private void OnHomeSectionPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        var propertyName = e.PropertyName ?? "";
+        if (string.IsNullOrWhiteSpace(propertyName))
+        {
+            OnPropertyChanged(nameof(Games));
+            OnPropertyChanged(nameof(SelectedGame));
+            OnPropertyChanged(nameof(SelectedGameAction));
+            OnPropertyChanged(nameof(HasGamesForHomeSelectionMessage));
+            return;
+        }
+
+        OnPropertyChanged(propertyName);
+    }
+
+    private void OnScanSectionPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        var propertyName = e.PropertyName ?? "";
+        if (string.IsNullOrWhiteSpace(propertyName))
+        {
+            OnPropertyChanged(nameof(DefaultFolders));
+            OnPropertyChanged(nameof(AddedFolders));
+            OnPropertyChanged(nameof(ScanStatusText));
+            OnPropertyChanged(nameof(DefaultFoldersEmptyVisibility));
+            OnPropertyChanged(nameof(AddedFoldersEmptyVisibility));
+            return;
+        }
+
+        OnPropertyChanged(propertyName);
+    }
+
+    private void OnSettingsSectionPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        var propertyName = e.PropertyName ?? "";
+        if (string.IsNullOrWhiteSpace(propertyName)
+            || string.Equals(propertyName, nameof(SettingsSectionViewModel.SettingsStatusText), StringComparison.Ordinal))
+        {
+            OnPropertyChanged(nameof(SettingsStatusText));
+        }
+    }
+
+    public ObservableCollection<GameCardViewModel> Games => Home.Games;
+    public ObservableCollection<ScanFolderRowViewModel> DefaultFolders => Scan.DefaultFolders;
+    public ObservableCollection<ScanFolderRowViewModel> AddedFolders => Scan.AddedFolders;
+    public DialogHostViewModel DialogHost { get; }
+    public InstallManagementDialogHostViewModel InstallManagementDialogHost { get; }
+    public ObservableCollection<SupportedGamesWikiRowViewModel> SupportedGamesWikiRows => SupportedGames.SupportedGamesWikiRows;
+    public SelectedGameActionViewModel SelectedGameAction => Home.SelectedGameAction;
+    public ShellNavigationViewModel Navigation { get; }
+    public RuntimeHeaderViewModel RuntimeHeader { get; }
+    public StartupOverlayViewModel StartupOverlay { get; }
+    public ShellBusyStateViewModel ShellBusyState { get; }
+    public HomeSectionViewModel Home { get; }
+    public ScanSectionViewModel Scan { get; }
+    public SupportedGamesSectionViewModel SupportedGames { get; }
+    public SettingsSectionViewModel Settings { get; }
+    public bool HasGamesForHomeSelectionMessage => Home.HasGamesForHomeSelectionMessage;
+    public StartupPreparationState StartupPreparationState
+    {
+        get
+        {
+            lock (_startupPreparationStateGate)
+            {
+                return _startupPreparationState;
+            }
+        }
+    }
+
+    public AppStrings Strings
+    {
+        get => _strings;
+        private set => SetProperty(ref _strings, value);
+    }
+    public string DeviceText
+    {
+        get => _deviceText;
+        private set
+        {
+            if (SetProperty(ref _deviceText, value))
+            {
+                OnPropertyChanged(nameof(DeviceGpuInlineText));
+                RuntimeHeader.ApplyText(DeviceText, GpuText);
+            }
+        }
+    }
+
+    public string GpuText
+    {
+        get => _gpuText;
+        private set
+        {
+            if (SetProperty(ref _gpuText, value))
+            {
+                OnPropertyChanged(nameof(DeviceGpuInlineText));
+                RuntimeHeader.ApplyText(DeviceText, GpuText);
+            }
+        }
+    }
+
+    public string DeviceGpuInlineText
+    {
+        get
+        {
+            var device = (DeviceText ?? "").Trim();
+            var gpu = (GpuText ?? "").Trim();
+
+            if (string.IsNullOrWhiteSpace(device) && string.IsNullOrWhiteSpace(gpu))
+            {
+                return "";
+            }
+
+            if (string.IsNullOrWhiteSpace(device))
+            {
+                return gpu;
+            }
+
+            if (string.IsNullOrWhiteSpace(gpu))
+            {
+                return device;
+            }
+
+            return $"{device} | {gpu}";
+        }
+    }
+
+    public string GpuLogoSource
+    {
+        get => _gpuLogoSource;
+        private set
+        {
+            if (SetProperty(ref _gpuLogoSource, value))
+            {
+                OnPropertyChanged(nameof(GpuLogoVisibility));
+            }
+        }
+    }
+
+    public Visibility GpuLogoVisibility =>
+        string.IsNullOrWhiteSpace(GpuLogoSource) ? Visibility.Collapsed : Visibility.Visible;
+
+    public double GpuLogoWidth
+    {
+        get => _gpuLogoWidth;
+        private set => SetProperty(ref _gpuLogoWidth, value);
+    }
+
+    public double GpuLogoHeight
+    {
+        get => _gpuLogoHeight;
+        private set => SetProperty(ref _gpuLogoHeight, value);
+    }
+
+    public Thickness GpuLogoMargin
+    {
+        get => _gpuLogoMargin;
+        private set => SetProperty(ref _gpuLogoMargin, value);
+    }
+    public ShellViewKind CurrentViewKind => _navigationState.CurrentView;
+    public bool IsHomeViewActive => CurrentViewKind == ShellViewKind.Home;
+    public bool IsSupportedGamesWikiViewActive => CurrentViewKind == ShellViewKind.SupportedGamesWiki;
+    public bool IsScanViewActive => CurrentViewKind == ShellViewKind.Scan;
+    public bool IsSettingsViewActive => CurrentViewKind == ShellViewKind.Settings;
+    public string SupportedGamesWikiSearchText
+    {
+        get => SupportedGames.SupportedGamesWikiSearchText;
+        set => SupportedGames.SupportedGamesWikiSearchText = value;
+    }
+    public string SupportedGamesWikiStatusText => SupportedGames.SupportedGamesWikiStatusText;
+    public Visibility SupportedGamesWikiStatusVisibility => SupportedGames.SupportedGamesWikiStatusVisibility;
+    public Visibility SupportedGamesWikiLoadingVisibility => SupportedGames.SupportedGamesWikiLoadingVisibility;
+    public Visibility SupportedGamesWikiEmptyVisibility => SupportedGames.SupportedGamesWikiEmptyVisibility;
+    public Visibility FirstRunPreparationOverlayVisibility =>
+        IsFirstRunPreparationOverlayVisible ? Visibility.Visible : Visibility.Collapsed;
+    public bool IsFirstRunPreparationOverlayVisible
+    {
+        get => _isFirstRunPreparationOverlayVisible;
+        private set
+        {
+            if (SetProperty(ref _isFirstRunPreparationOverlayVisible, value))
+            {
+                OnPropertyChanged(nameof(FirstRunPreparationOverlayVisibility));
+                StartupOverlay.ApplyFirstRunPreparationOverlay(value);
+            }
+        }
+    }
+    public Visibility OperationOverlayVisibility =>
+        IsOperationOverlayVisible ? Visibility.Visible : Visibility.Collapsed;
+    public bool IsOperationOverlayVisible
+    {
+        get => _isOperationOverlayVisible;
+        private set
+        {
+            if (SetProperty(ref _isOperationOverlayVisible, value))
+            {
+                OnPropertyChanged(nameof(OperationOverlayVisibility));
+                ShellBusyState.Apply(IsOperationOverlayVisible, OperationOverlayMessage);
+            }
+        }
+    }
+    public string OperationOverlayMessage
+    {
+        get => _operationOverlayMessage;
+        private set
+        {
+            if (SetProperty(ref _operationOverlayMessage, value))
+            {
+                ShellBusyState.Apply(IsOperationOverlayVisible, OperationOverlayMessage);
+            }
+        }
+    }
+    public string SupportedGamesWikiEmptyText => SupportedGames.SupportedGamesWikiEmptyText;
+    public bool IsSupportedGamesWikiLoading => SupportedGames.IsSupportedGamesWikiLoading;
+    public Visibility DefaultFoldersEmptyVisibility => Scan.DefaultFoldersEmptyVisibility;
+    public Visibility AddedFoldersEmptyVisibility => Scan.AddedFoldersEmptyVisibility;
+    public string WindowTitleWithVersion => $"{Strings.WindowTitle} v{GetCurrentAppVersion()}";
+
+    public string SettingsStatusText
+    {
+        get => Settings.SettingsStatusText;
+        private set => Settings.SettingsStatusText = value;
+    }
+
+    public AppLanguage SelectedLanguage
+    {
+        get => _selectedLanguage;
+        set
+        {
+            if (!SetProperty(ref _selectedLanguage, value))
+            {
+                return;
+            }
+
+            _ = ApplyLanguageChangeAsync(value);
+        }
+    }
+
+    private async Task ApplyLanguageChangeAsync(AppLanguage language, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _languageProvider.SetLanguage(language);
+            RefreshLocalizedStrings();
+            SelectedGameAction.ApplyLocalization(Strings);
+            RefreshSupportedGamesAfterLanguageChange();
+            OnPropertyChanged(nameof(SupportedGamesWikiEmptyText));
+            ApplyLocalizationStateUpdate(_localizationStateController.BuildRefreshState(language, Strings));
+            await RefreshRuntimeContextAsync(cancellationToken);
+            await RefreshRuntimeDataCatalogAsync(cancellationToken);
+            await RecomputeSelectionAfterScanAsync(cancellationToken, navigateHome: false);
+        }
+        catch (Exception ex)
+        {
+            LogWarning(MainViewModelLogCategories.I18n, $"language change refresh failed type={ex.GetType().Name}");
+        }
+    }
+
+    private bool IsKoreanUi => SelectedLanguage == AppLanguage.Korean;
+
+    private static string NormalizeLanguageOption(string? option)
+    {
+        return string.Equals(option, LanguageOptionKorean, StringComparison.Ordinal)
+            ? LanguageOptionKorean
+            : string.Equals(option, LanguageOptionEnglish, StringComparison.Ordinal)
+                ? LanguageOptionEnglish
+                : LanguageOptionAuto;
+    }
+
+    private static string NormalizeLanguagePreference(string? preference)
+    {
+        return string.Equals(preference, LanguagePreferenceKorean, StringComparison.OrdinalIgnoreCase)
+            ? LanguagePreferenceKorean
+            : string.Equals(preference, LanguagePreferenceEnglish, StringComparison.OrdinalIgnoreCase)
+                ? LanguagePreferenceEnglish
+                : LanguagePreferenceAuto;
+    }
+
+    private static string ResolveLanguageOptionFromState(string preference)
+    {
+        var normalizedPreference = NormalizeLanguagePreference(preference);
+        if (normalizedPreference == LanguagePreferenceKorean)
+        {
+            return LanguageOptionKorean;
+        }
+
+        if (normalizedPreference == LanguagePreferenceEnglish)
+        {
+            return LanguageOptionEnglish;
+        }
+
+        return LanguageOptionAuto;
+    }
+
+    private void ApplySettingsLanguageOption(string option)
+    {
+        var normalizedOption = NormalizeLanguageOption(option);
+        var preference = normalizedOption switch
+        {
+            LanguageOptionKorean => LanguagePreferenceKorean,
+            LanguageOptionEnglish => LanguagePreferenceEnglish,
+            _ => LanguagePreferenceAuto
+        };
+
+        _languagePreference = preference;
+
+        var nextLanguage = preference switch
+        {
+            LanguagePreferenceKorean => AppLanguage.Korean,
+            LanguagePreferenceEnglish => AppLanguage.English,
+            _ => ResolveAutoLanguage()
+        };
+
+        if (SelectedLanguage != nextLanguage)
+        {
+            SelectedLanguage = nextLanguage;
+        }
+
+        SaveUserSettings();
+    }
+
+    private AppLanguage ResolveAutoLanguage()
+    {
+        return _systemPreferredLanguage;
+    }
+
+    public string ScanStatusText
+    {
+        get => Scan.ScanStatusText;
+        private set => Scan.ScanStatusText = value;
+    }
+
+    public GameCardViewModel? SelectedGame
+    {
+        get => Home.SelectedGame;
+        private set => Home.SelectedGame = value;
+    }
+
+}
