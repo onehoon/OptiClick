@@ -47,9 +47,7 @@ public sealed class InstallSelectionRequestBuilder
             input.ModuleDownloadLinks,
             input.SelectedLanguage);
         var fsr4Required = ShellGameCardMapper.ResolveFsr4Required(selectedShellGame);
-        var selectionPopupMessage = ShouldSuppressSelectionPopupMessage(input, selectedShellGame)
-            ? ""
-            : BuildSelectionPopupMessage(selectedShellGame, input.SelectedLanguage);
+        var selectionPopupMessage = BuildSelectionPopupMessage(selectedShellGame, input.SelectedLanguage);
         var installPostPopupMessage = ResolveLocalizedInstallPostMessage(selectedShellGame, input.SelectedLanguage);
 
         return new ShellInstallSelectionRequest
@@ -150,35 +148,6 @@ public sealed class InstallSelectionRequestBuilder
         }
 
         return $"{installPre}[P]{rtssOverlayNotice}";
-    }
-
-    private static bool ShouldSuppressSelectionPopupMessage(
-        InstallSelectionRequestBuildInput input,
-        ShellGameCardModel selectedShellGame)
-    {
-        var previous = input.PreviousState;
-        if (!previous.PopupConfirmed
-            || !previous.PrecheckOk
-            || previous.PendingPopupRequests.Count > 0
-            || previous.PrecheckSnapshot.State != InstallPrecheckState.Passed)
-        {
-            return false;
-        }
-
-        var previousGameId = (previous.SelectedGameId ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(previousGameId))
-        {
-            previousGameId = (previous.SelectedGame?.GameId ?? "").Trim();
-        }
-
-        var selectedGameId = (selectedShellGame.GameId ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(previousGameId)
-            || string.IsNullOrWhiteSpace(selectedGameId))
-        {
-            return false;
-        }
-
-        return string.Equals(previousGameId, selectedGameId, StringComparison.OrdinalIgnoreCase);
     }
 
     private static string PickFirstNonEmpty(params string[] values)

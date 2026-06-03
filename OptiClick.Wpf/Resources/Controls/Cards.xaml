@@ -39,15 +39,6 @@
                 <ScaleTransform ScaleX="1" ScaleY="1" />
             </Setter.Value>
         </Setter>
-        <Setter Property="Effect">
-            <Setter.Value>
-                <DropShadowEffect BlurRadius="10"
-                                  ShadowDepth="3"
-                                  Direction="270"
-                                  Opacity="0.16"
-                                  Color="{DynamicResource SurfaceColor}" />
-            </Setter.Value>
-        </Setter>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -58,10 +49,10 @@
         <Style.Resources>
             <Storyboard x:Key="CoverCardHoverIn">
                 <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
-                                 To="1.02"
+                                 To="1.01"
                                  Duration="0:0:0.13" />
                 <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                 To="1.02"
+                                 To="1.01"
                                  Duration="0:0:0.13" />
             </Storyboard>
             <Storyboard x:Key="CoverCardHoverOut">
@@ -76,15 +67,6 @@
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
                 <Setter Property="Panel.ZIndex" Value="5" />
-                <Setter Property="Effect">
-                    <Setter.Value>
-                                <DropShadowEffect BlurRadius="18"
-                                          ShadowDepth="5"
-                                          Direction="270"
-                                          Opacity="0.16"
-                                          Color="{DynamicResource BorderColor}" />
-                    </Setter.Value>
-                </Setter>
             </Trigger>
             <EventTrigger RoutedEvent="MouseEnter">
                 <BeginStoryboard Storyboard="{StaticResource CoverCardHoverIn}" />
