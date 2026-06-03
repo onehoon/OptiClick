@@ -1,0 +1,41 @@
+name: Publish Windows
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Publish win-x64
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore appsettings.json
+        shell: pwsh
+        env:
+          OPTICLICK_APPSETTINGS_JSON: ${{ secrets.OPTICLICK_APPSETTINGS_JSON }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:OPTICLICK_APPSETTINGS_JSON)) {
+            throw "Missing OPTICLICK_APPSETTINGS_JSON secret."
+          }
+
+          $null = $env:OPTICLICK_APPSETTINGS_JSON | ConvertFrom-Json
+          Set-Content -Path ".\OptiClick.Wpf\appsettings.json" -Value $env:OPTICLICK_APPSETTINGS_JSON -Encoding utf8
+
+      - name: Publish
+        shell: pwsh
+        run: |
+          dotnet publish .\OptiClick.Wpf\OptiClick.Wpf.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OptiClick-win-x64
+          path: .\OptiClick.Wpf\bin\Release\net10.0-windows10.0.22000.0\win-x64\publish\
