@@ -17,17 +17,16 @@
         </Button.ToolTip>
         <Border Width="{Binding CardWidth}"
                 Height="{Binding CardHeight}"
-                Background="{Binding CoverBrush}"
-                BorderBrush="Transparent"
-                BorderThickness="0"
+                Background="Transparent"
                 CornerRadius="0"
                 ClipToBounds="True">
             <Border.Style>
                 <Style TargetType="Border">
+                    <Setter Property="BorderBrush" Value="Transparent" />
+                    <Setter Property="BorderThickness" Value="2" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding IsSelected}" Value="True">
                             <Setter Property="BorderBrush" Value="{StaticResource CoverSelectedStrokeBrush}" />
-                            <Setter Property="BorderThickness" Value="3" />
                             <Setter Property="Effect">
                                 <Setter.Value>
                                     <DropShadowEffect BlurRadius="22"
@@ -40,7 +39,7 @@
                     </Style.Triggers>
                 </Style>
             </Border.Style>
-            <Grid>
+            <Grid Background="{Binding CoverBrush}">
                 <Image Source="{Binding CoverImage}"
                        Stretch="UniformToFill"
                        SnapsToDevicePixels="True"

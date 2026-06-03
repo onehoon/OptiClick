@@ -17,7 +17,27 @@ internal static class HomeCoverGridLayoutCalculator
     public const double CoverGapDip = 10;
     public const double MinCoverGapDip = CoverGapDip;
     public const double MaxCoverGapDip = 24;
+    public const double ReservedCoverBorderThicknessDip = 2;
     public const double CoverAspectHeightPerWidth = 1.5;
+
+    public static double ExpandSizeForReservedCoverBorder(double size)
+    {
+        return size <= 0
+            ? 0
+            : Math.Round(size + (ReservedCoverBorderThicknessDip * 2), 2);
+    }
+
+    public static double AdjustAvailableWidthForReservedCoverBorder(double availableWidth)
+    {
+        return availableWidth <= 0
+            ? 0
+            : Math.Max(0, availableWidth - (ReservedCoverBorderThicknessDip * 2));
+    }
+
+    public static double AdjustGapForReservedCoverBorder(double gap)
+    {
+        return Math.Max(0, gap - (ReservedCoverBorderThicknessDip * 2));
+    }
 
     public static HomeCoverGridLayout Calculate(
         double availableWidth,
