@@ -7,7 +7,8 @@
             Width="{Binding CardWidth}"
             Height="{Binding CardHeight}"
             Visibility="{Binding CardLayoutVisibility}"
-            Opacity="{Binding CardOpacity}">
+            Opacity="{Binding CardOpacity}"
+            ToolTipService.IsEnabled="False">
         <Button.ToolTip>
             <StackPanel>
                 <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
@@ -36,14 +37,6 @@
                                 </Setter.Value>
                             </Setter>
                         </DataTrigger>
-                        <MultiDataTrigger>
-                            <MultiDataTrigger.Conditions>
-                                <Condition Binding="{Binding IsSelected}" Value="False" />
-                                <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=IsMouseOver}" Value="True" />
-                            </MultiDataTrigger.Conditions>
-                            <Setter Property="BorderBrush" Value="{StaticResource CoverHoverStrokeBrush}" />
-                            <Setter Property="BorderThickness" Value="1" />
-                        </MultiDataTrigger>
                     </Style.Triggers>
                 </Style>
             </Border.Style>
@@ -53,18 +46,6 @@
                        SnapsToDevicePixels="True"
                        RenderOptions.BitmapScalingMode="HighQuality"
                        Opacity="1" />
-                <Rectangle Fill="{StaticResource CoverHoverOverlayBrush}"
-                           Visibility="Collapsed">
-                    <Rectangle.Style>
-                        <Style TargetType="Rectangle">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=IsMouseOver}" Value="True">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Rectangle.Style>
-                </Rectangle>
                 <Rectangle Fill="{StaticResource CoverSelectedOverlayBrush}"
                            Visibility="Collapsed">
                     <Rectangle.Style>

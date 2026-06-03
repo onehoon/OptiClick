@@ -431,7 +431,7 @@ public sealed partial class MainViewModel : ViewModelBase
     private async Task RecomputeSelectionAfterScanAsync(CancellationToken cancellationToken, bool navigateHome)
     {
         if (SelectedGame is null) return;
-        await SelectGameCardAsync(SelectedGame, cancellationToken, navigateHome);
+        await SelectGameCardAsync(SelectedGame, cancellationToken, navigateHome, showPendingPopups: false);
     }
 
     private async Task ShowPendingSelectionPopupRequestsAsync(
