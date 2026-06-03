@@ -36,6 +36,8 @@ public sealed class GameCardViewModel : ViewModelBase
     private double _lastAppliedCoverWidth;
     private double _lastAppliedCoverHeight;
     private Brush _badgeBrush;
+    private Brush _badgeBorderBrush;
+    private Brush _badgeForegroundBrush;
 
     public GameCardViewModel(
         string title,
@@ -48,7 +50,9 @@ public sealed class GameCardViewModel : ViewModelBase
         Brush coverBrush,
         Brush badgeBrush,
         GameEntry gameEntry,
-        ShellGameCardModel? sourceModel = null)
+        ShellGameCardModel? sourceModel = null,
+        Brush? badgeBorderBrush = null,
+        Brush? badgeForegroundBrush = null)
     {
         Title = title;
         Subtitle = subtitle;
@@ -59,6 +63,8 @@ public sealed class GameCardViewModel : ViewModelBase
         NotePreview = notePreview;
         CoverBrush = coverBrush;
         _badgeBrush = badgeBrush;
+        _badgeBorderBrush = badgeBorderBrush ?? badgeBrush;
+        _badgeForegroundBrush = badgeForegroundBrush ?? Brushes.White;
         GameEntry = gameEntry;
         SourceModel = sourceModel;
     }
@@ -99,6 +105,16 @@ public sealed class GameCardViewModel : ViewModelBase
     {
         get => _badgeBrush;
         private set => SetProperty(ref _badgeBrush, value);
+    }
+    public Brush BadgeBorderBrush
+    {
+        get => _badgeBorderBrush;
+        private set => SetProperty(ref _badgeBorderBrush, value);
+    }
+    public Brush BadgeForegroundBrush
+    {
+        get => _badgeForegroundBrush;
+        private set => SetProperty(ref _badgeForegroundBrush, value);
     }
     public GameEntry GameEntry { get; }
     public ShellGameCardModel? SourceModel { get; }
@@ -146,6 +162,8 @@ public sealed class GameCardViewModel : ViewModelBase
         var didChange = false;
         didChange |= SetProperty(ref _statusBadge, refreshedCard.StatusBadge ?? "", nameof(StatusBadge));
         didChange |= SetProperty(ref _badgeBrush, refreshedCard.BadgeBrush, nameof(BadgeBrush));
+        didChange |= SetProperty(ref _badgeBorderBrush, refreshedCard.BadgeBorderBrush, nameof(BadgeBorderBrush));
+        didChange |= SetProperty(ref _badgeForegroundBrush, refreshedCard.BadgeForegroundBrush, nameof(BadgeForegroundBrush));
         return didChange;
     }
 

@@ -12,11 +12,11 @@ namespace OptiClick.Wpf.Shell.Games;
 public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFactory
 {
     private static readonly Brush CoverBrush = CreateCoverBrush("#315C75");
-    private static readonly Brush InstallableBadgeBrush = CreateSolidBrush("#2E7D5B");
-    private static readonly Brush UpdateAvailableBadgeBrush = CreateSolidBrush("#D6AA43");
-    private static readonly Brush LatestBadgeBrush = CreateSolidBrush("#243447");
-    private static readonly Brush PreReleaseBadgeBrush = CreateSolidBrush("#4A5D7A");
-    private static readonly Brush NeedsReviewBadgeBrush = CreateSolidBrush("#9B4D56");
+    private static readonly BadgePalette InstallableBadgePalette = CreateBadgePalette("#D6101923", "#CC718699", "#FFD2DBE5");
+    private static readonly BadgePalette UpdateAvailableBadgePalette = CreateBadgePalette("#D6211705", "#CCCA8A24", "#FFE7B55A");
+    private static readonly BadgePalette LatestBadgePalette = CreateBadgePalette("#D60D2417", "#CC2AAF5A", "#FF35D26B");
+    private static readonly BadgePalette PreReleaseBadgePalette = CreateBadgePalette("#D614142C", "#CC756FE3", "#FFC3BEFF");
+    private static readonly BadgePalette NeedsReviewBadgePalette = CreateBadgePalette("#D6261015", "#CCCA5268", "#FFFF9AAA");
     private readonly IShellGameCardStateResolver _stateResolver;
     private readonly IInstallStatusResolver _installStatusResolver;
     private readonly IAppStringsProvider _stringsProvider;
@@ -106,7 +106,7 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
                 languageCode,
                 installStatusCache);
             var statusBadge = ToStatusBadge(installStatus, strings);
-            var badgeBrush = ToBadgeBrush(installStatus.Code);
+            var badgePalette = ToBadgePalette(installStatus.Code);
 
             list.Add(new GameCardViewModel(
                 game.DisplayName,
@@ -117,9 +117,11 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
                 "",
                 strings.HomeSelectGameForNotes,
                 CoverBrush,
-                badgeBrush,
+                badgePalette.BackgroundBrush,
                 gameEntry,
-                game));
+                game,
+                badgePalette.BorderBrush,
+                badgePalette.ForegroundBrush));
         }
 
         return list;
@@ -213,29 +215,29 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
         };
     }
 
-    private static Brush ToBadgeBrush(string code)
+    private static BadgePalette ToBadgePalette(string code)
     {
         if (string.Equals(code, InstallStatusCodes.UpdateAvailable, StringComparison.OrdinalIgnoreCase))
         {
-            return UpdateAvailableBadgeBrush;
+            return UpdateAvailableBadgePalette;
         }
 
         if (string.Equals(code, InstallStatusCodes.Latest, StringComparison.OrdinalIgnoreCase))
         {
-            return LatestBadgeBrush;
+            return LatestBadgePalette;
         }
 
         if (string.Equals(code, InstallStatusCodes.PreRelease, StringComparison.OrdinalIgnoreCase))
         {
-            return PreReleaseBadgeBrush;
+            return PreReleaseBadgePalette;
         }
 
         if (string.Equals(code, InstallStatusCodes.NeedsReview, StringComparison.OrdinalIgnoreCase))
         {
-            return NeedsReviewBadgeBrush;
+            return NeedsReviewBadgePalette;
         }
 
-        return InstallableBadgeBrush;
+        return InstallableBadgePalette;
     }
 
     private static string ResolveTargetPath(IReadOnlyDictionary<string, string> targetPathByGameId, string gameId)
@@ -301,4 +303,17 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
     {
         return new SolidColorBrush((Color)ColorConverter.ConvertFromString(color));
     }
+
+    private static BadgePalette CreateBadgePalette(string background, string border, string foreground)
+    {
+        return new BadgePalette(
+            CreateSolidBrush(background),
+            CreateSolidBrush(border),
+            CreateSolidBrush(foreground));
+    }
+
+    private sealed record BadgePalette(
+        Brush BackgroundBrush,
+        Brush BorderBrush,
+        Brush ForegroundBrush);
 }
