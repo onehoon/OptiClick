@@ -27,14 +27,6 @@
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding IsSelected}" Value="True">
                             <Setter Property="BorderBrush" Value="{StaticResource CoverSelectedStrokeBrush}" />
-                            <Setter Property="Effect">
-                                <Setter.Value>
-                                    <DropShadowEffect BlurRadius="22"
-                                                      ShadowDepth="0"
-                                                      Opacity="0.34"
-                                                      Color="{StaticResource CoverSelectedStrokeColor}" />
-                                </Setter.Value>
-                            </Setter>
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
@@ -105,31 +97,6 @@
                                FontSize="12"
                                FontWeight="Bold"
                                Foreground="{Binding BadgeForegroundBrush}" />
-                </Border>
-                <Border Width="22"
-                        Height="22"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Top"
-                        Margin="9"
-                        CornerRadius="11"
-                        Background="{StaticResource CoverSelectedStrokeBrush}"
-                        Visibility="Collapsed"
-                        IsHitTestVisible="False">
-                    <Border.Style>
-                        <Style TargetType="Border">
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Border.Style>
-                    <TextBlock Text="✓"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               Foreground="{DynamicResource TextPrimaryBrush}"
-                               FontSize="12"
-                               FontWeight="Bold" />
                 </Border>
             </Grid>
         </Border>

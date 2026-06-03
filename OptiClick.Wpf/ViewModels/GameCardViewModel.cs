@@ -11,10 +11,6 @@ namespace OptiClick.Wpf.ViewModels;
 
 public sealed class GameCardViewModel : ViewModelBase
 {
-    private static readonly Brush SelectedBorder = new SolidColorBrush(Color.FromRgb(122, 162, 255));
-    private static readonly Brush NormalBorder = new SolidColorBrush(Color.FromRgb(47, 57, 70));
-    private static readonly Thickness SelectedThickness = new(3);
-    private static readonly Thickness NormalThickness = new(0);
     private const string DefaultCoverImageSource = CoverImageCacheService.DefaultCoverImageSource;
     private const double CoverImageWidthRefreshThresholdDip = 12.0;
     private const double CoverImageHeightRefreshThresholdDip = 18.0;
@@ -118,8 +114,6 @@ public sealed class GameCardViewModel : ViewModelBase
     }
     public GameEntry GameEntry { get; }
     public ShellGameCardModel? SourceModel { get; }
-    public Brush CardBorderBrush => IsSelected ? SelectedBorder : NormalBorder;
-    public Thickness CardBorderThickness => IsSelected ? SelectedThickness : NormalThickness;
     public double CardOpacity => IsDimmed ? 0.78 : 1.0;
     public Visibility CardLayoutVisibility => _isCardLayoutReady ? Visibility.Visible : Visibility.Collapsed;
 
@@ -196,14 +190,7 @@ public sealed class GameCardViewModel : ViewModelBase
     public bool IsSelected
     {
         get => _isSelected;
-        set
-        {
-            if (SetProperty(ref _isSelected, value))
-            {
-                OnPropertyChanged(nameof(CardBorderBrush));
-                OnPropertyChanged(nameof(CardBorderThickness));
-            }
-        }
+        set => SetProperty(ref _isSelected, value);
     }
 
     public bool IsDimmed

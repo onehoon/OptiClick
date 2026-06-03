@@ -50,7 +50,6 @@
     <SolidColorBrush x:Key="SelectedGameStatusBadgeBrush" Color="{StaticResource SelectedGameStatusBadgeColor}" />
     <SolidColorBrush x:Key="SelectedGameStatusBadgeForegroundBrush" Color="{StaticResource SelectedGameStatusBadgeForegroundColor}" />
     <SolidColorBrush x:Key="CoverSelectedStrokeBrush" Color="{StaticResource CoverSelectedStrokeColor}" />
-    <SolidColorBrush x:Key="CoverSelectedGlowBrush" Color="{StaticResource CoverSelectedGlowColor}" />
     <SolidColorBrush x:Key="CoverSelectedOverlayBrush" Color="{StaticResource CoverSelectedOverlayColor}" />
     <SolidColorBrush x:Key="CoverSelectedInnerStrokeBrush" Color="{StaticResource CoverSelectedInnerStrokeColor}" />
     <SolidColorBrush x:Key="CoverHoverStrokeBrush" Color="{StaticResource CoverHoverStrokeColor}" />
