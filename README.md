@@ -132,11 +132,8 @@ As a result, users can install and start playing immediately without additional 
 > Failure to meet these requirements may result in crashes, black screens, or XeFG not functioning properly.
 
 1. **Launch the App**  
-   Steam libraries will be scanned automatically  
-   (Manual folder selection is also available)
-
-   > Automatic scanning currently supports **Steam** only.  
-   > **Epic Games Store**, **GOG**, and **Xbox Game Pass** titles are not supported at this time.
+   OptiClick scans common game install locations automatically.  
+   If your game is not listed, select its install folder manually.
 
 2. **Review Notices**  
    Check supported games and update information

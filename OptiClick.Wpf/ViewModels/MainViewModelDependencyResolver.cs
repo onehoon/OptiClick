@@ -112,7 +112,6 @@ public static class MainViewModelDependencyResolver
         var startupNoticePresenter = appDependencies.StartupNoticePresenter ?? new StartupNoticePresenter();
         var startupAnnouncementFlowController = appDependencies.StartupAnnouncementFlowController
                                                 ?? new StartupAnnouncementFlowController(startupNoticePresenter);
-        var settingsDialogPresenter = appDependencies.SettingsDialogPresenter ?? new SettingsDialogPresenter();
         var scanFolderDialogPresenter = scanDependencies.ScanFolderDialogPresenter ?? new ScanFolderDialogPresenter();
         var scanFolderActionController = scanDependencies.ScanFolderActionController
                                          ?? new ScanFolderActionController(
@@ -183,7 +182,6 @@ public static class MainViewModelDependencyResolver
                                                ?? NoOpCoverCacheBootstrapService.Instance;
         var shellCommandActionController = appDependencies.ShellCommandActionController
                                            ?? new ShellCommandActionController(
-                                               settingsDialogPresenter,
                                                startupNoticePresenter,
                                                supportIssueContextBuilder,
                                                supportActionController);
@@ -245,7 +243,6 @@ public static class MainViewModelDependencyResolver
             ScanVisibleGameResolver = scanVisibleGameResolver,
             StartupNoticePresenter = startupNoticePresenter,
             StartupAnnouncementFlowController = startupAnnouncementFlowController,
-            SettingsDialogPresenter = settingsDialogPresenter,
             ShellCommandActionController = shellCommandActionController,
             LocalizationStateController = localizationStateController,
             RuntimeSummaryStateController = runtimeSummaryStateController,

@@ -124,7 +124,6 @@ public sealed record MainViewModelAppDependencies
     public ISupportedGamesWikiMarkdownLoader? SupportedGamesWikiMarkdownLoader { get; init; }
     public StartupNoticePresenter? StartupNoticePresenter { get; init; }
     public StartupAnnouncementFlowController? StartupAnnouncementFlowController { get; init; }
-    public SettingsDialogPresenter? SettingsDialogPresenter { get; init; }
     public ShellCommandActionController? ShellCommandActionController { get; init; }
     public LocalizationStateController? LocalizationStateController { get; init; }
     public RuntimeSummaryStateController? RuntimeSummaryStateController { get; init; }

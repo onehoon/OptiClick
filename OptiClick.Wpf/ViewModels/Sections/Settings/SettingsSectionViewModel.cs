@@ -14,13 +14,10 @@ public sealed class SettingsSectionViewModel : ViewModelBase
     private readonly Func<AppStrings> _stringsAccessor;
     private readonly Func<bool> _isKoreanUi;
     private readonly Action<string> _applySettingsLanguageOption;
-    private readonly Action _saveUserSettings;
-    private readonly Action<bool> _logCheckUpdatesOnStartupChanged;
     private readonly SettingsActionCoordinator _settingsActionCoordinator;
     private readonly Func<bool> _isInstallExecutionInProgress;
     private string _selectedSettingsLanguageOption;
     private string _settingsStatusText = "";
-    private bool _checkUpdatesOnStartup = true;
 
     public SettingsSectionViewModel(SettingsSectionViewModelOptions options)
     {
@@ -29,8 +26,6 @@ public sealed class SettingsSectionViewModel : ViewModelBase
         _stringsAccessor = options.StringsAccessor ?? throw new ArgumentNullException(nameof(options.StringsAccessor));
         _isKoreanUi = options.IsKoreanUi ?? throw new ArgumentNullException(nameof(options.IsKoreanUi));
         _applySettingsLanguageOption = options.ApplySettingsLanguageOption ?? throw new ArgumentNullException(nameof(options.ApplySettingsLanguageOption));
-        _saveUserSettings = options.SaveUserSettings ?? throw new ArgumentNullException(nameof(options.SaveUserSettings));
-        _logCheckUpdatesOnStartupChanged = options.LogCheckUpdatesOnStartupChanged ?? throw new ArgumentNullException(nameof(options.LogCheckUpdatesOnStartupChanged));
         _settingsActionCoordinator = options.SettingsActionCoordinator ?? throw new ArgumentNullException(nameof(options.SettingsActionCoordinator));
         _isInstallExecutionInProgress = options.IsInstallExecutionInProgress ?? throw new ArgumentNullException(nameof(options.IsInstallExecutionInProgress));
         SettingsLanguageOptions = options.SettingsLanguageOptions ?? throw new ArgumentNullException(nameof(options.SettingsLanguageOptions));
@@ -80,35 +75,16 @@ public sealed class SettingsSectionViewModel : ViewModelBase
 
     public string SettingsActionRunLabel => _isKoreanUi() ? "\uC2E4\uD589" : "Run";
 
-    public bool CheckUpdatesOnStartup
-    {
-        get => _checkUpdatesOnStartup;
-        set
-        {
-            if (SetProperty(ref _checkUpdatesOnStartup, value))
-            {
-                _saveUserSettings();
-                SettingsStatusText = Strings.SettingsStartupUpdatePreferenceChanged;
-                _logCheckUpdatesOnStartupChanged(value);
-            }
-        }
-    }
-
     public ICommand OpenLogFolderCommand { get; }
 
     public ICommand OpenSupportRequestCommand { get; }
 
     public AsyncRelayCommand RefreshInstallFilesCommand { get; }
 
-    public void ApplyLoadedSettings(
-        string selectedSettingsLanguageOption,
-        bool checkUpdatesOnStartup)
+    public void ApplyLoadedSettings(string selectedSettingsLanguageOption)
     {
         _selectedSettingsLanguageOption = selectedSettingsLanguageOption ?? "Auto";
         OnPropertyChanged(nameof(SelectedSettingsLanguageOption));
-
-        _checkUpdatesOnStartup = checkUpdatesOnStartup;
-        OnPropertyChanged(nameof(CheckUpdatesOnStartup));
     }
 
     public void RefreshLocalization()
@@ -124,7 +100,6 @@ public sealed class SettingsSectionViewModel : ViewModelBase
     private Task RefreshInstallFilesAsync(CancellationToken cancellationToken)
     {
         return _settingsActionCoordinator.RefreshInstallFilesAsync(
-            Strings,
             _isKoreanUi(),
             _isInstallExecutionInProgress(),
             value => SettingsStatusText = value,
@@ -139,8 +114,6 @@ public sealed record SettingsSectionViewModelOptions
     public required ObservableCollection<string> SettingsLanguageOptions { get; init; }
     public required string InitialSettingsLanguageOption { get; init; }
     public required Action<string> ApplySettingsLanguageOption { get; init; }
-    public required Action SaveUserSettings { get; init; }
-    public required Action<bool> LogCheckUpdatesOnStartupChanged { get; init; }
     public required SettingsActionCoordinator SettingsActionCoordinator { get; init; }
     public required Func<bool> IsInstallExecutionInProgress { get; init; }
     public required ICommand OpenLogFolderCommand { get; init; }

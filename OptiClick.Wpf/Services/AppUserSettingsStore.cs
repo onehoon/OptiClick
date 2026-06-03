@@ -8,7 +8,6 @@ namespace OptiClick.Wpf.Services;
 public sealed class AppUserSettings
 {
     public int Version { get; init; } = 1;
-    public bool CheckUpdatesOnStartup { get; init; } = true;
     public string LanguagePreference { get; init; } = "auto";
 }
 

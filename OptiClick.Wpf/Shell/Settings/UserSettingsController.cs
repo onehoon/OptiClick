@@ -25,36 +25,34 @@ public sealed class UserSettingsController
         return _userSettingsStore.Load() ?? new AppUserSettings();
     }
 
-    public void SavePreferences(bool checkUpdatesOnStartup)
+    public void SavePreferences()
     {
         var current = Load();
-        SavePreferences(checkUpdatesOnStartup, current.LanguagePreference);
+        SavePreferences(current.LanguagePreference);
     }
 
-    public void SavePreferences(bool checkUpdatesOnStartup, string languagePreference)
+    public void SavePreferences(string languagePreference)
     {
         _userSettingsStore.Save(new AppUserSettings
         {
             Version = 1,
-            CheckUpdatesOnStartup = checkUpdatesOnStartup,
             LanguagePreference = string.IsNullOrWhiteSpace(languagePreference) ? "auto" : languagePreference
         });
     }
 
-    public void SavePreferencesNonBlocking(bool checkUpdatesOnStartup)
+    public void SavePreferencesNonBlocking()
     {
         var current = Load();
-        SavePreferencesNonBlocking(checkUpdatesOnStartup, current.LanguagePreference);
+        SavePreferencesNonBlocking(current.LanguagePreference);
     }
 
-    public void SavePreferencesNonBlocking(bool checkUpdatesOnStartup, string languagePreference)
+    public void SavePreferencesNonBlocking(string languagePreference)
     {
         lock (_pendingSaveSync)
         {
             _pendingSettings = new AppUserSettings
             {
                 Version = 1,
-                CheckUpdatesOnStartup = checkUpdatesOnStartup,
                 LanguagePreference = string.IsNullOrWhiteSpace(languagePreference) ? "auto" : languagePreference
             };
         }

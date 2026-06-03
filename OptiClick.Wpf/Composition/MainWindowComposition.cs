@@ -44,7 +44,6 @@ public sealed class MainWindowComposition
         var resultApplier = new MainViewModelResultApplier();
         var gpuVendorLogoResolver = new GpuVendorLogoResolver();
         var runtimeHeaderPresenter = new RuntimeHeaderPresenter(gpuVendorLogoResolver);
-        var settingsDialogPresenter = new SettingsDialogPresenter();
         var scanFolderListController = new ScanFolderListController(scan.ScanFolderManifestStore);
         var scanFolderDialogPresenter = new ScanFolderDialogPresenter();
         var scanFolderActionController = new ScanFolderActionController(
@@ -54,7 +53,6 @@ public sealed class MainWindowComposition
         var startupNoticePresenter = new StartupNoticePresenter();
         var gameMasterCoverPrefetchService = new GameMasterCoverPrefetchService();
         var shellCommandActionController = new ShellCommandActionController(
-            settingsDialogPresenter,
             startupNoticePresenter,
             support.SupportIssueContextBuilder,
             support.SupportActionController);
@@ -184,7 +182,6 @@ public sealed class MainWindowComposition
                 UserSettingsController = userSettingsController,
                 SupportedGamesWikiMarkdownLoader = supportedGamesWikiMarkdownLoader,
                 RuntimeHeaderPresenter = runtimeHeaderPresenter,
-                SettingsDialogPresenter = settingsDialogPresenter,
                 StartupNoticePresenter = startupNoticePresenter,
                 StartupAnnouncementFlowController = startupAnnouncementFlowController,
                 ShellCommandActionController = shellCommandActionController,

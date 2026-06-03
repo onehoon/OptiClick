@@ -69,7 +69,6 @@ public sealed record MainViewModelResolvedDependencies
     public required ScanVisibleGameResolver ScanVisibleGameResolver { get; init; }
     public required StartupNoticePresenter StartupNoticePresenter { get; init; }
     public required StartupAnnouncementFlowController StartupAnnouncementFlowController { get; init; }
-    public required SettingsDialogPresenter SettingsDialogPresenter { get; init; }
     public required ShellCommandActionController ShellCommandActionController { get; init; }
     public required LocalizationStateController LocalizationStateController { get; init; }
     public required RuntimeSummaryStateController RuntimeSummaryStateController { get; init; }

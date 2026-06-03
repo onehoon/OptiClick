@@ -87,14 +87,10 @@ public sealed partial class MainViewModel : ViewModelBase
             ApplyLocalizationStateUpdate(_localizationStateController.BuildRefreshState(preferredLanguage, Strings));
         }
 
-        Settings.ApplyLoadedSettings(
-            ResolveLanguageOptionFromState(_languagePreference),
-            safeSettings.CheckUpdatesOnStartup);
+        Settings.ApplyLoadedSettings(ResolveLanguageOptionFromState(_languagePreference));
     }
 
-    private void SaveUserSettings() => _userSettingsController.SavePreferencesNonBlocking(
-        Settings.CheckUpdatesOnStartup,
-        _languagePreference);
+    private void SaveUserSettings() => _userSettingsController.SavePreferencesNonBlocking(_languagePreference);
 
     public void FlushPendingUserSettingsSave() => _userSettingsController.FlushPendingSaves();
 

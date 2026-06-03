@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using OptiClick.Infrastructure.Windows;
-using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Logging;
 using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Services;
@@ -28,7 +27,6 @@ public sealed class SettingsActionCoordinator
     }
 
     public async Task RefreshInstallFilesAsync(
-        AppStrings strings,
         bool isKoreanUi,
         bool isInstallExecutionInProgress,
         Action<string> applySettingsStatusText,

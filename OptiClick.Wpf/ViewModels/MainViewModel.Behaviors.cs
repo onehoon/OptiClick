@@ -442,10 +442,7 @@ public sealed partial class MainViewModel : ViewModelBase
         try
         {
             await ShowStartupAnnouncementIfNeededAsync(cancellationToken);
-            if (Settings.CheckUpdatesOnStartup)
-            {
-                await ShowStartupUpdateCheckDialogAsync(cancellationToken);
-            }
+            await ShowStartupUpdateCheckDialogAsync(cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

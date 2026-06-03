@@ -324,8 +324,6 @@ public sealed partial class MainViewModel : ViewModelBase
                 SettingsLanguageOptions = settingsLanguageOptions,
                 InitialSettingsLanguageOption = LanguageOptionAuto,
                 ApplySettingsLanguageOption = ApplySettingsLanguageOption,
-                SaveUserSettings = SaveUserSettings,
-                LogCheckUpdatesOnStartupChanged = value => LogInfo(MainViewModelLogCategories.Settings, $"check_updates_on_startup={(value ? "true" : "false")}"),
                 SettingsActionCoordinator = settingsActionCoordinator,
                 IsInstallExecutionInProgress = () => _isInstallExecutionInProgress,
                 OpenLogFolderCommand = new RelayCommand(_ => OpenLogFolder()),
