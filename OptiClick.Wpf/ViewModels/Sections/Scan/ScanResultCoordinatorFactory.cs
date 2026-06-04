@@ -4,6 +4,7 @@ using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Shell.Dialogs;
 using OptiClick.Wpf.Shell.Flow;
 using OptiClick.Wpf.Shell.Navigation;
+using OptiClick.Wpf.Shell.Scan;
 using OptiClick.Wpf.ViewModels;
 
 namespace OptiClick.Wpf.ViewModels.Sections.Scan;
@@ -19,7 +20,7 @@ public sealed class ScanResultCoordinatorFactory
             {
                 FlowLogDispatcher = input.FlowLogDispatcher,
                 FlowLogFallbackCategory = input.FlowLogFallbackCategory,
-                ResultApplier = input.ResultApplier,
+                CreateScanStateUpdate = input.CreateScanStateUpdate,
                 DialogPresenter = input.DialogPresenter,
                 StringsAccessor = input.StringsAccessor,
                 GameCountAccessor = input.GameCountAccessor,
@@ -37,7 +38,7 @@ public sealed record ScanResultCoordinatorFactoryInput
 {
     public required FlowLogDispatcher FlowLogDispatcher { get; init; }
     public required string FlowLogFallbackCategory { get; init; }
-    public required MainViewModelResultApplier ResultApplier { get; init; }
+    public required Func<ScanFlowResult, MainViewModelStateUpdate> CreateScanStateUpdate { get; init; }
     public required DialogPresenter DialogPresenter { get; init; }
     public required Func<AppStrings> StringsAccessor { get; init; }
     public required Func<int> GameCountAccessor { get; init; }
