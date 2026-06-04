@@ -22,6 +22,7 @@ using OptiClick.Wpf.Shell.Startup;
 using OptiClick.Wpf.Shell.Support;
 using OptiClick.Wpf.Shell.Selection;
 using OptiClick.Wpf.Shell.Wiki;
+using OptiClick.Wpf.ViewModels.Sections.Scan;
 using OptiClick.Infrastructure.FileSystem;
 
 namespace OptiClick.Wpf.ViewModels;
@@ -75,6 +76,7 @@ public sealed record MainViewModelResolvedDependencies
     public required MainViewModelBusyStateApplier BusyStateApplier { get; init; }
     public required ScanFolderDialogPresenter ScanFolderDialogPresenter { get; init; }
     public required ScanFolderActionController ScanFolderActionController { get; init; }
+    public required ScanOrchestratorFactory ScanOrchestratorFactory { get; init; }
     public required SupportActionController SupportActionController { get; init; }
     public required SupportIssueContextBuilder SupportIssueContextBuilder { get; init; }
     public required InstallPopupPresenter InstallPopupPresenter { get; init; }

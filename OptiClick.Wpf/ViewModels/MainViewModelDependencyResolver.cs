@@ -25,6 +25,7 @@ using OptiClick.Wpf.Shell.Startup;
 using OptiClick.Wpf.Shell.Support;
 using OptiClick.Wpf.Shell.Selection;
 using OptiClick.Wpf.Shell.Wiki;
+using OptiClick.Wpf.ViewModels.Sections.Scan;
 using OptiClick.Infrastructure.FileSystem;
 using System.Net.Http;
 
@@ -118,6 +119,7 @@ public static class MainViewModelDependencyResolver
                                              scanFolderListController,
                                              scanDependencies.FolderPickerService,
                                              scanFolderDialogPresenter);
+        var scanOrchestratorFactory = scanDependencies.ScanOrchestratorFactory ?? new ScanOrchestratorFactory();
         var supportIssueContextBuilder = appDependencies.SupportIssueContextBuilder ?? new SupportIssueContextBuilder();
 
         var resolvedInstallPlanInputBuilder = installDependencies.InstallPlanInputBuilder ?? new InstallPlanInputBuilder();
@@ -249,6 +251,7 @@ public static class MainViewModelDependencyResolver
             BusyStateApplier = busyStateApplier,
             ScanFolderDialogPresenter = scanFolderDialogPresenter,
             ScanFolderActionController = scanFolderActionController,
+            ScanOrchestratorFactory = scanOrchestratorFactory,
             SupportActionController = supportActionController,
             SupportIssueContextBuilder = supportIssueContextBuilder,
             InstallPopupPresenter = installPopupPresenter,
@@ -298,6 +301,7 @@ public static class MainViewModelDependencyResolver
         EnsureExplicitDependency(scanDependencies.ScanFlowController, $"{nameof(MainViewModelScanDependencies)}.{nameof(MainViewModelScanDependencies.ScanFlowController)}");
         EnsureExplicitDependency(scanDependencies.ScanFolderListController, $"{nameof(MainViewModelScanDependencies)}.{nameof(MainViewModelScanDependencies.ScanFolderListController)}");
         EnsureExplicitDependency(scanDependencies.ScanFolderActionController, $"{nameof(MainViewModelScanDependencies)}.{nameof(MainViewModelScanDependencies.ScanFolderActionController)}");
+        EnsureExplicitDependency(scanDependencies.ScanOrchestratorFactory, $"{nameof(MainViewModelScanDependencies)}.{nameof(MainViewModelScanDependencies.ScanOrchestratorFactory)}");
 
         EnsureExplicitDependency(installDependencies.ArchiveReadinessFlowController, $"{nameof(MainViewModelInstallDependencies)}.{nameof(MainViewModelInstallDependencies.ArchiveReadinessFlowController)}");
         EnsureExplicitDependency(installDependencies.InstallFlowController, $"{nameof(MainViewModelInstallDependencies)}.{nameof(MainViewModelInstallDependencies.InstallFlowController)}");
