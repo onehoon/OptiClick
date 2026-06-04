@@ -7,14 +7,7 @@
             Width="{Binding CardWidth}"
             Height="{Binding CardHeight}"
             Visibility="{Binding CardLayoutVisibility}"
-            Opacity="{Binding CardOpacity}"
-            ToolTipService.IsEnabled="False">
-        <Button.ToolTip>
-            <StackPanel>
-                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
-                <TextBlock Text="{Binding StatusBadge}" />
-            </StackPanel>
-        </Button.ToolTip>
+            Opacity="{Binding CardOpacity}">
         <Border Width="{Binding CardWidth}"
                 Height="{Binding CardHeight}"
                 Background="Transparent"
@@ -72,16 +65,6 @@
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                             <GradientStop Color="#FFFFFFFF" Offset="0" />
                             <GradientStop Color="#00FFFFFF" Offset="1" />
-                        </LinearGradientBrush>
-                    </Rectangle.Fill>
-                </Rectangle>
-                <Rectangle VerticalAlignment="Bottom"
-                           Height="72"
-                           Opacity="0.10">
-                    <Rectangle.Fill>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                            <GradientStop Color="#00000000" Offset="0" />
-                            <GradientStop Color="#88000000" Offset="1" />
                         </LinearGradientBrush>
                     </Rectangle.Fill>
                 </Rectangle>

@@ -12,18 +12,9 @@
         <Setter Property="Background" Value="{StaticResource SurfaceElevatedBrush}" />
     </Style>
 
-    <Style x:Key="StatusPillCardControlStyle" TargetType="ui:Card" BasedOn="{StaticResource PanelCardControlStyle}">
-        <Setter Property="Padding" Value="{StaticResource StatusPillPadding}" />
-    </Style>
-
     <Style x:Key="SectionListItemCardControlStyle" TargetType="ui:Card" BasedOn="{StaticResource RaisedPanelCardControlStyle}">
         <Setter Property="Padding" Value="{StaticResource ListItemPadding}" />
         <Setter Property="Margin" Value="{StaticResource ListItemMargin}" />
-    </Style>
-
-    <Style x:Key="SectionStatusCardControlStyle" TargetType="ui:Card" BasedOn="{StaticResource RaisedPanelCardControlStyle}">
-        <Setter Property="Padding" Value="{StaticResource SectionStatusCardPadding}" />
-        <Setter Property="Margin" Value="{StaticResource SectionStatusCardMargin}" />
     </Style>
 
     <Style x:Key="CoverCardButtonStyle" TargetType="Button">

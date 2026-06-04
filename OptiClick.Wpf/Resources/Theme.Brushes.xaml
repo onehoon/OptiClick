@@ -52,8 +52,6 @@
     <SolidColorBrush x:Key="CoverSelectedStrokeBrush" Color="{StaticResource CoverSelectedStrokeColor}" />
     <SolidColorBrush x:Key="CoverSelectedOverlayBrush" Color="{StaticResource CoverSelectedOverlayColor}" />
     <SolidColorBrush x:Key="CoverSelectedInnerStrokeBrush" Color="{StaticResource CoverSelectedInnerStrokeColor}" />
-    <SolidColorBrush x:Key="CoverHoverStrokeBrush" Color="{StaticResource CoverHoverStrokeColor}" />
-    <SolidColorBrush x:Key="CoverHoverOverlayBrush" Color="{StaticResource CoverHoverOverlayColor}" />
     <SolidColorBrush x:Key="NavSelectedAccentBrush" Color="{StaticResource NavSelectedAccentColor}" />
     <SolidColorBrush x:Key="NavSelectedBackgroundBrush" Color="{StaticResource NavSelectedBackgroundColor}" />
     <SolidColorBrush x:Key="NavSelectedBorderBrush" Color="{StaticResource NavSelectedBorderColor}" />
