@@ -98,7 +98,7 @@ public sealed record MainViewModelResolvedDependencies
     public required ShellSectionsFactory ShellSectionsFactory { get; init; }
     public required ShellSectionsCompositionFactory ShellSectionsCompositionFactory { get; init; }
     public required GameCardSelectionStateController GameCardSelectionStateController { get; init; }
-    public required IGameMasterCoverPrefetchService GameMasterCoverPrefetchService { get; init; }
+    public required GameMasterCoverPrefetchCoordinator GameMasterCoverPrefetchCoordinator { get; init; }
     public required ICoverCacheBootstrapService CoverCacheBootstrapService { get; init; }
     public required StartupBackgroundTaskManager StartupBackgroundTaskManager { get; init; }
     public required ArchiveReadinessRefreshCoordinator ArchiveReadinessRefreshCoordinator { get; init; }

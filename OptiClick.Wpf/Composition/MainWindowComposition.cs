@@ -98,6 +98,9 @@ public sealed class MainWindowComposition
         var appUpdateCoordinator = new AppUpdateCoordinator(update.AppUpdateFlowController);
         var gameCardSelectionStateController = new GameCardSelectionStateController();
         var startupBackgroundTaskManager = new StartupBackgroundTaskManager();
+        var gameMasterCoverPrefetchCoordinator = new GameMasterCoverPrefetchCoordinator(
+            gameMasterCoverPrefetchService,
+            startupBackgroundTaskManager);
         var archiveReadinessRefreshCoordinator = new ArchiveReadinessRefreshCoordinator();
         var archiveReadinessWarmupController = new ArchiveReadinessWarmupController();
         var startupFlowCoordinator = new StartupFlowCoordinator();
@@ -229,6 +232,7 @@ public sealed class MainWindowComposition
                 ShellSectionsCompositionFactory = shellSectionsCompositionFactory,
                 GameCardSelectionStateController = gameCardSelectionStateController,
                 GameMasterCoverPrefetchService = gameMasterCoverPrefetchService,
+                GameMasterCoverPrefetchCoordinator = gameMasterCoverPrefetchCoordinator,
                 CoverCacheBootstrapService = coverCacheBootstrapService,
                 StartupBackgroundTaskManager = startupBackgroundTaskManager,
                 ArchiveReadinessRefreshCoordinator = archiveReadinessRefreshCoordinator,
