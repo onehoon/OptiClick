@@ -96,6 +96,7 @@ public sealed record MainViewModelResolvedDependencies
     public required DialogHostViewModel DialogHost { get; init; }
     public required MainViewModelResultApplier ResultApplier { get; init; }
     public required ShellSectionsFactory ShellSectionsFactory { get; init; }
+    public required ShellSectionsCompositionFactory ShellSectionsCompositionFactory { get; init; }
     public required GameCardSelectionStateController GameCardSelectionStateController { get; init; }
     public required IGameMasterCoverPrefetchService GameMasterCoverPrefetchService { get; init; }
     public required ICoverCacheBootstrapService CoverCacheBootstrapService { get; init; }
