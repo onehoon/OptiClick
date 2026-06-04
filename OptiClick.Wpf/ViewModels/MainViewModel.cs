@@ -251,57 +251,74 @@ public sealed partial class MainViewModel : ViewModelBase
         var sections = new ShellSectionsFactory().Create(
             new ShellSectionsFactoryInput
             {
-                StringsAccessor = () => Strings,
-                Games = games,
-                SelectGameAsync = (game, cancellationToken) => SelectGameCardAsync(game, cancellationToken),
-                ShowDetails = ShowDetailsDialog,
-                ShowInstallAsync = ShowInstallDialogAsync,
-                CanSelectGame = () => !_isInstallExecutionInProgress && !_isAppUpdateInProgress,
-                CanShowDetails = () => SelectedGame is not null,
-                CanShowInstall = () => SelectedGame is not null
-                                      && !_isInstallExecutionInProgress
-                                      && !_isAppUpdateInProgress
-                                      && !ShouldBlockStartupForUnsupportedOperatingSystem(),
-                OnSelectGameException = ex => LogError(MainViewModelLogCategories.Command, "select game command failed", ex),
-                OnShowInstallException = ex => LogError(MainViewModelLogCategories.Command, "install command failed", ex),
-                DefaultFolders = defaultFolders,
-                AddedFolders = addedFolders,
-                ScanFolderListController = scanFolderListController,
-                ScanFolderActionController = scanFolderActionController,
-                ApplyScanFolderActionResult = result => ApplyDeferredStateUpdate(
-                    _resultApplier.CreateScanFolderActionStateUpdate(result)),
-                ScanFlowController = scanFlowController,
-                ScanLock = _scanLock,
-                ScannedGameState = _scannedGameState,
-                DialogPresenter = _dialogPresenter,
-                IsMultiGpuBlocked = () => _gpuSelectionCoordinator.MultiGpuBlocked,
-                BuildScanRequest = BuildScanRequest,
-                ApplyScanFlowResultAsync = ApplyScanFlowResultAsync,
-                RunWithStartupAutoSelectionSuppressedAsync = RunWithStartupAutoSelectionSuppressedAsync,
-                ApplyStartupNoGamesNavigation = ApplyStartupNoGamesNavigation,
-                ShowStartupNoSupportedGamesGuidanceAsync = ShowStartupNoSupportedGamesGuidanceAsync,
-                ClearVisibleGameCards = () => ReplaceGameCards([]),
-                LogScanWarning = message => LogWarning(MainViewModelLogCategories.Scan, message),
-                ShowHome = () => SetCurrentView(ShellViewKind.Home),
-                AddedFolderStatusBrush = AddedFolderStatusBrush,
-                MissingFolderStatusBrush = MissingFolderStatusBrush,
-                OnScanCommandException = ex => LogError(MainViewModelLogCategories.Command, "save and scan command failed", ex),
-                SupportedGamesWikiMarkdownLoader = supportedGamesWikiMarkdownLoader,
-                StartupBackgroundTaskManager = _startupBackgroundTaskManager,
-                AppLogger = _appLogger,
-                SelectedLanguageAccessor = () => SelectedLanguage,
-                CurrentViewKindAccessor = () => CurrentViewKind,
-                OpenGameSupportRequestCommandAccessor = () => OpenGameSupportRequestCommand,
-                UpdateStartupPreparationState = UpdateStartupPreparationState,
-                LocalDataPathProvider = _localDataPathProvider,
-                IsKoreanUi = () => IsKoreanUi,
-                SettingsLanguageOptions = settingsLanguageOptions,
-                InitialSettingsLanguageOption = LanguageOptionAuto,
-                ApplySettingsLanguageOption = ApplySettingsLanguageOption,
-                IsInstallExecutionInProgress = () => _isInstallExecutionInProgress,
-                OpenLogFolder = OpenLogFolder,
-                OpenSupportRequest = OpenSupportRequest,
-                OnRefreshInstallFilesException = ex => LogError(MainViewModelLogCategories.Command, "reset app cache command failed", ex)
+                Home = new HomeSectionFactoryInput
+                {
+                    StringsAccessor = () => Strings,
+                    Games = games,
+                    SelectGameAsync = (game, cancellationToken) => SelectGameCardAsync(game, cancellationToken),
+                    ShowDetails = ShowDetailsDialog,
+                    ShowInstallAsync = ShowInstallDialogAsync,
+                    CanSelectGame = () => !_isInstallExecutionInProgress && !_isAppUpdateInProgress,
+                    CanShowDetails = () => SelectedGame is not null,
+                    CanShowInstall = () => SelectedGame is not null
+                                          && !_isInstallExecutionInProgress
+                                          && !_isAppUpdateInProgress
+                                          && !ShouldBlockStartupForUnsupportedOperatingSystem(),
+                    OnSelectGameException = ex => LogError(MainViewModelLogCategories.Command, "select game command failed", ex),
+                    OnShowInstallException = ex => LogError(MainViewModelLogCategories.Command, "install command failed", ex)
+                },
+                Scan = new ScanSectionFactoryInput
+                {
+                    StringsAccessor = () => Strings,
+                    DefaultFolders = defaultFolders,
+                    AddedFolders = addedFolders,
+                    ScanFolderListController = scanFolderListController,
+                    ScanFolderActionController = scanFolderActionController,
+                    ApplyScanFolderActionResult = result => ApplyDeferredStateUpdate(
+                        _resultApplier.CreateScanFolderActionStateUpdate(result)),
+                    ScanFlowController = scanFlowController,
+                    ScanLock = _scanLock,
+                    ScannedGameState = _scannedGameState,
+                    DialogPresenter = _dialogPresenter,
+                    IsMultiGpuBlocked = () => _gpuSelectionCoordinator.MultiGpuBlocked,
+                    BuildScanRequest = BuildScanRequest,
+                    ApplyScanFlowResultAsync = ApplyScanFlowResultAsync,
+                    RunWithStartupAutoSelectionSuppressedAsync = RunWithStartupAutoSelectionSuppressedAsync,
+                    ApplyStartupNoGamesNavigation = ApplyStartupNoGamesNavigation,
+                    ShowStartupNoSupportedGamesGuidanceAsync = ShowStartupNoSupportedGamesGuidanceAsync,
+                    ClearVisibleGameCards = () => ReplaceGameCards([]),
+                    LogScanWarning = message => LogWarning(MainViewModelLogCategories.Scan, message),
+                    ShowHome = () => SetCurrentView(ShellViewKind.Home),
+                    AddedFolderStatusBrush = AddedFolderStatusBrush,
+                    MissingFolderStatusBrush = MissingFolderStatusBrush,
+                    OnScanCommandException = ex => LogError(MainViewModelLogCategories.Command, "save and scan command failed", ex)
+                },
+                SupportedGames = new SupportedGamesSectionFactoryInput
+                {
+                    SupportedGamesWikiMarkdownLoader = supportedGamesWikiMarkdownLoader,
+                    StartupBackgroundTaskManager = _startupBackgroundTaskManager,
+                    AppLogger = _appLogger,
+                    StringsAccessor = () => Strings,
+                    SelectedLanguageAccessor = () => SelectedLanguage,
+                    CurrentViewKindAccessor = () => CurrentViewKind,
+                    OpenGameSupportRequestCommandAccessor = () => OpenGameSupportRequestCommand,
+                    UpdateStartupPreparationState = UpdateStartupPreparationState
+                },
+                Settings = new SettingsSectionFactoryInput
+                {
+                    StringsAccessor = () => Strings,
+                    DialogPresenter = _dialogPresenter,
+                    LocalDataPathProvider = _localDataPathProvider,
+                    AppLogger = _appLogger,
+                    IsKoreanUi = () => IsKoreanUi,
+                    SettingsLanguageOptions = settingsLanguageOptions,
+                    InitialSettingsLanguageOption = LanguageOptionAuto,
+                    ApplySettingsLanguageOption = ApplySettingsLanguageOption,
+                    IsInstallExecutionInProgress = () => _isInstallExecutionInProgress,
+                    OpenLogFolder = OpenLogFolder,
+                    OpenSupportRequest = OpenSupportRequest,
+                    OnRefreshInstallFilesException = ex => LogError(MainViewModelLogCategories.Command, "reset app cache command failed", ex)
+                }
             });
 
         Home = sections.Home;
