@@ -16,7 +16,9 @@ using OptiClick.Wpf.Shell.Settings;
 using OptiClick.Wpf.Shell.Startup;
 using OptiClick.Wpf.Shell.Wiki;
 using OptiClick.Wpf.ViewModels;
+using OptiClick.Wpf.ViewModels.Sections;
 using OptiClick.Wpf.ViewModels.Sections.Scan;
+using OptiClick.Wpf.ViewModels.Shell;
 using System.Net.Http;
 
 namespace OptiClick.Wpf.Composition;
@@ -63,6 +65,7 @@ public sealed class MainWindowComposition
             runtime.DeviceIdentityResolver,
             runtimeHeaderPresenter);
         var navigationState = new ShellNavigationState();
+        var shellChrome = ShellChromeViewModels.Create(navigationState);
         var dialogPresenter = new DialogPresenter(app.DialogService, app.AppLogger);
         var remoteCatalogDialogGate = new OnceDialogGate();
         var userSettingsController = new UserSettingsController(app.UserSettingsStore, app.AppLogger);
@@ -91,6 +94,7 @@ public sealed class MainWindowComposition
             app.LocalDataPathProvider,
             app.AppLogger);
         var busyStateApplier = new MainViewModelBusyStateApplier();
+        var shellSectionsFactory = new ShellSectionsFactory();
         var viewModelFactory = new MainViewModelFactory();
 
         return viewModelFactory.Create(new MainViewModelFactoryInput
@@ -180,6 +184,7 @@ public sealed class MainWindowComposition
                 SupportActionController = support.SupportActionController,
                 SupportIssueContextBuilder = support.SupportIssueContextBuilder,
                 NavigationState = navigationState,
+                ShellChrome = shellChrome,
                 DialogPresenter = dialogPresenter,
                 RemoteCatalogDialogGate = remoteCatalogDialogGate,
                 UserSettingsController = userSettingsController,
@@ -194,6 +199,7 @@ public sealed class MainWindowComposition
                 FlowLogDispatcher = flowLogDispatcher,
                 FlowRequestFactory = flowRequestFactory,
                 ResultApplier = resultApplier,
+                ShellSectionsFactory = shellSectionsFactory,
                 GameCardSelectionStateController = gameCardSelectionStateController,
                 GameMasterCoverPrefetchService = gameMasterCoverPrefetchService,
                 CoverCacheBootstrapService = coverCacheBootstrapService,
