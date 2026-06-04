@@ -190,6 +190,7 @@ public sealed partial class MainViewModel : ViewModelBase
         _userSettingsController = resolved.UserSettingsController;
         var scanFolderListController = resolved.ScanFolderListController;
         var scanFolderActionController = resolved.ScanFolderActionController;
+        var scanOrchestratorFactory = resolved.ScanOrchestratorFactory;
         _scanVisibleGameResolver = resolved.ScanVisibleGameResolver;
         _installPopupPresenter = resolved.InstallPopupPresenter;
         _archiveReadinessFlowController = resolved.ArchiveReadinessFlowController;
@@ -248,7 +249,7 @@ public sealed partial class MainViewModel : ViewModelBase
         RuntimeHeader = new RuntimeHeaderViewModel();
         StartupOverlay = new StartupOverlayViewModel();
         ShellBusyState = new ShellBusyStateViewModel();
-        var scanOrchestrator = new ScanOrchestratorFactory().Create(
+        var scanOrchestrator = scanOrchestratorFactory.Create(
             new ScanOrchestratorFactoryInput
             {
                 StringsAccessor = () => Strings,
