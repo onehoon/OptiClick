@@ -249,6 +249,7 @@ public sealed partial class MainViewModel : ViewModelBase
         RuntimeHeader = new RuntimeHeaderViewModel();
         StartupOverlay = new StartupOverlayViewModel();
         ShellBusyState = new ShellBusyStateViewModel();
+        InitializeCommandSet();
         var scanResultCoordinator = new ScanResultCoordinator(
             new ScanResultCoordinatorOptions
             {
@@ -321,7 +322,7 @@ public sealed partial class MainViewModel : ViewModelBase
                     StringsAccessor = () => Strings,
                     SelectedLanguageAccessor = () => SelectedLanguage,
                     CurrentViewKindAccessor = () => CurrentViewKind,
-                    OpenGameSupportRequestCommandAccessor = () => OpenGameSupportRequestCommand,
+                    OpenGameSupportRequestCommandAccessor = () => _openGameSupportRequestCommand,
                     UpdateStartupPreparationState = UpdateStartupPreparationState
                 },
                 Settings = new SettingsSectionFactoryInput
@@ -348,7 +349,6 @@ public sealed partial class MainViewModel : ViewModelBase
         Scan.PropertyChanged += OnScanSectionPropertyChanged;
         Settings = sections.Settings;
         Settings.PropertyChanged += OnSettingsSectionPropertyChanged;
-        InitializeCommandSet();
 
         _selectedLanguage = _languageProvider.CurrentLanguage;
         RefreshLocalizedStrings();
