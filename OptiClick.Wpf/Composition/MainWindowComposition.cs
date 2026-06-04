@@ -114,6 +114,7 @@ public sealed class MainWindowComposition
             app.AppLogger);
         var busyStateApplier = new MainViewModelBusyStateApplier();
         var shellSectionsFactory = new ShellSectionsFactory();
+        var shellSectionsCompositionFactory = new ShellSectionsCompositionFactory();
         var viewModelFactory = new MainViewModelFactory();
 
         return viewModelFactory.Create(new MainViewModelFactoryInput
@@ -225,6 +226,7 @@ public sealed class MainWindowComposition
                 FlowRequestFactory = flowRequestFactory,
                 ResultApplier = resultApplier,
                 ShellSectionsFactory = shellSectionsFactory,
+                ShellSectionsCompositionFactory = shellSectionsCompositionFactory,
                 GameCardSelectionStateController = gameCardSelectionStateController,
                 GameMasterCoverPrefetchService = gameMasterCoverPrefetchService,
                 CoverCacheBootstrapService = coverCacheBootstrapService,

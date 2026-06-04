@@ -145,6 +145,7 @@ public sealed record MainViewModelAppDependencies
     public MainViewModelFlowRequestFactory? FlowRequestFactory { get; init; }
     public MainViewModelResultApplier? ResultApplier { get; init; }
     public ShellSectionsFactory? ShellSectionsFactory { get; init; }
+    public ShellSectionsCompositionFactory? ShellSectionsCompositionFactory { get; init; }
     public GameCardSelectionStateController? GameCardSelectionStateController { get; init; }
     public IGameMasterCoverPrefetchService? GameMasterCoverPrefetchService { get; init; }
     public ICoverCacheBootstrapService? CoverCacheBootstrapService { get; init; }
