@@ -238,6 +238,7 @@ public static class MainViewModelDependencyResolver
                                              ?? new OverlayInstallManagementDialogService(installManagementDialogHost);
         var resultApplier = appDependencies.ResultApplier ?? new MainViewModelResultApplier();
         var shellSectionsFactory = appDependencies.ShellSectionsFactory ?? new ShellSectionsFactory();
+        var shellSectionsCompositionFactory = appDependencies.ShellSectionsCompositionFactory ?? new ShellSectionsCompositionFactory();
         var gameCardSelectionStateController = appDependencies.GameCardSelectionStateController ?? new GameCardSelectionStateController();
         var startupBackgroundTaskManager = appDependencies.StartupBackgroundTaskManager ?? new StartupBackgroundTaskManager();
         var archiveReadinessRefreshCoordinator = appDependencies.ArchiveReadinessRefreshCoordinator ?? new ArchiveReadinessRefreshCoordinator();
@@ -305,6 +306,7 @@ public static class MainViewModelDependencyResolver
             DialogHost = dialogHost,
             ResultApplier = resultApplier,
             ShellSectionsFactory = shellSectionsFactory,
+            ShellSectionsCompositionFactory = shellSectionsCompositionFactory,
             GameCardSelectionStateController = gameCardSelectionStateController,
             GameMasterCoverPrefetchService = resolvedGameMasterCoverPrefetchService,
             CoverCacheBootstrapService = resolvedCoverCacheBootstrapService,
@@ -402,6 +404,7 @@ public static class MainViewModelDependencyResolver
         EnsureExplicitDependency(appDependencies.FlowRequestFactory, nameof(MainViewModelAppDependencies.FlowRequestFactory));
         EnsureExplicitDependency(appDependencies.ResultApplier, nameof(MainViewModelAppDependencies.ResultApplier));
         EnsureExplicitDependency(appDependencies.ShellSectionsFactory, nameof(MainViewModelAppDependencies.ShellSectionsFactory));
+        EnsureExplicitDependency(appDependencies.ShellSectionsCompositionFactory, nameof(MainViewModelAppDependencies.ShellSectionsCompositionFactory));
         EnsureExplicitDependency(appDependencies.DialogHost, nameof(MainViewModelAppDependencies.DialogHost));
         EnsureExplicitDependency(
             appDependencies.GameMasterCoverPrefetchService,

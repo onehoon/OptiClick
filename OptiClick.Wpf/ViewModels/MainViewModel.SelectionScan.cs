@@ -171,16 +171,10 @@ public sealed partial class MainViewModel : ViewModelBase
     // Match result is intentionally not synthesized from card selection alone.
     // It must come from an actual scan/match pipeline.
 
-    private IReadOnlyList<ScanFolderRowViewModel> LoadAddedScanFoldersFromManifest(
-        IReadOnlyCollection<ScanFolderRowViewModel> defaultFolders,
-        ScanFolderActionController scanFolderActionController)
+    private IReadOnlyList<ScanFolderRowViewModel> ApplyInitialScanFolderLoadResult(ScanFolderActionResult result)
     {
         var update = _resultApplier.CreateScanFolderActionStateUpdate(
-            scanFolderActionController.LoadAddedFoldersFromManifest(
-                defaultFolders,
-                Strings,
-                AddedFolderStatusBrush,
-                MissingFolderStatusBrush));
+            result);
         DispatchStateUpdateFlowLogs(update, MainViewModelLogCategories.Scan);
         return update.ScanFolderStateUpdate?.AddedFolders ?? [];
     }
