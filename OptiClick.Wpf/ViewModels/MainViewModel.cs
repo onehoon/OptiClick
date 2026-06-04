@@ -248,8 +248,8 @@ public sealed partial class MainViewModel : ViewModelBase
         RuntimeHeader = new RuntimeHeaderViewModel();
         StartupOverlay = new StartupOverlayViewModel();
         ShellBusyState = new ShellBusyStateViewModel();
-        var scanOrchestrator = new ScanOrchestrator(
-            new ScanOrchestratorOptions
+        var scanOrchestrator = new ScanOrchestratorFactory().Create(
+            new ScanOrchestratorFactoryInput
             {
                 StringsAccessor = () => Strings,
                 ScanFlowController = scanFlowController,
