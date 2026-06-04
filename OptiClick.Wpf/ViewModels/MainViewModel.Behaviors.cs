@@ -173,7 +173,7 @@ public sealed partial class MainViewModel : ViewModelBase
             showFirstRunPreparationOverlay = await ShouldShowFirstRunPreparationOverlayAsync(cancellationToken);
             if (showFirstRunPreparationOverlay)
             {
-                IsFirstRunPreparationOverlayVisible = true;
+                StartupOverlay.ApplyFirstRunPreparationOverlay(true);
                 LogInfo(MainViewModelLogCategories.App, "milestone startup_overlay_shown");
                 coverCacheBootstrapCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                 coverCacheBootstrapTask = StartCoverCacheBootstrapForColdStartAsync(coverCacheBootstrapCancellation.Token);
@@ -217,7 +217,7 @@ public sealed partial class MainViewModel : ViewModelBase
                     coverCacheBootstrapCancellation,
                     archiveWarmupState,
                     archiveReadinessResult);
-                IsFirstRunPreparationOverlayVisible = false;
+                StartupOverlay.ApplyFirstRunPreparationOverlay(false);
                 LogInfo(MainViewModelLogCategories.App, "milestone first_run_overlay_hidden");
                 await CompleteFirstRunPreparationOverlayAsync(
                     archiveWarmupState,
@@ -975,12 +975,6 @@ public sealed partial class MainViewModel : ViewModelBase
     private void ApplyRuntimeSummaryStateUpdate(RuntimeSummaryStateUpdate update)
     {
         _runtimeShellState.ApplyRuntimeSummary(update);
-        DeviceText = update.DeviceText;
-        GpuText = update.GpuText;
-        GpuLogoSource = update.GpuLogoSource;
-        GpuLogoWidth = update.GpuLogoWidth;
-        GpuLogoHeight = update.GpuLogoHeight;
-        GpuLogoMargin = update.GpuLogoMargin;
         RuntimeHeader.Apply(update);
 
         if (update.HasSelectedGpu)
@@ -990,7 +984,7 @@ public sealed partial class MainViewModel : ViewModelBase
                 $"selected_gpu vendor={NormalizeStatusCode(update.SelectedGpuVendor, MainViewModelStatusCodes.Unknown)} name=\"{NormalizeStatusCode(update.SelectedGpuName, MainViewModelStatusCodes.Unknown)}\" source={NormalizeStatusCode(_gpuSelectionCoordinator.SelectedGpuLogSource, "runtime_context_selected")}");
             LogInfo(
                 MainViewModelLogCategories.Runtime,
-                $"gpu_logo source={(string.IsNullOrWhiteSpace(GpuLogoSource) ? "none" : NormalizeStatusCode(GpuLogoSource, "none"))}");
+                $"gpu_logo source={(string.IsNullOrWhiteSpace(update.GpuLogoSource) ? "none" : NormalizeStatusCode(update.GpuLogoSource, "none"))}");
         }
         else
         {
