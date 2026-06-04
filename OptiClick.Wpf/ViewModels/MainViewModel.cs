@@ -248,6 +248,23 @@ public sealed partial class MainViewModel : ViewModelBase
         RuntimeHeader = new RuntimeHeaderViewModel();
         StartupOverlay = new StartupOverlayViewModel();
         ShellBusyState = new ShellBusyStateViewModel();
+        var scanOrchestrator = new ScanOrchestrator(
+            new ScanOrchestratorOptions
+            {
+                StringsAccessor = () => Strings,
+                ScanFlowController = scanFlowController,
+                ScanLock = _scanLock,
+                ScannedGameState = _scannedGameState,
+                DialogPresenter = _dialogPresenter,
+                IsMultiGpuBlocked = () => _gpuSelectionCoordinator.MultiGpuBlocked,
+                BuildScanRequest = BuildScanRequest,
+                ApplyScanFlowResultAsync = ApplyScanFlowResultAsync,
+                RunWithStartupAutoSelectionSuppressedAsync = RunWithStartupAutoSelectionSuppressedAsync,
+                ApplyStartupNoGamesNavigation = ApplyStartupNoGamesNavigation,
+                ShowStartupNoSupportedGamesGuidanceAsync = ShowStartupNoSupportedGamesGuidanceAsync,
+                ClearVisibleGameCards = () => ReplaceGameCards([]),
+                LogWarning = message => LogWarning(MainViewModelLogCategories.Scan, message)
+            });
         var sections = new ShellSectionsFactory().Create(
             new ShellSectionsFactoryInput
             {
@@ -276,18 +293,7 @@ public sealed partial class MainViewModel : ViewModelBase
                     ScanFolderActionController = scanFolderActionController,
                     ApplyScanFolderActionResult = result => ApplyDeferredStateUpdate(
                         _resultApplier.CreateScanFolderActionStateUpdate(result)),
-                    ScanFlowController = scanFlowController,
-                    ScanLock = _scanLock,
-                    ScannedGameState = _scannedGameState,
-                    DialogPresenter = _dialogPresenter,
-                    IsMultiGpuBlocked = () => _gpuSelectionCoordinator.MultiGpuBlocked,
-                    BuildScanRequest = BuildScanRequest,
-                    ApplyScanFlowResultAsync = ApplyScanFlowResultAsync,
-                    RunWithStartupAutoSelectionSuppressedAsync = RunWithStartupAutoSelectionSuppressedAsync,
-                    ApplyStartupNoGamesNavigation = ApplyStartupNoGamesNavigation,
-                    ShowStartupNoSupportedGamesGuidanceAsync = ShowStartupNoSupportedGamesGuidanceAsync,
-                    ClearVisibleGameCards = () => ReplaceGameCards([]),
-                    LogScanWarning = message => LogWarning(MainViewModelLogCategories.Scan, message),
+                    ScanOrchestrator = scanOrchestrator,
                     ShowHome = () => SetCurrentView(ShellViewKind.Home),
                     AddedFolderStatusBrush = AddedFolderStatusBrush,
                     MissingFolderStatusBrush = MissingFolderStatusBrush,

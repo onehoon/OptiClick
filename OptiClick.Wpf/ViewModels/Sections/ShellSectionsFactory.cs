@@ -69,18 +69,7 @@ public sealed class ShellSectionsFactory
                 ScanFolderListController = input.ScanFolderListController,
                 ScanFolderActionController = input.ScanFolderActionController,
                 ApplyScanFolderActionResult = input.ApplyScanFolderActionResult,
-                ScanFlowController = input.ScanFlowController,
-                ScanLock = input.ScanLock,
-                ScannedGameState = input.ScannedGameState,
-                DialogPresenter = input.DialogPresenter,
-                IsMultiGpuBlocked = input.IsMultiGpuBlocked,
-                BuildScanRequest = input.BuildScanRequest,
-                ApplyScanFlowResultAsync = input.ApplyScanFlowResultAsync,
-                RunWithStartupAutoSelectionSuppressedAsync = input.RunWithStartupAutoSelectionSuppressedAsync,
-                ApplyStartupNoGamesNavigation = input.ApplyStartupNoGamesNavigation,
-                ShowStartupNoSupportedGamesGuidanceAsync = input.ShowStartupNoSupportedGamesGuidanceAsync,
-                ClearVisibleGameCards = input.ClearVisibleGameCards,
-                LogWarning = input.LogScanWarning,
+                ScanOrchestrator = input.ScanOrchestrator,
                 ShowHome = input.ShowHome,
                 AddedFolderStatusBrush = input.AddedFolderStatusBrush,
                 MissingFolderStatusBrush = input.MissingFolderStatusBrush,
@@ -161,18 +150,7 @@ public sealed record ScanSectionFactoryInput
     public required ScanFolderListController ScanFolderListController { get; init; }
     public required ScanFolderActionController ScanFolderActionController { get; init; }
     public required Action<ScanFolderActionResult> ApplyScanFolderActionResult { get; init; }
-    public required ScanFlowController ScanFlowController { get; init; }
-    public required SemaphoreSlim ScanLock { get; init; }
-    public required ScannedGameState ScannedGameState { get; init; }
-    public required DialogPresenter DialogPresenter { get; init; }
-    public required Func<bool> IsMultiGpuBlocked { get; init; }
-    public required Func<IReadOnlyList<string>, ScanFlowRequest> BuildScanRequest { get; init; }
-    public required Func<ScanFlowResult, CancellationToken, bool, Task> ApplyScanFlowResultAsync { get; init; }
-    public required Func<Func<CancellationToken, Task>, CancellationToken, Task> RunWithStartupAutoSelectionSuppressedAsync { get; init; }
-    public required Action<ScanFlowResult> ApplyStartupNoGamesNavigation { get; init; }
-    public required Func<ScanFlowResult, CancellationToken, Task> ShowStartupNoSupportedGamesGuidanceAsync { get; init; }
-    public required Action ClearVisibleGameCards { get; init; }
-    public required Action<string> LogScanWarning { get; init; }
+    public required ScanOrchestrator ScanOrchestrator { get; init; }
     public required Action ShowHome { get; init; }
     public required Brush AddedFolderStatusBrush { get; init; }
     public required Brush MissingFolderStatusBrush { get; init; }
