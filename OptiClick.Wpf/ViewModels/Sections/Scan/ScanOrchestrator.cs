@@ -24,7 +24,7 @@ public sealed class ScanOrchestrator
     private readonly Action _clearVisibleGameCards;
     private readonly Action<string> _logWarning;
 
-    public ScanOrchestrator(ScanOrchestratorOptions options)
+    internal ScanOrchestrator(ScanOrchestratorOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
 
@@ -132,7 +132,7 @@ public sealed class ScanOrchestrator
     }
 }
 
-public sealed record ScanOrchestratorOptions
+internal sealed record ScanOrchestratorOptions
 {
     public required Func<AppStrings> StringsAccessor { get; init; }
     public required ScanFlowController ScanFlowController { get; init; }
