@@ -148,7 +148,6 @@ public sealed record MainViewModelAppDependencies
     public ShellSectionsCompositionFactory? ShellSectionsCompositionFactory { get; init; }
     public GameCardSelectionStateController? GameCardSelectionStateController { get; init; }
     public IGameMasterCoverPrefetchService? GameMasterCoverPrefetchService { get; init; }
-    public GameMasterCoverPrefetchCoordinator? GameMasterCoverPrefetchCoordinator { get; init; }
     public ICoverCacheBootstrapService? CoverCacheBootstrapService { get; init; }
     public StartupBackgroundTaskManager? StartupBackgroundTaskManager { get; init; }
     public ArchiveReadinessRefreshCoordinator? ArchiveReadinessRefreshCoordinator { get; init; }
