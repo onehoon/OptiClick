@@ -174,7 +174,7 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
             }
 
             var noticeDecision = _modConflictNoticeBuilder.Build(
-                precheckResult.ConflictFindings,
+                precheckResult.NoticeFindings ?? precheckResult.ConflictFindings,
                 useKorean: IsKoreanLanguage(request.Language));
             var precheckOutcome = BuildSelectionOutcome(request, precheckResult, noticeDecision);
             var flowResult = _precheckFlow.Build(

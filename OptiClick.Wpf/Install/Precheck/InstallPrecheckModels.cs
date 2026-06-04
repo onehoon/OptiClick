@@ -8,10 +8,10 @@ public sealed record ModBinaryState
     public IReadOnlyList<string> DllNames { get; init; } = Array.Empty<string>();
 }
 
-public sealed record RenoDxState
+public sealed record ModFilePresenceState
 {
     public bool Detected { get; init; }
-    public IReadOnlyList<string> AddonPaths { get; init; } = Array.Empty<string>();
+    public IReadOnlyList<string> RelativePaths { get; init; } = Array.Empty<string>();
 }
 
 public sealed record ModPrecheckState
@@ -21,13 +21,17 @@ public sealed record ModPrecheckState
         ReShade = new ModBinaryState(),
         SpecialK = new ModBinaryState(),
         UltimateAsiLoader = new ModBinaryState(),
-        RenoDx = new RenoDxState()
+        RenoDx = new ModFilePresenceState(),
+        LennyModLoader = new ModFilePresenceState(),
+        ScriptHookRdr2 = new ModFilePresenceState()
     };
 
     public ModBinaryState ReShade { get; init; } = new();
     public ModBinaryState SpecialK { get; init; } = new();
     public ModBinaryState UltimateAsiLoader { get; init; } = new();
-    public RenoDxState RenoDx { get; init; } = new();
+    public ModFilePresenceState RenoDx { get; init; } = new();
+    public ModFilePresenceState LennyModLoader { get; init; } = new();
+    public ModFilePresenceState ScriptHookRdr2 { get; init; } = new();
 }
 
 public sealed record ModConflictFinding
@@ -43,6 +47,7 @@ public sealed record InstallPrecheckResult
     public string ResolvedDllName { get; init; } = "";
     public string RawErrorMessage { get; init; } = "";
     public IReadOnlyList<ModConflictFinding> ConflictFindings { get; init; } = Array.Empty<ModConflictFinding>();
+    public IReadOnlyList<ModConflictFinding>? NoticeFindings { get; init; }
     public string ErrorCode { get; init; } = "";
     public IReadOnlyDictionary<string, string> ErrorContext { get; init; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 }
