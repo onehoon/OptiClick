@@ -17,7 +17,7 @@ public sealed class GameMasterCoverPrefetchCoordinator
 
     private readonly IGameMasterCoverPrefetchService _prefetchService;
     private readonly StartupBackgroundTaskManager _backgroundTaskManager;
-    private bool _isGameMasterCoverPrefetchStarted;
+    private int _gameMasterCoverPrefetchStarted;
     private int _homeCoverPrefetchRunning;
 
     public GameMasterCoverPrefetchCoordinator(
@@ -32,12 +32,11 @@ public sealed class GameMasterCoverPrefetchCoordinator
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        if (_isGameMasterCoverPrefetchStarted)
+        if (Interlocked.CompareExchange(ref _gameMasterCoverPrefetchStarted, 1, 0) != 0)
         {
             return;
         }
 
-        _isGameMasterCoverPrefetchStarted = true;
         request.UpdateStartupPreparationState(state => state with
         {
             GameMasterCoverPrefetchStarted = true,
@@ -97,7 +96,7 @@ public sealed class GameMasterCoverPrefetchCoordinator
             }
 
             var prioritizedTargets = ResolveHomeCoverPrefetchTargets(
-                gameMaster,
+                prefetchTargets,
                 request.HomeCardsAccessor());
 
             if (prioritizedTargets.Length == 0)
@@ -162,8 +161,9 @@ public sealed class GameMasterCoverPrefetchCoordinator
                 return;
             }
 
+            var prefetchTargets = GameMasterCoverPrefetchService.CollectTargets(gameMaster);
             var homeTargets = ResolveHomeCoverPrefetchTargets(
-                gameMaster,
+                prefetchTargets,
                 request.HomeCardsAccessor());
             if (homeTargets.Length == 0)
             {
@@ -197,10 +197,9 @@ public sealed class GameMasterCoverPrefetchCoordinator
     }
 
     private static GameMasterCoverPrefetchTarget[] ResolveHomeCoverPrefetchTargets(
-        IReadOnlyList<RuntimeDataGameProfile> gameMaster,
+        IReadOnlyList<GameMasterCoverPrefetchTarget> prefetchTargets,
         IReadOnlyCollection<GameCardViewModel> homeCards)
     {
-        var prefetchTargets = GameMasterCoverPrefetchService.CollectTargets(gameMaster);
         if (prefetchTargets.Count == 0)
         {
             return [];
