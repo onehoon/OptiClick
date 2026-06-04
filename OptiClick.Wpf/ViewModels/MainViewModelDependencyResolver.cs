@@ -25,7 +25,9 @@ using OptiClick.Wpf.Shell.Startup;
 using OptiClick.Wpf.Shell.Support;
 using OptiClick.Wpf.Shell.Selection;
 using OptiClick.Wpf.Shell.Wiki;
+using OptiClick.Wpf.ViewModels.Sections;
 using OptiClick.Wpf.ViewModels.Sections.Scan;
+using OptiClick.Wpf.ViewModels.Shell;
 using OptiClick.Infrastructure.FileSystem;
 using System.Net.Http;
 
@@ -98,6 +100,7 @@ public static class MainViewModelDependencyResolver
         var resolvedUserSettingsStore = appDependencies.UserSettingsStore ?? new AppUserSettingsStore(localDataPathProvider, appLogger);
         var firstRunStateStore = appDependencies.FirstRunStateStore ?? new FirstRunStateStore(localDataPathProvider, appLogger);
         var navigationState = appDependencies.NavigationState ?? new ShellNavigationState();
+        var shellChrome = appDependencies.ShellChrome ?? ShellChromeViewModels.Create(navigationState);
         var dialogPresenter = appDependencies.DialogPresenter ?? new DialogPresenter(required.DialogService, appLogger);
         var remoteCatalogDialogGate = appDependencies.RemoteCatalogDialogGate ?? new OnceDialogGate();
         var resolvedGpuVendorLogoResolver = appDependencies.GpuVendorLogoResolver ?? new GpuVendorLogoResolver();
@@ -200,6 +203,7 @@ public static class MainViewModelDependencyResolver
         var installManagementDialogService = appDependencies.InstallManagementDialogService
                                              ?? new OverlayInstallManagementDialogService(installManagementDialogHost);
         var resultApplier = appDependencies.ResultApplier ?? new MainViewModelResultApplier();
+        var shellSectionsFactory = appDependencies.ShellSectionsFactory ?? new ShellSectionsFactory();
         var gameCardSelectionStateController = appDependencies.GameCardSelectionStateController ?? new GameCardSelectionStateController();
         var startupBackgroundTaskManager = appDependencies.StartupBackgroundTaskManager ?? new StartupBackgroundTaskManager();
         var archiveReadinessRefreshCoordinator = appDependencies.ArchiveReadinessRefreshCoordinator ?? new ArchiveReadinessRefreshCoordinator();
@@ -234,6 +238,7 @@ public static class MainViewModelDependencyResolver
             AppStringsProvider = appStringsProvider,
             FirstRunStateStore = firstRunStateStore,
             NavigationState = navigationState,
+            ShellChrome = shellChrome,
             DialogPresenter = dialogPresenter,
             InstallManagementDialogHost = installManagementDialogHost,
             InstallManagementDialogService = installManagementDialogService,
@@ -259,6 +264,7 @@ public static class MainViewModelDependencyResolver
             FlowRequestFactory = flowRequestFactory,
             DialogHost = dialogHost,
             ResultApplier = resultApplier,
+            ShellSectionsFactory = shellSectionsFactory,
             GameCardSelectionStateController = gameCardSelectionStateController,
             GameMasterCoverPrefetchService = resolvedGameMasterCoverPrefetchService,
             CoverCacheBootstrapService = resolvedCoverCacheBootstrapService,
@@ -317,6 +323,7 @@ public static class MainViewModelDependencyResolver
         EnsureExplicitDependency(appDependencies.GameCardSelectionStateController, nameof(MainViewModelAppDependencies.GameCardSelectionStateController));
         EnsureExplicitDependency(appDependencies.InstallManagementDialogHost, nameof(MainViewModelAppDependencies.InstallManagementDialogHost));
         EnsureExplicitDependency(appDependencies.InstallManagementDialogService, nameof(MainViewModelAppDependencies.InstallManagementDialogService));
+        EnsureExplicitDependency(appDependencies.ShellChrome, nameof(MainViewModelAppDependencies.ShellChrome));
         EnsureExplicitDependency(appDependencies.AppVersionProvider, nameof(MainViewModelAppDependencies.AppVersionProvider));
         EnsureExplicitDependency(appDependencies.AppUpdateFlowController, nameof(MainViewModelAppDependencies.AppUpdateFlowController));
         EnsureExplicitDependency(appDependencies.GameDetailsDialogPresenter, nameof(MainViewModelAppDependencies.GameDetailsDialogPresenter));
@@ -331,6 +338,7 @@ public static class MainViewModelDependencyResolver
         EnsureExplicitDependency(appDependencies.FlowLogDispatcher, nameof(MainViewModelAppDependencies.FlowLogDispatcher));
         EnsureExplicitDependency(appDependencies.FlowRequestFactory, nameof(MainViewModelAppDependencies.FlowRequestFactory));
         EnsureExplicitDependency(appDependencies.ResultApplier, nameof(MainViewModelAppDependencies.ResultApplier));
+        EnsureExplicitDependency(appDependencies.ShellSectionsFactory, nameof(MainViewModelAppDependencies.ShellSectionsFactory));
         EnsureExplicitDependency(appDependencies.DialogHost, nameof(MainViewModelAppDependencies.DialogHost));
         EnsureExplicitDependency(
             appDependencies.GameMasterCoverPrefetchService,
