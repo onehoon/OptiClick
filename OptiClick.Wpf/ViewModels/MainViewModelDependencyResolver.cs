@@ -99,8 +99,20 @@ public static class MainViewModelDependencyResolver
 
         var resolvedUserSettingsStore = appDependencies.UserSettingsStore ?? new AppUserSettingsStore(localDataPathProvider, appLogger);
         var firstRunStateStore = appDependencies.FirstRunStateStore ?? new FirstRunStateStore(localDataPathProvider, appLogger);
-        var navigationState = appDependencies.NavigationState ?? new ShellNavigationState();
-        var shellChrome = appDependencies.ShellChrome ?? ShellChromeViewModels.Create(navigationState);
+        ShellNavigationState navigationState;
+        ShellChromeViewModels shellChrome;
+        if (appDependencies.ShellChrome is null)
+        {
+            navigationState = appDependencies.NavigationState ?? new ShellNavigationState();
+            shellChrome = ShellChromeViewModels.Create(navigationState);
+        }
+        else
+        {
+            shellChrome = appDependencies.ShellChrome;
+            navigationState = appDependencies.NavigationState ?? shellChrome.NavigationState;
+            EnsureShellChromeNavigationState(shellChrome, navigationState);
+        }
+
         var dialogPresenter = appDependencies.DialogPresenter ?? new DialogPresenter(required.DialogService, appLogger);
         var remoteCatalogDialogGate = appDependencies.RemoteCatalogDialogGate ?? new OnceDialogGate();
         var resolvedGpuVendorLogoResolver = appDependencies.GpuVendorLogoResolver ?? new GpuVendorLogoResolver();
@@ -369,5 +381,18 @@ public static class MainViewModelDependencyResolver
 
         throw new InvalidOperationException(
             $"MainViewModel dependency '{dependencyName}' must be explicitly provided when fallback resolution is disabled.");
+    }
+
+    private static void EnsureShellChromeNavigationState(
+        ShellChromeViewModels shellChrome,
+        ShellNavigationState navigationState)
+    {
+        if (ReferenceEquals(shellChrome.NavigationState, navigationState))
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            "MainViewModel dependency 'ShellChrome.NavigationState' must reference the same instance as 'NavigationState'.");
     }
 }
