@@ -206,7 +206,7 @@
 
                     <StackPanel Grid.Row="0"
                                 Margin="8,3,8,0">
-                        <ui:Button Command="{Binding ShowHomeCommand}"
+                        <ui:Button Command="{Binding Commands.ShowHomeCommand}"
                                    Tag="{Binding IsHomeViewActive}"
                                    ToolTip="{Binding Strings.NavHome}"
                                    AutomationProperties.Name="{Binding Strings.NavHome}"
@@ -222,7 +222,7 @@
                                            Height="26" />
                         </ui:Button>
 
-                        <ui:Button Command="{Binding ShowScanViewCommand}"
+                        <ui:Button Command="{Binding Commands.ShowScanViewCommand}"
                                    Tag="{Binding IsScanViewActive}"
                                    ToolTip="{Binding Strings.NavScan}"
                                    AutomationProperties.Name="{Binding Strings.NavScan}"
@@ -238,7 +238,7 @@
                                            Height="26" />
                         </ui:Button>
 
-                        <ui:Button Command="{Binding ShowSupportedGamesWikiViewCommand}"
+                        <ui:Button Command="{Binding Commands.ShowSupportedGamesWikiViewCommand}"
                                    Tag="{Binding IsSupportedGamesWikiViewActive}"
                                    ToolTip="{Binding Strings.NavSupportedGamesWiki}"
                                    AutomationProperties.Name="{Binding Strings.NavSupportedGamesWiki}"
@@ -256,7 +256,7 @@
                     </StackPanel>
 
                     <ui:Button Grid.Row="1"
-                               Command="{Binding ShowSettingsCommand}"
+                               Command="{Binding Commands.ShowSettingsCommand}"
                                Tag="{Binding IsSettingsViewActive}"
                                ToolTip="{Binding Strings.NavSettings}"
                                AutomationProperties.Name="{Binding Strings.NavSettings}"
