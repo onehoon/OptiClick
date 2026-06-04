@@ -13,6 +13,7 @@ using OptiClick.Wpf.Shell.Actions;
 using OptiClick.Wpf.Shell.Dialogs;
 using OptiClick.Wpf.Shell.Flow;
 using OptiClick.Wpf.Shell.Games;
+using OptiClick.Wpf.Shell.Gpu;
 using OptiClick.Wpf.Shell.Localization;
 using OptiClick.Wpf.Shell.Navigation;
 using OptiClick.Wpf.Shell.Runtime;
@@ -21,6 +22,7 @@ using OptiClick.Wpf.Shell.Settings;
 using OptiClick.Wpf.Shell.Startup;
 using OptiClick.Wpf.Shell.Support;
 using OptiClick.Wpf.Shell.Selection;
+using OptiClick.Wpf.Shell.Update;
 using OptiClick.Wpf.Shell.Wiki;
 using OptiClick.Wpf.ViewModels.Sections;
 using OptiClick.Wpf.ViewModels.Sections.Scan;
@@ -40,6 +42,9 @@ public sealed record MainViewModelResolvedDependencies
     public required DeviceIdentityRulesFlowController DeviceIdentityRulesFlowController { get; init; }
     public required RuntimeCatalogFlowController RuntimeCatalogFlowController { get; init; }
     public required RuntimeEndpointStatusPresenter RuntimeEndpointStatusPresenter { get; init; }
+    public required GpuSelectionCoordinator GpuSelectionCoordinator { get; init; }
+    public required RuntimeContextCoordinator RuntimeContextCoordinator { get; init; }
+    public required RuntimeCatalogCoordinator RuntimeCatalogCoordinator { get; init; }
     public required IRemoteGpuBundleManifestClient GpuBundleManifestClient { get; init; }
     public required IGpuBundleManifestRuleResolver GpuBundleManifestRuleResolver { get; init; }
 
@@ -55,6 +60,7 @@ public sealed record MainViewModelResolvedDependencies
 
     public required IAppVersionProvider AppVersionProvider { get; init; }
     public required AppUpdateFlowController AppUpdateFlowController { get; init; }
+    public required AppUpdateCoordinator AppUpdateCoordinator { get; init; }
     public required GameDetailsDialogPresenter GameDetailsDialogPresenter { get; init; }
     public required IAppLogger AppLogger { get; init; }
     public required IAppLocalDataPathProvider LocalDataPathProvider { get; init; }
@@ -73,12 +79,14 @@ public sealed record MainViewModelResolvedDependencies
     public required ScanVisibleGameResolver ScanVisibleGameResolver { get; init; }
     public required StartupNoticePresenter StartupNoticePresenter { get; init; }
     public required StartupAnnouncementFlowController StartupAnnouncementFlowController { get; init; }
+    public required SelectionPopupCoordinator SelectionPopupCoordinator { get; init; }
     public required ShellCommandActionController ShellCommandActionController { get; init; }
     public required LocalizationStateController LocalizationStateController { get; init; }
     public required RuntimeSummaryStateController RuntimeSummaryStateController { get; init; }
     public required MainViewModelBusyStateApplier BusyStateApplier { get; init; }
     public required ScanFolderDialogPresenter ScanFolderDialogPresenter { get; init; }
     public required ScanFolderActionController ScanFolderActionController { get; init; }
+    public required ScanResultCoordinatorFactory ScanResultCoordinatorFactory { get; init; }
     public required ScanOrchestratorFactory ScanOrchestratorFactory { get; init; }
     public required SupportActionController SupportActionController { get; init; }
     public required SupportIssueContextBuilder SupportIssueContextBuilder { get; init; }

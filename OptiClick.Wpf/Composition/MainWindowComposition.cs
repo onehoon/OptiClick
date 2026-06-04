@@ -8,12 +8,15 @@ using OptiClick.Wpf.Shell.Actions;
 using OptiClick.Wpf.Shell.Dialogs;
 using OptiClick.Wpf.Shell.Flow;
 using OptiClick.Wpf.Shell.Games;
+using OptiClick.Wpf.Shell.Gpu;
 using OptiClick.Wpf.Shell.Localization;
 using OptiClick.Wpf.Shell.Navigation;
 using OptiClick.Wpf.Shell.Runtime;
 using OptiClick.Wpf.Shell.Scan;
+using OptiClick.Wpf.Shell.Selection;
 using OptiClick.Wpf.Shell.Settings;
 using OptiClick.Wpf.Shell.Startup;
+using OptiClick.Wpf.Shell.Update;
 using OptiClick.Wpf.Shell.Wiki;
 using OptiClick.Wpf.ViewModels;
 using OptiClick.Wpf.ViewModels.Sections;
@@ -53,6 +56,7 @@ public sealed class MainWindowComposition
             scanFolderListController,
             scan.FolderPickerService,
             scanFolderDialogPresenter);
+        var scanResultCoordinatorFactory = new ScanResultCoordinatorFactory();
         var scanOrchestratorFactory = new ScanOrchestratorFactory();
         var startupNoticePresenter = new StartupNoticePresenter();
         var gameMasterCoverPrefetchService = new GameMasterCoverPrefetchService();
@@ -64,6 +68,15 @@ public sealed class MainWindowComposition
         var runtimeSummaryStateController = new RuntimeSummaryStateController(
             runtime.DeviceIdentityResolver,
             runtimeHeaderPresenter);
+        var gpuSelectionCoordinator = new GpuSelectionCoordinator(GpuSelectionCoordinator.DefaultMaxSupportedGpuCount);
+        var runtimeContextCoordinator = new RuntimeContextCoordinator(
+            runtime.RuntimeContextFlowController,
+            runtimeSummaryStateController,
+            flowLogDispatcher,
+            gpuSelectionCoordinator);
+        var runtimeCatalogCoordinator = new RuntimeCatalogCoordinator(
+            runtime.RuntimeCatalogFlowController,
+            runtime.RuntimeEndpointStatusPresenter);
         var navigationState = new ShellNavigationState();
         var shellChrome = ShellChromeViewModels.Create(navigationState);
         var dialogPresenter = new DialogPresenter(app.DialogService, app.AppLogger);
@@ -77,6 +90,12 @@ public sealed class MainWindowComposition
             new SupportedGamesWikiMarkdownCacheStore(app.LocalDataPathProvider, app.AppLogger),
             app.AppLogger);
         var startupAnnouncementFlowController = new StartupAnnouncementFlowController(startupNoticePresenter);
+        var selectionPopupCoordinator = new SelectionPopupCoordinator(
+            install.GameSelectionFlowController,
+            dialogPresenter,
+            flowLogDispatcher,
+            app.AppLogger);
+        var appUpdateCoordinator = new AppUpdateCoordinator(update.AppUpdateFlowController);
         var gameCardSelectionStateController = new GameCardSelectionStateController();
         var startupBackgroundTaskManager = new StartupBackgroundTaskManager();
         var archiveReadinessRefreshCoordinator = new ArchiveReadinessRefreshCoordinator();
@@ -119,6 +138,9 @@ public sealed class MainWindowComposition
                 DeviceIdentityRulesFlowController = runtime.DeviceIdentityRulesFlowController,
                 RuntimeCatalogFlowController = runtime.RuntimeCatalogFlowController,
                 RuntimeEndpointStatusPresenter = runtime.RuntimeEndpointStatusPresenter,
+                GpuSelectionCoordinator = gpuSelectionCoordinator,
+                RuntimeContextCoordinator = runtimeContextCoordinator,
+                RuntimeCatalogCoordinator = runtimeCatalogCoordinator,
                 ModuleDownloadLinkMapBuilder = runtime.ModuleDownloadLinkMapBuilder,
                 GpuBundleManifestClient = runtime.GpuBundleManifestClient,
                 GpuBundleManifestRuleResolver = runtime.GpuBundleManifestRuleResolver
@@ -133,6 +155,7 @@ public sealed class MainWindowComposition
                 ScanFolderListController = scanFolderListController,
                 ScanFolderDialogPresenter = scanFolderDialogPresenter,
                 ScanFolderActionController = scanFolderActionController,
+                ScanResultCoordinatorFactory = scanResultCoordinatorFactory,
                 ScanOrchestratorFactory = scanOrchestratorFactory
             },
             Install = new MainViewModelInstallDependencies
@@ -169,6 +192,7 @@ public sealed class MainWindowComposition
                 AppUpdateExecutionService = update.AppUpdateExecutionService,
                 AppUpdateDialogPresenter = update.AppUpdateDialogPresenter,
                 AppUpdateFlowController = update.AppUpdateFlowController,
+                AppUpdateCoordinator = appUpdateCoordinator,
                 GameDetailsDialogPresenter = support.GameDetailsDialogPresenter,
                 AppLogger = app.AppLogger,
                 LocalDataPathProvider = app.LocalDataPathProvider,
@@ -192,6 +216,7 @@ public sealed class MainWindowComposition
                 RuntimeHeaderPresenter = runtimeHeaderPresenter,
                 StartupNoticePresenter = startupNoticePresenter,
                 StartupAnnouncementFlowController = startupAnnouncementFlowController,
+                SelectionPopupCoordinator = selectionPopupCoordinator,
                 ShellCommandActionController = shellCommandActionController,
                 LocalizationStateController = localizationStateController,
                 RuntimeSummaryStateController = runtimeSummaryStateController,

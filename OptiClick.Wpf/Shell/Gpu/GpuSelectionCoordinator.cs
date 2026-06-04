@@ -5,6 +5,8 @@ namespace OptiClick.Wpf.Shell.Gpu;
 
 public sealed class GpuSelectionCoordinator
 {
+    public const int DefaultMaxSupportedGpuCount = 2;
+
     private readonly int _maxSupportedGpuCount;
     private bool _multiGpuBlockPopupShown;
     private string _multiGpuBlockPopupSignature = "";
