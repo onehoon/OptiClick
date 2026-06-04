@@ -55,6 +55,7 @@ public sealed class Unreal5Installer : IUnreal5Installer
 
             if (_fileSystem.FileExists(Path.Combine(context.TargetPath, "dxgi.dll")))
             {
+                // Unreal5 is the only archive component that treats an existing root dxgi.dll as an allowed skip.
                 return ComponentInstallStepResult.Skipped(ComponentInstallName.Unreal5, "dxgi_exists");
             }
 

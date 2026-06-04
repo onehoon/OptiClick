@@ -70,6 +70,7 @@ public sealed class ComponentInstallCoordinator : IComponentInstallCoordinator
         }
         executionContext = UpdateFinalDllNameFromCoreStep(executionContext, core);
 
+        // ExtraBundle runs last so game-specific OptiScaler override payloads win over the base install.
         var inOrder = new (ComponentInstallName Name, Func<Task<ComponentInstallStepResult>> Run)[]
         {
             (ComponentInstallName.UltimateAsiLoader, () => _ualInstaller.InstallAsync(executionContext, cancellationToken)),

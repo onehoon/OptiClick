@@ -84,6 +84,7 @@ public sealed class Fsr4Installer : IFsr4Installer
                 InstallerExecutionHelpers.EnsureWritableIfExists(_fileSystem, destination);
             }
 
+            // FSR4 is an archive component; overwriting the resolved payload target is intentional.
             _fileSystem.CopyFile(sourceDll, destination, overwrite: true);
             return ComponentInstallStepResult.Success(ComponentInstallName.Fsr4);
         }
