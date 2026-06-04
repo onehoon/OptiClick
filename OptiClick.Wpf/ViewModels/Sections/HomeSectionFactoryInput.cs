@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
 using OptiClick.Wpf.Localization;
+using OptiClick.Wpf.ViewModels;
 
 namespace OptiClick.Wpf.ViewModels.Sections;
 
