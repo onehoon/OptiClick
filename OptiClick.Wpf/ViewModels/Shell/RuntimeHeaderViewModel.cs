@@ -101,6 +101,18 @@ public sealed class RuntimeHeaderViewModel : ViewModelBase
         GpuText = gpuText;
     }
 
+    public void ApplyTextUpdate(string deviceText, string gpuText)
+    {
+        if (string.IsNullOrWhiteSpace(deviceText) && string.IsNullOrWhiteSpace(gpuText))
+        {
+            return;
+        }
+
+        ApplyText(
+            string.IsNullOrWhiteSpace(deviceText) ? DeviceText : deviceText,
+            string.IsNullOrWhiteSpace(gpuText) ? GpuText : gpuText);
+    }
+
     public void Apply(RuntimeSummaryStateUpdate update)
     {
         ArgumentNullException.ThrowIfNull(update);

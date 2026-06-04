@@ -469,13 +469,7 @@ public sealed partial class MainViewModel : ViewModelBase
         ArgumentNullException.ThrowIfNull(update);
         if (!string.IsNullOrWhiteSpace(update.ScanStatusText)) ScanStatusText = update.ScanStatusText;
         if (!string.IsNullOrWhiteSpace(update.SettingsStatusText)) SettingsStatusText = update.SettingsStatusText;
-        if (!string.IsNullOrWhiteSpace(update.DeviceText) || !string.IsNullOrWhiteSpace(update.GpuText))
-        {
-            RuntimeHeader.ApplyText(
-                string.IsNullOrWhiteSpace(update.DeviceText) ? RuntimeHeader.DeviceText : update.DeviceText,
-                string.IsNullOrWhiteSpace(update.GpuText) ? RuntimeHeader.GpuText : update.GpuText);
-        }
-
+        RuntimeHeader.ApplyTextUpdate(update.DeviceText, update.GpuText);
         if (update.ShouldRelocalizeScanFolders) RelocalizeScanFolderRows();
         if (update.ShouldRefreshRuntimeSummary) ApplyRuntimeSummaryStateUpdate(_runtimeSummaryStateController.Build(_runtimeShellState.LatestRuntimeContext, Strings));
     }
