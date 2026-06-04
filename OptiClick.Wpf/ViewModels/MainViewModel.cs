@@ -245,10 +245,10 @@ public sealed partial class MainViewModel : ViewModelBase
             ? new ObservableCollection<ScanFolderRowViewModel>(_mockDataProvider.CreateAddedFolders())
             : new ObservableCollection<ScanFolderRowViewModel>(LoadAddedScanFoldersFromManifest(defaultFolders, scanFolderActionController));
         var settingsLanguageOptions = new ObservableCollection<string> { LanguageOptionAuto, LanguageOptionKorean, LanguageOptionEnglish };
-        Navigation = new ShellNavigationViewModel(_navigationState);
-        RuntimeHeader = new RuntimeHeaderViewModel();
-        StartupOverlay = new StartupOverlayViewModel();
-        ShellBusyState = new ShellBusyStateViewModel();
+        Navigation = resolved.ShellChrome.Navigation;
+        RuntimeHeader = resolved.ShellChrome.RuntimeHeader;
+        StartupOverlay = resolved.ShellChrome.StartupOverlay;
+        ShellBusyState = resolved.ShellChrome.ShellBusyState;
         InitializeCommandSet();
         var scanResultCoordinator = new ScanResultCoordinator(
             new ScanResultCoordinatorOptions
@@ -280,7 +280,7 @@ public sealed partial class MainViewModel : ViewModelBase
                 ClearVisibleGameCards = () => ReplaceGameCards([]),
                 LogWarning = message => LogWarning(MainViewModelLogCategories.Scan, message)
             });
-        var sections = new ShellSectionsFactory().Create(
+        var sections = resolved.ShellSectionsFactory.Create(
             new ShellSectionsFactoryInput
             {
                 Home = new HomeSectionFactoryInput

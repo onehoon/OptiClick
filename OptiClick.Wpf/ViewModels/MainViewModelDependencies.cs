@@ -27,7 +27,9 @@ using OptiClick.Wpf.Shell.Selection;
 using OptiClick.Wpf.Shell.Startup;
 using OptiClick.Wpf.Shell.Support;
 using OptiClick.Wpf.Shell.Wiki;
+using OptiClick.Wpf.ViewModels.Sections;
 using OptiClick.Wpf.ViewModels.Sections.Scan;
+using OptiClick.Wpf.ViewModels.Shell;
 using OptiClick.Infrastructure.FileSystem;
 
 namespace OptiClick.Wpf.ViewModels;
@@ -119,6 +121,7 @@ public sealed record MainViewModelAppDependencies
     public SupportActionController? SupportActionController { get; init; }
     public SupportIssueContextBuilder? SupportIssueContextBuilder { get; init; }
     public ShellNavigationState? NavigationState { get; init; }
+    public ShellChromeViewModels? ShellChrome { get; init; }
     public DialogPresenter? DialogPresenter { get; init; }
     public OnceDialogGate? RemoteCatalogDialogGate { get; init; }
     public RuntimeHeaderPresenter? RuntimeHeaderPresenter { get; init; }
@@ -133,6 +136,7 @@ public sealed record MainViewModelAppDependencies
     public FlowLogDispatcher? FlowLogDispatcher { get; init; }
     public MainViewModelFlowRequestFactory? FlowRequestFactory { get; init; }
     public MainViewModelResultApplier? ResultApplier { get; init; }
+    public ShellSectionsFactory? ShellSectionsFactory { get; init; }
     public GameCardSelectionStateController? GameCardSelectionStateController { get; init; }
     public IGameMasterCoverPrefetchService? GameMasterCoverPrefetchService { get; init; }
     public ICoverCacheBootstrapService? CoverCacheBootstrapService { get; init; }
