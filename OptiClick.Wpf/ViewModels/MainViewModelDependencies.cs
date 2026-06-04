@@ -18,6 +18,7 @@ using OptiClick.Wpf.Shell.Actions;
 using OptiClick.Wpf.Shell.Dialogs;
 using OptiClick.Wpf.Shell.Flow;
 using OptiClick.Wpf.Shell.Games;
+using OptiClick.Wpf.Shell.Gpu;
 using OptiClick.Wpf.Shell.Localization;
 using OptiClick.Wpf.Shell.Navigation;
 using OptiClick.Wpf.Shell.Runtime;
@@ -26,6 +27,7 @@ using OptiClick.Wpf.Shell.Settings;
 using OptiClick.Wpf.Shell.Selection;
 using OptiClick.Wpf.Shell.Startup;
 using OptiClick.Wpf.Shell.Support;
+using OptiClick.Wpf.Shell.Update;
 using OptiClick.Wpf.Shell.Wiki;
 using OptiClick.Wpf.ViewModels.Sections;
 using OptiClick.Wpf.ViewModels.Sections.Scan;
@@ -53,6 +55,9 @@ public sealed record MainViewModelRuntimeDependencies
     public DeviceIdentityRulesFlowController? DeviceIdentityRulesFlowController { get; init; }
     public RuntimeCatalogFlowController? RuntimeCatalogFlowController { get; init; }
     public RuntimeEndpointStatusPresenter? RuntimeEndpointStatusPresenter { get; init; }
+    public GpuSelectionCoordinator? GpuSelectionCoordinator { get; init; }
+    public RuntimeContextCoordinator? RuntimeContextCoordinator { get; init; }
+    public RuntimeCatalogCoordinator? RuntimeCatalogCoordinator { get; init; }
     public ModuleDownloadLinkMapBuilder? ModuleDownloadLinkMapBuilder { get; init; }
     public IRemoteGpuBundleManifestClient? GpuBundleManifestClient { get; init; }
     public IGpuBundleManifestRuleResolver? GpuBundleManifestRuleResolver { get; init; }
@@ -68,6 +73,7 @@ public sealed record MainViewModelScanDependencies
     public ScanFolderListController? ScanFolderListController { get; init; }
     public ScanFolderDialogPresenter? ScanFolderDialogPresenter { get; init; }
     public ScanFolderActionController? ScanFolderActionController { get; init; }
+    public ScanResultCoordinatorFactory? ScanResultCoordinatorFactory { get; init; }
     public ScanOrchestratorFactory? ScanOrchestratorFactory { get; init; }
 }
 
@@ -106,6 +112,7 @@ public sealed record MainViewModelAppDependencies
     public IAppUpdateExecutionService? AppUpdateExecutionService { get; init; }
     public AppUpdateDialogPresenter? AppUpdateDialogPresenter { get; init; }
     public AppUpdateFlowController? AppUpdateFlowController { get; init; }
+    public AppUpdateCoordinator? AppUpdateCoordinator { get; init; }
     public GameDetailsDialogPresenter? GameDetailsDialogPresenter { get; init; }
     public IAppLogger? AppLogger { get; init; }
     public IAppLocalDataPathProvider? LocalDataPathProvider { get; init; }
@@ -129,6 +136,7 @@ public sealed record MainViewModelAppDependencies
     public ISupportedGamesWikiMarkdownLoader? SupportedGamesWikiMarkdownLoader { get; init; }
     public StartupNoticePresenter? StartupNoticePresenter { get; init; }
     public StartupAnnouncementFlowController? StartupAnnouncementFlowController { get; init; }
+    public SelectionPopupCoordinator? SelectionPopupCoordinator { get; init; }
     public ShellCommandActionController? ShellCommandActionController { get; init; }
     public LocalizationStateController? LocalizationStateController { get; init; }
     public RuntimeSummaryStateController? RuntimeSummaryStateController { get; init; }

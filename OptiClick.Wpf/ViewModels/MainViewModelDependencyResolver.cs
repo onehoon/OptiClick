@@ -16,6 +16,7 @@ using OptiClick.Wpf.Shell.Actions;
 using OptiClick.Wpf.Shell.Dialogs;
 using OptiClick.Wpf.Shell.Flow;
 using OptiClick.Wpf.Shell.Games;
+using OptiClick.Wpf.Shell.Gpu;
 using OptiClick.Wpf.Shell.Localization;
 using OptiClick.Wpf.Shell.Navigation;
 using OptiClick.Wpf.Shell.Runtime;
@@ -24,6 +25,7 @@ using OptiClick.Wpf.Shell.Settings;
 using OptiClick.Wpf.Shell.Startup;
 using OptiClick.Wpf.Shell.Support;
 using OptiClick.Wpf.Shell.Selection;
+using OptiClick.Wpf.Shell.Update;
 using OptiClick.Wpf.Shell.Wiki;
 using OptiClick.Wpf.ViewModels.Sections;
 using OptiClick.Wpf.ViewModels.Sections.Scan;
@@ -119,6 +121,18 @@ public static class MainViewModelDependencyResolver
         var runtimeHeaderPresenter = appDependencies.RuntimeHeaderPresenter ?? new RuntimeHeaderPresenter(resolvedGpuVendorLogoResolver);
         var runtimeSummaryStateController = appDependencies.RuntimeSummaryStateController
                                             ?? new RuntimeSummaryStateController(deviceIdentityResolver, runtimeHeaderPresenter);
+        var gpuSelectionCoordinator = runtimeDependencies.GpuSelectionCoordinator
+                                      ?? new GpuSelectionCoordinator(GpuSelectionCoordinator.DefaultMaxSupportedGpuCount);
+        var runtimeContextCoordinator = runtimeDependencies.RuntimeContextCoordinator
+                                        ?? new RuntimeContextCoordinator(
+                                            runtimeContextFlowController,
+                                            runtimeSummaryStateController,
+                                            flowLogDispatcher,
+                                            gpuSelectionCoordinator);
+        var runtimeCatalogCoordinator = runtimeDependencies.RuntimeCatalogCoordinator
+                                        ?? new RuntimeCatalogCoordinator(
+                                            runtimeCatalogFlowController,
+                                            runtimeEndpointStatusPresenter);
         var userSettingsController = appDependencies.UserSettingsController ?? new UserSettingsController(resolvedUserSettingsStore, appLogger);
         var supportedGamesWikiMarkdownLoader = appDependencies.SupportedGamesWikiMarkdownLoader
                                                 ?? new NoopSupportedGamesWikiMarkdownLoader();
@@ -134,6 +148,7 @@ public static class MainViewModelDependencyResolver
                                              scanFolderListController,
                                              scanDependencies.FolderPickerService,
                                              scanFolderDialogPresenter);
+        var scanResultCoordinatorFactory = scanDependencies.ScanResultCoordinatorFactory ?? new ScanResultCoordinatorFactory();
         var scanOrchestratorFactory = scanDependencies.ScanOrchestratorFactory ?? new ScanOrchestratorFactory();
         var supportIssueContextBuilder = appDependencies.SupportIssueContextBuilder ?? new SupportIssueContextBuilder();
 
@@ -209,6 +224,13 @@ public static class MainViewModelDependencyResolver
             resolvedAppUpdateExecutionService,
             resolvedExternalUrlLauncher,
             resolvedAppUpdateDialogPresenter);
+        var appUpdateCoordinator = appDependencies.AppUpdateCoordinator ?? new AppUpdateCoordinator(appUpdateFlowController);
+        var selectionPopupCoordinator = appDependencies.SelectionPopupCoordinator
+                                        ?? new SelectionPopupCoordinator(
+                                            gameSelectionFlowController,
+                                            dialogPresenter,
+                                            flowLogDispatcher,
+                                            appLogger);
         var gameDetailsDialogPresenter = appDependencies.GameDetailsDialogPresenter ?? new GameDetailsDialogPresenter();
         var dialogHost = appDependencies.DialogHost ?? new DialogHostViewModel();
         var installManagementDialogHost = appDependencies.InstallManagementDialogHost ?? new InstallManagementDialogHostViewModel();
@@ -232,6 +254,9 @@ public static class MainViewModelDependencyResolver
             DeviceIdentityRulesFlowController = deviceIdentityRulesFlowController,
             RuntimeCatalogFlowController = runtimeCatalogFlowController,
             RuntimeEndpointStatusPresenter = runtimeEndpointStatusPresenter,
+            GpuSelectionCoordinator = gpuSelectionCoordinator,
+            RuntimeContextCoordinator = runtimeContextCoordinator,
+            RuntimeCatalogCoordinator = runtimeCatalogCoordinator,
             GpuBundleManifestClient = gpuBundleManifestClient,
             GpuBundleManifestRuleResolver = gpuBundleManifestRuleResolver,
             FolderPickerService = scanDependencies.FolderPickerService,
@@ -244,6 +269,7 @@ public static class MainViewModelDependencyResolver
             OptiClickUninstallExecutor = optiClickUninstallExecutor,
             AppVersionProvider = appVersionProvider,
             AppUpdateFlowController = appUpdateFlowController,
+            AppUpdateCoordinator = appUpdateCoordinator,
             GameDetailsDialogPresenter = gameDetailsDialogPresenter,
             AppLogger = appLogger,
             LocalDataPathProvider = localDataPathProvider,
@@ -262,12 +288,14 @@ public static class MainViewModelDependencyResolver
             ScanVisibleGameResolver = scanVisibleGameResolver,
             StartupNoticePresenter = startupNoticePresenter,
             StartupAnnouncementFlowController = startupAnnouncementFlowController,
+            SelectionPopupCoordinator = selectionPopupCoordinator,
             ShellCommandActionController = shellCommandActionController,
             LocalizationStateController = localizationStateController,
             RuntimeSummaryStateController = runtimeSummaryStateController,
             BusyStateApplier = busyStateApplier,
             ScanFolderDialogPresenter = scanFolderDialogPresenter,
             ScanFolderActionController = scanFolderActionController,
+            ScanResultCoordinatorFactory = scanResultCoordinatorFactory,
             ScanOrchestratorFactory = scanOrchestratorFactory,
             SupportActionController = supportActionController,
             SupportIssueContextBuilder = supportIssueContextBuilder,
@@ -309,24 +337,45 @@ public static class MainViewModelDependencyResolver
             return;
         }
 
+        EnsureExplicitRuntimeDependencies(runtimeDependencies);
+        EnsureExplicitScanDependencies(scanDependencies);
+        EnsureExplicitInstallDependencies(installDependencies);
+        EnsureExplicitAppDependencies(appDependencies);
+    }
+
+    private static void EnsureExplicitRuntimeDependencies(MainViewModelRuntimeDependencies runtimeDependencies)
+    {
         EnsureExplicitDependency(runtimeDependencies.RuntimeContextFlowController, $"{nameof(MainViewModelRuntimeDependencies)}.{nameof(MainViewModelRuntimeDependencies.RuntimeContextFlowController)}");
         EnsureExplicitDependency(runtimeDependencies.DeviceIdentityRulesFlowController, $"{nameof(MainViewModelRuntimeDependencies)}.{nameof(MainViewModelRuntimeDependencies.DeviceIdentityRulesFlowController)}");
         EnsureExplicitDependency(runtimeDependencies.RuntimeCatalogFlowController, $"{nameof(MainViewModelRuntimeDependencies)}.{nameof(MainViewModelRuntimeDependencies.RuntimeCatalogFlowController)}");
         EnsureExplicitDependency(runtimeDependencies.RuntimeEndpointStatusPresenter, $"{nameof(MainViewModelRuntimeDependencies)}.{nameof(MainViewModelRuntimeDependencies.RuntimeEndpointStatusPresenter)}");
+        EnsureExplicitDependency(runtimeDependencies.GpuSelectionCoordinator, $"{nameof(MainViewModelRuntimeDependencies)}.{nameof(MainViewModelRuntimeDependencies.GpuSelectionCoordinator)}");
+        EnsureExplicitDependency(runtimeDependencies.RuntimeContextCoordinator, $"{nameof(MainViewModelRuntimeDependencies)}.{nameof(MainViewModelRuntimeDependencies.RuntimeContextCoordinator)}");
+        EnsureExplicitDependency(runtimeDependencies.RuntimeCatalogCoordinator, $"{nameof(MainViewModelRuntimeDependencies)}.{nameof(MainViewModelRuntimeDependencies.RuntimeCatalogCoordinator)}");
         EnsureExplicitDependency(runtimeDependencies.GpuBundleManifestClient, $"{nameof(MainViewModelRuntimeDependencies)}.{nameof(MainViewModelRuntimeDependencies.GpuBundleManifestClient)}");
         EnsureExplicitDependency(runtimeDependencies.GpuBundleManifestRuleResolver, $"{nameof(MainViewModelRuntimeDependencies)}.{nameof(MainViewModelRuntimeDependencies.GpuBundleManifestRuleResolver)}");
+    }
 
+    private static void EnsureExplicitScanDependencies(MainViewModelScanDependencies scanDependencies)
+    {
         EnsureExplicitDependency(scanDependencies.ScanFlowController, $"{nameof(MainViewModelScanDependencies)}.{nameof(MainViewModelScanDependencies.ScanFlowController)}");
         EnsureExplicitDependency(scanDependencies.ScanFolderListController, $"{nameof(MainViewModelScanDependencies)}.{nameof(MainViewModelScanDependencies.ScanFolderListController)}");
         EnsureExplicitDependency(scanDependencies.ScanFolderActionController, $"{nameof(MainViewModelScanDependencies)}.{nameof(MainViewModelScanDependencies.ScanFolderActionController)}");
+        EnsureExplicitDependency(scanDependencies.ScanResultCoordinatorFactory, $"{nameof(MainViewModelScanDependencies)}.{nameof(MainViewModelScanDependencies.ScanResultCoordinatorFactory)}");
         EnsureExplicitDependency(scanDependencies.ScanOrchestratorFactory, $"{nameof(MainViewModelScanDependencies)}.{nameof(MainViewModelScanDependencies.ScanOrchestratorFactory)}");
+    }
 
+    private static void EnsureExplicitInstallDependencies(MainViewModelInstallDependencies installDependencies)
+    {
         EnsureExplicitDependency(installDependencies.ArchiveReadinessFlowController, $"{nameof(MainViewModelInstallDependencies)}.{nameof(MainViewModelInstallDependencies.ArchiveReadinessFlowController)}");
         EnsureExplicitDependency(installDependencies.InstallFlowController, $"{nameof(MainViewModelInstallDependencies)}.{nameof(MainViewModelInstallDependencies.InstallFlowController)}");
         EnsureExplicitDependency(installDependencies.InstallPopupPresenter, $"{nameof(MainViewModelInstallDependencies)}.{nameof(MainViewModelInstallDependencies.InstallPopupPresenter)}");
         EnsureExplicitDependency(installDependencies.OptiClickUninstallPlanBuilder, $"{nameof(MainViewModelInstallDependencies)}.{nameof(MainViewModelInstallDependencies.OptiClickUninstallPlanBuilder)}");
         EnsureExplicitDependency(installDependencies.OptiClickUninstallExecutor, $"{nameof(MainViewModelInstallDependencies)}.{nameof(MainViewModelInstallDependencies.OptiClickUninstallExecutor)}");
+    }
 
+    private static void EnsureExplicitAppDependencies(MainViewModelAppDependencies appDependencies)
+    {
         EnsureExplicitDependency(appDependencies.NavigationState, nameof(MainViewModelAppDependencies.NavigationState));
         EnsureExplicitDependency(appDependencies.DialogPresenter, nameof(MainViewModelAppDependencies.DialogPresenter));
         EnsureExplicitDependency(appDependencies.RemoteCatalogDialogGate, nameof(MainViewModelAppDependencies.RemoteCatalogDialogGate));
@@ -338,12 +387,14 @@ public static class MainViewModelDependencyResolver
         EnsureExplicitDependency(appDependencies.ShellChrome, nameof(MainViewModelAppDependencies.ShellChrome));
         EnsureExplicitDependency(appDependencies.AppVersionProvider, nameof(MainViewModelAppDependencies.AppVersionProvider));
         EnsureExplicitDependency(appDependencies.AppUpdateFlowController, nameof(MainViewModelAppDependencies.AppUpdateFlowController));
+        EnsureExplicitDependency(appDependencies.AppUpdateCoordinator, nameof(MainViewModelAppDependencies.AppUpdateCoordinator));
         EnsureExplicitDependency(appDependencies.GameDetailsDialogPresenter, nameof(MainViewModelAppDependencies.GameDetailsDialogPresenter));
         EnsureExplicitDependency(appDependencies.AppLogger, nameof(MainViewModelAppDependencies.AppLogger));
         EnsureExplicitDependency(appDependencies.LocalDataPathProvider, nameof(MainViewModelAppDependencies.LocalDataPathProvider));
         EnsureExplicitDependency(appDependencies.AppStringsProvider, nameof(MainViewModelAppDependencies.AppStringsProvider));
         EnsureExplicitDependency(appDependencies.FirstRunStateStore, nameof(MainViewModelAppDependencies.FirstRunStateStore));
         EnsureExplicitDependency(appDependencies.ShellCommandActionController, nameof(MainViewModelAppDependencies.ShellCommandActionController));
+        EnsureExplicitDependency(appDependencies.SelectionPopupCoordinator, nameof(MainViewModelAppDependencies.SelectionPopupCoordinator));
         EnsureExplicitDependency(appDependencies.LocalizationStateController, nameof(MainViewModelAppDependencies.LocalizationStateController));
         EnsureExplicitDependency(appDependencies.RuntimeSummaryStateController, nameof(MainViewModelAppDependencies.RuntimeSummaryStateController));
         EnsureExplicitDependency(appDependencies.BusyStateApplier, nameof(MainViewModelAppDependencies.BusyStateApplier));
