@@ -409,7 +409,6 @@ public sealed partial class MainViewModel : ViewModelBase
     public ObservableCollection<ScanFolderRowViewModel> AddedFolders => Scan.AddedFolders;
     public DialogHostViewModel DialogHost { get; }
     public InstallManagementDialogHostViewModel InstallManagementDialogHost { get; }
-    public ObservableCollection<SupportedGamesWikiRowViewModel> SupportedGamesWikiRows => SupportedGames.SupportedGamesWikiRows;
     public SelectedGameActionViewModel SelectedGameAction => Home.SelectedGameAction;
     public ShellNavigationViewModel Navigation { get; }
     public RuntimeHeaderViewModel RuntimeHeader { get; }
@@ -442,17 +441,6 @@ public sealed partial class MainViewModel : ViewModelBase
     public bool IsSupportedGamesWikiViewActive => CurrentViewKind == ShellViewKind.SupportedGamesWiki;
     public bool IsScanViewActive => CurrentViewKind == ShellViewKind.Scan;
     public bool IsSettingsViewActive => CurrentViewKind == ShellViewKind.Settings;
-    public string SupportedGamesWikiSearchText
-    {
-        get => SupportedGames.SupportedGamesWikiSearchText;
-        set => SupportedGames.SupportedGamesWikiSearchText = value;
-    }
-    public string SupportedGamesWikiStatusText => SupportedGames.SupportedGamesWikiStatusText;
-    public Visibility SupportedGamesWikiStatusVisibility => SupportedGames.SupportedGamesWikiStatusVisibility;
-    public Visibility SupportedGamesWikiLoadingVisibility => SupportedGames.SupportedGamesWikiLoadingVisibility;
-    public Visibility SupportedGamesWikiEmptyVisibility => SupportedGames.SupportedGamesWikiEmptyVisibility;
-    public string SupportedGamesWikiEmptyText => SupportedGames.SupportedGamesWikiEmptyText;
-    public bool IsSupportedGamesWikiLoading => SupportedGames.IsSupportedGamesWikiLoading;
     public Visibility DefaultFoldersEmptyVisibility => Scan.DefaultFoldersEmptyVisibility;
     public Visibility AddedFoldersEmptyVisibility => Scan.AddedFoldersEmptyVisibility;
     public string WindowTitleWithVersion => $"{Strings.WindowTitle} v{GetCurrentAppVersion()}";
@@ -486,7 +474,6 @@ public sealed partial class MainViewModel : ViewModelBase
             RefreshLocalizedStrings();
             SelectedGameAction.ApplyLocalization(Strings);
             RefreshSupportedGamesAfterLanguageChange();
-            OnPropertyChanged(nameof(SupportedGamesWikiEmptyText));
             ApplyLocalizationStateUpdate(_localizationStateController.BuildRefreshState(language, Strings));
             await RefreshRuntimeContextAsync(cancellationToken);
             await RefreshRuntimeDataCatalogAsync(cancellationToken);
