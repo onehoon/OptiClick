@@ -138,6 +138,7 @@ public sealed class ExtraBundleInstaller : IExtraBundleInstaller
 
     private int CopyPayloadTree(string payloadPath, string targetPath)
     {
+        // Extra bundles are curated OptiScaler override payloads; overwrites are intentional.
         var copiedFileCount = 0;
         var orderedEntries = EnumeratePayloadEntries(payloadPath)
             .OrderBy(static path => path, StringComparer.OrdinalIgnoreCase)

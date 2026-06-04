@@ -141,6 +141,7 @@ public sealed class DllPayloadInstaller
 
             try
             {
+                // Component payload installs intentionally overwrite their managed target.
                 _fileSystem.CopyFile(candidates[0], destinationPath, overwrite: true);
                 return new DllPayloadInstallResult
                 {
