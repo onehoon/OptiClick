@@ -104,7 +104,7 @@ public sealed partial class MainViewModel : ViewModelBase
                 });
                 StartStartupDialogsInBackground();
             },
-            StartSupportedGamesWikiRefreshInBackground = StartSupportedGamesWikiRefreshInBackground,
+            StartSupportedGamesWikiRefreshInBackground = () => SupportedGames.StartRefreshInBackground(),
             StartGameMasterCoverPrefetchInBackground = StartGameMasterCoverPrefetchInBackground,
             LogInfo = message => LogInfo(MainViewModelLogCategories.App, message)
         };
@@ -811,8 +811,8 @@ public sealed partial class MainViewModel : ViewModelBase
         RefreshNavigationAndScanCommandStates();
         if (view == ShellViewKind.SupportedGamesWiki)
         {
-            EnsureSupportedGamesWikiLoadedForView();
-            QueueSupportedGamesWikiVisibleCoverLoad(0, 0);
+            SupportedGames.EnsureLoadedForView();
+            SupportedGames.QueueVisibleCoverLoad(0, 0);
         }
     }
 
@@ -928,7 +928,7 @@ public sealed partial class MainViewModel : ViewModelBase
 
             if (result.ShouldApplyRemoteDataState && SupportedGames.HasEntries)
             {
-                RebuildSupportedGamesWikiRows();
+                SupportedGames.RebuildRows();
             }
 
             if (update.ShouldRefreshArchiveReadiness)
