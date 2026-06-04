@@ -27,6 +27,10 @@ public sealed class ShellSectionsFactory
     public ShellSections Create(ShellSectionsFactoryInput input)
     {
         ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(input.Home);
+        ArgumentNullException.ThrowIfNull(input.Scan);
+        ArgumentNullException.ThrowIfNull(input.SupportedGames);
+        ArgumentNullException.ThrowIfNull(input.Settings);
 
         return new ShellSections(
             CreateHome(input.Home),
