@@ -17,10 +17,7 @@ public sealed class ScanOrchestrator
     private readonly DialogPresenter _dialogPresenter;
     private readonly Func<bool> _isMultiGpuBlocked;
     private readonly Func<IReadOnlyList<string>, ScanFlowRequest> _buildScanRequest;
-    private readonly Func<ScanFlowResult, CancellationToken, bool, Task> _applyScanFlowResultAsync;
-    private readonly Func<Func<CancellationToken, Task>, CancellationToken, Task> _runWithStartupAutoSelectionSuppressedAsync;
-    private readonly Action<ScanFlowResult> _applyStartupNoGamesNavigation;
-    private readonly Func<ScanFlowResult, CancellationToken, Task> _showStartupNoSupportedGamesGuidanceAsync;
+    private readonly ScanResultCoordinator _scanResultCoordinator;
     private readonly Action _clearVisibleGameCards;
     private readonly Action<string> _logWarning;
 
@@ -35,10 +32,7 @@ public sealed class ScanOrchestrator
         _dialogPresenter = options.DialogPresenter ?? throw new ArgumentNullException(nameof(options.DialogPresenter));
         _isMultiGpuBlocked = options.IsMultiGpuBlocked ?? throw new ArgumentNullException(nameof(options.IsMultiGpuBlocked));
         _buildScanRequest = options.BuildScanRequest ?? throw new ArgumentNullException(nameof(options.BuildScanRequest));
-        _applyScanFlowResultAsync = options.ApplyScanFlowResultAsync ?? throw new ArgumentNullException(nameof(options.ApplyScanFlowResultAsync));
-        _runWithStartupAutoSelectionSuppressedAsync = options.RunWithStartupAutoSelectionSuppressedAsync ?? throw new ArgumentNullException(nameof(options.RunWithStartupAutoSelectionSuppressedAsync));
-        _applyStartupNoGamesNavigation = options.ApplyStartupNoGamesNavigation ?? throw new ArgumentNullException(nameof(options.ApplyStartupNoGamesNavigation));
-        _showStartupNoSupportedGamesGuidanceAsync = options.ShowStartupNoSupportedGamesGuidanceAsync ?? throw new ArgumentNullException(nameof(options.ShowStartupNoSupportedGamesGuidanceAsync));
+        _scanResultCoordinator = options.ScanResultCoordinator ?? throw new ArgumentNullException(nameof(options.ScanResultCoordinator));
         _clearVisibleGameCards = options.ClearVisibleGameCards ?? throw new ArgumentNullException(nameof(options.ClearVisibleGameCards));
         _logWarning = options.LogWarning ?? throw new ArgumentNullException(nameof(options.LogWarning));
     }
@@ -90,7 +84,7 @@ public sealed class ScanOrchestrator
                 var result = await _scanFlowController.RunManualScanAsync(
                     _buildScanRequest(context.ResolveScanFolders()),
                     ct);
-                await _applyScanFlowResultAsync(result, ct, true);
+                await _scanResultCoordinator.ApplyManualScanResultAsync(result, ct);
             },
             cancellationToken);
     }
@@ -112,15 +106,13 @@ public sealed class ScanOrchestrator
         var ran = await _scanLock.TryRunExclusiveAsync(
             async ct =>
             {
-                await _runWithStartupAutoSelectionSuppressedAsync(
+                await _scanResultCoordinator.RunWithStartupAutoSelectionSuppressedAsync(
                     async innerCt =>
                     {
                         var result = await _scanFlowController.RunStartupAutoScanAsync(
                             _buildScanRequest(context.ResolveScanFolders()),
                             innerCt);
-                        await _applyScanFlowResultAsync(result, innerCt, false);
-                        _applyStartupNoGamesNavigation(result);
-                        await _showStartupNoSupportedGamesGuidanceAsync(result, innerCt);
+                        await _scanResultCoordinator.ApplyStartupAutoScanResultAsync(result, innerCt);
                     },
                     ct);
             },
@@ -141,10 +133,7 @@ internal sealed record ScanOrchestratorOptions
     public required DialogPresenter DialogPresenter { get; init; }
     public required Func<bool> IsMultiGpuBlocked { get; init; }
     public required Func<IReadOnlyList<string>, ScanFlowRequest> BuildScanRequest { get; init; }
-    public required Func<ScanFlowResult, CancellationToken, bool, Task> ApplyScanFlowResultAsync { get; init; }
-    public required Func<Func<CancellationToken, Task>, CancellationToken, Task> RunWithStartupAutoSelectionSuppressedAsync { get; init; }
-    public required Action<ScanFlowResult> ApplyStartupNoGamesNavigation { get; init; }
-    public required Func<ScanFlowResult, CancellationToken, Task> ShowStartupNoSupportedGamesGuidanceAsync { get; init; }
+    public required ScanResultCoordinator ScanResultCoordinator { get; init; }
     public required Action ClearVisibleGameCards { get; init; }
     public required Action<string> LogWarning { get; init; }
 }

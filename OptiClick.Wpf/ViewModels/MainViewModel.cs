@@ -249,6 +249,22 @@ public sealed partial class MainViewModel : ViewModelBase
         RuntimeHeader = new RuntimeHeaderViewModel();
         StartupOverlay = new StartupOverlayViewModel();
         ShellBusyState = new ShellBusyStateViewModel();
+        var scanResultCoordinator = new ScanResultCoordinator(
+            new ScanResultCoordinatorOptions
+            {
+                FlowLogDispatcher = _flowLogDispatcher,
+                FlowLogFallbackCategory = MainViewModelLogCategories.Scan,
+                ResultApplier = _resultApplier,
+                DialogPresenter = _dialogPresenter,
+                StringsAccessor = () => Strings,
+                GameCountAccessor = () => Games.Count,
+                RemoteCatalogErrorCodeAccessor = () => _runtimeShellState.LatestRemoteCatalogErrorCode,
+                ReadSuppressHomeNavigationForAutoSelection = () => _suppressHomeNavigationForAutoSelection,
+                SetSuppressHomeNavigationForAutoSelection = value => _suppressHomeNavigationForAutoSelection = value,
+                ApplyStateUpdate = ApplyStateUpdate,
+                SetCurrentView = SetCurrentView,
+                RecomputeSelectionAfterScanAsync = RecomputeSelectionAfterScanAsync
+            });
         var scanOrchestrator = scanOrchestratorFactory.Create(
             new ScanOrchestratorFactoryInput
             {
@@ -259,10 +275,7 @@ public sealed partial class MainViewModel : ViewModelBase
                 DialogPresenter = _dialogPresenter,
                 IsMultiGpuBlocked = () => _gpuSelectionCoordinator.MultiGpuBlocked,
                 BuildScanRequest = BuildScanRequest,
-                ApplyScanFlowResultAsync = ApplyScanFlowResultAsync,
-                RunWithStartupAutoSelectionSuppressedAsync = RunWithStartupAutoSelectionSuppressedAsync,
-                ApplyStartupNoGamesNavigation = ApplyStartupNoGamesNavigation,
-                ShowStartupNoSupportedGamesGuidanceAsync = ShowStartupNoSupportedGamesGuidanceAsync,
+                ScanResultCoordinator = scanResultCoordinator,
                 ClearVisibleGameCards = () => ReplaceGameCards([]),
                 LogWarning = message => LogWarning(MainViewModelLogCategories.Scan, message)
             });

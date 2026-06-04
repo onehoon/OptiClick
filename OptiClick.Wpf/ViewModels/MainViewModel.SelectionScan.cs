@@ -7,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using OptiClick.Wpf.Services;
 using OptiClick.Wpf.Install.UiState;
-using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Shell.Navigation;
 using OptiClick.Wpf.Shell.Scan;
 using OptiClick.Wpf.Shell.Selection;
@@ -217,102 +216,6 @@ public sealed partial class MainViewModel : ViewModelBase
             _scannedGameState.TargetPathByGameId,
             _runtimeShellState.ModuleDownloadLinks,
             _runtimeShellState.LatestRemoteCatalogErrorCode);
-    }
-
-    private async Task RunWithStartupAutoSelectionSuppressedAsync(
-        Func<CancellationToken, Task> operation,
-        CancellationToken cancellationToken)
-    {
-        var previousSuppressFlag = _suppressHomeNavigationForAutoSelection;
-        _suppressHomeNavigationForAutoSelection = true;
-        try
-        {
-            await operation(cancellationToken);
-        }
-        finally
-        {
-            _suppressHomeNavigationForAutoSelection = previousSuppressFlag;
-        }
-    }
-
-    private void ApplyStartupNoGamesNavigation(ScanFlowResult result)
-    {
-        if (!ShouldNavigateToScanForStartupNoGames(result))
-        {
-            return;
-        }
-
-        SetCurrentView(ShellViewKind.Scan);
-    }
-
-    private async Task ShowStartupNoSupportedGamesGuidanceAsync(
-        ScanFlowResult result,
-        CancellationToken cancellationToken)
-    {
-        if (!ShouldShowStartupNoSupportedGamesGuidance(result))
-        {
-            return;
-        }
-
-        SetCurrentView(ShellViewKind.Scan);
-        await _dialogPresenter.ShowSafelyAsync(
-            new AppDialogRequest
-            {
-                Kind = AppDialogKind.Warning,
-                Severity = DialogSeverity.Warning,
-                Title = Strings.NavScan,
-                Summary = Strings.ScanNoSupportedGamesFoundGuide
-            },
-            cancellationToken);
-    }
-
-    private bool ShouldNavigateToScanForStartupNoGames(ScanFlowResult result)
-    {
-        if (result.Summary.MatchedCount > 0 || Games.Count > 0)
-        {
-            return false;
-        }
-
-        return string.IsNullOrWhiteSpace(_runtimeShellState.LatestRemoteCatalogErrorCode);
-    }
-
-    private bool ShouldShowStartupNoSupportedGamesGuidance(ScanFlowResult result)
-    {
-        if (!ShouldNavigateToScanForStartupNoGames(result))
-        {
-            return false;
-        }
-
-        if (!result.DidRun)
-        {
-            return false;
-        }
-        return true;
-    }
-
-    private async Task ApplyScanFlowResultAsync(
-        ScanFlowResult result,
-        CancellationToken cancellationToken,
-        bool navigateHome)
-    {
-        _flowLogDispatcher.Dispatch(result.Logs, MainViewModelLogCategories.Scan);
-        var update = _resultApplier.CreateScanStateUpdate(result);
-        ApplyStateUpdate(update);
-
-        if (update.DialogRequest is not null)
-        {
-            await _dialogPresenter.ShowSafelyAsync(update.DialogRequest, cancellationToken);
-        }
-
-        if (update.ShouldRecomputeSelection)
-        {
-            await RecomputeSelectionAfterScanAsync(cancellationToken, navigateHome);
-        }
-
-        if (update.ShouldNavigateHome && Games.Count > 0)
-        {
-            SetCurrentView(ShellViewKind.Home);
-        }
     }
 
     private GameCardViewModel? RefreshVisibleGamesFromScanMatches()
