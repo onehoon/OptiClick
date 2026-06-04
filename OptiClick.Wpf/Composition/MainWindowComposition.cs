@@ -16,6 +16,7 @@ using OptiClick.Wpf.Shell.Settings;
 using OptiClick.Wpf.Shell.Startup;
 using OptiClick.Wpf.Shell.Wiki;
 using OptiClick.Wpf.ViewModels;
+using OptiClick.Wpf.ViewModels.Sections.Scan;
 using System.Net.Http;
 
 namespace OptiClick.Wpf.Composition;
@@ -50,6 +51,7 @@ public sealed class MainWindowComposition
             scanFolderListController,
             scan.FolderPickerService,
             scanFolderDialogPresenter);
+        var scanOrchestratorFactory = new ScanOrchestratorFactory();
         var startupNoticePresenter = new StartupNoticePresenter();
         var gameMasterCoverPrefetchService = new GameMasterCoverPrefetchService();
         var shellCommandActionController = new ShellCommandActionController(
@@ -126,7 +128,8 @@ public sealed class MainWindowComposition
                 ScanFlowController = scan.ScanFlowController,
                 ScanFolderListController = scanFolderListController,
                 ScanFolderDialogPresenter = scanFolderDialogPresenter,
-                ScanFolderActionController = scanFolderActionController
+                ScanFolderActionController = scanFolderActionController,
+                ScanOrchestratorFactory = scanOrchestratorFactory
             },
             Install = new MainViewModelInstallDependencies
             {
