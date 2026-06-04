@@ -13,7 +13,7 @@ namespace OptiClick.Wpf.ViewModels.Sections.Scan;
 public sealed class ScanResultCoordinator
 {
     private readonly FlowLogDispatcher _flowLogDispatcher;
-    private readonly MainViewModelResultApplier _resultApplier;
+    private readonly Func<ScanFlowResult, MainViewModelStateUpdate> _createScanStateUpdate;
     private readonly DialogPresenter _dialogPresenter;
     private readonly Func<AppStrings> _stringsAccessor;
     private readonly Func<int> _gameCountAccessor;
@@ -30,7 +30,7 @@ public sealed class ScanResultCoordinator
         ArgumentNullException.ThrowIfNull(options);
 
         _flowLogDispatcher = options.FlowLogDispatcher ?? throw new ArgumentNullException(nameof(options.FlowLogDispatcher));
-        _resultApplier = options.ResultApplier ?? throw new ArgumentNullException(nameof(options.ResultApplier));
+        _createScanStateUpdate = options.CreateScanStateUpdate ?? throw new ArgumentNullException(nameof(options.CreateScanStateUpdate));
         _dialogPresenter = options.DialogPresenter ?? throw new ArgumentNullException(nameof(options.DialogPresenter));
         _stringsAccessor = options.StringsAccessor ?? throw new ArgumentNullException(nameof(options.StringsAccessor));
         _gameCountAccessor = options.GameCountAccessor ?? throw new ArgumentNullException(nameof(options.GameCountAccessor));
@@ -85,7 +85,7 @@ public sealed class ScanResultCoordinator
         bool navigateHome)
     {
         _flowLogDispatcher.Dispatch(result.Logs, _flowLogFallbackCategory);
-        var update = _resultApplier.CreateScanStateUpdate(result);
+        var update = _createScanStateUpdate(result);
         _applyStateUpdate(update);
 
         if (update.DialogRequest is not null)
@@ -161,7 +161,7 @@ public sealed record ScanResultCoordinatorOptions
 {
     public required FlowLogDispatcher FlowLogDispatcher { get; init; }
     public required string FlowLogFallbackCategory { get; init; }
-    public required MainViewModelResultApplier ResultApplier { get; init; }
+    public required Func<ScanFlowResult, MainViewModelStateUpdate> CreateScanStateUpdate { get; init; }
     public required DialogPresenter DialogPresenter { get; init; }
     public required Func<AppStrings> StringsAccessor { get; init; }
     public required Func<int> GameCountAccessor { get; init; }
