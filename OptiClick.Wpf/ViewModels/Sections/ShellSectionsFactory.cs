@@ -29,13 +29,13 @@ public sealed class ShellSectionsFactory
         ArgumentNullException.ThrowIfNull(input);
 
         return new ShellSections(
-            CreateHome(input),
-            CreateScan(input),
-            CreateSupportedGames(input),
-            CreateSettings(input));
+            CreateHome(input.Home),
+            CreateScan(input.Scan),
+            CreateSupportedGames(input.SupportedGames),
+            CreateSettings(input.Settings));
     }
 
-    private static HomeSectionViewModel CreateHome(ShellSectionsFactoryInput input)
+    private static HomeSectionViewModel CreateHome(HomeSectionFactoryInput input)
     {
         return new HomeSectionViewModel(
             new HomeSectionViewModelOptions
@@ -54,7 +54,7 @@ public sealed class ShellSectionsFactory
             });
     }
 
-    private static ScanSectionViewModel CreateScan(ShellSectionsFactoryInput input)
+    private static ScanSectionViewModel CreateScan(ScanSectionFactoryInput input)
     {
         return new ScanSectionViewModel(
             new ScanSectionViewModelOptions
@@ -84,7 +84,7 @@ public sealed class ShellSectionsFactory
             });
     }
 
-    private static SupportedGamesSectionViewModel CreateSupportedGames(ShellSectionsFactoryInput input)
+    private static SupportedGamesSectionViewModel CreateSupportedGames(SupportedGamesSectionFactoryInput input)
     {
         return new SupportedGamesSectionViewModel(
             input.SupportedGamesWikiMarkdownLoader,
@@ -97,7 +97,7 @@ public sealed class ShellSectionsFactory
             input.UpdateStartupPreparationState);
     }
 
-    private static SettingsSectionViewModel CreateSettings(ShellSectionsFactoryInput input)
+    private static SettingsSectionViewModel CreateSettings(SettingsSectionFactoryInput input)
     {
         var settingsActionCoordinator = new SettingsActionCoordinator(
             input.DialogPresenter,
@@ -129,6 +129,14 @@ public sealed record ShellSections(
 
 public sealed record ShellSectionsFactoryInput
 {
+    public required HomeSectionFactoryInput Home { get; init; }
+    public required ScanSectionFactoryInput Scan { get; init; }
+    public required SupportedGamesSectionFactoryInput SupportedGames { get; init; }
+    public required SettingsSectionFactoryInput Settings { get; init; }
+}
+
+public sealed record HomeSectionFactoryInput
+{
     public required Func<AppStrings> StringsAccessor { get; init; }
     public required ObservableCollection<GameCardViewModel> Games { get; init; }
     public required Func<GameCardViewModel, CancellationToken, Task> SelectGameAsync { get; init; }
@@ -139,7 +147,11 @@ public sealed record ShellSectionsFactoryInput
     public required Func<bool> CanShowInstall { get; init; }
     public Action<Exception>? OnSelectGameException { get; init; }
     public Action<Exception>? OnShowInstallException { get; init; }
+}
 
+public sealed record ScanSectionFactoryInput
+{
+    public required Func<AppStrings> StringsAccessor { get; init; }
     public required ObservableCollection<ScanFolderRowViewModel> DefaultFolders { get; init; }
     public required ObservableCollection<ScanFolderRowViewModel> AddedFolders { get; init; }
     public required ScanFolderListController ScanFolderListController { get; init; }
@@ -161,16 +173,26 @@ public sealed record ShellSectionsFactoryInput
     public required Brush AddedFolderStatusBrush { get; init; }
     public required Brush MissingFolderStatusBrush { get; init; }
     public Action<Exception>? OnScanCommandException { get; init; }
+}
 
+public sealed record SupportedGamesSectionFactoryInput
+{
     public required ISupportedGamesWikiMarkdownLoader SupportedGamesWikiMarkdownLoader { get; init; }
     public required StartupBackgroundTaskManager StartupBackgroundTaskManager { get; init; }
     public required IAppLogger AppLogger { get; init; }
+    public required Func<AppStrings> StringsAccessor { get; init; }
     public required Func<AppLanguage> SelectedLanguageAccessor { get; init; }
     public required Func<ShellViewKind> CurrentViewKindAccessor { get; init; }
     public required Func<ICommand> OpenGameSupportRequestCommandAccessor { get; init; }
     public required Action<Func<StartupPreparationState, StartupPreparationState>> UpdateStartupPreparationState { get; init; }
+}
 
+public sealed record SettingsSectionFactoryInput
+{
+    public required Func<AppStrings> StringsAccessor { get; init; }
+    public required DialogPresenter DialogPresenter { get; init; }
     public required IAppLocalDataPathProvider LocalDataPathProvider { get; init; }
+    public required IAppLogger AppLogger { get; init; }
     public required Func<bool> IsKoreanUi { get; init; }
     public required ObservableCollection<string> SettingsLanguageOptions { get; init; }
     public required string InitialSettingsLanguageOption { get; init; }
