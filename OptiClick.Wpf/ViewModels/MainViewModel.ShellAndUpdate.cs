@@ -205,8 +205,7 @@ public sealed partial class MainViewModel : ViewModelBase
         ArgumentNullException.ThrowIfNull(update);
         _isAppUpdateInProgress = update.IsAppUpdateInProgress;
         _isInstallExecutionInProgress = update.IsInstallExecutionInProgress;
-        IsOperationOverlayVisible = update.IsOperationOverlayVisible;
-        OperationOverlayMessage = update.OperationOverlayMessage;
+        ShellBusyState.Apply(update.IsOperationOverlayVisible, update.OperationOverlayMessage);
         if (!string.IsNullOrWhiteSpace(update.SettingsStatusText)) SettingsStatusText = update.SettingsStatusText;
         if (update.ShouldRefreshInstallCommand)
         {
