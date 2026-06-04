@@ -4,11 +4,9 @@ using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Media;
 using OptiClick.Core.Abstractions;
 using OptiClick.Core.Models;
 using OptiClick.Core.Runtime;
-using OptiClick.Wpf.Collections;
 using OptiClick.Wpf.Install.Archives;
 using OptiClick.Wpf.Install.Flow;
 using OptiClick.Wpf.Install.Planning;
@@ -57,8 +55,6 @@ public sealed partial class MainViewModel : ViewModelBase
     private const string LanguageOptionEnglish = "English";
     private const string GpuManifestRestartRequiredErrorCode = "gpu_bundle_manifest_restart_required";
 
-    private static readonly Brush AddedFolderStatusBrush = new SolidColorBrush(Color.FromRgb(185, 226, 250));
-    private static readonly Brush MissingFolderStatusBrush = new SolidColorBrush(Color.FromRgb(212, 180, 142));
     // Core services
     private readonly IWritableAppLanguageProvider _languageProvider;
     private readonly IShellMockDataProvider _mockDataProvider;
@@ -170,9 +166,7 @@ public sealed partial class MainViewModel : ViewModelBase
         _gpuBundleManifestClient = resolved.GpuBundleManifestClient;
         _gpuBundleManifestRuleResolver = resolved.GpuBundleManifestRuleResolver;
         _gameSelectionFlowController = resolved.GameSelectionFlowController;
-        var scanFlowController = resolved.ScanFlowController;
         _appVersionProvider = resolved.AppVersionProvider;
-        var scanFolderDiscoveryService = resolved.ScanFolderDiscoveryService;
         _appLogger = resolved.AppLogger;
         _localDataPathProvider = resolved.LocalDataPathProvider;
         _appStringsProvider = resolved.AppStringsProvider;
@@ -184,9 +178,6 @@ public sealed partial class MainViewModel : ViewModelBase
         _installManagementDialogService = resolved.InstallManagementDialogService;
         _remoteCatalogDialogGate = resolved.RemoteCatalogDialogGate;
         _userSettingsController = resolved.UserSettingsController;
-        var scanFolderListController = resolved.ScanFolderListController;
-        var scanFolderActionController = resolved.ScanFolderActionController;
-        var scanOrchestratorFactory = resolved.ScanOrchestratorFactory;
         _scanVisibleGameResolver = resolved.ScanVisibleGameResolver;
         _installPopupPresenter = resolved.InstallPopupPresenter;
         _archiveReadinessFlowController = resolved.ArchiveReadinessFlowController;
@@ -202,7 +193,6 @@ public sealed partial class MainViewModel : ViewModelBase
         _shellCommandActionController = resolved.ShellCommandActionController;
         _localizationStateController = resolved.LocalizationStateController;
         _runtimeSummaryStateController = resolved.RuntimeSummaryStateController;
-        var supportedGamesWikiMarkdownLoader = resolved.SupportedGamesWikiMarkdownLoader;
         _busyStateApplier = resolved.BusyStateApplier;
         _appUpdateFlowController = resolved.AppUpdateFlowController;
         _appUpdateCoordinator = resolved.AppUpdateCoordinator;
@@ -220,112 +210,74 @@ public sealed partial class MainViewModel : ViewModelBase
         _runtimeCatalogCoordinator = resolved.RuntimeCatalogCoordinator;
         DialogHost = resolved.DialogHost;
         InstallManagementDialogHost = resolved.InstallManagementDialogHost;
-        var games = seedMockGameCards
-            ? new BatchedObservableCollection<GameCardViewModel>(_mockDataProvider.CreateGames())
-            : new BatchedObservableCollection<GameCardViewModel>();
-        var defaultFolders = seedMockScanFolders
-            ? new ObservableCollection<ScanFolderRowViewModel>(_mockDataProvider.CreateDefaultFolders())
-            : new ObservableCollection<ScanFolderRowViewModel>(
-                scanFolderDiscoveryService?.DiscoverDefaultFolders() ?? []);
-        var addedFolders = seedMockScanFolders
-            ? new ObservableCollection<ScanFolderRowViewModel>(_mockDataProvider.CreateAddedFolders())
-            : new ObservableCollection<ScanFolderRowViewModel>(LoadAddedScanFoldersFromManifest(defaultFolders, scanFolderActionController));
         var settingsLanguageOptions = new ObservableCollection<string> { LanguageOptionAuto, LanguageOptionKorean, LanguageOptionEnglish };
         Navigation = resolved.ShellChrome.Navigation;
         RuntimeHeader = resolved.ShellChrome.RuntimeHeader;
         StartupOverlay = resolved.ShellChrome.StartupOverlay;
         ShellBusyState = resolved.ShellChrome.ShellBusyState;
         InitializeCommandSet();
-        var scanResultCoordinator = resolved.ScanResultCoordinatorFactory.Create(
-            new ScanResultCoordinatorFactoryInput
+        var sections = resolved.ShellSectionsCompositionFactory.Create(
+            new ShellSectionsCompositionFactoryInput
             {
-                FlowLogDispatcher = _flowLogDispatcher,
-                FlowLogFallbackCategory = MainViewModelLogCategories.Scan,
-                ResultApplier = _resultApplier,
+                ShellSectionsFactory = resolved.ShellSectionsFactory,
+                ScanResultCoordinatorFactory = resolved.ScanResultCoordinatorFactory,
+                ScanOrchestratorFactory = resolved.ScanOrchestratorFactory,
+                MockDataProvider = _mockDataProvider,
+                ScanFolderDiscoveryService = resolved.ScanFolderDiscoveryService,
+                ScanFlowController = resolved.ScanFlowController,
+                ScanFolderListController = resolved.ScanFolderListController,
+                ScanFolderActionController = resolved.ScanFolderActionController,
+                ScanLock = _scanLock,
+                ScannedGameState = _scannedGameState,
                 DialogPresenter = _dialogPresenter,
+                FlowLogDispatcher = _flowLogDispatcher,
+                ResultApplier = _resultApplier,
+                SupportedGamesWikiMarkdownLoader = resolved.SupportedGamesWikiMarkdownLoader,
+                StartupBackgroundTaskManager = _startupBackgroundTaskManager,
+                AppLogger = _appLogger,
+                LocalDataPathProvider = _localDataPathProvider,
+                SettingsLanguageOptions = settingsLanguageOptions,
+                InitialSettingsLanguageOption = LanguageOptionAuto,
+                SeedMockGameCards = seedMockGameCards,
+                SeedMockScanFolders = seedMockScanFolders,
                 StringsAccessor = () => Strings,
-                GameCountAccessor = () => Games.Count,
                 RemoteCatalogErrorCodeAccessor = () => _runtimeShellState.LatestRemoteCatalogErrorCode,
                 ReadSuppressHomeNavigationForAutoSelection = () => _suppressHomeNavigationForAutoSelection,
                 SetSuppressHomeNavigationForAutoSelection = value => _suppressHomeNavigationForAutoSelection = value,
                 ApplyStateUpdate = ApplyStateUpdate,
                 SetCurrentView = SetCurrentView,
-                RecomputeSelectionAfterScanAsync = RecomputeSelectionAfterScanAsync
-            });
-        var scanOrchestrator = scanOrchestratorFactory.Create(
-            new ScanOrchestratorFactoryInput
-            {
-                StringsAccessor = () => Strings,
-                ScanFlowController = scanFlowController,
-                ScanLock = _scanLock,
-                ScannedGameState = _scannedGameState,
-                DialogPresenter = _dialogPresenter,
+                RecomputeSelectionAfterScanAsync = RecomputeSelectionAfterScanAsync,
                 IsMultiGpuBlocked = () => _gpuSelectionCoordinator.MultiGpuBlocked,
                 BuildScanRequest = BuildScanRequest,
-                ScanResultCoordinator = scanResultCoordinator,
                 ClearVisibleGameCards = () => ReplaceGameCards([]),
-                LogWarning = message => LogWarning(MainViewModelLogCategories.Scan, message)
-            });
-        var sections = resolved.ShellSectionsFactory.Create(
-            new ShellSectionsFactoryInput
-            {
-                Home = new HomeSectionFactoryInput
-                {
-                    StringsAccessor = () => Strings,
-                    Games = games,
-                    SelectGameAsync = (game, cancellationToken) => SelectGameCardAsync(game, cancellationToken),
-                    ShowDetails = ShowDetailsDialog,
-                    ShowInstallAsync = ShowInstallDialogAsync,
-                    CanSelectGame = () => !_isInstallExecutionInProgress && !_isAppUpdateInProgress,
-                    CanShowDetails = () => SelectedGame is not null,
-                    CanShowInstall = () => SelectedGame is not null
-                                          && !_isInstallExecutionInProgress
-                                          && !_isAppUpdateInProgress
-                                          && !ShouldBlockStartupForUnsupportedOperatingSystem(),
-                    OnSelectGameException = ex => LogError(MainViewModelLogCategories.Command, "select game command failed", ex),
-                    OnShowInstallException = ex => LogError(MainViewModelLogCategories.Command, "install command failed", ex)
-                },
-                Scan = new ScanSectionFactoryInput
-                {
-                    StringsAccessor = () => Strings,
-                    DefaultFolders = defaultFolders,
-                    AddedFolders = addedFolders,
-                    ScanFolderListController = scanFolderListController,
-                    ScanFolderActionController = scanFolderActionController,
-                    ApplyScanFolderActionResult = result => ApplyDeferredStateUpdate(
-                        _resultApplier.CreateScanFolderActionStateUpdate(result)),
-                    ScanOrchestrator = scanOrchestrator,
-                    ShowHome = () => SetCurrentView(ShellViewKind.Home),
-                    AddedFolderStatusBrush = AddedFolderStatusBrush,
-                    MissingFolderStatusBrush = MissingFolderStatusBrush,
-                    OnScanCommandException = ex => LogError(MainViewModelLogCategories.Command, "save and scan command failed", ex)
-                },
-                SupportedGames = new SupportedGamesSectionFactoryInput
-                {
-                    SupportedGamesWikiMarkdownLoader = supportedGamesWikiMarkdownLoader,
-                    StartupBackgroundTaskManager = _startupBackgroundTaskManager,
-                    AppLogger = _appLogger,
-                    StringsAccessor = () => Strings,
-                    SelectedLanguageAccessor = () => SelectedLanguage,
-                    CurrentViewKindAccessor = () => Navigation.CurrentViewKind,
-                    OpenGameSupportRequestCommandAccessor = () => _openGameSupportRequestCommand,
-                    UpdateStartupPreparationState = UpdateStartupPreparationState
-                },
-                Settings = new SettingsSectionFactoryInput
-                {
-                    StringsAccessor = () => Strings,
-                    DialogPresenter = _dialogPresenter,
-                    LocalDataPathProvider = _localDataPathProvider,
-                    AppLogger = _appLogger,
-                    IsKoreanUi = () => IsKoreanUi,
-                    SettingsLanguageOptions = settingsLanguageOptions,
-                    InitialSettingsLanguageOption = LanguageOptionAuto,
-                    ApplySettingsLanguageOption = ApplySettingsLanguageOption,
-                    IsInstallExecutionInProgress = () => _isInstallExecutionInProgress,
-                    OpenLogFolder = OpenLogFolder,
-                    OpenSupportRequest = OpenSupportRequest,
-                    OnRefreshInstallFilesException = ex => LogError(MainViewModelLogCategories.Command, "reset app cache command failed", ex)
-                }
+                LogScanWarning = message => LogWarning(MainViewModelLogCategories.Scan, message),
+                ApplyInitialScanFolderLoadResult = ApplyInitialScanFolderLoadResult,
+                ApplyScanFolderActionResult = result => ApplyDeferredStateUpdate(
+                    _resultApplier.CreateScanFolderActionStateUpdate(result)),
+                SelectGameAsync = (game, cancellationToken) => SelectGameCardAsync(game, cancellationToken),
+                ShowDetails = ShowDetailsDialog,
+                ShowInstallAsync = ShowInstallDialogAsync,
+                CanSelectGame = () => !_isInstallExecutionInProgress && !_isAppUpdateInProgress,
+                CanShowDetails = () => SelectedGame is not null,
+                CanShowInstall = () => SelectedGame is not null
+                                      && !_isInstallExecutionInProgress
+                                      && !_isAppUpdateInProgress
+                                      && !ShouldBlockStartupForUnsupportedOperatingSystem(),
+                OnSelectGameException = ex => LogError(MainViewModelLogCategories.Command, "select game command failed", ex),
+                OnShowInstallException = ex => LogError(MainViewModelLogCategories.Command, "install command failed", ex),
+                ShowHome = () => SetCurrentView(ShellViewKind.Home),
+                OnScanCommandException = ex => LogError(MainViewModelLogCategories.Command, "save and scan command failed", ex),
+                SelectedLanguageAccessor = () => SelectedLanguage,
+                CurrentViewKindAccessor = () => Navigation.CurrentViewKind,
+                OpenGameSupportRequestCommandAccessor = () => _openGameSupportRequestCommand,
+                UpdateStartupPreparationState = UpdateStartupPreparationState,
+                IsKoreanUi = () => IsKoreanUi,
+                ApplySettingsLanguageOption = ApplySettingsLanguageOption,
+                IsInstallExecutionInProgress = () => _isInstallExecutionInProgress,
+                OpenLogFolder = OpenLogFolder,
+                OpenSupportRequest = OpenSupportRequest,
+                OnRefreshInstallFilesException = ex => LogError(MainViewModelLogCategories.Command, "reset app cache command failed", ex),
+                ScanLogCategory = MainViewModelLogCategories.Scan
             });
 
         Home = sections.Home;
