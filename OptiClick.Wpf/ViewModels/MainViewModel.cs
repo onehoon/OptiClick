@@ -383,11 +383,7 @@ public sealed partial class MainViewModel : ViewModelBase
         var propertyName = e.PropertyName ?? "";
         if (string.IsNullOrWhiteSpace(propertyName))
         {
-            OnPropertyChanged(nameof(DefaultFolders));
-            OnPropertyChanged(nameof(AddedFolders));
             OnPropertyChanged(nameof(ScanStatusText));
-            OnPropertyChanged(nameof(DefaultFoldersEmptyVisibility));
-            OnPropertyChanged(nameof(AddedFoldersEmptyVisibility));
             return;
         }
 
@@ -404,12 +400,10 @@ public sealed partial class MainViewModel : ViewModelBase
         }
     }
 
-    public ObservableCollection<GameCardViewModel> Games => Home.Games;
-    public ObservableCollection<ScanFolderRowViewModel> DefaultFolders => Scan.DefaultFolders;
-    public ObservableCollection<ScanFolderRowViewModel> AddedFolders => Scan.AddedFolders;
+    private ObservableCollection<GameCardViewModel> Games => Home.Games;
     public DialogHostViewModel DialogHost { get; }
     public InstallManagementDialogHostViewModel InstallManagementDialogHost { get; }
-    public SelectedGameActionViewModel SelectedGameAction => Home.SelectedGameAction;
+    private SelectedGameActionViewModel SelectedGameAction => Home.SelectedGameAction;
     public ShellNavigationViewModel Navigation { get; }
     public RuntimeHeaderViewModel RuntimeHeader { get; }
     public StartupOverlayViewModel StartupOverlay { get; }
@@ -419,7 +413,7 @@ public sealed partial class MainViewModel : ViewModelBase
     public ScanSectionViewModel Scan { get; }
     public SupportedGamesSectionViewModel SupportedGames { get; }
     public SettingsSectionViewModel Settings { get; }
-    public bool HasGamesForHomeSelectionMessage => Home.HasGamesForHomeSelectionMessage;
+    private bool HasGamesForHomeSelectionMessage => Home.HasGamesForHomeSelectionMessage;
     public StartupPreparationState StartupPreparationState
     {
         get
@@ -441,14 +435,12 @@ public sealed partial class MainViewModel : ViewModelBase
     public bool IsSupportedGamesWikiViewActive => CurrentViewKind == ShellViewKind.SupportedGamesWiki;
     public bool IsScanViewActive => CurrentViewKind == ShellViewKind.Scan;
     public bool IsSettingsViewActive => CurrentViewKind == ShellViewKind.Settings;
-    public Visibility DefaultFoldersEmptyVisibility => Scan.DefaultFoldersEmptyVisibility;
-    public Visibility AddedFoldersEmptyVisibility => Scan.AddedFoldersEmptyVisibility;
     public string WindowTitleWithVersion => $"{Strings.WindowTitle} v{GetCurrentAppVersion()}";
 
-    public string SettingsStatusText
+    private string SettingsStatusText
     {
         get => Settings.SettingsStatusText;
-        private set => Settings.SettingsStatusText = value;
+        set => Settings.SettingsStatusText = value;
     }
 
     public AppLanguage SelectedLanguage
@@ -473,7 +465,7 @@ public sealed partial class MainViewModel : ViewModelBase
             LogInfo(MainViewModelLogCategories.I18n, $"ui_language_changed source=settings value={ToLanguageCode(language)}");
             RefreshLocalizedStrings();
             SelectedGameAction.ApplyLocalization(Strings);
-            RefreshSupportedGamesAfterLanguageChange();
+            SupportedGames.RefreshAfterLanguageChange();
             ApplyLocalizationStateUpdate(_localizationStateController.BuildRefreshState(language, Strings));
             await RefreshRuntimeContextAsync(cancellationToken);
             await RefreshRuntimeDataCatalogAsync(cancellationToken);
@@ -558,16 +550,16 @@ public sealed partial class MainViewModel : ViewModelBase
         return _systemPreferredLanguage;
     }
 
-    public string ScanStatusText
+    private string ScanStatusText
     {
         get => Scan.ScanStatusText;
-        private set => Scan.ScanStatusText = value;
+        set => Scan.ScanStatusText = value;
     }
 
-    public GameCardViewModel? SelectedGame
+    private GameCardViewModel? SelectedGame
     {
         get => Home.SelectedGame;
-        private set => Home.SelectedGame = value;
+        set => Home.SelectedGame = value;
     }
 
 }
