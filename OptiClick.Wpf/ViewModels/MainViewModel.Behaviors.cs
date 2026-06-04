@@ -802,11 +802,6 @@ public sealed partial class MainViewModel : ViewModelBase
         {
             return;
         }
-        OnPropertyChanged(nameof(CurrentViewKind));
-        OnPropertyChanged(nameof(IsHomeViewActive));
-        OnPropertyChanged(nameof(IsSupportedGamesWikiViewActive));
-        OnPropertyChanged(nameof(IsScanViewActive));
-        OnPropertyChanged(nameof(IsSettingsViewActive));
         Navigation.Refresh();
         RefreshNavigationAndScanCommandStates();
         if (view == ShellViewKind.SupportedGamesWiki)
