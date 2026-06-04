@@ -28,46 +28,51 @@ public sealed class ShellSectionsCompositionFactory
     {
         ArgumentNullException.ThrowIfNull(input);
 
+        var home = input.Home;
+        var scan = input.Scan;
+        var supportedGames = input.SupportedGames;
+        var settings = input.Settings;
+
         var games = input.SeedMockGameCards
             ? new BatchedObservableCollection<GameCardViewModel>(input.MockDataProvider.CreateGames())
             : new BatchedObservableCollection<GameCardViewModel>();
         var defaultFolders = input.SeedMockScanFolders
             ? new ObservableCollection<ScanFolderRowViewModel>(input.MockDataProvider.CreateDefaultFolders())
             : new ObservableCollection<ScanFolderRowViewModel>(
-                input.ScanFolderDiscoveryService?.DiscoverDefaultFolders() ?? []);
+                scan.ScanFolderDiscoveryService?.DiscoverDefaultFolders() ?? []);
         var addedFolders = input.SeedMockScanFolders
             ? new ObservableCollection<ScanFolderRowViewModel>(input.MockDataProvider.CreateAddedFolders())
             : new ObservableCollection<ScanFolderRowViewModel>(LoadAddedScanFoldersFromManifest(input, defaultFolders));
 
-        var scanResultCoordinator = input.ScanResultCoordinatorFactory.Create(
+        var scanResultCoordinator = scan.ScanResultCoordinatorFactory.Create(
             new ScanResultCoordinatorFactoryInput
             {
-                FlowLogDispatcher = input.FlowLogDispatcher,
-                FlowLogFallbackCategory = input.ScanLogCategory,
-                ResultApplier = input.ResultApplier,
-                DialogPresenter = input.DialogPresenter,
+                FlowLogDispatcher = scan.FlowLogDispatcher,
+                FlowLogFallbackCategory = scan.ScanLogCategory,
+                CreateScanStateUpdate = scan.CreateScanStateUpdate,
+                DialogPresenter = scan.DialogPresenter,
                 StringsAccessor = input.StringsAccessor,
                 GameCountAccessor = () => games.Count,
-                RemoteCatalogErrorCodeAccessor = input.RemoteCatalogErrorCodeAccessor,
-                ReadSuppressHomeNavigationForAutoSelection = input.ReadSuppressHomeNavigationForAutoSelection,
-                SetSuppressHomeNavigationForAutoSelection = input.SetSuppressHomeNavigationForAutoSelection,
-                ApplyStateUpdate = input.ApplyStateUpdate,
-                SetCurrentView = input.SetCurrentView,
-                RecomputeSelectionAfterScanAsync = input.RecomputeSelectionAfterScanAsync
+                RemoteCatalogErrorCodeAccessor = scan.RemoteCatalogErrorCodeAccessor,
+                ReadSuppressHomeNavigationForAutoSelection = scan.ReadSuppressHomeNavigationForAutoSelection,
+                SetSuppressHomeNavigationForAutoSelection = scan.SetSuppressHomeNavigationForAutoSelection,
+                ApplyStateUpdate = scan.ApplyStateUpdate,
+                SetCurrentView = scan.SetCurrentView,
+                RecomputeSelectionAfterScanAsync = scan.RecomputeSelectionAfterScanAsync
             });
-        var scanOrchestrator = input.ScanOrchestratorFactory.Create(
+        var scanOrchestrator = scan.ScanOrchestratorFactory.Create(
             new ScanOrchestratorFactoryInput
             {
                 StringsAccessor = input.StringsAccessor,
-                ScanFlowController = input.ScanFlowController,
-                ScanLock = input.ScanLock,
-                ScannedGameState = input.ScannedGameState,
-                DialogPresenter = input.DialogPresenter,
-                IsMultiGpuBlocked = input.IsMultiGpuBlocked,
-                BuildScanRequest = input.BuildScanRequest,
+                ScanFlowController = scan.ScanFlowController,
+                ScanLock = scan.ScanLock,
+                ScannedGameState = scan.ScannedGameState,
+                DialogPresenter = scan.DialogPresenter,
+                IsMultiGpuBlocked = scan.IsMultiGpuBlocked,
+                BuildScanRequest = scan.BuildScanRequest,
                 ScanResultCoordinator = scanResultCoordinator,
-                ClearVisibleGameCards = input.ClearVisibleGameCards,
-                LogWarning = input.LogScanWarning
+                ClearVisibleGameCards = scan.ClearVisibleGameCards,
+                LogWarning = scan.LogScanWarning
             });
 
         return input.ShellSectionsFactory.Create(
@@ -77,54 +82,54 @@ public sealed class ShellSectionsCompositionFactory
                 {
                     StringsAccessor = input.StringsAccessor,
                     Games = games,
-                    SelectGameAsync = input.SelectGameAsync,
-                    ShowDetails = input.ShowDetails,
-                    ShowInstallAsync = input.ShowInstallAsync,
-                    CanSelectGame = input.CanSelectGame,
-                    CanShowDetails = input.CanShowDetails,
-                    CanShowInstall = input.CanShowInstall,
-                    OnSelectGameException = input.OnSelectGameException,
-                    OnShowInstallException = input.OnShowInstallException
+                    SelectGameAsync = home.SelectGameAsync,
+                    ShowDetails = home.ShowDetails,
+                    ShowInstallAsync = home.ShowInstallAsync,
+                    CanSelectGame = home.CanSelectGame,
+                    CanShowDetails = home.CanShowDetails,
+                    CanShowInstall = home.CanShowInstall,
+                    OnSelectGameException = home.OnSelectGameException,
+                    OnShowInstallException = home.OnShowInstallException
                 },
                 Scan = new ScanSectionFactoryInput
                 {
                     StringsAccessor = input.StringsAccessor,
                     DefaultFolders = defaultFolders,
                     AddedFolders = addedFolders,
-                    ScanFolderListController = input.ScanFolderListController,
-                    ScanFolderActionController = input.ScanFolderActionController,
-                    ApplyScanFolderActionResult = input.ApplyScanFolderActionResult,
+                    ScanFolderListController = scan.ScanFolderListController,
+                    ScanFolderActionController = scan.ScanFolderActionController,
+                    ApplyScanFolderActionResult = scan.ApplyScanFolderActionResult,
                     ScanOrchestrator = scanOrchestrator,
-                    ShowHome = input.ShowHome,
+                    ShowHome = scan.ShowHome,
                     AddedFolderStatusBrush = AddedFolderStatusBrush,
                     MissingFolderStatusBrush = MissingFolderStatusBrush,
-                    OnScanCommandException = input.OnScanCommandException
+                    OnScanCommandException = scan.OnScanCommandException
                 },
                 SupportedGames = new SupportedGamesSectionFactoryInput
                 {
-                    SupportedGamesWikiMarkdownLoader = input.SupportedGamesWikiMarkdownLoader,
-                    StartupBackgroundTaskManager = input.StartupBackgroundTaskManager,
-                    AppLogger = input.AppLogger,
+                    SupportedGamesWikiMarkdownLoader = supportedGames.SupportedGamesWikiMarkdownLoader,
+                    StartupBackgroundTaskManager = supportedGames.StartupBackgroundTaskManager,
+                    AppLogger = supportedGames.AppLogger,
                     StringsAccessor = input.StringsAccessor,
-                    SelectedLanguageAccessor = input.SelectedLanguageAccessor,
-                    CurrentViewKindAccessor = input.CurrentViewKindAccessor,
-                    OpenGameSupportRequestCommandAccessor = input.OpenGameSupportRequestCommandAccessor,
-                    UpdateStartupPreparationState = input.UpdateStartupPreparationState
+                    SelectedLanguageAccessor = supportedGames.SelectedLanguageAccessor,
+                    CurrentViewKindAccessor = supportedGames.CurrentViewKindAccessor,
+                    OpenGameSupportRequestCommandAccessor = supportedGames.OpenGameSupportRequestCommandAccessor,
+                    UpdateStartupPreparationState = supportedGames.UpdateStartupPreparationState
                 },
                 Settings = new SettingsSectionFactoryInput
                 {
                     StringsAccessor = input.StringsAccessor,
-                    DialogPresenter = input.DialogPresenter,
-                    LocalDataPathProvider = input.LocalDataPathProvider,
-                    AppLogger = input.AppLogger,
-                    IsKoreanUi = input.IsKoreanUi,
-                    SettingsLanguageOptions = input.SettingsLanguageOptions,
-                    InitialSettingsLanguageOption = input.InitialSettingsLanguageOption,
-                    ApplySettingsLanguageOption = input.ApplySettingsLanguageOption,
-                    IsInstallExecutionInProgress = input.IsInstallExecutionInProgress,
-                    OpenLogFolder = input.OpenLogFolder,
-                    OpenSupportRequest = input.OpenSupportRequest,
-                    OnRefreshInstallFilesException = input.OnRefreshInstallFilesException
+                    DialogPresenter = settings.DialogPresenter,
+                    LocalDataPathProvider = settings.LocalDataPathProvider,
+                    AppLogger = settings.AppLogger,
+                    IsKoreanUi = settings.IsKoreanUi,
+                    SettingsLanguageOptions = settings.SettingsLanguageOptions,
+                    InitialSettingsLanguageOption = settings.InitialSettingsLanguageOption,
+                    ApplySettingsLanguageOption = settings.ApplySettingsLanguageOption,
+                    IsInstallExecutionInProgress = settings.IsInstallExecutionInProgress,
+                    OpenLogFolder = settings.OpenLogFolder,
+                    OpenSupportRequest = settings.OpenSupportRequest,
+                    OnRefreshInstallFilesException = settings.OnRefreshInstallFilesException
                 }
             });
     }
@@ -133,23 +138,46 @@ public sealed class ShellSectionsCompositionFactory
         ShellSectionsCompositionFactoryInput input,
         IReadOnlyCollection<ScanFolderRowViewModel> defaultFolders)
     {
-        var result = input.ScanFolderActionController.LoadAddedFoldersFromManifest(
+        var result = input.Scan.ScanFolderActionController.LoadAddedFoldersFromManifest(
             defaultFolders,
             input.StringsAccessor(),
             AddedFolderStatusBrush,
             MissingFolderStatusBrush);
 
-        return input.ApplyInitialScanFolderLoadResult(result);
+        return input.Scan.ApplyInitialScanFolderLoadResult(result);
     }
 }
 
 public sealed record ShellSectionsCompositionFactoryInput
 {
     public required ShellSectionsFactory ShellSectionsFactory { get; init; }
+    public required IShellMockDataProvider MockDataProvider { get; init; }
+    public required bool SeedMockGameCards { get; init; }
+    public required bool SeedMockScanFolders { get; init; }
+    public required Func<AppStrings> StringsAccessor { get; init; }
+    public required HomeSectionCompositionInput Home { get; init; }
+    public required ScanSectionCompositionInput Scan { get; init; }
+    public required SupportedGamesSectionCompositionInput SupportedGames { get; init; }
+    public required SettingsSectionCompositionInput Settings { get; init; }
+}
+
+public sealed record HomeSectionCompositionInput
+{
+    public required Func<GameCardViewModel, CancellationToken, Task> SelectGameAsync { get; init; }
+    public required Action ShowDetails { get; init; }
+    public required Func<CancellationToken, Task> ShowInstallAsync { get; init; }
+    public required Func<bool> CanSelectGame { get; init; }
+    public required Func<bool> CanShowDetails { get; init; }
+    public required Func<bool> CanShowInstall { get; init; }
+    public Action<Exception>? OnSelectGameException { get; init; }
+    public Action<Exception>? OnShowInstallException { get; init; }
+}
+
+public sealed record ScanSectionCompositionInput
+{
+    public IScanFolderDiscoveryService? ScanFolderDiscoveryService { get; init; }
     public required ScanResultCoordinatorFactory ScanResultCoordinatorFactory { get; init; }
     public required ScanOrchestratorFactory ScanOrchestratorFactory { get; init; }
-    public required IShellMockDataProvider MockDataProvider { get; init; }
-    public IScanFolderDiscoveryService? ScanFolderDiscoveryService { get; init; }
     public required ScanFlowController ScanFlowController { get; init; }
     public required ScanFolderListController ScanFolderListController { get; init; }
     public required ScanFolderActionController ScanFolderActionController { get; init; }
@@ -157,16 +185,7 @@ public sealed record ShellSectionsCompositionFactoryInput
     public required ScannedGameState ScannedGameState { get; init; }
     public required DialogPresenter DialogPresenter { get; init; }
     public required FlowLogDispatcher FlowLogDispatcher { get; init; }
-    public required MainViewModelResultApplier ResultApplier { get; init; }
-    public required ISupportedGamesWikiMarkdownLoader SupportedGamesWikiMarkdownLoader { get; init; }
-    public required StartupBackgroundTaskManager StartupBackgroundTaskManager { get; init; }
-    public required IAppLogger AppLogger { get; init; }
-    public required IAppLocalDataPathProvider LocalDataPathProvider { get; init; }
-    public required ObservableCollection<string> SettingsLanguageOptions { get; init; }
-    public required string InitialSettingsLanguageOption { get; init; }
-    public required bool SeedMockGameCards { get; init; }
-    public required bool SeedMockScanFolders { get; init; }
-    public required Func<AppStrings> StringsAccessor { get; init; }
+    public required Func<ScanFlowResult, MainViewModelStateUpdate> CreateScanStateUpdate { get; init; }
     public required Func<string> RemoteCatalogErrorCodeAccessor { get; init; }
     public required Func<bool> ReadSuppressHomeNavigationForAutoSelection { get; init; }
     public required Action<bool> SetSuppressHomeNavigationForAutoSelection { get; init; }
@@ -179,25 +198,33 @@ public sealed record ShellSectionsCompositionFactoryInput
     public required Action<string> LogScanWarning { get; init; }
     public required Func<ScanFolderActionResult, IReadOnlyList<ScanFolderRowViewModel>> ApplyInitialScanFolderLoadResult { get; init; }
     public required Action<ScanFolderActionResult> ApplyScanFolderActionResult { get; init; }
-    public required Func<GameCardViewModel, CancellationToken, Task> SelectGameAsync { get; init; }
-    public required Action ShowDetails { get; init; }
-    public required Func<CancellationToken, Task> ShowInstallAsync { get; init; }
-    public required Func<bool> CanSelectGame { get; init; }
-    public required Func<bool> CanShowDetails { get; init; }
-    public required Func<bool> CanShowInstall { get; init; }
-    public Action<Exception>? OnSelectGameException { get; init; }
-    public Action<Exception>? OnShowInstallException { get; init; }
     public required Action ShowHome { get; init; }
     public Action<Exception>? OnScanCommandException { get; init; }
+    public string ScanLogCategory { get; init; } = "scan";
+}
+
+public sealed record SupportedGamesSectionCompositionInput
+{
+    public required ISupportedGamesWikiMarkdownLoader SupportedGamesWikiMarkdownLoader { get; init; }
+    public required StartupBackgroundTaskManager StartupBackgroundTaskManager { get; init; }
+    public required IAppLogger AppLogger { get; init; }
     public required Func<AppLanguage> SelectedLanguageAccessor { get; init; }
     public required Func<ShellViewKind> CurrentViewKindAccessor { get; init; }
     public required Func<ICommand> OpenGameSupportRequestCommandAccessor { get; init; }
     public required Action<Func<StartupPreparationState, StartupPreparationState>> UpdateStartupPreparationState { get; init; }
+}
+
+public sealed record SettingsSectionCompositionInput
+{
+    public required DialogPresenter DialogPresenter { get; init; }
+    public required IAppLocalDataPathProvider LocalDataPathProvider { get; init; }
+    public required IAppLogger AppLogger { get; init; }
+    public required ObservableCollection<string> SettingsLanguageOptions { get; init; }
+    public required string InitialSettingsLanguageOption { get; init; }
     public required Func<bool> IsKoreanUi { get; init; }
     public required Action<string> ApplySettingsLanguageOption { get; init; }
     public required Func<bool> IsInstallExecutionInProgress { get; init; }
     public required Action OpenLogFolder { get; init; }
     public required Action OpenSupportRequest { get; init; }
     public Action<Exception>? OnRefreshInstallFilesException { get; init; }
-    public string ScanLogCategory { get; init; } = "scan";
 }

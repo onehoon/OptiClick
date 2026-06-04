@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -474,22 +473,17 @@ public sealed partial class MainViewModel : ViewModelBase
 
     private void StartGameMasterCoverPrefetchInBackground()
     {
-        if (_isGameMasterCoverPrefetchStarted)
-        {
-            return;
-        }
-
-        _isGameMasterCoverPrefetchStarted = true;
-        UpdateStartupPreparationState(state => state with
-        {
-            GameMasterCoverPrefetchStarted = true,
-            GameMasterCoverPrefetchRunning = true,
-            GameMasterCoverPrefetchCompleted = false,
-            GameMasterCoverPrefetchCanceled = false,
-            GameMasterCoverPrefetchFailed = false
-        });
-        var cancellationTokenSource = _startupBackgroundTaskManager.CreateSource();
-        _ = RunGameMasterCoverPrefetchInBackgroundAsync(cancellationTokenSource);
+        _gameMasterCoverPrefetchCoordinator.StartGameMasterCoverPrefetchInBackground(
+            new GameMasterCoverPrefetchCoordinatorRequest
+            {
+                GameMasterAccessor = () => _runtimeShellState.LatestRuntimeData.GameMaster,
+                HomeCardsAccessor = () => Games,
+                RefreshHomeCoversOnDispatcherAsync = RefreshHomeCoversOnDispatcherAsync,
+                UpdateStartupPreparationState = UpdateStartupPreparationState,
+                ClearLastErrorCode = ClearLastErrorCode,
+                LogInfo = message => LogInfo(MainViewModelLogCategories.Wiki, message),
+                LogWarning = message => LogWarning(MainViewModelLogCategories.Wiki, message)
+            });
     }
 
     public void CancelBackgroundWork()
@@ -497,148 +491,18 @@ public sealed partial class MainViewModel : ViewModelBase
         _startupBackgroundTaskManager.CancelAll();
     }
 
-    private async Task RunGameMasterCoverPrefetchInBackgroundAsync(CancellationTokenSource cancellationTokenSource)
-    {
-        var cancellationToken = cancellationTokenSource.Token;
-        var prefetchStopwatch = Stopwatch.StartNew();
-        var canceled = false;
-        var failed = false;
-        try
-        {
-            await Task.Delay(TimeSpan.FromSeconds(3), cancellationToken);
-
-            var gameMaster = _runtimeShellState.LatestRuntimeData.GameMaster;
-            if (gameMaster.Count == 0)
-            {
-                LogInfo(MainViewModelLogCategories.Wiki, "cover_prefetch skipped reason=no_game_master");
-                return;
-            }
-
-            var prefetchTargets = GameMasterCoverPrefetchService.CollectTargets(gameMaster);
-            if (prefetchTargets.Count == 0)
-            {
-                LogInfo(MainViewModelLogCategories.Wiki, "cover_prefetch skipped reason=no_targets");
-                return;
-            }
-
-            var prioritizedTargets = ResolveHomeCoverPrefetchTargets(gameMaster);
-
-            if (prioritizedTargets.Length == 0)
-            {
-                LogInfo(MainViewModelLogCategories.Wiki, "cover_prefetch skipped reason=no_home_targets");
-                return;
-            }
-
-            LogInfo(
-                MainViewModelLogCategories.Wiki,
-                $"cover_prefetch started total={prefetchTargets.Count} home_priority={prioritizedTargets.Length} scope=home_only remaining=not_prefetched");
-            var homeStageStopwatch = Stopwatch.StartNew();
-            var homeSummary = await _gameMasterCoverPrefetchService.PrefetchAsync(
-                prioritizedTargets,
-                [],
-                cancellationToken);
-            cancellationToken.ThrowIfCancellationRequested();
-            await RefreshHomeCoversOnDispatcherAsync();
-
-            LogInfo(
-                MainViewModelLogCategories.Wiki,
-                $"cover_prefetch completed total={homeSummary.Total} cached={homeSummary.Cached} downloaded={homeSummary.Downloaded} skipped={homeSummary.Skipped} failed={homeSummary.Failed} duration_ms={homeStageStopwatch.ElapsedMilliseconds}");
-        }
-        catch (OperationCanceledException)
-        {
-            canceled = true;
-            LogWarning(MainViewModelLogCategories.Wiki, $"cover_prefetch skipped reason=canceled duration_ms={prefetchStopwatch.ElapsedMilliseconds}");
-        }
-        catch (Exception ex)
-        {
-            failed = true;
-            LogWarning(
-                MainViewModelLogCategories.Wiki,
-                $"cover_prefetch failed type={ex.GetType().Name} duration_ms={prefetchStopwatch.ElapsedMilliseconds}");
-        }
-        finally
-        {
-            UpdateStartupPreparationState(state => state with
-            {
-                GameMasterCoverPrefetchRunning = false,
-                GameMasterCoverPrefetchCompleted = !canceled && !failed,
-                GameMasterCoverPrefetchCanceled = canceled,
-                GameMasterCoverPrefetchFailed = failed,
-                LastErrorCode = failed
-                    ? "cover_prefetch_failed"
-                    : !canceled
-                        ? ClearLastErrorCode(state.LastErrorCode, "cover_prefetch_failed")
-                        : state.LastErrorCode
-            });
-            _startupBackgroundTaskManager.Remove(cancellationTokenSource);
-        }
-    }
-
     private void QueueHomeCoverPrefetchInBackground(string reason)
     {
-        if (Games.Count == 0)
-        {
-            return;
-        }
-
-        var normalizedReason = NormalizeStatusCode(reason, "unknown");
-        if (Interlocked.CompareExchange(ref _homeCoverPrefetchRunning, 1, 0) != 0)
-        {
-            LogInfo(MainViewModelLogCategories.Wiki, $"home_cover_prefetch skipped reason=already_running source={normalizedReason}");
-            return;
-        }
-
-        var cancellationTokenSource = _startupBackgroundTaskManager.CreateSource();
-        _ = RunHomeCoverPrefetchInBackgroundAsync(cancellationTokenSource, normalizedReason);
-    }
-
-    private async Task RunHomeCoverPrefetchInBackgroundAsync(
-        CancellationTokenSource cancellationTokenSource,
-        string reason)
-    {
-        var cancellationToken = cancellationTokenSource.Token;
-        var normalizedReason = NormalizeStatusCode(reason, "unknown");
-        try
-        {
-            var gameMaster = _runtimeShellState.LatestRuntimeData.GameMaster;
-            if (gameMaster.Count == 0)
+        _gameMasterCoverPrefetchCoordinator.QueueHomeCoverPrefetchInBackground(
+            new GameMasterHomeCoverPrefetchCoordinatorRequest
             {
-                return;
-            }
-
-            var homeTargets = ResolveHomeCoverPrefetchTargets(gameMaster);
-            if (homeTargets.Length == 0)
-            {
-                return;
-            }
-
-            LogInfo(
-                MainViewModelLogCategories.Wiki,
-                $"home_cover_prefetch started reason={normalizedReason} total={homeTargets.Length}");
-            var stopwatch = Stopwatch.StartNew();
-            var summary = await _gameMasterCoverPrefetchService.PrefetchAsync(
-                homeTargets,
-                [],
-                cancellationToken);
-            cancellationToken.ThrowIfCancellationRequested();
-            await RefreshHomeCoversOnDispatcherAsync();
-            LogInfo(
-                MainViewModelLogCategories.Wiki,
-                $"home_cover_prefetch completed reason={normalizedReason} total={summary.Total} cached={summary.Cached} downloaded={summary.Downloaded} skipped={summary.Skipped} failed={summary.Failed} duration_ms={stopwatch.ElapsedMilliseconds}");
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            LogWarning(MainViewModelLogCategories.Wiki, $"home_cover_prefetch skipped reason=canceled source={normalizedReason}");
-        }
-        catch (Exception ex)
-        {
-            LogWarning(MainViewModelLogCategories.Wiki, $"home_cover_prefetch failed reason={normalizedReason} type={ex.GetType().Name}");
-        }
-        finally
-        {
-            Interlocked.Exchange(ref _homeCoverPrefetchRunning, 0);
-            _startupBackgroundTaskManager.Remove(cancellationTokenSource);
-        }
+                Reason = reason,
+                GameMasterAccessor = () => _runtimeShellState.LatestRuntimeData.GameMaster,
+                HomeCardsAccessor = () => Games,
+                RefreshHomeCoversOnDispatcherAsync = RefreshHomeCoversOnDispatcherAsync,
+                LogInfo = message => LogInfo(MainViewModelLogCategories.Wiki, message),
+                LogWarning = message => LogWarning(MainViewModelLogCategories.Wiki, message)
+            });
     }
 
     private async Task WaitForStartupDialogsReadyAsync(CancellationToken cancellationToken)
@@ -664,125 +528,6 @@ public sealed partial class MainViewModel : ViewModelBase
         {
             Home.RequestVisibleCoverLoad();
         }, DispatcherPriority.Background);
-    }
-
-    private GameMasterCoverPrefetchTarget[] ResolveHomeCoverPrefetchTargets(
-        IReadOnlyList<RuntimeDataGameProfile> gameMaster)
-    {
-        var prefetchTargets = GameMasterCoverPrefetchService.CollectTargets(gameMaster);
-        if (prefetchTargets.Count == 0)
-        {
-            return [];
-        }
-
-        var homeCardKeys = ResolveHomeCardCoverMatchKeys();
-        if (homeCardKeys.Count == 0)
-        {
-            return [];
-        }
-
-        return [..prefetchTargets.Where(target => IsHomeCardCoverTarget(target, homeCardKeys))];
-    }
-
-    private HashSet<string> ResolveHomeCardCoverMatchKeys()
-    {
-        if (Games.Count == 0)
-        {
-            return new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        }
-
-        var keys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var card in Games)
-        {
-            var sourceUrl = (card.CoverImageSource ?? "").Trim();
-            if (!string.IsNullOrWhiteSpace(sourceUrl) && sourceUrl.StartsWith("pack://application:", StringComparison.OrdinalIgnoreCase) == false)
-            {
-                var cacheSourceUrl = ResolveHomeCardSourceUrl(card.SourceModel);
-                if (!string.IsNullOrWhiteSpace(cacheSourceUrl))
-                {
-                    keys.Add(BuildHomeCardMatchKey("source", cacheSourceUrl));
-                }
-            }
-
-            var sourceGameId = (card.SourceModel?.GameId ?? "").Trim();
-            if (!string.IsNullOrWhiteSpace(sourceGameId))
-            {
-                keys.Add(BuildHomeCardMatchKey("gameId", sourceGameId));
-            }
-
-            var entryGameId = (card.GameEntry?.GameId ?? "").Trim();
-            if (!string.IsNullOrWhiteSpace(entryGameId))
-            {
-                keys.Add(BuildHomeCardMatchKey("gameId", entryGameId));
-            }
-
-            var sourceModelSteamAppId = (card.SourceModel?.CoverSteamAppId ?? "").Trim();
-            if (!string.IsNullOrWhiteSpace(sourceModelSteamAppId))
-            {
-                keys.Add(BuildHomeCardMatchKey("steam", sourceModelSteamAppId));
-            }
-
-            var coverUrl = (card.SourceModel?.CoverUrl ?? "").Trim();
-            if (!string.IsNullOrWhiteSpace(coverUrl))
-            {
-                keys.Add(BuildHomeCardMatchKey("source", coverUrl));
-            }
-        }
-
-        return keys;
-    }
-
-    private static bool IsHomeCardCoverTarget(GameMasterCoverPrefetchTarget target, HashSet<string> homeCardKeys)
-    {
-        if (homeCardKeys.Count == 0)
-        {
-            return false;
-        }
-
-        var gameId = (target.GameId ?? "").Trim();
-        if (!string.IsNullOrWhiteSpace(gameId) && homeCardKeys.Contains(BuildHomeCardMatchKey("gameId", gameId)))
-        {
-            return true;
-        }
-
-        if (!string.IsNullOrWhiteSpace(target.SteamAppId)
-            && homeCardKeys.Contains(BuildHomeCardMatchKey("steam", target.SteamAppId)))
-        {
-            return true;
-        }
-
-        if (!string.IsNullOrWhiteSpace(target.SourceUrl)
-            && homeCardKeys.Contains(BuildHomeCardMatchKey("source", target.SourceUrl)))
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    private static string ResolveHomeCardSourceUrl(ShellGameCardModel? sourceModel)
-    {
-        if (sourceModel is null)
-        {
-            return "";
-        }
-
-        if (!string.IsNullOrWhiteSpace(sourceModel.CoverUrl))
-        {
-            return sourceModel.CoverUrl.Trim();
-        }
-
-        if (!string.IsNullOrWhiteSpace(sourceModel.CoverSteamAppId))
-        {
-            return CoverImageCacheService.BuildSteamCoverUrl(sourceModel.CoverSteamAppId);
-        }
-
-        return "";
-    }
-
-    private static string BuildHomeCardMatchKey(string category, string value)
-    {
-        return $"{category}::{(value ?? "").Trim()}";
     }
 
     private bool ShouldBlockStartupForUnsupportedOperatingSystem()

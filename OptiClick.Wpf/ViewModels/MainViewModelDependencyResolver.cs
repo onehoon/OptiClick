@@ -241,6 +241,9 @@ public static class MainViewModelDependencyResolver
         var shellSectionsCompositionFactory = appDependencies.ShellSectionsCompositionFactory ?? new ShellSectionsCompositionFactory();
         var gameCardSelectionStateController = appDependencies.GameCardSelectionStateController ?? new GameCardSelectionStateController();
         var startupBackgroundTaskManager = appDependencies.StartupBackgroundTaskManager ?? new StartupBackgroundTaskManager();
+        var gameMasterCoverPrefetchCoordinator = new GameMasterCoverPrefetchCoordinator(
+            resolvedGameMasterCoverPrefetchService,
+            startupBackgroundTaskManager);
         var archiveReadinessRefreshCoordinator = appDependencies.ArchiveReadinessRefreshCoordinator ?? new ArchiveReadinessRefreshCoordinator();
         var archiveReadinessWarmupController = appDependencies.ArchiveReadinessWarmupController ?? new ArchiveReadinessWarmupController();
         var startupFlowCoordinator = appDependencies.StartupFlowCoordinator ?? new StartupFlowCoordinator();
@@ -308,7 +311,7 @@ public static class MainViewModelDependencyResolver
             ShellSectionsFactory = shellSectionsFactory,
             ShellSectionsCompositionFactory = shellSectionsCompositionFactory,
             GameCardSelectionStateController = gameCardSelectionStateController,
-            GameMasterCoverPrefetchService = resolvedGameMasterCoverPrefetchService,
+            GameMasterCoverPrefetchCoordinator = gameMasterCoverPrefetchCoordinator,
             CoverCacheBootstrapService = resolvedCoverCacheBootstrapService,
             StartupBackgroundTaskManager = startupBackgroundTaskManager,
             ArchiveReadinessRefreshCoordinator = archiveReadinessRefreshCoordinator,
