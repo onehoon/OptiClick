@@ -18,6 +18,7 @@ public sealed class ModPrecheckScanner : IModPrecheckScanner
         "d3d10.dll",
         "d3d9.dll",
         "dinput8.dll",
+        "opengl32.dll",
         "reshade64.dll",
         "specialk64.dll",
         "specialk32.dll",
@@ -26,6 +27,8 @@ public sealed class ModPrecheckScanner : IModPrecheckScanner
     ];
 
     private const string RenoDxPattern = "renodx*.addon";
+    private const string LennyModLoaderFileName = "lml.ini";
+    private const string ScriptHookRdr2FileName = "ScriptHookRDR2.dll";
 
     private readonly IInstallFileSystem _fileSystem;
     private readonly IBinaryOwnerDetector _ownerDetector;
@@ -62,12 +65,16 @@ public sealed class ModPrecheckScanner : IModPrecheckScanner
         }
 
         var renoDxPaths = ScanRenoDxAddons(normalizedTarget);
+        var lennyModLoaderPaths = ScanRootFiles(normalizedTarget, LennyModLoaderFileName);
+        var scriptHookRdr2Paths = ScanRootFiles(normalizedTarget, ScriptHookRdr2FileName);
         return new ModPrecheckState
         {
             ReShade = BuildModBinaryState(detectedPaths[ModConflictKinds.ReShade]),
             SpecialK = BuildModBinaryState(detectedPaths[ModConflictKinds.SpecialK]),
             UltimateAsiLoader = BuildModBinaryState(detectedPaths[ModConflictKinds.UltimateAsiLoader]),
-            RenoDx = BuildRenoDxState(renoDxPaths)
+            RenoDx = BuildModFilePresenceState(renoDxPaths),
+            LennyModLoader = BuildModFilePresenceState(lennyModLoaderPaths),
+            ScriptHookRdr2 = BuildModFilePresenceState(scriptHookRdr2Paths)
         };
     }
 
@@ -147,6 +154,27 @@ public sealed class ModPrecheckScanner : IModPrecheckScanner
         return NormalizeUniqueStrings(hits);
     }
 
+    private IReadOnlyList<string> ScanRootFiles(string targetPath, params string[] fileNames)
+    {
+        var hits = new List<string>();
+        foreach (var fileName in fileNames)
+        {
+            var normalizedName = (fileName ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(normalizedName))
+            {
+                continue;
+            }
+
+            var filePath = Path.Combine(targetPath, normalizedName);
+            if (_fileSystem.FileExists(filePath))
+            {
+                hits.Add(normalizedName);
+            }
+        }
+
+        return NormalizeUniqueStrings(hits);
+    }
+
     private static ModBinaryState BuildModBinaryState(IEnumerable<string> paths)
     {
         var names = NormalizeUniqueStrings(paths.Select(path => Path.GetFileName(path) ?? ""));
@@ -157,13 +185,13 @@ public sealed class ModPrecheckScanner : IModPrecheckScanner
         };
     }
 
-    private static RenoDxState BuildRenoDxState(IEnumerable<string> addonPaths)
+    private static ModFilePresenceState BuildModFilePresenceState(IEnumerable<string> relativePaths)
     {
-        var normalized = NormalizeUniqueStrings(addonPaths);
-        return new RenoDxState
+        var normalized = NormalizeUniqueStrings(relativePaths);
+        return new ModFilePresenceState
         {
             Detected = normalized.Count > 0,
-            AddonPaths = normalized
+            RelativePaths = normalized
         };
     }
 

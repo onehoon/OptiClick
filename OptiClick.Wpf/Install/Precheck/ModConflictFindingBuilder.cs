@@ -1,3 +1,4 @@
+using System.IO;
 using OptiClick.Wpf.Shell.Games;
 
 namespace OptiClick.Wpf.Install.Precheck;
@@ -26,32 +27,115 @@ public sealed class ModConflictFindingBuilder
             findings.Add(ual);
         }
 
-        var renoDx = BuildFinding(ModConflictKinds.RenoDx, state.RenoDx.AddonPaths);
+        var renoDx = BuildFinding(ModConflictKinds.RenoDx, state.RenoDx.RelativePaths);
         if (renoDx is not null)
         {
             findings.Add(renoDx);
         }
 
+        var lennyModLoader = BuildFinding(ModConflictKinds.LennyModLoader, state.LennyModLoader.RelativePaths);
+        if (lennyModLoader is not null)
+        {
+            findings.Add(lennyModLoader);
+        }
+
+        var scriptHookRdr2 = BuildFinding(ModConflictKinds.ScriptHookRdr2, state.ScriptHookRdr2.RelativePaths);
+        if (scriptHookRdr2 is not null)
+        {
+            findings.Add(scriptHookRdr2);
+        }
+
         return findings;
     }
 
-    public IReadOnlyList<ModConflictFinding> SuppressManagedSpecialKFindings(
+    public IReadOnlyList<ModConflictFinding> BuildNoticeFindings(
         IEnumerable<ModConflictFinding> findings,
-        ShellGameCardModel? game)
+        ShellGameCardModel? game,
+        string resolvedDllName)
     {
-        if (!IsSpecialKManagedByInstaller(game))
-        {
-            return findings.ToArray();
-        }
-
-        return findings
-            .Where(finding => !string.Equals((finding.Kind ?? "").Trim(), ModConflictKinds.SpecialK, StringComparison.OrdinalIgnoreCase))
+        return (findings ?? Array.Empty<ModConflictFinding>())
+            .Where(finding => !IsManagedInstallComponentFinding(finding, game, resolvedDllName))
             .ToArray();
     }
 
-    public bool IsSpecialKManagedByInstaller(ShellGameCardModel? game)
+    private static bool IsManagedInstallComponentFinding(
+        ModConflictFinding finding,
+        ShellGameCardModel? game,
+        string resolvedDllName)
     {
-        return !string.IsNullOrWhiteSpace(ShellGameInstallMetadataResolver.GetSpecialK(game));
+        var kind = (finding.Kind ?? "").Trim();
+        if (string.Equals(kind, ModConflictKinds.UltimateAsiLoader, StringComparison.OrdinalIgnoreCase))
+        {
+            return ShellGameInstallMetadataResolver.GetUltimateAsiLoader(game);
+        }
+
+        if (string.Equals(kind, ModConflictKinds.SpecialK, StringComparison.OrdinalIgnoreCase))
+        {
+            return IsSpecialKManagedByInstaller(finding, game, resolvedDllName);
+        }
+
+        return false;
+    }
+
+    private static bool IsSpecialKManagedByInstaller(
+        ModConflictFinding finding,
+        ShellGameCardModel? game,
+        string resolvedDllName)
+    {
+        var managedTargets = BuildSpecialKManagedTargets(game, resolvedDllName);
+        if (managedTargets.Count == 0)
+        {
+            return false;
+        }
+
+        return finding.Evidence
+            .Select(NormalizeRelativePath)
+            .Any(evidence => managedTargets.Contains(evidence));
+    }
+
+    private static HashSet<string> BuildSpecialKManagedTargets(ShellGameCardModel? game, string resolvedDllName)
+    {
+        var targets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var specialKValue = NormalizeRelativePath(ShellGameInstallMetadataResolver.GetSpecialK(game));
+        if (string.IsNullOrWhiteSpace(specialKValue))
+        {
+            return targets;
+        }
+
+        if (string.Equals(specialKValue, "plugins", StringComparison.OrdinalIgnoreCase))
+        {
+            var dllName = Path.GetFileName((resolvedDllName ?? "").Trim());
+            AddManagedDllTarget(targets, $"plugins/{dllName}");
+            return targets;
+        }
+
+        AddManagedDllTarget(targets, specialKValue);
+        return targets;
+    }
+
+    private static void AddManagedDllTarget(ISet<string> targets, string relativePath)
+    {
+        var normalized = NormalizeRelativePath(relativePath);
+        if (string.IsNullOrWhiteSpace(normalized)
+            || Path.IsPathRooted(normalized)
+            || normalized.Contains("../", StringComparison.Ordinal)
+            || !normalized.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        targets.Add(normalized);
+    }
+
+    private static string NormalizeRelativePath(string value)
+    {
+        var normalized = (value ?? "").Trim().Replace('\\', '/');
+        while (normalized.StartsWith("./", StringComparison.Ordinal))
+        {
+            normalized = normalized[2..];
+        }
+
+        return normalized.Trim('/');
     }
 
     private static ModConflictFinding? BuildFinding(string kind, IEnumerable<string> evidence)
@@ -87,14 +171,6 @@ public sealed class ModConflictNoticeBuilder
             return new ModConflictNoticeDecision
             {
                 Mode = ModConflictNoticeMode.None
-            };
-        }
-
-        if (normalizedFindings.All(finding => string.Equals(finding.Kind, ModConflictKinds.UltimateAsiLoader, StringComparison.OrdinalIgnoreCase)))
-        {
-            return new ModConflictNoticeDecision
-            {
-                Mode = ModConflictNoticeMode.EmptyForUltimateAsiOnly
             };
         }
 
@@ -168,6 +244,8 @@ public sealed class ModConflictNoticeBuilder
             ModConflictKinds.SpecialK => $"Special K: {evidence}",
             ModConflictKinds.UltimateAsiLoader => $"Ultimate ASI Loader: {evidence}",
             ModConflictKinds.RenoDx => $"RenoDX: {evidence}",
+            ModConflictKinds.LennyModLoader => $"Lenny's Mod Loader: {evidence}",
+            ModConflictKinds.ScriptHookRdr2 => $"Script Hook RDR2: {evidence}",
             _ => useKorean
                 ? $"MOD: {evidence}"
                 : $"MOD: {evidence}"

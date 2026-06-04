@@ -36,19 +36,20 @@ public sealed class BaseInstallPrecheckHandler : IInstallPrecheckHandler
         var modState = _modPrecheckScanner.Scan(targetPath);
         var conflictFindings = _findingBuilder.BuildFindings(modState);
         conflictFindings = _reFrameworkLegacyFindingService.AppendLegacyFinding(conflictFindings, targetPath, game);
-        conflictFindings = _findingBuilder.SuppressManagedSpecialKFindings(conflictFindings, game);
 
+        var preferredDll = string.IsNullOrWhiteSpace(request.PreferredDllName)
+            ? ShellGameInstallMetadataResolver.GetOptiScalerDllName(game)
+            : request.PreferredDllName.Trim();
         try
         {
-            var preferredDll = string.IsNullOrWhiteSpace(request.PreferredDllName)
-                ? ShellGameInstallMetadataResolver.GetOptiScalerDllName(game)
-                : request.PreferredDllName.Trim();
             var resolvedDllName = _proxyDllNameResolver.Resolve(targetPath, preferredDll);
+            var noticeFindings = _findingBuilder.BuildNoticeFindings(conflictFindings, game, resolvedDllName);
             return new InstallPrecheckResult
             {
                 Ok = true,
                 ResolvedDllName = resolvedDllName,
-                ConflictFindings = conflictFindings
+                ConflictFindings = conflictFindings,
+                NoticeFindings = noticeFindings
             };
         }
         catch (Exception ex)
@@ -63,12 +64,14 @@ public sealed class BaseInstallPrecheckHandler : IInstallPrecheckHandler
                 errorCode = ProxyDllNameResolver.InvalidPreferredProxyNameErrorCode;
             }
 
+            var noticeFindings = _findingBuilder.BuildNoticeFindings(conflictFindings, game, preferredDll);
             return new InstallPrecheckResult
             {
                 Ok = false,
                 RawErrorMessage = ex.Message,
                 ErrorCode = errorCode,
-                ConflictFindings = conflictFindings
+                ConflictFindings = conflictFindings,
+                NoticeFindings = noticeFindings
             };
         }
     }
