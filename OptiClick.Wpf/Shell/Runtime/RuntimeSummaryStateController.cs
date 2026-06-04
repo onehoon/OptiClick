@@ -33,10 +33,6 @@ public sealed class RuntimeSummaryStateController
             RuntimeContext = runtimeContext,
             DeviceText = presentation.DeviceText,
             GpuText = presentation.GpuText,
-            GpuLogoSource = presentation.GpuLogoSource,
-            GpuLogoWidth = presentation.GpuLogoWidth,
-            GpuLogoHeight = presentation.GpuLogoHeight,
-            GpuLogoMargin = presentation.GpuLogoMargin,
             HasSelectedGpu = selectedGpu is not null,
             SelectedGpuVendor = selectedGpu?.Vendor ?? "",
             SelectedGpuName = selectedGpu?.Name ?? ""

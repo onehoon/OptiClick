@@ -117,8 +117,7 @@ public static class MainViewModelDependencyResolver
 
         var dialogPresenter = appDependencies.DialogPresenter ?? new DialogPresenter(required.DialogService, appLogger);
         var remoteCatalogDialogGate = appDependencies.RemoteCatalogDialogGate ?? new OnceDialogGate();
-        var resolvedGpuVendorLogoResolver = appDependencies.GpuVendorLogoResolver ?? new GpuVendorLogoResolver();
-        var runtimeHeaderPresenter = appDependencies.RuntimeHeaderPresenter ?? new RuntimeHeaderPresenter(resolvedGpuVendorLogoResolver);
+        var runtimeHeaderPresenter = appDependencies.RuntimeHeaderPresenter ?? new RuntimeHeaderPresenter();
         var runtimeSummaryStateController = appDependencies.RuntimeSummaryStateController
                                             ?? new RuntimeSummaryStateController(deviceIdentityResolver, runtimeHeaderPresenter);
         var gpuSelectionCoordinator = runtimeDependencies.GpuSelectionCoordinator

@@ -1,4 +1,3 @@
-using System.Windows;
 using OptiClick.Wpf.Shell.Runtime;
 
 namespace OptiClick.Wpf.ViewModels.Shell;
@@ -7,10 +6,6 @@ public sealed class RuntimeHeaderViewModel : ViewModelBase
 {
     private string _deviceText = "";
     private string _gpuText = "";
-    private string _gpuLogoSource = "";
-    private double _gpuLogoWidth;
-    private double _gpuLogoHeight;
-    private Thickness _gpuLogoMargin = new(0);
 
     public string DeviceText
     {
@@ -62,39 +57,6 @@ public sealed class RuntimeHeaderViewModel : ViewModelBase
         }
     }
 
-    public string GpuLogoSource
-    {
-        get => _gpuLogoSource;
-        private set
-        {
-            if (SetProperty(ref _gpuLogoSource, value))
-            {
-                OnPropertyChanged(nameof(GpuLogoVisibility));
-            }
-        }
-    }
-
-    public Visibility GpuLogoVisibility =>
-        string.IsNullOrWhiteSpace(GpuLogoSource) ? Visibility.Collapsed : Visibility.Visible;
-
-    public double GpuLogoWidth
-    {
-        get => _gpuLogoWidth;
-        private set => SetProperty(ref _gpuLogoWidth, value);
-    }
-
-    public double GpuLogoHeight
-    {
-        get => _gpuLogoHeight;
-        private set => SetProperty(ref _gpuLogoHeight, value);
-    }
-
-    public Thickness GpuLogoMargin
-    {
-        get => _gpuLogoMargin;
-        private set => SetProperty(ref _gpuLogoMargin, value);
-    }
-
     public void ApplyText(string deviceText, string gpuText)
     {
         DeviceText = deviceText;
@@ -119,9 +81,5 @@ public sealed class RuntimeHeaderViewModel : ViewModelBase
 
         DeviceText = update.DeviceText;
         GpuText = update.GpuText;
-        GpuLogoSource = update.GpuLogoSource;
-        GpuLogoWidth = update.GpuLogoWidth;
-        GpuLogoHeight = update.GpuLogoHeight;
-        GpuLogoMargin = update.GpuLogoMargin;
     }
 }

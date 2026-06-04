@@ -722,14 +722,10 @@ public sealed partial class MainViewModel : ViewModelBase
             LogInfo(
                 MainViewModelLogCategories.Runtime,
                 $"selected_gpu vendor={NormalizeStatusCode(update.SelectedGpuVendor, MainViewModelStatusCodes.Unknown)} name=\"{NormalizeStatusCode(update.SelectedGpuName, MainViewModelStatusCodes.Unknown)}\" source={NormalizeStatusCode(_gpuSelectionCoordinator.SelectedGpuLogSource, "runtime_context_selected")}");
-            LogInfo(
-                MainViewModelLogCategories.Runtime,
-                $"gpu_logo source={(string.IsNullOrWhiteSpace(update.GpuLogoSource) ? "none" : NormalizeStatusCode(update.GpuLogoSource, "none"))}");
         }
         else
         {
             LogWarning(MainViewModelLogCategories.Runtime, "selected_gpu missing reason=no_supported_gpu");
-            LogWarning(MainViewModelLogCategories.Runtime, "gpu_logo skipped reason=selected_gpu_missing");
         }
     }
 

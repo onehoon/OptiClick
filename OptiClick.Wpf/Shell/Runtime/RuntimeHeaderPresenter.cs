@@ -1,33 +1,20 @@
 using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Localization;
-using OptiClick.Wpf.Services;
 
 namespace OptiClick.Wpf.Shell.Runtime;
 
 public sealed class RuntimeHeaderPresenter
 {
-    private readonly IGpuVendorLogoResolver _gpuVendorLogoResolver;
-
-    public RuntimeHeaderPresenter(IGpuVendorLogoResolver gpuVendorLogoResolver)
-    {
-        _gpuVendorLogoResolver = gpuVendorLogoResolver;
-    }
-
     public RuntimeHeaderPresentation Build(
         DeviceInfo? resolvedDevice,
         GpuInfo? selectedGpu,
         IReadOnlyList<GpuInfo>? gpus,
         AppStrings strings)
     {
-        var logoPresentation = _gpuVendorLogoResolver.ResolvePresentation(selectedGpu);
         return new RuntimeHeaderPresentation
         {
             DeviceText = BuildLocalizedDeviceSummary(resolvedDevice, strings),
-            GpuText = BuildLocalizedGpuSummary(selectedGpu, gpus, strings),
-            GpuLogoSource = logoPresentation.Source,
-            GpuLogoWidth = logoPresentation.Width,
-            GpuLogoHeight = logoPresentation.Height,
-            GpuLogoMargin = logoPresentation.Margin
+            GpuText = BuildLocalizedGpuSummary(selectedGpu, gpus, strings)
         };
     }
 
