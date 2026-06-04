@@ -22,10 +22,7 @@ public sealed class ScanOrchestratorFactory
                 DialogPresenter = input.DialogPresenter,
                 IsMultiGpuBlocked = input.IsMultiGpuBlocked,
                 BuildScanRequest = input.BuildScanRequest,
-                ApplyScanFlowResultAsync = input.ApplyScanFlowResultAsync,
-                RunWithStartupAutoSelectionSuppressedAsync = input.RunWithStartupAutoSelectionSuppressedAsync,
-                ApplyStartupNoGamesNavigation = input.ApplyStartupNoGamesNavigation,
-                ShowStartupNoSupportedGamesGuidanceAsync = input.ShowStartupNoSupportedGamesGuidanceAsync,
+                ScanResultCoordinator = input.ScanResultCoordinator,
                 ClearVisibleGameCards = input.ClearVisibleGameCards,
                 LogWarning = input.LogWarning
             });
@@ -41,10 +38,7 @@ public sealed record ScanOrchestratorFactoryInput
     public required DialogPresenter DialogPresenter { get; init; }
     public required Func<bool> IsMultiGpuBlocked { get; init; }
     public required Func<IReadOnlyList<string>, ScanFlowRequest> BuildScanRequest { get; init; }
-    public required Func<ScanFlowResult, CancellationToken, bool, Task> ApplyScanFlowResultAsync { get; init; }
-    public required Func<Func<CancellationToken, Task>, CancellationToken, Task> RunWithStartupAutoSelectionSuppressedAsync { get; init; }
-    public required Action<ScanFlowResult> ApplyStartupNoGamesNavigation { get; init; }
-    public required Func<ScanFlowResult, CancellationToken, Task> ShowStartupNoSupportedGamesGuidanceAsync { get; init; }
+    public required ScanResultCoordinator ScanResultCoordinator { get; init; }
     public required Action ClearVisibleGameCards { get; init; }
     public required Action<string> LogWarning { get; init; }
 }
