@@ -9,7 +9,7 @@
                  Title="{Binding WindowTitleWithVersion}"
                  Icon="pack://application:,,,/Assets/AppIcon.ico"
                  Width="1130"
-                 Height="655"
+                 Height="660"
                  MinWidth="920"
                  MinHeight="620"
                  WindowStartupLocation="CenterScreen"

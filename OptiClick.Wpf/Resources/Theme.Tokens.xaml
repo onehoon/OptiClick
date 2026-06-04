@@ -42,8 +42,6 @@
     <Color x:Key="CoverSelectedStrokeColor">#FFE0B75A</Color>
     <Color x:Key="CoverSelectedOverlayColor">#12FFFFFF</Color>
     <Color x:Key="CoverSelectedInnerStrokeColor">#F5F8FF</Color>
-    <Color x:Key="CoverHoverStrokeColor">#6EA8FF</Color>
-    <Color x:Key="CoverHoverOverlayColor">#14FFFFFF</Color>
     <Color x:Key="NavSelectedAccentColor">#8DD600</Color>
     <Color x:Key="NavSelectedBackgroundColor">#18223A</Color>
     <Color x:Key="NavSelectedBorderColor">#8DD600</Color>
