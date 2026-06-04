@@ -321,7 +321,7 @@ public sealed partial class MainViewModel : ViewModelBase
                     AppLogger = _appLogger,
                     StringsAccessor = () => Strings,
                     SelectedLanguageAccessor = () => SelectedLanguage,
-                    CurrentViewKindAccessor = () => CurrentViewKind,
+                    CurrentViewKindAccessor = () => Navigation.CurrentViewKind,
                     OpenGameSupportRequestCommandAccessor = () => _openGameSupportRequestCommand,
                     UpdateStartupPreparationState = UpdateStartupPreparationState
                 },
@@ -343,12 +343,9 @@ public sealed partial class MainViewModel : ViewModelBase
             });
 
         Home = sections.Home;
-        Home.PropertyChanged += OnHomeSectionPropertyChanged;
         SupportedGames = sections.SupportedGames;
         Scan = sections.Scan;
-        Scan.PropertyChanged += OnScanSectionPropertyChanged;
         Settings = sections.Settings;
-        Settings.PropertyChanged += OnSettingsSectionPropertyChanged;
 
         _selectedLanguage = _languageProvider.CurrentLanguage;
         RefreshLocalizedStrings();
@@ -361,43 +358,6 @@ public sealed partial class MainViewModel : ViewModelBase
             RuntimeHeader.DeviceText,
             RuntimeHeader.GpuText));
         ApplyUserSettings(_userSettingsController.Load());
-    }
-
-    private void OnHomeSectionPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        var propertyName = e.PropertyName ?? "";
-        if (string.IsNullOrWhiteSpace(propertyName))
-        {
-            OnPropertyChanged(nameof(Games));
-            OnPropertyChanged(nameof(SelectedGame));
-            OnPropertyChanged(nameof(SelectedGameAction));
-            OnPropertyChanged(nameof(HasGamesForHomeSelectionMessage));
-            return;
-        }
-
-        OnPropertyChanged(propertyName);
-    }
-
-    private void OnScanSectionPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        var propertyName = e.PropertyName ?? "";
-        if (string.IsNullOrWhiteSpace(propertyName))
-        {
-            OnPropertyChanged(nameof(ScanStatusText));
-            return;
-        }
-
-        OnPropertyChanged(propertyName);
-    }
-
-    private void OnSettingsSectionPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-    {
-        var propertyName = e.PropertyName ?? "";
-        if (string.IsNullOrWhiteSpace(propertyName)
-            || string.Equals(propertyName, nameof(SettingsSectionViewModel.SettingsStatusText), StringComparison.Ordinal))
-        {
-            OnPropertyChanged(nameof(SettingsStatusText));
-        }
     }
 
     private ObservableCollection<GameCardViewModel> Games => Home.Games;
@@ -413,7 +373,6 @@ public sealed partial class MainViewModel : ViewModelBase
     public ScanSectionViewModel Scan { get; }
     public SupportedGamesSectionViewModel SupportedGames { get; }
     public SettingsSectionViewModel Settings { get; }
-    private bool HasGamesForHomeSelectionMessage => Home.HasGamesForHomeSelectionMessage;
     public StartupPreparationState StartupPreparationState
     {
         get
@@ -430,11 +389,6 @@ public sealed partial class MainViewModel : ViewModelBase
         get => _strings;
         private set => SetProperty(ref _strings, value);
     }
-    public ShellViewKind CurrentViewKind => _navigationState.CurrentView;
-    public bool IsHomeViewActive => CurrentViewKind == ShellViewKind.Home;
-    public bool IsSupportedGamesWikiViewActive => CurrentViewKind == ShellViewKind.SupportedGamesWiki;
-    public bool IsScanViewActive => CurrentViewKind == ShellViewKind.Scan;
-    public bool IsSettingsViewActive => CurrentViewKind == ShellViewKind.Settings;
     public string WindowTitleWithVersion => $"{Strings.WindowTitle} v{GetCurrentAppVersion()}";
 
     private string SettingsStatusText
