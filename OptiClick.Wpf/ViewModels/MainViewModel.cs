@@ -36,6 +36,7 @@ using OptiClick.Wpf.Shell.Startup;
 using OptiClick.Wpf.Shell.Support;
 using OptiClick.Wpf.Shell.Update;
 using OptiClick.Wpf.Shell.Wiki;
+using OptiClick.Wpf.ViewModels.Sections;
 using OptiClick.Wpf.ViewModels.Sections.Home;
 using OptiClick.Wpf.ViewModels.Sections.Scan;
 using OptiClick.Wpf.ViewModels.Sections.Settings;
@@ -124,15 +125,6 @@ public sealed partial class MainViewModel : ViewModelBase
     private readonly AppLanguage _systemPreferredLanguage = AppLanguage.English;
     private AppLanguage _selectedLanguage = AppLanguage.English;
     private string _languagePreference = LanguagePreferenceAuto;
-    private string _deviceText = "";
-    private string _gpuText = "";
-    private string _gpuLogoSource = "";
-    private double _gpuLogoWidth;
-    private double _gpuLogoHeight;
-    private Thickness _gpuLogoMargin = new(0);
-    private bool _isFirstRunPreparationOverlayVisible;
-    private bool _isOperationOverlayVisible;
-    private string _operationOverlayMessage = "";
     private StartupPreparationState _startupPreparationState = StartupPreparationState.Empty;
 
     // Runtime state
@@ -256,12 +248,11 @@ public sealed partial class MainViewModel : ViewModelBase
         RuntimeHeader = new RuntimeHeaderViewModel();
         StartupOverlay = new StartupOverlayViewModel();
         ShellBusyState = new ShellBusyStateViewModel();
-        Home = new HomeSectionViewModel(
-            new HomeSectionViewModelOptions
+        var sections = new ShellSectionsFactory().Create(
+            new ShellSectionsFactoryInput
             {
                 StringsAccessor = () => Strings,
                 Games = games,
-                SelectedGameAction = new SelectedGameActionViewModel(),
                 SelectGameAsync = (game, cancellationToken) => SelectGameCardAsync(game, cancellationToken),
                 ShowDetails = ShowDetailsDialog,
                 ShowInstallAsync = ShowInstallDialogAsync,
@@ -272,22 +263,7 @@ public sealed partial class MainViewModel : ViewModelBase
                                       && !_isAppUpdateInProgress
                                       && !ShouldBlockStartupForUnsupportedOperatingSystem(),
                 OnSelectGameException = ex => LogError(MainViewModelLogCategories.Command, "select game command failed", ex),
-                OnShowInstallException = ex => LogError(MainViewModelLogCategories.Command, "install command failed", ex)
-            });
-        Home.PropertyChanged += OnHomeSectionPropertyChanged;
-        SupportedGames = new SupportedGamesSectionViewModel(
-            supportedGamesWikiMarkdownLoader,
-            _startupBackgroundTaskManager,
-            _appLogger,
-            () => SelectedLanguage,
-            () => Strings,
-            () => CurrentViewKind == ShellViewKind.SupportedGamesWiki,
-            () => OpenGameSupportRequestCommand,
-            UpdateStartupPreparationState);
-        Scan = new ScanSectionViewModel(
-            new ScanSectionViewModelOptions
-            {
-                StringsAccessor = () => Strings,
+                OnShowInstallException = ex => LogError(MainViewModelLogCategories.Command, "install command failed", ex),
                 DefaultFolders = defaultFolders,
                 AddedFolders = addedFolders,
                 ScanFolderListController = scanFolderListController,
@@ -305,31 +281,35 @@ public sealed partial class MainViewModel : ViewModelBase
                 ApplyStartupNoGamesNavigation = ApplyStartupNoGamesNavigation,
                 ShowStartupNoSupportedGamesGuidanceAsync = ShowStartupNoSupportedGamesGuidanceAsync,
                 ClearVisibleGameCards = () => ReplaceGameCards([]),
-                LogWarning = message => LogWarning(MainViewModelLogCategories.Scan, message),
+                LogScanWarning = message => LogWarning(MainViewModelLogCategories.Scan, message),
                 ShowHome = () => SetCurrentView(ShellViewKind.Home),
                 AddedFolderStatusBrush = AddedFolderStatusBrush,
                 MissingFolderStatusBrush = MissingFolderStatusBrush,
-                OnCommandException = ex => LogError(MainViewModelLogCategories.Command, "save and scan command failed", ex)
-            });
-        Scan.PropertyChanged += OnScanSectionPropertyChanged;
-        var settingsActionCoordinator = new SettingsActionCoordinator(
-            _dialogPresenter,
-            _localDataPathProvider,
-            _appLogger);
-        Settings = new SettingsSectionViewModel(
-            new SettingsSectionViewModelOptions
-            {
-                StringsAccessor = () => Strings,
+                OnScanCommandException = ex => LogError(MainViewModelLogCategories.Command, "save and scan command failed", ex),
+                SupportedGamesWikiMarkdownLoader = supportedGamesWikiMarkdownLoader,
+                StartupBackgroundTaskManager = _startupBackgroundTaskManager,
+                AppLogger = _appLogger,
+                SelectedLanguageAccessor = () => SelectedLanguage,
+                CurrentViewKindAccessor = () => CurrentViewKind,
+                OpenGameSupportRequestCommandAccessor = () => OpenGameSupportRequestCommand,
+                UpdateStartupPreparationState = UpdateStartupPreparationState,
+                LocalDataPathProvider = _localDataPathProvider,
                 IsKoreanUi = () => IsKoreanUi,
                 SettingsLanguageOptions = settingsLanguageOptions,
                 InitialSettingsLanguageOption = LanguageOptionAuto,
                 ApplySettingsLanguageOption = ApplySettingsLanguageOption,
-                SettingsActionCoordinator = settingsActionCoordinator,
                 IsInstallExecutionInProgress = () => _isInstallExecutionInProgress,
-                OpenLogFolderCommand = new RelayCommand(_ => OpenLogFolder()),
-                OpenSupportRequestCommand = new RelayCommand(_ => OpenSupportRequest()),
+                OpenLogFolder = OpenLogFolder,
+                OpenSupportRequest = OpenSupportRequest,
                 OnRefreshInstallFilesException = ex => LogError(MainViewModelLogCategories.Command, "reset app cache command failed", ex)
             });
+
+        Home = sections.Home;
+        Home.PropertyChanged += OnHomeSectionPropertyChanged;
+        SupportedGames = sections.SupportedGames;
+        Scan = sections.Scan;
+        Scan.PropertyChanged += OnScanSectionPropertyChanged;
+        Settings = sections.Settings;
         Settings.PropertyChanged += OnSettingsSectionPropertyChanged;
         InitializeCommandSet();
 
@@ -341,8 +321,8 @@ public sealed partial class MainViewModel : ViewModelBase
             Strings,
             SettingsStatusText,
             ScanStatusText,
-            _deviceText,
-            _gpuText));
+            RuntimeHeader.DeviceText,
+            RuntimeHeader.GpuText));
         ApplyUserSettings(_userSettingsController.Load());
     }
 
@@ -398,6 +378,7 @@ public sealed partial class MainViewModel : ViewModelBase
     public RuntimeHeaderViewModel RuntimeHeader { get; }
     public StartupOverlayViewModel StartupOverlay { get; }
     public ShellBusyStateViewModel ShellBusyState { get; }
+    public ShellCommandsViewModel Commands { get; private set; } = null!;
     public HomeSectionViewModel Home { get; }
     public ScanSectionViewModel Scan { get; }
     public SupportedGamesSectionViewModel SupportedGames { get; }
@@ -419,90 +400,6 @@ public sealed partial class MainViewModel : ViewModelBase
         get => _strings;
         private set => SetProperty(ref _strings, value);
     }
-    public string DeviceText
-    {
-        get => _deviceText;
-        private set
-        {
-            if (SetProperty(ref _deviceText, value))
-            {
-                OnPropertyChanged(nameof(DeviceGpuInlineText));
-                RuntimeHeader.ApplyText(DeviceText, GpuText);
-            }
-        }
-    }
-
-    public string GpuText
-    {
-        get => _gpuText;
-        private set
-        {
-            if (SetProperty(ref _gpuText, value))
-            {
-                OnPropertyChanged(nameof(DeviceGpuInlineText));
-                RuntimeHeader.ApplyText(DeviceText, GpuText);
-            }
-        }
-    }
-
-    public string DeviceGpuInlineText
-    {
-        get
-        {
-            var device = (DeviceText ?? "").Trim();
-            var gpu = (GpuText ?? "").Trim();
-
-            if (string.IsNullOrWhiteSpace(device) && string.IsNullOrWhiteSpace(gpu))
-            {
-                return "";
-            }
-
-            if (string.IsNullOrWhiteSpace(device))
-            {
-                return gpu;
-            }
-
-            if (string.IsNullOrWhiteSpace(gpu))
-            {
-                return device;
-            }
-
-            return $"{device} | {gpu}";
-        }
-    }
-
-    public string GpuLogoSource
-    {
-        get => _gpuLogoSource;
-        private set
-        {
-            if (SetProperty(ref _gpuLogoSource, value))
-            {
-                OnPropertyChanged(nameof(GpuLogoVisibility));
-            }
-        }
-    }
-
-    public Visibility GpuLogoVisibility =>
-        string.IsNullOrWhiteSpace(GpuLogoSource) ? Visibility.Collapsed : Visibility.Visible;
-
-    public double GpuLogoWidth
-    {
-        get => _gpuLogoWidth;
-        private set => SetProperty(ref _gpuLogoWidth, value);
-    }
-
-    public double GpuLogoHeight
-    {
-        get => _gpuLogoHeight;
-        private set => SetProperty(ref _gpuLogoHeight, value);
-    }
-
-    public Thickness GpuLogoMargin
-    {
-        get => _gpuLogoMargin;
-        private set => SetProperty(ref _gpuLogoMargin, value);
-    }
     public ShellViewKind CurrentViewKind => _navigationState.CurrentView;
     public bool IsHomeViewActive => CurrentViewKind == ShellViewKind.Home;
     public bool IsSupportedGamesWikiViewActive => CurrentViewKind == ShellViewKind.SupportedGamesWiki;
@@ -517,45 +414,6 @@ public sealed partial class MainViewModel : ViewModelBase
     public Visibility SupportedGamesWikiStatusVisibility => SupportedGames.SupportedGamesWikiStatusVisibility;
     public Visibility SupportedGamesWikiLoadingVisibility => SupportedGames.SupportedGamesWikiLoadingVisibility;
     public Visibility SupportedGamesWikiEmptyVisibility => SupportedGames.SupportedGamesWikiEmptyVisibility;
-    public Visibility FirstRunPreparationOverlayVisibility =>
-        IsFirstRunPreparationOverlayVisible ? Visibility.Visible : Visibility.Collapsed;
-    public bool IsFirstRunPreparationOverlayVisible
-    {
-        get => _isFirstRunPreparationOverlayVisible;
-        private set
-        {
-            if (SetProperty(ref _isFirstRunPreparationOverlayVisible, value))
-            {
-                OnPropertyChanged(nameof(FirstRunPreparationOverlayVisibility));
-                StartupOverlay.ApplyFirstRunPreparationOverlay(value);
-            }
-        }
-    }
-    public Visibility OperationOverlayVisibility =>
-        IsOperationOverlayVisible ? Visibility.Visible : Visibility.Collapsed;
-    public bool IsOperationOverlayVisible
-    {
-        get => _isOperationOverlayVisible;
-        private set
-        {
-            if (SetProperty(ref _isOperationOverlayVisible, value))
-            {
-                OnPropertyChanged(nameof(OperationOverlayVisibility));
-                ShellBusyState.Apply(IsOperationOverlayVisible, OperationOverlayMessage);
-            }
-        }
-    }
-    public string OperationOverlayMessage
-    {
-        get => _operationOverlayMessage;
-        private set
-        {
-            if (SetProperty(ref _operationOverlayMessage, value))
-            {
-                ShellBusyState.Apply(IsOperationOverlayVisible, OperationOverlayMessage);
-            }
-        }
-    }
     public string SupportedGamesWikiEmptyText => SupportedGames.SupportedGamesWikiEmptyText;
     public bool IsSupportedGamesWikiLoading => SupportedGames.IsSupportedGamesWikiLoading;
     public Visibility DefaultFoldersEmptyVisibility => Scan.DefaultFoldersEmptyVisibility;
