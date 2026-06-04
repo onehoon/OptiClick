@@ -4,6 +4,7 @@ using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Shell.Dialogs;
 using OptiClick.Wpf.Shell.Flow;
 using OptiClick.Wpf.Shell.Navigation;
+using OptiClick.Wpf.ViewModels;
 
 namespace OptiClick.Wpf.ViewModels.Sections.Scan;
 
