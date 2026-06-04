@@ -83,7 +83,6 @@ public sealed partial class MainViewModel : ViewModelBase
             RefreshLocalizedStrings();
             SelectedGameAction.ApplyLocalization(Strings);
             RefreshSupportedGamesAfterLanguageChange();
-            OnPropertyChanged(nameof(SupportedGamesWikiEmptyText));
             ApplyLocalizationStateUpdate(_localizationStateController.BuildRefreshState(preferredLanguage, Strings));
         }
 
