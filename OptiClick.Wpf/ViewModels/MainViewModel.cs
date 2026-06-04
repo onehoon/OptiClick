@@ -49,7 +49,6 @@ namespace OptiClick.Wpf.ViewModels;
 
 public sealed partial class MainViewModel : ViewModelBase
 {
-    private const int MaxSupportedGpuCount = 2;
     private const string LanguagePreferenceAuto = "auto";
     private const string LanguagePreferenceKorean = "ko";
     private const string LanguagePreferenceEnglish = "en";
@@ -167,10 +166,7 @@ public sealed partial class MainViewModel : ViewModelBase
         _mockDataProvider = resolved.MockDataProvider;
         _operatingSystemSupportPolicy = resolved.OperatingSystemSupportPolicy;
         _shellGameCardViewModelFactory = resolved.ShellGameCardViewModelFactory;
-        var runtimeContextFlowController = resolved.RuntimeContextFlowController;
         _deviceIdentityRulesFlowController = resolved.DeviceIdentityRulesFlowController;
-        var runtimeCatalogFlowController = resolved.RuntimeCatalogFlowController;
-        var runtimeEndpointStatusPresenter = resolved.RuntimeEndpointStatusPresenter;
         _gpuBundleManifestClient = resolved.GpuBundleManifestClient;
         _gpuBundleManifestRuleResolver = resolved.GpuBundleManifestRuleResolver;
         _gameSelectionFlowController = resolved.GameSelectionFlowController;
@@ -209,7 +205,7 @@ public sealed partial class MainViewModel : ViewModelBase
         var supportedGamesWikiMarkdownLoader = resolved.SupportedGamesWikiMarkdownLoader;
         _busyStateApplier = resolved.BusyStateApplier;
         _appUpdateFlowController = resolved.AppUpdateFlowController;
-        _appUpdateCoordinator = new AppUpdateCoordinator(_appUpdateFlowController);
+        _appUpdateCoordinator = resolved.AppUpdateCoordinator;
         _gameDetailsDialogPresenter = resolved.GameDetailsDialogPresenter;
         _gameCardSelectionStateController = resolved.GameCardSelectionStateController;
         _gameMasterCoverPrefetchService = resolved.GameMasterCoverPrefetchService;
@@ -218,20 +214,10 @@ public sealed partial class MainViewModel : ViewModelBase
         _archiveReadinessRefreshCoordinator = resolved.ArchiveReadinessRefreshCoordinator;
         _archiveReadinessWarmupController = resolved.ArchiveReadinessWarmupController;
         _startupFlowCoordinator = resolved.StartupFlowCoordinator;
-        _selectionPopupCoordinator = new SelectionPopupCoordinator(
-            _gameSelectionFlowController,
-            _dialogPresenter,
-            _flowLogDispatcher,
-            _appLogger);
-        _gpuSelectionCoordinator = new GpuSelectionCoordinator(MaxSupportedGpuCount);
-        _runtimeContextCoordinator = new RuntimeContextCoordinator(
-            runtimeContextFlowController,
-            _runtimeSummaryStateController,
-            _flowLogDispatcher,
-            _gpuSelectionCoordinator);
-        _runtimeCatalogCoordinator = new RuntimeCatalogCoordinator(
-            runtimeCatalogFlowController,
-            runtimeEndpointStatusPresenter);
+        _selectionPopupCoordinator = resolved.SelectionPopupCoordinator;
+        _gpuSelectionCoordinator = resolved.GpuSelectionCoordinator;
+        _runtimeContextCoordinator = resolved.RuntimeContextCoordinator;
+        _runtimeCatalogCoordinator = resolved.RuntimeCatalogCoordinator;
         DialogHost = resolved.DialogHost;
         InstallManagementDialogHost = resolved.InstallManagementDialogHost;
         var games = seedMockGameCards
@@ -250,8 +236,8 @@ public sealed partial class MainViewModel : ViewModelBase
         StartupOverlay = resolved.ShellChrome.StartupOverlay;
         ShellBusyState = resolved.ShellChrome.ShellBusyState;
         InitializeCommandSet();
-        var scanResultCoordinator = new ScanResultCoordinator(
-            new ScanResultCoordinatorOptions
+        var scanResultCoordinator = resolved.ScanResultCoordinatorFactory.Create(
+            new ScanResultCoordinatorFactoryInput
             {
                 FlowLogDispatcher = _flowLogDispatcher,
                 FlowLogFallbackCategory = MainViewModelLogCategories.Scan,
