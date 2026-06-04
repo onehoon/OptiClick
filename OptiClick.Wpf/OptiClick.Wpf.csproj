@@ -10,8 +10,6 @@
     <Resource Include="Assets\Covers\default-cover.png" />
     <Resource Include="Assets\AppIcon.png" />
     <Resource Include="Assets\AppIcon.ico" />
-    <Resource Include="Assets\Logos\*.png" />
-    <Resource Include="Assets\Logos\*.webp" />
   </ItemGroup>
 
   <ItemGroup>

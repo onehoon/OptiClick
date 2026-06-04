@@ -48,8 +48,7 @@ public sealed class MainWindowComposition
         var flowLogDispatcher = new FlowLogDispatcher(app.AppLogger);
         var flowRequestFactory = new MainViewModelFlowRequestFactory();
         var resultApplier = new MainViewModelResultApplier();
-        var gpuVendorLogoResolver = new GpuVendorLogoResolver();
-        var runtimeHeaderPresenter = new RuntimeHeaderPresenter(gpuVendorLogoResolver);
+        var runtimeHeaderPresenter = new RuntimeHeaderPresenter();
         var scanFolderListController = new ScanFolderListController(scan.ScanFolderManifestStore);
         var scanFolderDialogPresenter = new ScanFolderDialogPresenter();
         var scanFolderActionController = new ScanFolderActionController(
@@ -200,7 +199,6 @@ public sealed class MainWindowComposition
                 AppStringsProvider = app.StringsProvider,
                 UserSettingsStore = app.UserSettingsStore,
                 FirstRunStateStore = app.FirstRunStateStore,
-                GpuVendorLogoResolver = gpuVendorLogoResolver,
                 DialogHost = app.DialogHost,
                 InstallManagementDialogHost = app.InstallManagementDialogHost,
                 InstallManagementDialogService = app.InstallManagementDialogService,

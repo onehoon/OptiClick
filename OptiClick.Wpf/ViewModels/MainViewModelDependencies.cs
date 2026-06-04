@@ -119,7 +119,6 @@ public sealed record MainViewModelAppDependencies
     public IAppStringsProvider? AppStringsProvider { get; init; }
     public IAppUserSettingsStore? UserSettingsStore { get; init; }
     public IFirstRunStateStore? FirstRunStateStore { get; init; }
-    public IGpuVendorLogoResolver? GpuVendorLogoResolver { get; init; }
     public DialogHostViewModel? DialogHost { get; init; }
     public InstallManagementDialogHostViewModel? InstallManagementDialogHost { get; init; }
     public IInstallManagementDialogService? InstallManagementDialogService { get; init; }

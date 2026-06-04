@@ -33,11 +33,6 @@ namespace OptiClick.Wpf.Composition;
 
 public sealed partial class AppCompositionRoot
 {
-    public IGpuVendorLogoResolver CreateGpuVendorLogoResolver()
-    {
-        return new GpuVendorLogoResolver();
-    }
-
     public IDeviceIdentityRulesParser CreateDeviceIdentityRulesParser()
     {
         return new DeviceIdentityRulesParser();
