@@ -1,4 +1,5 @@
 using System.IO;
+using StageStatuses = OptiClick.Wpf.Install.Archives.ArchivePreparationStageStatuses;
 
 namespace OptiClick.Wpf.Install.Archives;
 
@@ -65,12 +66,12 @@ public sealed class ExtractedArchivePayloadCacheService
             && !IsUpdateNeeded(assetKey, manifestVersion))
         {
             CleanupRetention(request, cacheRoot, cacheEntryName);
-            return ReadyState(filename, finalEntryDir, CachedStatus());
+            return ReadyState(filename, finalEntryDir, StageStatuses.CachedStatus());
         }
 
         if (string.IsNullOrWhiteSpace(url) || string.IsNullOrWhiteSpace(filename))
         {
-            stageStatus = StageStatus("missing_metadata", "skipped", "skipped", "missing", "skipped");
+            stageStatus = StageStatuses.MissingMetadata();
             return TryResolveFallback(request, cacheRoot, cacheEntryName, filename, stageStatus, out var fallback)
                 ? fallback
                 : MissingMetadataState(request.AssetLabel, filename, stageStatus);
@@ -95,13 +96,13 @@ public sealed class ExtractedArchivePayloadCacheService
                 entry.Sha256);
             if (!download.IsSuccess)
             {
-                stageStatus = StageStatus("download", Failed(download.ErrorCode), "skipped", "skipped", "skipped");
+                stageStatus = StageStatuses.DownloadFailed(download.ErrorCode);
                 return TryResolveFallback(request, cacheRoot, cacheEntryName, filename, stageStatus, out var fallback)
                     ? fallback
                     : FailedState(filename, download.ErrorCode, stageStatus);
             }
 
-            stageStatus = StageStatus("download", "ok", ResolveShaStatus(download), "pending", "pending");
+            stageStatus = StageStatuses.DownloadSucceeded(download);
             var materializeError = await MaterializePayloadAsync(
                 downloadPath,
                 stagingEntryDir,
@@ -110,7 +111,7 @@ public sealed class ExtractedArchivePayloadCacheService
                 cancellationToken);
             if (!string.IsNullOrWhiteSpace(materializeError))
             {
-                stageStatus = stageStatus with { Folder = Failed(materializeError), Json = "skipped" };
+                stageStatus = StageStatuses.WithFolderFailure(stageStatus, materializeError);
                 return TryResolveFallback(request, cacheRoot, cacheEntryName, filename, stageStatus, out var fallback)
                     ? fallback
                     : FailedState(filename, materializeError, stageStatus);
@@ -118,14 +119,14 @@ public sealed class ExtractedArchivePayloadCacheService
 
             if (!request.Validator.IsValid(stagingEntryDir, out var validationError))
             {
-                stageStatus = stageStatus with { Folder = Failed(validationError), Json = "skipped" };
+                stageStatus = StageStatuses.WithFolderFailure(stageStatus, validationError);
                 return TryResolveFallback(request, cacheRoot, cacheEntryName, filename, stageStatus, out var fallback)
                     ? fallback
                     : FailedState(filename, validationError, stageStatus);
             }
 
             Promote(stagingEntryDir, finalEntryDir, backupEntryDir);
-            stageStatus = stageStatus with { Folder = "ok" };
+            stageStatus = StageStatuses.WithFolderOk(stageStatus);
             CleanupRetention(request, cacheRoot, cacheEntryName);
             _manifestStore.WriteEntry(
                 assetKey,
@@ -133,7 +134,7 @@ public sealed class ExtractedArchivePayloadCacheService
                 filename,
                 PayloadCacheKind,
                 cacheEntryName);
-            stageStatus = stageStatus with { Json = "ok" };
+            stageStatus = StageStatuses.WithJsonOk(stageStatus);
 
             return ReadyState(filename, finalEntryDir, stageStatus);
         }
@@ -144,7 +145,7 @@ public sealed class ExtractedArchivePayloadCacheService
         catch
         {
             RestoreBackup(finalEntryDir, backupEntryDir);
-            stageStatus = EnsureFailureStatus(stageStatus, "prepare_failed");
+            stageStatus = StageStatuses.EnsureFailure(stageStatus, "prepare_failed");
             return TryResolveFallback(request, cacheRoot, cacheEntryName, filename, stageStatus, out var fallback)
                 ? fallback
                 : FailedState(filename, "prepare_failed", stageStatus);
@@ -216,7 +217,7 @@ public sealed class ExtractedArchivePayloadCacheService
                 continue;
             }
 
-            state = ReadyState(filename, candidate, FallbackStatus(stageStatus));
+            state = ReadyState(filename, candidate, StageStatuses.Fallback(stageStatus));
             return true;
         }
 
@@ -415,81 +416,6 @@ public sealed class ExtractedArchivePayloadCacheService
             ErrorMessage = error,
             StageStatus = stageStatus
         };
-    }
-
-    private static ArchivePreparationStageStatus CachedStatus()
-    {
-        return StageStatus("cache", "cached", "cached", "cached", "ok");
-    }
-
-    private static ArchivePreparationStageStatus FallbackStatus(ArchivePreparationStageStatus status)
-    {
-        return status with
-        {
-            Source = "fallback",
-            Folder = string.IsNullOrWhiteSpace(status.Folder) || string.Equals(status.Folder, "skipped", StringComparison.OrdinalIgnoreCase)
-                ? "fallback"
-                : status.Folder,
-            Json = string.IsNullOrWhiteSpace(status.Json) ? "skipped" : status.Json
-        };
-    }
-
-    private static ArchivePreparationStageStatus EnsureFailureStatus(
-        ArchivePreparationStageStatus status,
-        string errorCode)
-    {
-        if (string.IsNullOrWhiteSpace(status.Source))
-        {
-            return StageStatus("unknown", "skipped", "skipped", Failed(errorCode), "skipped");
-        }
-
-        if (string.Equals(status.Json, "pending", StringComparison.OrdinalIgnoreCase))
-        {
-            return status with { Json = Failed(errorCode) };
-        }
-
-        if (string.Equals(status.Folder, "pending", StringComparison.OrdinalIgnoreCase)
-            || string.IsNullOrWhiteSpace(status.Folder))
-        {
-            return status with { Folder = Failed(errorCode), Json = string.IsNullOrWhiteSpace(status.Json) ? "skipped" : status.Json };
-        }
-
-        return status;
-    }
-
-    private static ArchivePreparationStageStatus StageStatus(
-        string source,
-        string download,
-        string sha,
-        string folder,
-        string json)
-    {
-        return new ArchivePreparationStageStatus
-        {
-            Source = source,
-            Download = download,
-            Sha = sha,
-            Folder = folder,
-            Json = json
-        };
-    }
-
-    private static string Failed(string code)
-    {
-        return string.IsNullOrWhiteSpace(code) ? "failed" : $"failed:{code.Trim()}";
-    }
-
-    private static string ResolveShaStatus(ArchiveDownloadResult download)
-    {
-        if (download is null || string.IsNullOrWhiteSpace(download.VerificationSource))
-        {
-            return "ok";
-        }
-
-        return string.Equals(download.VerificationSource, "not_configured", StringComparison.OrdinalIgnoreCase)
-               || string.Equals(download.VerificationSource, "github_digest_unavailable", StringComparison.OrdinalIgnoreCase)
-            ? "not_configured"
-            : "ok";
     }
 
     private static void TryMoveDirectory(string source, string destination)
