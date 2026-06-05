@@ -311,16 +311,33 @@ public sealed partial class MainViewModel : ViewModelBase
         var result = await _archiveReadinessFlowController.RefreshAsync(
             new ArchiveReadinessFlowRequest
             {
-                ModuleDownloadLinks = _runtimeShellState.ModuleDownloadLinks
+                ModuleDownloadLinks = _runtimeShellState.ModuleDownloadLinks,
+                OptiScalerVariantCatalog = _runtimeShellState.LatestOptiScalerVariantCatalog,
+                PreferredOptiScalerVariant = _optiScalerVariantPreference
             },
             cancellationToken);
         _flowLogDispatcher.Dispatch(result.Logs, MainViewModelLogCategories.Install);
         if (result.DidRun)
         {
             _runtimeShellState.SetArchiveReadiness(result.Readiness);
+            ApplyOptiScalerVariantSyncResult(result.OptiScalerVariantSync);
         }
 
         return result;
+    }
+
+    private void ApplyOptiScalerVariantSyncResult(OptiScalerVariantSyncResult? result)
+    {
+        _runtimeShellState.ApplyOptiScalerVariantSync(result);
+        Settings.ApplyOptiScalerVariantOptions(
+            _runtimeShellState.LatestOptiScalerVariantSelectionOptions,
+            _runtimeShellState.EffectiveOptiScalerVariant);
+
+        if (result?.ShouldPersistEffectiveVariant == true)
+        {
+            _optiScalerVariantPreference = NormalizeOptiScalerVariantPreference(result.EffectiveVariant);
+            SaveUserSettings();
+        }
     }
 
     private async Task RefreshSelectionAfterSuccessfulInstallAsync(CancellationToken cancellationToken)
@@ -373,12 +390,14 @@ public sealed partial class MainViewModel : ViewModelBase
 
         if (update.RuntimeData is not null
             || update.RemoteCatalog is not null
-            || update.ModuleDownloadLinks is not null)
+            || update.ModuleDownloadLinks is not null
+            || update.OptiScalerVariantCatalog is not null)
         {
             _runtimeShellState.ApplyRemoteCatalog(
                 update.RuntimeData,
                 update.RemoteCatalog,
-                update.ModuleDownloadLinks);
+                update.ModuleDownloadLinks,
+                update.OptiScalerVariantCatalog);
         }
 
         if (update.MatchByGameId is { } matchByGameId) _scannedGameState.ReplaceMatches(matchByGameId);

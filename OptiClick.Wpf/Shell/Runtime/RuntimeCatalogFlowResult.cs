@@ -14,6 +14,7 @@ public sealed record RuntimeCatalogFlowResult
     public ShellGameCatalog Catalog { get; init; } = ShellGameCatalog.Empty;
     public IReadOnlyDictionary<string, object?> ModuleDownloadLinks { get; init; }
         = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+    public OptiScalerVariantCatalog OptiScalerVariantCatalog { get; init; } = OptiScalerVariantCatalog.Empty;
     public string SettingsStatusText { get; init; } = "";
     public string ScanStatusText { get; init; } = "";
     public AppDialogRequest? DialogRequest { get; init; }

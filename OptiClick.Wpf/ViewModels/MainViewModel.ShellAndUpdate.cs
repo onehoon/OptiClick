@@ -69,6 +69,7 @@ public sealed partial class MainViewModel : ViewModelBase
         var safeSettings = settings ?? new AppUserSettings();
 
         _languagePreference = NormalizeLanguagePreference(safeSettings.LanguagePreference);
+        _optiScalerVariantPreference = NormalizeOptiScalerVariantPreference(safeSettings.OptiScalerVariantPreference);
         var preferredLanguage = _languagePreference switch
         {
             LanguagePreferenceKorean => AppLanguage.Korean,
@@ -89,7 +90,9 @@ public sealed partial class MainViewModel : ViewModelBase
         Settings.ApplyLoadedSettings(ResolveLanguageOptionFromState(_languagePreference));
     }
 
-    private void SaveUserSettings() => _userSettingsController.SavePreferencesNonBlocking(_languagePreference);
+    private void SaveUserSettings() => _userSettingsController.SavePreferencesNonBlocking(
+        _languagePreference,
+        _optiScalerVariantPreference);
 
     public void FlushPendingUserSettingsSave() => _userSettingsController.FlushPendingSaves();
 

@@ -3,6 +3,7 @@ using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Shell.RuntimeData;
 using OptiClick.Wpf.Shell.Flow;
 using OptiClick.Wpf.Shell.Games;
+using OptiClick.Wpf.Shell.Runtime;
 using OptiClick.Wpf.Shell.Scan;
 
 namespace OptiClick.Wpf.ViewModels;
@@ -20,6 +21,7 @@ public sealed record MainViewModelStateUpdate
     public RemoteRuntimeData? RuntimeData { get; init; }
     public ShellGameCatalog? RemoteCatalog { get; init; }
     public IReadOnlyDictionary<string, object?>? ModuleDownloadLinks { get; init; }
+    public OptiScalerVariantCatalog? OptiScalerVariantCatalog { get; init; }
 
     public bool ShouldResetRemoteCatalogDialogGate { get; init; }
     public bool ShouldRefreshVisibleGames { get; init; }

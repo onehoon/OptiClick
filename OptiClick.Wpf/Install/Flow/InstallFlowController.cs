@@ -185,7 +185,7 @@ public sealed class InstallFlowController
         }
         logs.Add(Info(
             "install-context",
-            $"payload={NormalizeStatusCode(context.OptiScalerPayloadDirectory, "missing")} final_dll={NormalizeStatusCode(context.FinalDllName, "missing")} preferred_dll={NormalizeStatusCode(preferredProxyName, "missing")} fsr4_required={FormatBool(context.Fsr4Required)} fsr4_source={NormalizeStatusCode(context.Fsr4SourceArchive, "missing")} module_links={context.ModuleDownloadLinks.Count}"));
+            $"optiscaler_variant={NormalizeStatusCode(context.OptiScalerVariant, "missing")} optiscaler_version={NormalizeStatusCode(context.OptiScalerVersion, "missing")} optiscaler_display_version={NormalizeStatusCode(context.OptiScalerDisplayVersion, "missing")} payload={NormalizeStatusCode(context.OptiScalerPayloadDirectory, "missing")} final_dll={NormalizeStatusCode(context.FinalDllName, "missing")} preferred_dll={NormalizeStatusCode(preferredProxyName, "missing")} fsr4_required={FormatBool(context.Fsr4Required)} fsr4_source={NormalizeStatusCode(context.Fsr4SourceArchive, "missing")} module_links={context.ModuleDownloadLinks.Count}"));
         ComponentInstallResult installResult;
         try
         {

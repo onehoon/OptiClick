@@ -28,32 +28,46 @@ public sealed class UserSettingsController
     public void SavePreferences()
     {
         var current = Load();
-        SavePreferences(current.LanguagePreference);
+        SavePreferences(current.LanguagePreference, current.OptiScalerVariantPreference);
     }
 
     public void SavePreferences(string languagePreference)
     {
+        var current = Load();
+        SavePreferences(languagePreference, current.OptiScalerVariantPreference);
+    }
+
+    public void SavePreferences(string languagePreference, string optiScalerVariantPreference)
+    {
         _userSettingsStore.Save(new AppUserSettings
         {
             Version = 1,
-            LanguagePreference = string.IsNullOrWhiteSpace(languagePreference) ? "auto" : languagePreference
+            LanguagePreference = string.IsNullOrWhiteSpace(languagePreference) ? "auto" : languagePreference,
+            OptiScalerVariantPreference = string.IsNullOrWhiteSpace(optiScalerVariantPreference) ? "stable" : optiScalerVariantPreference
         });
     }
 
     public void SavePreferencesNonBlocking()
     {
         var current = Load();
-        SavePreferencesNonBlocking(current.LanguagePreference);
+        SavePreferencesNonBlocking(current.LanguagePreference, current.OptiScalerVariantPreference);
     }
 
     public void SavePreferencesNonBlocking(string languagePreference)
+    {
+        var current = Load();
+        SavePreferencesNonBlocking(languagePreference, current.OptiScalerVariantPreference);
+    }
+
+    public void SavePreferencesNonBlocking(string languagePreference, string optiScalerVariantPreference)
     {
         lock (_pendingSaveSync)
         {
             _pendingSettings = new AppUserSettings
             {
                 Version = 1,
-                LanguagePreference = string.IsNullOrWhiteSpace(languagePreference) ? "auto" : languagePreference
+                LanguagePreference = string.IsNullOrWhiteSpace(languagePreference) ? "auto" : languagePreference,
+                OptiScalerVariantPreference = string.IsNullOrWhiteSpace(optiScalerVariantPreference) ? "stable" : optiScalerVariantPreference
             };
         }
 

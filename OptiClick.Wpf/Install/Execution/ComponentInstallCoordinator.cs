@@ -52,7 +52,7 @@ public sealed class ComponentInstallCoordinator : IComponentInstallCoordinator
         var extraBundleAlias = ShellGameInstallMetadataResolver.GetExtraBundle(context.Game);
         _logger.Info(
             "Install",
-            $"execution start game_id={(context.Game?.GameId ?? "").Trim()} target={context.TargetPath} payload={context.OptiScalerPayloadDirectory} final_dll={context.FinalDllName} preferred_dll={preferredProxyName} reframework={NormalizeStepMessage(reFrameworkValue)} specialk={NormalizeStepMessage(specialKValue)} extra_bundle={NormalizeStepMessage(extraBundleAlias)}");
+            $"execution start game_id={(context.Game?.GameId ?? "").Trim()} target={context.TargetPath} optiscaler_variant={NormalizeStepMessage(context.OptiScalerVariant)} optiscaler_version={NormalizeStepMessage(context.OptiScalerVersion)} optiscaler_display_version={NormalizeStepMessage(context.OptiScalerDisplayVersion)} payload={context.OptiScalerPayloadDirectory} final_dll={context.FinalDllName} preferred_dll={preferredProxyName} reframework={NormalizeStepMessage(reFrameworkValue)} specialk={NormalizeStepMessage(specialKValue)} extra_bundle={NormalizeStepMessage(extraBundleAlias)}");
         var steps = new List<ComponentInstallStepResult>();
         var executionContext = PrepareExecutionContext(context);
 

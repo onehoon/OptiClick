@@ -46,6 +46,7 @@ public sealed class InstallComposition
         public required IArchiveDownloader ArchiveDownloader { get; init; }
         public required IArchiveExtractor ArchiveExtractor { get; init; }
         public required IArchivePreparationCoordinator ArchivePreparationCoordinator { get; init; }
+        public required IOptiScalerVariantArchiveSyncService OptiScalerVariantArchiveSyncService { get; init; }
     }
 
     private sealed record ConfigProfileServices
@@ -110,7 +111,9 @@ public sealed class InstallComposition
         var componentInstallContextBuilder = new ComponentInstallContextBuilder();
         var installPopupPresenter = new InstallPopupPresenter();
         var installCompletionMessageBuilder = new InstallCompletionMessageBuilder();
-        var archiveReadinessFlowController = new ArchiveReadinessFlowController(archivePreparation.ArchivePreparationCoordinator);
+        var archiveReadinessFlowController = new ArchiveReadinessFlowController(
+            archivePreparation.ArchivePreparationCoordinator,
+            archivePreparation.OptiScalerVariantArchiveSyncService);
         var optiScalerIniBaseApplier = new OptiScalerIniBaseApplier(configProfileServices.IniProfileEditor);
         var configApplyFlowController = new ConfigApplyFlowController(
             configProfileServices.ConfigProfileApplier,
@@ -166,22 +169,34 @@ public sealed class InstallComposition
         var archiveDownloader = _root.CreateArchiveDownloader();
         var archiveExtractor = _root.CreateArchiveExtractor();
         var archiveManifestStore = _root.CreateArchiveDownloadManifestStore(archiveCachePaths.ManifestRoot);
+        var optiScalerPayloadCacheService = new OptiScalerPayloadCacheService(
+            archiveDownloader,
+            archiveExtractor,
+            archiveManifestStore,
+            new OptiScalerPayloadValidator());
         var archivePreparationCoordinator = new ArchivePreparationCoordinator(
             archiveCachePaths,
             new VersionedArchivePreparationService(archiveDownloader, archiveManifestStore, archiveExtractor),
             new OptiPatcherArchivePreparationService(archiveDownloader, archiveExtractor, archiveManifestStore),
             new Fsr4ArchivePreparationService(archiveDownloader, archiveExtractor, archiveManifestStore),
-            new OptiScalerPayloadCacheService(
-                archiveDownloader,
-                archiveExtractor,
-                archiveManifestStore,
-                new OptiScalerPayloadValidator()));
+            optiScalerPayloadCacheService);
+        var optiScalerVariantManifestStore = new OptiScalerVariantManifestStore(
+            archiveCachePaths.ManifestRoot,
+            app.AppLogger);
+        var optiScalerVariantArchiveSyncService = new OptiScalerVariantArchiveSyncService(
+            archiveCachePaths,
+            optiScalerPayloadCacheService,
+            optiScalerVariantManifestStore,
+            archiveManifestStore,
+            new OptiScalerPayloadValidator(),
+            app.AppLogger);
 
         return new ArchivePreparationServices
         {
             ArchiveDownloader = archiveDownloader,
             ArchiveExtractor = archiveExtractor,
-            ArchivePreparationCoordinator = archivePreparationCoordinator
+            ArchivePreparationCoordinator = archivePreparationCoordinator,
+            OptiScalerVariantArchiveSyncService = optiScalerVariantArchiveSyncService
         };
     }
 

@@ -120,6 +120,7 @@ public sealed partial class MainViewModel : ViewModelBase
     private readonly AppLanguage _systemPreferredLanguage = AppLanguage.English;
     private AppLanguage _selectedLanguage = AppLanguage.English;
     private string _languagePreference = LanguagePreferenceAuto;
+    private string _optiScalerVariantPreference = OptiScalerVariantCatalogBuilder.StableVariant;
     private StartupPreparationState _startupPreparationState = StartupPreparationState.Empty;
 
     // Runtime state
@@ -209,6 +210,7 @@ public sealed partial class MainViewModel : ViewModelBase
         DialogHost = resolved.DialogHost;
         InstallManagementDialogHost = resolved.InstallManagementDialogHost;
         var settingsLanguageOptions = new ObservableCollection<string> { LanguageOptionAuto, LanguageOptionKorean, LanguageOptionEnglish };
+        var optiScalerVariantOptions = new ObservableCollection<OptiScalerVariantSelectionOption>();
         Navigation = resolved.ShellChrome.Navigation;
         RuntimeHeader = resolved.ShellChrome.RuntimeHeader;
         StartupOverlay = resolved.ShellChrome.StartupOverlay;
@@ -282,9 +284,12 @@ public sealed partial class MainViewModel : ViewModelBase
                     LocalDataPathProvider = _localDataPathProvider,
                     AppLogger = _appLogger,
                     SettingsLanguageOptions = settingsLanguageOptions,
+                    OptiScalerVariantOptions = optiScalerVariantOptions,
                     InitialSettingsLanguageOption = LanguageOptionAuto,
+                    InitialOptiScalerVariantOption = OptiScalerVariantCatalogBuilder.StableVariant,
                     IsKoreanUi = () => IsKoreanUi,
                     ApplySettingsLanguageOption = ApplySettingsLanguageOption,
+                    ApplyOptiScalerVariantOption = ApplySettingsOptiScalerVariantOption,
                     IsInstallExecutionInProgress = () => _isInstallExecutionInProgress,
                     OpenLogFolder = OpenLogFolder,
                     OpenSupportRequest = OpenSupportRequest,
@@ -422,6 +427,14 @@ public sealed partial class MainViewModel : ViewModelBase
         return LanguageOptionAuto;
     }
 
+    private static string NormalizeOptiScalerVariantPreference(string? preference)
+    {
+        var normalized = OptiScalerVariantCatalogBuilder.NormalizeVariant(preference);
+        return string.IsNullOrWhiteSpace(normalized)
+            ? OptiScalerVariantCatalogBuilder.StableVariant
+            : normalized;
+    }
+
     private void ApplySettingsLanguageOption(string option)
     {
         var normalizedOption = NormalizeLanguageOption(option);
@@ -446,6 +459,13 @@ public sealed partial class MainViewModel : ViewModelBase
             SelectedLanguage = nextLanguage;
         }
 
+        SaveUserSettings();
+    }
+
+    private void ApplySettingsOptiScalerVariantOption(string option)
+    {
+        var normalized = NormalizeOptiScalerVariantPreference(option);
+        _optiScalerVariantPreference = normalized;
         SaveUserSettings();
     }
 

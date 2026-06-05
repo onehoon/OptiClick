@@ -5,6 +5,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Collections;
+using OptiClick.Wpf.Install.Archives;
 using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Logging;
 using OptiClick.Wpf.Services;
@@ -124,8 +125,11 @@ public sealed class ShellSectionsCompositionFactory
                     AppLogger = settings.AppLogger,
                     IsKoreanUi = settings.IsKoreanUi,
                     SettingsLanguageOptions = settings.SettingsLanguageOptions,
+                    OptiScalerVariantOptions = settings.OptiScalerVariantOptions,
                     InitialSettingsLanguageOption = settings.InitialSettingsLanguageOption,
+                    InitialOptiScalerVariantOption = settings.InitialOptiScalerVariantOption,
                     ApplySettingsLanguageOption = settings.ApplySettingsLanguageOption,
+                    ApplyOptiScalerVariantOption = settings.ApplyOptiScalerVariantOption,
                     IsInstallExecutionInProgress = settings.IsInstallExecutionInProgress,
                     OpenLogFolder = settings.OpenLogFolder,
                     OpenSupportRequest = settings.OpenSupportRequest,
@@ -220,9 +224,12 @@ public sealed record SettingsSectionCompositionInput
     public required IAppLocalDataPathProvider LocalDataPathProvider { get; init; }
     public required IAppLogger AppLogger { get; init; }
     public required ObservableCollection<string> SettingsLanguageOptions { get; init; }
+    public required ObservableCollection<OptiScalerVariantSelectionOption> OptiScalerVariantOptions { get; init; }
     public required string InitialSettingsLanguageOption { get; init; }
+    public required string InitialOptiScalerVariantOption { get; init; }
     public required Func<bool> IsKoreanUi { get; init; }
     public required Action<string> ApplySettingsLanguageOption { get; init; }
+    public required Action<string> ApplyOptiScalerVariantOption { get; init; }
     public required Func<bool> IsInstallExecutionInProgress { get; init; }
     public required Action OpenLogFolder { get; init; }
     public required Action OpenSupportRequest { get; init; }

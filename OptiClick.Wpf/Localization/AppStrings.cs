@@ -83,6 +83,8 @@ public sealed record AppStrings
     public string SettingsCoverSize { get; init; } = "";
     public string SettingsLanguage { get; init; } = "";
     public string SettingsLanguageDescription { get; init; } = "";
+    public string SettingsOptiScalerVersionTitle { get; init; } = "";
+    public string SettingsOptiScalerVersionDescription { get; init; } = "";
     public string SettingsUpdatesTitle { get; init; } = "";
     public string SettingsUpdatesDescription { get; init; } = "";
     public string SettingsCheckNow { get; init; } = "";
