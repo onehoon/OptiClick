@@ -6,6 +6,12 @@
     <SolidColorBrush x:Key="SupportedGamesPanelBackgroundBrush" Color="{StaticResource SupportedGamesPanelBackgroundColor}" />
     <SolidColorBrush x:Key="SupportedGamesCardBackgroundBrush" Color="{StaticResource SupportedGamesCardBackgroundColor}" />
     <SolidColorBrush x:Key="SupportedGamesInputBackgroundBrush" Color="{StaticResource SupportedGamesInputBackgroundColor}" />
+    <SolidColorBrush x:Key="SupportedGamesCardHoverBackgroundBrush" Color="{StaticResource SupportedGamesCardHoverBackgroundColor}" />
+    <SolidColorBrush x:Key="SupportedGamesCardBorderBrush" Color="{StaticResource SupportedGamesCardBorderColor}" />
+    <SolidColorBrush x:Key="SupportedGamesCardHoverBorderBrush" Color="{StaticResource SupportedGamesCardHoverBorderColor}" />
+    <SolidColorBrush x:Key="SupportedGamesBadgeBackgroundBrush" Color="{StaticResource SupportedGamesBadgeBackgroundColor}" />
+    <SolidColorBrush x:Key="SupportedGamesBadgeBorderBrush" Color="{StaticResource SupportedGamesBadgeBorderColor}" />
+    <SolidColorBrush x:Key="SupportedGamesCoverBackgroundBrush" Color="{StaticResource SupportedGamesCoverBackgroundColor}" />
     <SolidColorBrush x:Key="SurfaceElevatedBrush" Color="{StaticResource SurfaceRaisedColor}" />
     <SolidColorBrush x:Key="SurfaceHoverBrush" Color="{StaticResource SurfaceHoverColor}" />
     <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />

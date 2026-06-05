@@ -9,8 +9,8 @@ public static class SupportedGamesWikiLayoutProfile
     public const string WikiThumbHeightResourceKey = "SupportedGamesWikiThumbHeightDip";
     public const string RowHeightResourceKey = "SupportedGamesWikiRowHeightDip";
 
-    public const double DefaultRowHeightDip = 80;
-    public const double DefaultWikiThumbHeightDip = DefaultRowHeightDip;
+    public const double DefaultRowHeightDip = 96;
+    public const double DefaultWikiThumbHeightDip = 80;
     public const double DefaultWikiThumbWidthDip = DefaultWikiThumbHeightDip * CoverAspectWidthPerHeight;
     private const double WikiRowCoverHeightBucketDip = 8.0;
     public const double MainCardWidthDip = 180;
@@ -43,8 +43,8 @@ public static class SupportedGamesWikiLayoutProfile
 
     public static double ResolveWikiRowCoverHeightDip()
     {
-        var rowHeight = ResolveRowHeightDip();
-        return NormalizeWikiRowHeightDip(rowHeight);
+        var thumbHeight = ResolveWikiThumbHeightDip();
+        return NormalizeWikiThumbHeightDip(thumbHeight);
     }
 
     public static double ResolveWikiRowCoverWidthDip()
@@ -68,11 +68,11 @@ public static class SupportedGamesWikiLayoutProfile
         return defaultValue;
     }
 
-    private static double NormalizeWikiRowHeightDip(double rowHeightDip)
+    private static double NormalizeWikiThumbHeightDip(double rowHeightDip)
     {
         if (rowHeightDip <= 0)
         {
-            return DefaultRowHeightDip;
+            return DefaultWikiThumbHeightDip;
         }
 
         return Math.Round(rowHeightDip / WikiRowCoverHeightBucketDip, MidpointRounding.AwayFromZero) * WikiRowCoverHeightBucketDip;

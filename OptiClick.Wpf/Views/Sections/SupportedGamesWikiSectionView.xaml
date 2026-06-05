@@ -5,23 +5,28 @@
              xmlns:services="clr-namespace:OptiClick.Wpf.Services">
     <UserControl.Resources>
         <Thickness x:Key="WikiSearchBoxMargin">0,10,18,0</Thickness>
-        <Thickness x:Key="WikiRowRightInset">0,0,18,0</Thickness>
+        <Thickness x:Key="WikiRowRightInset">0,0,12,0</Thickness>
         <Thickness x:Key="WikiCardMargin">0,0,0,8</Thickness>
-        <SolidColorBrush x:Key="WikiVendorIntelBrush" Color="#2F87D9" />
-        <SolidColorBrush x:Key="WikiVendorAmdBrush" Color="#D45A62" />
-        <SolidColorBrush x:Key="WikiVendorNvidiaBrush" Color="#6AA600" />
+        <Thickness x:Key="WikiCardPadding">8</Thickness>
+        <Thickness x:Key="WikiVendorBadgePadding">8,5</Thickness>
+        <CornerRadius x:Key="WikiCardCornerRadius">10</CornerRadius>
+        <CornerRadius x:Key="WikiCoverCornerRadius">8</CornerRadius>
+        <CornerRadius x:Key="WikiVendorBadgeCornerRadius">8</CornerRadius>
+        <SolidColorBrush x:Key="WikiVendorIntelBrush" Color="#68AEEB" />
+        <SolidColorBrush x:Key="WikiVendorAmdBrush" Color="#E07880" />
+        <SolidColorBrush x:Key="WikiVendorNvidiaBrush" Color="#8ACB43" />
 
         <Style x:Key="RequestGameSupportButtonStyle" TargetType="{x:Type ui:Button}" BasedOn="{StaticResource SecondaryButtonStyle}">
-            <Setter Property="Background" Value="{DynamicResource SupportedGamesCardBackgroundBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SupportedGamesInputBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SupportedGamesCardBorderBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="Padding" Value="12,0" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="MinHeight" Value="36" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource SupportedGamesCardHoverBackgroundBrush}" />
                     <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}" />
                     <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
                 </Trigger>
@@ -39,15 +44,39 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
             <Setter Property="CaretBrush" Value="{DynamicResource AccentPrimaryBrush}" />
-            <Setter Property="Padding" Value="10,6,38,6" />
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}" />
-                </Trigger>
-                <Trigger Property="IsKeyboardFocused" Value="True">
-                    <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}" />
-                </Trigger>
-            </Style.Triggers>
+            <Setter Property="SelectionBrush" Value="{DynamicResource SurfaceHoverBrush}" />
+            <Setter Property="Padding" Value="12,8,38,8" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type TextBox}">
+                        <Grid SnapsToDevicePixels="True">
+                            <Border x:Name="SearchBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="9" />
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          Margin="{TemplateBinding Padding}"
+                                          Focusable="False"
+                                          HorizontalScrollBarVisibility="Hidden"
+                                          VerticalScrollBarVisibility="Hidden" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="SearchBorder" Property="Background" Value="{DynamicResource SupportedGamesCardBackgroundBrush}" />
+                                <Setter TargetName="SearchBorder" Property="BorderBrush" Value="{DynamicResource SupportedGamesCardHoverBorderBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="SearchBorder" Property="Background" Value="{DynamicResource SupportedGamesCardBackgroundBrush}" />
+                                <Setter TargetName="SearchBorder" Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="SearchBorder" Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <Style x:Key="SupportedGamesSearchClearButtonStyle" TargetType="Button" BasedOn="{StaticResource IconButtonStyle}">
@@ -76,46 +105,75 @@
             <Setter Property="MinWidth" Value="0" />
         </Style>
 
-        <Style x:Key="WikiVendorTextStyle" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
-            <Setter Property="FontSize" Value="15" />
-            <Setter Property="LineHeight" Value="19" />
+        <Style x:Key="WikiVendorLabelTextStyle" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="LineHeight" Value="15" />
             <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="TextWrapping" Value="NoWrap" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
         </Style>
 
         <Style x:Key="WikiVendorValueTextStyle" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
-            <Setter Property="FontSize" Value="15" />
-            <Setter Property="LineHeight" Value="19" />
-            <Setter Property="Foreground" Value="{DynamicResource TextMutedBrush}" />
+            <Setter Property="FontSize" Value="12.5" />
+            <Setter Property="LineHeight" Value="16" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
             <Setter Property="TextWrapping" Value="Wrap" />
             <Setter Property="TextTrimming" Value="None" />
             <Setter Property="MinWidth" Value="0" />
         </Style>
 
-        <Style x:Key="WikiVendorIntelTextStyle" TargetType="TextBlock" BasedOn="{StaticResource WikiVendorTextStyle}">
+        <Style x:Key="WikiVendorIntelTextStyle" TargetType="TextBlock" BasedOn="{StaticResource WikiVendorLabelTextStyle}">
             <Setter Property="Foreground" Value="{StaticResource WikiVendorIntelBrush}" />
         </Style>
 
-        <Style x:Key="WikiVendorAmdTextStyle" TargetType="TextBlock" BasedOn="{StaticResource WikiVendorTextStyle}">
+        <Style x:Key="WikiVendorAmdTextStyle" TargetType="TextBlock" BasedOn="{StaticResource WikiVendorLabelTextStyle}">
             <Setter Property="Foreground" Value="{StaticResource WikiVendorAmdBrush}" />
         </Style>
 
-        <Style x:Key="WikiVendorNvidiaTextStyle" TargetType="TextBlock" BasedOn="{StaticResource WikiVendorTextStyle}">
+        <Style x:Key="WikiVendorNvidiaTextStyle" TargetType="TextBlock" BasedOn="{StaticResource WikiVendorLabelTextStyle}">
             <Setter Property="Foreground" Value="{StaticResource WikiVendorNvidiaBrush}" />
         </Style>
 
         <Style x:Key="SupportedGamesItemCardStyle" TargetType="Border">
             <Setter Property="Margin" Value="{StaticResource WikiCardMargin}" />
-            <Setter Property="Padding" Value="0" />
+            <Setter Property="Padding" Value="{StaticResource WikiCardPadding}" />
             <Setter Property="MinHeight" Value="{x:Static services:SupportedGamesWikiLayoutProfile.DefaultRowHeightDip}" />
             <Setter Property="Background" Value="{DynamicResource SupportedGamesCardBackgroundBrush}" />
-            <Setter Property="BorderBrush" Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SupportedGamesCardBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource WikiCardCornerRadius}" />
             <Setter Property="HorizontalAlignment" Value="Stretch" />
             <Setter Property="ClipToBounds" Value="True" />
             <Setter Property="SnapsToDevicePixels" Value="True" />
             <Setter Property="Cursor" Value="Arrow" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource SupportedGamesCardHoverBackgroundBrush}" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource SupportedGamesCardHoverBorderBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="WikiCoverFrameStyle" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource SupportedGamesCoverBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SupportedGamesBadgeBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource WikiCoverCornerRadius}" />
+            <Setter Property="ClipToBounds" Value="True" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="RenderOptions.BitmapScalingMode" Value="HighQuality" />
+        </Style>
+
+        <Style x:Key="WikiVendorBadgeStyle" TargetType="Border">
+            <Setter Property="Padding" Value="{StaticResource WikiVendorBadgePadding}" />
+            <Setter Property="MinHeight" Value="38" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="Background" Value="{DynamicResource SupportedGamesBadgeBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SupportedGamesBadgeBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource WikiVendorBadgeCornerRadius}" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
         </Style>
     </UserControl.Resources>
 
@@ -157,6 +215,7 @@
                     <TextBlock Margin="0,0,0,0"
                                VerticalAlignment="Center"
                                Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                               TextTrimming="CharacterEllipsis"
                                Text="{Binding Strings.SupportedGamesWikiRequestGame}" />
                 </StackPanel>
             </ui:Button>
@@ -165,13 +224,13 @@
                   Grid.ColumnSpan="2"
                   Margin="{StaticResource WikiSearchBoxMargin}">
                 <TextBox x:Name="SupportedGamesSearchBox"
-                         MinHeight="36"
+                         MinHeight="38"
                          HorizontalAlignment="Stretch"
                          VerticalContentAlignment="Center"
                          Style="{StaticResource SupportedGamesSearchBoxStyle}"
                          ToolTip="{Binding Strings.SupportedGamesWikiSearchPlaceholder}"
                          Text="{Binding SupportedGamesWikiSearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBlock Margin="12,0,0,0"
+                <TextBlock Margin="13,0,0,0"
                            VerticalAlignment="Center"
                            IsHitTestVisible="False"
                            Foreground="{DynamicResource TextMutedBrush}"
@@ -213,7 +272,7 @@
                  Style="{StaticResource PanelCardControlStyle}"
                  Padding="14,14,0,14"
                  Background="{DynamicResource SupportedGamesPanelBackgroundBrush}"
-                 BorderBrush="{DynamicResource BorderBrush}">
+                 BorderBrush="{DynamicResource SupportedGamesCardBorderBrush}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -256,126 +315,113 @@
                                             Style="{StaticResource SupportedGamesItemCardStyle}">
                                         <Grid MinWidth="0"
                                               ClipToBounds="True">
-                                        <Grid x:Name="WideLayout"
-                                                  MinWidth="0"
+                                            <Grid MinWidth="0"
                                                   ClipToBounds="True">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="45*" />
-                                                    <ColumnDefinition Width="55*" />
+                                                    <ColumnDefinition Width="12" />
+                                                    <ColumnDefinition Width="*" />
                                                 </Grid.ColumnDefinitions>
 
                                                 <Border Grid.Column="0"
                                                         Width="{Binding CoverImageWidthDip}"
                                                         Height="{Binding CoverImageHeightDip}"
-                                                        VerticalAlignment="Stretch"
-                                                        Margin="0"
-                                                        CornerRadius="0"
-                                                        ClipToBounds="True"
-                                                        Background="{DynamicResource SurfaceElevatedBrush}">
-                                                    <Image Width="{Binding CoverImageWidthDip}"
-                                                           Height="{Binding CoverImageHeightDip}"
-                                                           VerticalAlignment="Stretch"
-                                                           Source="{Binding CoverImage}"
-                                                           Stretch="UniformToFill"
-                                                           SnapsToDevicePixels="True"
-                                                           RenderOptions.BitmapScalingMode="HighQuality" />
+                                                        VerticalAlignment="Center"
+                                                        Style="{StaticResource WikiCoverFrameStyle}">
+                                                    <Border CornerRadius="{StaticResource WikiCoverCornerRadius}">
+                                                        <Border.Background>
+                                                            <ImageBrush ImageSource="{Binding CoverImage}"
+                                                                        Stretch="UniformToFill" />
+                                                        </Border.Background>
+                                                    </Border>
                                                 </Border>
-
-                                                <TextBlock Grid.Column="1"
-                                                            Margin="12,0,0,0"
-                                                            Text="{Binding DisplayTitle}"
-                                                            VerticalAlignment="Center"
-                                                            Style="{StaticResource WikiGameTitleTextStyle}" />
 
                                                 <Grid Grid.Column="2"
                                                       MinWidth="0"
-                                                      ClipToBounds="True"
                                                       VerticalAlignment="Center">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="72" />
-                                                        <ColumnDefinition Width="*" />
-                                                    </Grid.ColumnDefinitions>
                                                     <Grid.RowDefinitions>
-                                                        <RowDefinition Height="Auto" />
                                                         <RowDefinition Height="Auto" />
                                                         <RowDefinition Height="Auto" />
                                                     </Grid.RowDefinitions>
 
-                                                    <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,0,10,0" Text="Intel" Style="{StaticResource WikiVendorIntelTextStyle}" />
-                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding IntelText}" Style="{StaticResource WikiVendorValueTextStyle}" />
+                                                    <TextBlock Grid.Row="0"
+                                                               Text="{Binding DisplayTitle}"
+                                                               Style="{StaticResource WikiGameTitleTextStyle}"
+                                                               ToolTip="{Binding DisplayTitle}" />
 
-                                                    <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,0,10,0" Text="AMD" Style="{StaticResource WikiVendorAmdTextStyle}" />
-                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AmdText}" Style="{StaticResource WikiVendorValueTextStyle}" />
+                                                    <Grid x:Name="WideVendorLayout"
+                                                          Grid.Row="1"
+                                                          MinWidth="0"
+                                                          Margin="0,8,0,0">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="8" />
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="8" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
 
-                                                    <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,0,10,0" Text="NVIDIA" Style="{StaticResource WikiVendorNvidiaTextStyle}" />
-                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding NvidiaText}" Style="{StaticResource WikiVendorValueTextStyle}" />
+                                                        <Border Grid.Column="0"
+                                                                Style="{StaticResource WikiVendorBadgeStyle}">
+                                                            <StackPanel MinWidth="0">
+                                                                <TextBlock Text="Intel" Style="{StaticResource WikiVendorIntelTextStyle}" />
+                                                                <TextBlock Text="{Binding IntelText}" Style="{StaticResource WikiVendorValueTextStyle}" Margin="0,2,0,0" />
+                                                            </StackPanel>
+                                                        </Border>
+
+                                                        <Border Grid.Column="2"
+                                                                Style="{StaticResource WikiVendorBadgeStyle}">
+                                                            <StackPanel MinWidth="0">
+                                                                <TextBlock Text="AMD" Style="{StaticResource WikiVendorAmdTextStyle}" />
+                                                                <TextBlock Text="{Binding AmdText}" Style="{StaticResource WikiVendorValueTextStyle}" Margin="0,2,0,0" />
+                                                            </StackPanel>
+                                                        </Border>
+
+                                                        <Border Grid.Column="4"
+                                                                Style="{StaticResource WikiVendorBadgeStyle}">
+                                                            <StackPanel MinWidth="0">
+                                                                <TextBlock Text="NVIDIA" Style="{StaticResource WikiVendorNvidiaTextStyle}" />
+                                                                <TextBlock Text="{Binding NvidiaText}" Style="{StaticResource WikiVendorValueTextStyle}" Margin="0,2,0,0" />
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </Grid>
+
+                                                    <StackPanel x:Name="CompactVendorLayout"
+                                                                Grid.Row="1"
+                                                                MinWidth="0"
+                                                                Margin="0,8,0,0"
+                                                                Visibility="Collapsed">
+                                                        <Border Style="{StaticResource WikiVendorBadgeStyle}" Margin="0,0,0,6">
+                                                            <StackPanel MinWidth="0">
+                                                                <TextBlock Text="Intel" Style="{StaticResource WikiVendorIntelTextStyle}" />
+                                                                <TextBlock Text="{Binding IntelText}" Style="{StaticResource WikiVendorValueTextStyle}" Margin="0,2,0,0" />
+                                                            </StackPanel>
+                                                        </Border>
+
+                                                        <Border Style="{StaticResource WikiVendorBadgeStyle}" Margin="0,0,0,6">
+                                                            <StackPanel MinWidth="0">
+                                                                <TextBlock Text="AMD" Style="{StaticResource WikiVendorAmdTextStyle}" />
+                                                                <TextBlock Text="{Binding AmdText}" Style="{StaticResource WikiVendorValueTextStyle}" Margin="0,2,0,0" />
+                                                            </StackPanel>
+                                                        </Border>
+
+                                                        <Border Style="{StaticResource WikiVendorBadgeStyle}">
+                                                            <StackPanel MinWidth="0">
+                                                                <TextBlock Text="NVIDIA" Style="{StaticResource WikiVendorNvidiaTextStyle}" />
+                                                                <TextBlock Text="{Binding NvidiaText}" Style="{StaticResource WikiVendorValueTextStyle}" Margin="0,2,0,0" />
+                                                            </StackPanel>
+                                                        </Border>
+                                                    </StackPanel>
                                                 </Grid>
                                             </Grid>
-
-                                            <StackPanel x:Name="CompactLayout"
-                                                        MinWidth="0"
-                                                        Visibility="Collapsed">
-                                                <Grid MinWidth="0"
-                                                      Margin="0,0,0,8">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto" />
-                                                        <ColumnDefinition Width="*" />
-                                                    </Grid.ColumnDefinitions>
-
-                                                <Border Grid.Column="0"
-                                                            Width="{Binding CoverImageWidthDip}"
-                                                            Height="{Binding CoverImageHeightDip}"
-                                                            VerticalAlignment="Stretch"
-                                                            Margin="0"
-                                                            CornerRadius="0"
-                                                            ClipToBounds="True"
-                                                            Background="{DynamicResource SurfaceElevatedBrush}">
-                                                    <Image Width="{Binding CoverImageWidthDip}"
-                                                           Height="{Binding CoverImageHeightDip}"
-                                                           VerticalAlignment="Stretch"
-                                                           Source="{Binding CoverImage}"
-                                                           Stretch="UniformToFill"
-                                                           SnapsToDevicePixels="True"
-                                                           RenderOptions.BitmapScalingMode="HighQuality" />
-                                                    </Border>
-
-                                                    <TextBlock Grid.Column="1"
-                                                               Margin="12,0,0,0"
-                                                               Text="{Binding DisplayTitle}"
-                                                               VerticalAlignment="Center"
-                                                               Style="{StaticResource WikiGameTitleTextStyle}" />
-                                                </Grid>
-
-                                                <Grid MinWidth="0">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="72" />
-                                                        <ColumnDefinition Width="*" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="Auto" />
-                                                    </Grid.RowDefinitions>
-
-                                                    <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,0,10,0" Text="Intel" Style="{StaticResource WikiVendorIntelTextStyle}" />
-                                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding IntelText}" Style="{StaticResource WikiVendorValueTextStyle}" />
-
-                                                    <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,0,10,0" Text="AMD" Style="{StaticResource WikiVendorAmdTextStyle}" />
-                                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AmdText}" Style="{StaticResource WikiVendorValueTextStyle}" />
-
-                                                    <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,0,10,0" Text="NVIDIA" Style="{StaticResource WikiVendorNvidiaTextStyle}" />
-                                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding NvidiaText}" Style="{StaticResource WikiVendorValueTextStyle}" />
-                                                </Grid>
-                                            </StackPanel>
                                         </Grid>
                                     </Border>
 
                                     <DataTemplate.Triggers>
-                                        <DataTrigger Binding="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ScrollViewer}, Converter={StaticResource LessThanDoubleConverter}, ConverterParameter=700}"
+                                        <DataTrigger Binding="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ScrollViewer}, Converter={StaticResource LessThanDoubleConverter}, ConverterParameter=820}"
                                                      Value="True">
-                                            <Setter TargetName="WideLayout" Property="Visibility" Value="Collapsed" />
-                                            <Setter TargetName="CompactLayout" Property="Visibility" Value="Visible" />
+                                            <Setter TargetName="WideVendorLayout" Property="Visibility" Value="Collapsed" />
+                                            <Setter TargetName="CompactVendorLayout" Property="Visibility" Value="Visible" />
                                         </DataTrigger>
                                     </DataTemplate.Triggers>
                                 </DataTemplate>
