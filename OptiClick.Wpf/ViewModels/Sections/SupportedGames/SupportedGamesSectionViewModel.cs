@@ -355,7 +355,7 @@ public sealed class SupportedGamesSectionViewModel : ViewModelBase
 
         var rowPitch = Math.Max(
             1.0,
-            SupportedGamesWikiLayoutProfile.ResolveWikiRowCoverHeightDip() + RowBottomMarginDip);
+            SupportedGamesWikiLayoutProfile.ResolveRowHeightDip() + RowBottomMarginDip);
         var safeOffset = double.IsNaN(verticalOffset) || double.IsInfinity(verticalOffset)
             ? 0
             : Math.Max(0, verticalOffset);
