@@ -9,6 +9,7 @@ public sealed record OptiScalerPayloadCacheResult
     public string CacheEntryName { get; init; } = "";
     public string Version { get; init; } = "";
     public string ErrorCode { get; init; } = "";
+    public ArchivePreparationStageStatus StageStatus { get; init; } = ArchivePreparationStageStatus.Unknown;
 }
 
 public interface IOptiScalerPayloadCacheService
@@ -55,7 +56,8 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
         {
             return new OptiScalerPayloadCacheResult
             {
-                ErrorCode = "missing_metadata"
+                ErrorCode = "missing_metadata",
+                StageStatus = StageStatus("missing_metadata", "skipped", "skipped", "missing", "skipped")
             };
         }
 
@@ -75,7 +77,8 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
                 IsSuccess = true,
                 PayloadDirectory = preparedPayloadDir,
                 CacheEntryName = cacheEntryName,
-                Version = cacheVersion
+                Version = cacheVersion,
+                StageStatus = CachedStatus()
             };
         }
 
@@ -85,6 +88,7 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
         var extractRoot = Path.Combine(workRoot, "_extract");
         var downloadPath = Path.Combine(workRoot, filename);
         var backupEntryDir = Path.Combine(cacheRoot, $"{BackupPrefix}{cacheEntryName}_{Guid.NewGuid():N}");
+        var stageStatus = ArchivePreparationStageStatus.Unknown;
 
         try
         {
@@ -99,18 +103,23 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
                 entry.Sha256);
             if (!download.IsSuccess)
             {
+                stageStatus = StageStatus("download", Failed(download.ErrorCode), "skipped", "skipped", "skipped");
                 return new OptiScalerPayloadCacheResult
                 {
-                    ErrorCode = download.ErrorCode
+                    ErrorCode = download.ErrorCode,
+                    StageStatus = stageStatus
                 };
             }
 
+            stageStatus = StageStatus("download", "ok", ResolveShaStatus(download), "pending", "pending");
             if (string.Equals(Path.GetExtension(downloadPath), ".zip", StringComparison.OrdinalIgnoreCase)
                 && !ArchivePreparationHelpers.IsValidZipFile(downloadPath))
             {
+                stageStatus = stageStatus with { Folder = Failed("invalid_zip"), Json = "skipped" };
                 return new OptiScalerPayloadCacheResult
                 {
-                    ErrorCode = "invalid_zip"
+                    ErrorCode = "invalid_zip",
+                    StageStatus = stageStatus
                 };
             }
 
@@ -118,9 +127,12 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
             var extract = await _extractor.ExtractAsync(downloadPath, extractRoot, cancellationToken);
             if (!extract.IsSuccess)
             {
+                var extractError = string.IsNullOrWhiteSpace(extract.ErrorCode) ? "extract_failed" : extract.ErrorCode;
+                stageStatus = stageStatus with { Folder = Failed(extractError), Json = "skipped" };
                 return new OptiScalerPayloadCacheResult
                 {
-                    ErrorCode = extract.ErrorCode
+                    ErrorCode = extractError,
+                    StageStatus = stageStatus
                 };
             }
 
@@ -128,9 +140,11 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
             CopyDirectory(normalizedSource, stagingPayloadDir);
             if (!_validator.IsValid(stagingPayloadDir, out var payloadError))
             {
+                stageStatus = stageStatus with { Folder = Failed(payloadError), Json = "skipped" };
                 return new OptiScalerPayloadCacheResult
                 {
-                    ErrorCode = payloadError
+                    ErrorCode = payloadError,
+                    StageStatus = stageStatus
                 };
             }
 
@@ -140,6 +154,7 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
             }
 
             Directory.Move(stagingEntryDir, finalEntryDir);
+            stageStatus = stageStatus with { Folder = "ok" };
             if (Directory.Exists(backupEntryDir))
             {
                 Directory.Delete(backupEntryDir, recursive: true);
@@ -148,13 +163,15 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
             CleanupStaleOptiScalerEntries(cacheRoot, cacheEntryName);
             WriteCurrentVersionEntry(cacheVersion, filename, cacheEntryName);
             PruneManifestVersionsWithoutPayload(cacheRoot);
+            stageStatus = stageStatus with { Json = "ok" };
 
             return new OptiScalerPayloadCacheResult
             {
                 IsSuccess = true,
                 PayloadDirectory = finalPayloadDir,
                 CacheEntryName = cacheEntryName,
-                Version = cacheVersion
+                Version = cacheVersion,
+                StageStatus = stageStatus
             };
         }
         catch
@@ -166,7 +183,8 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
 
             return new OptiScalerPayloadCacheResult
             {
-                ErrorCode = "prepare_failed"
+                ErrorCode = "prepare_failed",
+                StageStatus = EnsureFailureStatus(stageStatus, "prepare_failed")
             };
         }
         finally
@@ -335,5 +353,68 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
         {
             // Ignore cleanup failure.
         }
+    }
+
+    private static ArchivePreparationStageStatus CachedStatus()
+    {
+        return StageStatus("cache", "cached", "cached", "cached", "ok");
+    }
+
+    private static ArchivePreparationStageStatus EnsureFailureStatus(
+        ArchivePreparationStageStatus status,
+        string errorCode)
+    {
+        if (string.IsNullOrWhiteSpace(status.Source))
+        {
+            return StageStatus("unknown", "skipped", "skipped", Failed(errorCode), "skipped");
+        }
+
+        if (string.Equals(status.Json, "pending", StringComparison.OrdinalIgnoreCase))
+        {
+            return status with { Json = Failed(errorCode) };
+        }
+
+        if (string.Equals(status.Folder, "pending", StringComparison.OrdinalIgnoreCase)
+            || string.IsNullOrWhiteSpace(status.Folder))
+        {
+            return status with { Folder = Failed(errorCode), Json = string.IsNullOrWhiteSpace(status.Json) ? "skipped" : status.Json };
+        }
+
+        return status;
+    }
+
+    private static ArchivePreparationStageStatus StageStatus(
+        string source,
+        string download,
+        string sha,
+        string folder,
+        string json)
+    {
+        return new ArchivePreparationStageStatus
+        {
+            Source = source,
+            Download = download,
+            Sha = sha,
+            Folder = folder,
+            Json = json
+        };
+    }
+
+    private static string Failed(string code)
+    {
+        return string.IsNullOrWhiteSpace(code) ? "failed" : $"failed:{code.Trim()}";
+    }
+
+    private static string ResolveShaStatus(ArchiveDownloadResult download)
+    {
+        if (download is null || string.IsNullOrWhiteSpace(download.VerificationSource))
+        {
+            return "ok";
+        }
+
+        return string.Equals(download.VerificationSource, "not_configured", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(download.VerificationSource, "github_digest_unavailable", StringComparison.OrdinalIgnoreCase)
+            ? "not_configured"
+            : "ok";
     }
 }

@@ -1,4 +1,5 @@
 using System.Windows;
+using OptiClick.Infrastructure.Windows;
 using OptiClick.Wpf.Logging;
 using OptiClick.Wpf.ViewModels;
 
@@ -36,17 +37,33 @@ public sealed class AppBootstrapper
         var startupLogger = root.CreateAppLogger();
         startupLogger.Info(MainViewModelLogCategories.App, "milestone app_process_started");
         startupLogger.Info(MainViewModelLogCategories.App, "milestone app_bootstrapper_started");
-        var elevationRelaunchCanceledOrFailed = false;
+        var isElevatedRelaunchChild = startupEventArgs.Args.Any(arg => string.Equals(arg, ProcessElevationService.ElevatedRelaunchArgument, StringComparison.OrdinalIgnoreCase));
+        if (isElevatedRelaunchChild)
+        {
+            startupLogger.Info(MainViewModelLogCategories.App, "milestone elevation_relaunch_child_started");
+        }
+
         if (root.ShouldRelaunchElevated(startupEventArgs.Args))
         {
+            startupLogger.Info(MainViewModelLogCategories.App, "milestone elevation_relaunch_requested");
             var relaunched = root.TryRelaunchAsAdministrator(startupEventArgs.Args);
             if (relaunched)
             {
+                startupLogger.Info(MainViewModelLogCategories.App, "milestone elevation_relaunch_launched exiting_bootstrap_process");
                 app.Shutdown(0);
                 return;
             }
 
-            elevationRelaunchCanceledOrFailed = true;
+            startupLogger.Info(MainViewModelLogCategories.App, "milestone elevation_relaunch_canceled_or_failed shutting_down");
+            app.Shutdown(1);
+            return;
+        }
+
+        if (!root.IsCurrentProcessElevated())
+        {
+            startupLogger.Info(MainViewModelLogCategories.App, "milestone elevation_required_unavailable shutting_down");
+            app.Shutdown(1);
+            return;
         }
 
         continueStartup();
@@ -59,11 +76,6 @@ public sealed class AppBootstrapper
 
         if (mainWindow.DataContext is MainViewModel viewModel)
         {
-            if (elevationRelaunchCanceledOrFailed)
-            {
-                viewModel.NotifyAdministratorRelaunchCancelled();
-            }
-
             _ = mainWindow.Dispatcher.InvokeAsync(() => RunStartupSequenceAsync(viewModel, startupLogger));
         }
     }

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace OptiClick.Wpf.Install.Archives;
 
 public interface IArchivePreparationCoordinator
@@ -39,6 +41,7 @@ public sealed class ArchivePreparationCoordinator : IArchivePreparationCoordinat
     {
         _cachePaths.EnsureDirectories();
         var entry = ArchiveEntryNormalizer.Normalize(GetEntry(moduleDownloadLinks, ArchiveAssetRuntimeDataKeys.OptiScaler));
+        var stopwatch = Stopwatch.StartNew();
         var payloadResult = await _optiScalerPayloadCacheService.PrepareAsync(entry, _cachePaths.OptiScalerPayloadCacheRoot, cancellationToken);
         return new ArchivePreparationSnapshot
         {
@@ -50,7 +53,8 @@ public sealed class ArchivePreparationCoordinator : IArchivePreparationCoordinat
                     ArchivePath = payloadResult.PayloadDirectory,
                     Ready = payloadResult.IsSuccess,
                     Downloading = false,
-                    ErrorMessage = payloadResult.ErrorCode
+                    ErrorMessage = payloadResult.ErrorCode,
+                    StageStatus = WithDuration(payloadResult.StageStatus, stopwatch.ElapsedMilliseconds)
                 }
             }
         };
@@ -66,6 +70,7 @@ public sealed class ArchivePreparationCoordinator : IArchivePreparationCoordinat
         foreach (var key in ArchivePreparationSequence.DefaultStartupOrder)
         {
             var entry = ArchiveEntryNormalizer.Normalize(GetEntry(moduleDownloadLinks, ArchiveAssetRuntimeDataKeys.ToRuntimeDataEntryKey(key)));
+            var stopwatch = Stopwatch.StartNew();
             ArchivePreparationState state = key switch
             {
                 ArchiveAssetKey.Fsr4 => await _fsr4Service.PrepareAsync(entry, _cachePaths.Fsr4CacheDir, cancellationToken),
@@ -77,7 +82,7 @@ public sealed class ArchivePreparationCoordinator : IArchivePreparationCoordinat
                     _cachePaths.ResolveCacheDirectory(key),
                     cancellationToken)
             };
-            states[key] = state;
+            states[key] = state with { StageStatus = WithDuration(state.StageStatus, stopwatch.ElapsedMilliseconds) };
         }
 
         return new ArchivePreparationSnapshot
@@ -100,6 +105,16 @@ public sealed class ArchivePreparationCoordinator : IArchivePreparationCoordinat
             ArchiveAssetKey.UltimateAsiLoader => "Ultimate ASI Loader archive",
             ArchiveAssetKey.Unreal5 => "Unreal5 patch archive",
             _ => "archive"
+        };
+    }
+
+    private static ArchivePreparationStageStatus WithDuration(
+        ArchivePreparationStageStatus status,
+        long durationMs)
+    {
+        return (status ?? ArchivePreparationStageStatus.Unknown) with
+        {
+            DurationMs = durationMs
         };
     }
 }
