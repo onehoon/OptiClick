@@ -67,6 +67,20 @@ public static class RuntimeDataRowReader
         };
     }
 
+    public static string GetFirstString(RuntimeDataRawRow row, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            var value = GetString(row, key);
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+        }
+
+        return "";
+    }
+
     public static bool TryGetValue(RuntimeDataRawRow row, string key, out JsonElement value)
     {
         value = default;

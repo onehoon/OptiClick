@@ -2,7 +2,7 @@ using System.IO;
 
 namespace OptiClick.Wpf.Install.Archives;
 
-public sealed class OptiScalerPayloadValidator
+public sealed class OptiScalerPayloadValidator : IArchivePayloadValidator
 {
     private static readonly string[] RequiredFiles = ["OptiScaler.dll", "OptiScaler.ini"];
 

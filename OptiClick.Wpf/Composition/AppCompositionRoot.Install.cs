@@ -95,11 +95,13 @@ public sealed partial class AppCompositionRoot
 
     public IVersionedArchivePreparationService CreateVersionedArchivePreparationService(
         IArchiveDownloader archiveDownloader,
-        IArchiveDownloadManifestStore manifestStore)
+        IArchiveDownloadManifestStore manifestStore,
+        IArchiveExtractor archiveExtractor)
     {
         return new VersionedArchivePreparationService(
             archiveDownloader,
-            manifestStore);
+            manifestStore,
+            archiveExtractor);
     }
 
     public IInstallFileSystem CreateInstallFileSystem()

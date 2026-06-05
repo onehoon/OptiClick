@@ -31,18 +31,23 @@ public sealed record ArchiveDownloadResult
 
 public sealed class ArchiveDownloader
 {
-    private readonly HttpClient _httpClient;
+    private const int VerificationAttemptLimit = 2;
 
-    public ArchiveDownloader(HttpClient httpClient)
+    private readonly HttpClient _httpClient;
+    private readonly IArchiveFileVerifier _fileVerifier;
+
+    public ArchiveDownloader(HttpClient httpClient, IArchiveFileVerifier? fileVerifier = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        _fileVerifier = fileVerifier ?? new ArchiveFileVerifier(_httpClient);
     }
 
     public async Task<ArchiveDownloadResult> DownloadAsync(
         string url,
         string destinationPath,
         TimeSpan timeout,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string fallbackSha256 = "")
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
         {
@@ -60,44 +65,63 @@ public sealed class ArchiveDownloader
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         cts.CancelAfter(timeout);
 
-        try
+        for (var attempt = 1; attempt <= VerificationAttemptLimit; attempt++)
         {
-            using var response = await _httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cts.Token);
-            response.EnsureSuccessStatusCode();
-
-            await using var source = await response.Content.ReadAsStreamAsync(cts.Token);
-            await using var file = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None);
-            await source.CopyToAsync(file, cts.Token);
-            file.Close();
-
-            if (File.Exists(destination))
+            try
             {
-                File.Delete(destination);
-            }
+                using var response = await _httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                response.EnsureSuccessStatusCode();
 
-            File.Move(tempPath, destination);
-            return ArchiveDownloadResult.Success(destination);
+                await using var source = await response.Content.ReadAsStreamAsync(cts.Token);
+                await using var file = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None);
+                await source.CopyToAsync(file, cts.Token);
+                file.Close();
+
+                var verification = await _fileVerifier.VerifyArchiveFileAsync(tempPath, url, fallbackSha256, cts.Token);
+                if (!verification.IsSuccess)
+                {
+                    TryDelete(tempPath);
+                    if (ShouldRetryVerificationFailure(verification, attempt))
+                    {
+                        continue;
+                    }
+
+                    return ArchiveDownloadResult.Failure(
+                        verification.ErrorCode,
+                        BuildVerificationFailureMessage(verification, attempt));
+                }
+
+                if (File.Exists(destination))
+                {
+                    File.Delete(destination);
+                }
+
+                File.Move(tempPath, destination);
+                return ArchiveDownloadResult.Success(destination);
+            }
+            catch (OperationCanceledException) when (cts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+            {
+                TryDelete(tempPath);
+                return ArchiveDownloadResult.Failure("timeout");
+            }
+            catch (OperationCanceledException)
+            {
+                TryDelete(tempPath);
+                return ArchiveDownloadResult.Failure("canceled");
+            }
+            catch (HttpRequestException)
+            {
+                TryDelete(tempPath);
+                return ArchiveDownloadResult.Failure("request_failed");
+            }
+            catch
+            {
+                TryDelete(tempPath);
+                return ArchiveDownloadResult.Failure("download_failed");
+            }
         }
-        catch (OperationCanceledException) when (cts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
-        {
-            TryDelete(tempPath);
-            return ArchiveDownloadResult.Failure("timeout");
-        }
-        catch (OperationCanceledException)
-        {
-            TryDelete(tempPath);
-            return ArchiveDownloadResult.Failure("canceled");
-        }
-        catch (HttpRequestException)
-        {
-            TryDelete(tempPath);
-            return ArchiveDownloadResult.Failure("request_failed");
-        }
-        catch
-        {
-            TryDelete(tempPath);
-            return ArchiveDownloadResult.Failure("download_failed");
-        }
+
+        return ArchiveDownloadResult.Failure("download_failed");
     }
 
     private static void TryDelete(string path)
@@ -113,5 +137,38 @@ public sealed class ArchiveDownloader
         {
             // Ignore cleanup failure.
         }
+    }
+
+    private static bool ShouldRetryVerificationFailure(ArchiveFileVerificationResult verification, int attempt)
+    {
+        return attempt < VerificationAttemptLimit
+               && string.Equals(verification.ErrorCode, "sha256_mismatch", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string BuildVerificationFailureMessage(ArchiveFileVerificationResult verification, int attempt)
+    {
+        var parts = new List<string>
+        {
+            $"archive_verification_failed:{verification.ErrorCode}"
+        };
+
+        parts.Add($"attempt={attempt}");
+
+        if (!string.IsNullOrWhiteSpace(verification.Source))
+        {
+            parts.Add($"source={verification.Source}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(verification.ExpectedSha256))
+        {
+            parts.Add($"expected_sha256={verification.ExpectedSha256}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(verification.ActualSha256))
+        {
+            parts.Add($"actual_sha256={verification.ActualSha256}");
+        }
+
+        return string.Join("; ", parts);
     }
 }

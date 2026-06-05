@@ -15,7 +15,18 @@ public static class InstallerExecutionHelpers
             return "";
         }
 
-        return ReadString(entry, "url");
+        return ReadFirstString(entry, "url", "download_url", "source_url");
+    }
+
+    public static string ExtractModuleSha256(IReadOnlyDictionary<string, object?> moduleDownloadLinks, string moduleKey)
+    {
+        if (!moduleDownloadLinks.TryGetValue(moduleKey, out var rawEntry)
+            || rawEntry is not IReadOnlyDictionary<string, object?> entry)
+        {
+            return "";
+        }
+
+        return ReadFirstString(entry, "sha256", "SHA256");
     }
 
     public static string ReadString(IReadOnlyDictionary<string, object?> values, string key)
@@ -30,6 +41,20 @@ public static class InstallerExecutionHelpers
             string text => text.Trim(),
             _ => value.ToString()?.Trim() ?? ""
         };
+    }
+
+    public static string ReadFirstString(IReadOnlyDictionary<string, object?> values, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            var value = ReadString(values, key);
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+        }
+
+        return "";
     }
 
     public static string NormalizeRelativeDllPath(string destinationRelPath)

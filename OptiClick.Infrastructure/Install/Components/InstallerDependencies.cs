@@ -8,6 +8,7 @@ public sealed record DllPayloadInstallRequest
     public string Url { get; init; } = "";
     public string CachedArchivePath { get; init; } = "";
     public string DownloadFileName { get; init; } = "";
+    public string Sha256 { get; init; } = "";
 }
 
 public sealed record DllPayloadInstallResult
@@ -60,7 +61,8 @@ public interface IComponentArchiveDownloader
         string url,
         string destinationPath,
         TimeSpan timeout,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        string fallbackSha256 = "");
 }
 
 public interface IComponentArchiveExtractor
@@ -85,7 +87,8 @@ public interface IComponentArchiveSourceReader
         string url,
         string cachedArchivePath,
         string downloadFilename,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        string fallbackSha256 = "");
 
     Task<IReadOnlyList<string>> FindFilesAsync(
         string sourcePath,

@@ -46,27 +46,34 @@ public sealed class Fsr4Installer : IFsr4Installer
             return ComponentInstallStepResult.Skipped(ComponentInstallName.Fsr4, eligibility.SkipReason);
         }
 
-        var sourceArchive = (context.Fsr4SourceArchivePath ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(sourceArchive) || !_fileSystem.FileExists(sourceArchive))
+        var sourcePath = (context.Fsr4SourceArchivePath ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(sourcePath)
+            || (!_fileSystem.FileExists(sourcePath) && !_fileSystem.DirectoryExists(sourcePath)))
         {
             return ComponentInstallStepResult.Failed(ComponentInstallName.Fsr4, ComponentInstallErrorCodes.SourceMissing);
         }
 
-        var tempRoot = Path.Combine(
-            _installExecutionTempRoot,
-            "Fsr4",
-            Guid.NewGuid().ToString("N"));
+        var tempRoot = "";
+        var payloadRoot = sourcePath;
 
         try
         {
-            _fileSystem.CreateDirectory(tempRoot);
-            var extract = await _archiveExtractor.ExtractAsync(sourceArchive, tempRoot, cancellationToken);
-            if (!extract.IsSuccess)
+            if (_fileSystem.FileExists(sourcePath))
             {
-                return ComponentInstallStepResult.Failed(ComponentInstallName.Fsr4, ComponentInstallErrorCodes.ExtractFailed);
+                tempRoot = Path.Combine(
+                    _installExecutionTempRoot,
+                    "Fsr4",
+                    Guid.NewGuid().ToString("N"));
+                payloadRoot = tempRoot;
+                _fileSystem.CreateDirectory(tempRoot);
+                var extract = await _archiveExtractor.ExtractAsync(sourcePath, tempRoot, cancellationToken);
+                if (!extract.IsSuccess)
+                {
+                    return ComponentInstallStepResult.Failed(ComponentInstallName.Fsr4, ComponentInstallErrorCodes.ExtractFailed);
+                }
             }
 
-            var dllCandidates = FindDllCandidates(tempRoot);
+            var dllCandidates = FindDllCandidates(payloadRoot);
             if (dllCandidates.Count == 0)
             {
                 return ComponentInstallStepResult.Failed(ComponentInstallName.Fsr4, ComponentInstallErrorCodes.SourceMissing);
@@ -90,7 +97,10 @@ public sealed class Fsr4Installer : IFsr4Installer
         }
         finally
         {
-            TryDeleteDirectory(tempRoot);
+            if (!string.IsNullOrWhiteSpace(tempRoot))
+            {
+                TryDeleteDirectory(tempRoot);
+            }
         }
     }
 

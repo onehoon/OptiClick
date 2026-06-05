@@ -8,7 +8,6 @@ public interface IArchivePreparationCoordinator
 
     Task<ArchivePreparationSnapshot> PrepareStartupArchivesAsync(
         IReadOnlyDictionary<string, object?> moduleDownloadLinks,
-        bool fsr4Enabled,
         CancellationToken cancellationToken = default);
 }
 
@@ -59,7 +58,6 @@ public sealed class ArchivePreparationCoordinator : IArchivePreparationCoordinat
 
     public async Task<ArchivePreparationSnapshot> PrepareStartupArchivesAsync(
         IReadOnlyDictionary<string, object?> moduleDownloadLinks,
-        bool fsr4Enabled,
         CancellationToken cancellationToken = default)
     {
         _cachePaths.EnsureDirectories();
@@ -70,7 +68,7 @@ public sealed class ArchivePreparationCoordinator : IArchivePreparationCoordinat
             var entry = ArchiveEntryNormalizer.Normalize(GetEntry(moduleDownloadLinks, ArchiveAssetRuntimeDataKeys.ToRuntimeDataEntryKey(key)));
             ArchivePreparationState state = key switch
             {
-                ArchiveAssetKey.Fsr4 => await _fsr4Service.PrepareAsync(entry, _cachePaths.Fsr4CacheDir, fsr4Enabled, cancellationToken),
+                ArchiveAssetKey.Fsr4 => await _fsr4Service.PrepareAsync(entry, _cachePaths.Fsr4CacheDir, cancellationToken),
                 ArchiveAssetKey.OptiPatcher => await _optiPatcherService.PrepareAsync(entry, _cachePaths.OptiPatcherCacheDir, cancellationToken),
                 _ => await _versionedService.PrepareAsync(
                     key,

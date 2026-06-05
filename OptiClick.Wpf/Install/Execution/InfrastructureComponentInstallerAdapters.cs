@@ -121,9 +121,10 @@ internal sealed class ComponentArchiveSourceReaderAdapter : OptiClick.Infrastruc
         string url,
         string cachedArchivePath,
         string downloadFilename,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string fallbackSha256 = "")
     {
-        return await _inner.ResolveSourcePathAsync(url, cachedArchivePath, downloadFilename, cancellationToken);
+        return await _inner.ResolveSourcePathAsync(url, cachedArchivePath, downloadFilename, cancellationToken, fallbackSha256);
     }
 
     public async Task<IReadOnlyList<string>> FindFilesAsync(
@@ -159,9 +160,10 @@ internal sealed class DllPayloadInstallerAdapter : OptiClick.Infrastructure.Inst
                 TargetPath = request.TargetPath,
                 DestinationRelativePath = request.DestinationRelativePath,
                 SourceDllName = request.SourceDllName,
-                Url = request.Url,
-                CachedArchivePath = request.CachedArchivePath,
-                DownloadFileName = request.DownloadFileName
+            Url = request.Url,
+            CachedArchivePath = request.CachedArchivePath,
+            DownloadFileName = request.DownloadFileName,
+            Sha256 = request.Sha256
             },
             cancellationToken);
 
@@ -230,14 +232,15 @@ internal sealed class ComponentArchiveDownloaderAdapter : OptiClick.Infrastructu
         _inner = inner ?? throw new ArgumentNullException(nameof(inner));
     }
 
-    public async Task<OptiClick.Infrastructure.Install.Components.ComponentArchiveDownloadResult> DownloadAsync(
-        string url,
-        string destinationPath,
-        TimeSpan timeout,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await _inner.DownloadAsync(url, destinationPath, timeout, cancellationToken);
-        return new OptiClick.Infrastructure.Install.Components.ComponentArchiveDownloadResult
+        public async Task<OptiClick.Infrastructure.Install.Components.ComponentArchiveDownloadResult> DownloadAsync(
+            string url,
+            string destinationPath,
+            TimeSpan timeout,
+            CancellationToken cancellationToken = default,
+            string fallbackSha256 = "")
+        {
+            var result = await _inner.DownloadAsync(url, destinationPath, timeout, cancellationToken, fallbackSha256);
+            return new OptiClick.Infrastructure.Install.Components.ComponentArchiveDownloadResult
         {
             IsSuccess = result.IsSuccess,
             DestinationPath = result.DestinationPath,

@@ -7,6 +7,7 @@ public sealed record RemoteArchiveEntry
     public string Url { get; init; } = "";
     public string Filename { get; init; } = "";
     public string Version { get; init; } = "";
+    public string Sha256 { get; init; } = "";
 }
 
 public static class ArchiveEntryNormalizer
@@ -18,14 +19,16 @@ public static class ArchiveEntryNormalizer
             return new RemoteArchiveEntry();
         }
 
-        var url = ReadText(dictionary, "url");
+        var url = ReadFirstText(dictionary, "url", "download_url", "source_url");
         var filename = ResolveArchiveFilename(dictionary, url);
         var version = ReadText(dictionary, "version");
+        var sha256 = ReadFirstText(dictionary, "sha256", "SHA256");
         return new RemoteArchiveEntry
         {
             Url = url,
             Filename = filename,
-            Version = version
+            Version = version,
+            Sha256 = sha256
         };
     }
 
@@ -68,33 +71,7 @@ public static class ArchiveEntryNormalizer
 
     public static string ResolveOptiScalerCacheEntryName(RemoteArchiveEntry entry)
     {
-        var candidate = Path.GetFileNameWithoutExtension(entry.Filename);
-        if (string.IsNullOrWhiteSpace(candidate))
-        {
-            candidate = ResolveOptiScalerCacheVersion(entry);
-        }
-
-        var normalized = RegexReplaceInvalidCacheNameChars(candidate);
-        return string.IsNullOrWhiteSpace(normalized) ? "optiscaler" : normalized;
-    }
-
-    private static string RegexReplaceInvalidCacheNameChars(string value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return "";
-        }
-
-        var text = value.Trim();
-        var chars = text.Select(static ch =>
-            (ch is >= 'a' and <= 'z')
-            || (ch is >= 'A' and <= 'Z')
-            || (ch is >= '0' and <= '9')
-            || ch is '.' or '_' or '-'
-                ? ch
-                : '_')
-            .ToArray();
-        return new string(chars).Trim('.', '_', '-');
+        return ArchivePayloadCacheEntryNames.ResolveOptiScalerEntryName(entry);
     }
 
     private static string ReadText(IReadOnlyDictionary<string, object?> values, string key)
@@ -109,6 +86,20 @@ public static class ArchiveEntryNormalizer
             string text => text.Trim(),
             _ => value.ToString()?.Trim() ?? ""
         };
+    }
+
+    private static string ReadFirstText(IReadOnlyDictionary<string, object?> values, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            var value = ReadText(values, key);
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+        }
+
+        return "";
     }
 
     private static string SanitizeFilename(string value)

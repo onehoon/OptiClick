@@ -1,9 +1,8 @@
 using System.IO;
 using System.Linq;
 using OptiClick.Infrastructure.FileSystem;
+using OptiClick.Wpf.Install.Archives;
 using OptiClick.Wpf.Logging;
-using OptiClick.Wpf.Services;
-using OptiClick.Wpf.Shell.Startup;
 
 namespace OptiClick.Wpf.Shell.Settings;
 
@@ -17,11 +16,7 @@ internal sealed record AppCacheResetTarget(string Path, AppCacheResetTargetKind 
 
 internal sealed class AppCacheResetService
 {
-    internal const string ArchiveManifestFileName = "cache_manifest.json";
     internal const string FirstRunStateFileName = "startup_state.json";
-    internal const string SupportedGamesWikiCacheDirectoryName = "SupportedGamesWiki";
-    internal const string SupportedGamesWikiLegacyMarkdownFileName = "supported_game_list_wiki_cache.md";
-    internal const string DeviceIdentityRulesCacheFileName = "device_identity_rules_cache.json";
 
     private readonly IAppLocalDataPathProvider _localDataPathProvider;
     private readonly IAppLogger _appLogger;
@@ -64,18 +59,14 @@ internal sealed class AppCacheResetService
 
     internal IReadOnlyList<AppCacheResetTarget> BuildTargets()
     {
+        var archiveCachePaths = ArchiveCachePaths.CreateDefault(_localDataPathProvider);
         var manifestDirectory = _localDataPathProvider.ManifestDirectory;
         return
         [
-            DirectoryTarget(_localDataPathProvider.ArchivesDirectory),
+            DirectoryTarget(archiveCachePaths.Root),
+            DirectoryTarget(archiveCachePaths.ManifestRoot),
             DirectoryTarget(_localDataPathProvider.InstallExecutionTempDirectory),
-            DirectoryTarget(CoverImageCacheService.GetCacheDirectory(_localDataPathProvider)),
-            DirectoryTarget(Path.Combine(_localDataPathProvider.RootDirectory, SupportedGamesWikiCacheDirectoryName)),
-            FileTarget(Path.Combine(manifestDirectory, ArchiveManifestFileName)),
-            FileTarget(Path.Combine(manifestDirectory, FirstRunStateFileName)),
-            FileTarget(Path.Combine(manifestDirectory, CoverCacheBootstrapService.CoverCacheManifestFileName)),
-            FileTarget(Path.Combine(manifestDirectory, DeviceIdentityRulesCacheFileName)),
-            FileTarget(Path.Combine(manifestDirectory, SupportedGamesWikiLegacyMarkdownFileName))
+            FileTarget(Path.Combine(manifestDirectory, FirstRunStateFileName))
         ];
     }
 

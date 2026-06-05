@@ -66,14 +66,14 @@ public sealed class SettingsSectionViewModel : ViewModelBase
     public string SettingsLogFolderLabel => _isKoreanUi() ? "Log \uD3F4\uB354" : "Log folder";
 
     public string SettingsRefreshInstallFilesLabel =>
-        _isKoreanUi() ? "\uC571 \uCE90\uC2DC \uCD08\uAE30\uD654" : "Reset app cache";
+        _isKoreanUi() ? "\uC124\uCE58 \uD30C\uC77C \uCE90\uC2DC \uCD08\uAE30\uD654" : "Reset install file cache";
 
     public string SettingsGitHubLabel =>
         _isKoreanUi() ? "\uBB38\uC758\uD558\uAE30 [GitHub]" : "Contact [GitHub]";
 
     public string SettingsActionOpenLabel => _isKoreanUi() ? "\uC5F4\uAE30" : "Open";
 
-    public string SettingsActionRunLabel => _isKoreanUi() ? "\uC2E4\uD589" : "Run";
+    public string SettingsActionRunLabel => _isKoreanUi() ? "\uCD08\uAE30\uD654" : "Reset";
 
     public ICommand OpenLogFolderCommand { get; }
 

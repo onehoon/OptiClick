@@ -49,7 +49,7 @@ public sealed class RuntimeDataResourceResolver : IRuntimeDataResourceResolver
                 Alias = normalizedAlias,
                 ResourceId = RuntimeDataRowReader.GetString(row, "resource_id"),
                 ResourceGroup = RuntimeDataRowReader.GetString(row, "resource_group"),
-                Url = RuntimeDataRowReader.GetString(row, "url"),
+                Url = RuntimeDataRowReader.GetFirstString(row, "url", "download_url", "source_url"),
                 Filename = RuntimeDataRowReader.GetString(row, "filename"),
                 Version = RuntimeDataRowReader.GetString(row, "version"),
                 DisplayVersion = RuntimeDataRowReader.GetString(row, "display_version"),

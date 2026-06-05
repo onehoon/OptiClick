@@ -31,6 +31,7 @@ public sealed class OptiPatcherInstaller : IOptiPatcherInstaller
 
         var url = InstallerExecutionHelpers.ExtractModuleUrl(context.ModuleDownloadLinks, "optipatcher");
         var fileName = ReadEntryFileName(context.ModuleDownloadLinks, "optipatcher");
+        var sha256 = InstallerExecutionHelpers.ExtractModuleSha256(context.ModuleDownloadLinks, "optipatcher");
         if (string.IsNullOrWhiteSpace(url) && string.IsNullOrWhiteSpace(context.OptiPatcherCachedArchivePath))
         {
             return ComponentInstallStepResult.Failed(ComponentInstallName.OptiPatcher, ComponentInstallErrorCodes.SourceMissing);
@@ -38,7 +39,12 @@ public sealed class OptiPatcherInstaller : IOptiPatcherInstaller
 
         try
         {
-            source = await _archiveSourceReader.ResolveSourcePathAsync(url, context.OptiPatcherCachedArchivePath, fileName, cancellationToken);
+            source = await _archiveSourceReader.ResolveSourcePathAsync(
+                url,
+                context.OptiPatcherCachedArchivePath,
+                fileName,
+                cancellationToken,
+                sha256);
             if (string.IsNullOrWhiteSpace(source))
             {
                 return ComponentInstallStepResult.Failed(ComponentInstallName.OptiPatcher, ComponentInstallErrorCodes.SourceMissing);

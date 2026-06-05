@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Net.Http;
 using OptiClick.Infrastructure.FileSystem;
 
 namespace OptiClick.Infrastructure.Archives;
@@ -8,6 +9,7 @@ public interface IArchiveSourceFileSystem
     bool FileExists(string path);
     bool DirectoryExists(string path);
     void CreateDirectory(string path);
+    void DeleteFile(string path);
     IEnumerable<string> EnumerateFiles(string directoryPath, string searchPattern, SearchOption searchOption);
 }
 
@@ -17,7 +19,8 @@ public interface IArchiveSourceDownloader
         string url,
         string destinationPath,
         TimeSpan timeout,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        string fallbackSha256 = "");
 }
 
 public interface IArchiveSourceExtractor
@@ -39,6 +42,7 @@ public sealed class ArchiveSourceReader
     private readonly IArchiveSourceFileSystem _fileSystem;
     private readonly IArchiveSourceDownloader _downloader;
     private readonly IArchiveSourceExtractor _extractor;
+    private readonly IArchiveFileVerifier _fileVerifier;
     private readonly TimeSpan _downloadTimeout;
     private readonly string _ownedTempRoot;
 
@@ -47,11 +51,13 @@ public sealed class ArchiveSourceReader
         IArchiveSourceDownloader downloader,
         IArchiveSourceExtractor extractor,
         TimeSpan? downloadTimeout = null,
-        ArchiveSourceReaderOptions? options = null)
+        ArchiveSourceReaderOptions? options = null,
+        IArchiveFileVerifier? fileVerifier = null)
     {
         _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
         _downloader = downloader ?? throw new ArgumentNullException(nameof(downloader));
         _extractor = extractor ?? throw new ArgumentNullException(nameof(extractor));
+        _fileVerifier = fileVerifier ?? new ArchiveFileVerifier(new HttpClient());
         _downloadTimeout = downloadTimeout ?? TimeSpan.FromSeconds(60);
         _ownedTempRoot = ResolveOwnedTempRoot(options);
     }
@@ -60,12 +66,24 @@ public sealed class ArchiveSourceReader
         string url,
         string cachedArchivePath,
         string downloadFilename,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string fallbackSha256 = "")
     {
         var cached = (cachedArchivePath ?? "").Trim();
-        if (!string.IsNullOrWhiteSpace(cached) && _fileSystem.FileExists(cached))
+        if (!string.IsNullOrWhiteSpace(cached) && _fileSystem.DirectoryExists(cached))
         {
             return Path.GetFullPath(cached);
+        }
+
+        if (!string.IsNullOrWhiteSpace(cached) && _fileSystem.FileExists(cached))
+        {
+            var verification = await _fileVerifier.VerifyArchiveFileAsync(cached, url, fallbackSha256, cancellationToken);
+            if (verification.IsSuccess)
+            {
+                return Path.GetFullPath(cached);
+            }
+
+            TryDeleteCachedFile(cached);
         }
 
         if (string.IsNullOrWhiteSpace(url))
@@ -76,7 +94,7 @@ public sealed class ArchiveSourceReader
         var scope = TemporaryExtractionScope.Create(_ownedTempRoot, "source");
         var fileName = ResolveDownloadFileName(url, downloadFilename, "download.bin");
         var destination = Path.Combine(scope.Path, fileName);
-        var download = await _downloader.DownloadAsync(url, destination, _downloadTimeout, cancellationToken);
+        var download = await _downloader.DownloadAsync(url, destination, _downloadTimeout, cancellationToken, fallbackSha256);
         if (!download.IsSuccess)
         {
             scope.Dispose();
@@ -127,10 +145,16 @@ public sealed class ArchiveSourceReader
             return Array.Empty<string>();
         }
 
-        return _fileSystem
+        var matches = _fileSystem
             .EnumerateFiles(extractRoot, "*", SearchOption.AllDirectories)
             .Where(predicate)
             .ToArray();
+        if (matches.Length == 0)
+        {
+            scope.Dispose();
+        }
+
+        return matches;
     }
 
     public bool CleanupTemporaryPath(string path)
@@ -181,6 +205,21 @@ public sealed class ArchiveSourceReader
         }
 
         return fallback;
+    }
+
+    private void TryDeleteCachedFile(string path)
+    {
+        try
+        {
+            if (_fileSystem.FileExists(path))
+            {
+                _fileSystem.DeleteFile(path);
+            }
+        }
+        catch
+        {
+            // Ignore cleanup failure.
+        }
     }
 
     private static string ResolveOwnedTempRoot(ArchiveSourceReaderOptions? options)

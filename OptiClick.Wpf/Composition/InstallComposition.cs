@@ -168,9 +168,9 @@ public sealed class InstallComposition
         var archiveManifestStore = _root.CreateArchiveDownloadManifestStore(archiveCachePaths.ManifestRoot);
         var archivePreparationCoordinator = new ArchivePreparationCoordinator(
             archiveCachePaths,
-            new VersionedArchivePreparationService(archiveDownloader, archiveManifestStore),
-            new OptiPatcherArchivePreparationService(archiveDownloader, archiveManifestStore),
-            new Fsr4ArchivePreparationService(archiveDownloader),
+            new VersionedArchivePreparationService(archiveDownloader, archiveManifestStore, archiveExtractor),
+            new OptiPatcherArchivePreparationService(archiveDownloader, archiveExtractor, archiveManifestStore),
+            new Fsr4ArchivePreparationService(archiveDownloader, archiveExtractor, archiveManifestStore),
             new OptiScalerPayloadCacheService(
                 archiveDownloader,
                 archiveExtractor,

@@ -34,8 +34,9 @@ internal static class StartupArchiveReadinessLocalProbe
 
             foreach (var key in ArchivePreparationSequence.DefaultStartupOrder)
             {
-                states[key] = ResolveArchiveFileState(
+                states[key] = ResolvePayloadState(
                     cachePaths,
+                    manifestStore,
                     GetEntry(moduleDownloadLinks, ArchiveAssetRuntimeDataKeys.ToRuntimeDataEntryKey(key)),
                     key);
             }
@@ -62,26 +63,19 @@ internal static class StartupArchiveReadinessLocalProbe
     {
         var entry = ArchiveEntryNormalizer.Normalize(rawEntry);
         var candidates = new List<string>();
+        var expectedEntryName = ArchivePayloadCacheEntryNames.ResolveOptiScalerEntryName(entry);
+        var expectedVersion = ArchiveEntryNormalizer.ResolveOptiScalerCacheVersion(entry);
         var manifestEntry = manifestStore.TryGetEntry(ArchiveAssetRuntimeDataKeys.OptiScaler);
-        if (manifestEntry is not null
-            && string.Equals((manifestEntry.CacheKind ?? "").Trim(), "payload_dir", StringComparison.Ordinal))
+        if (IsCurrentPayloadManifestEntry(manifestEntry, expectedVersion, expectedEntryName))
         {
-            AddCandidate(candidates, Path.Combine(cachePaths.OptiScalerPayloadCacheRoot, (manifestEntry.CacheEntry ?? "").Trim()));
+            AddCandidate(candidates, Path.Combine(cachePaths.OptiScalerPayloadCacheRoot, manifestEntry!.CacheEntry.Trim()));
         }
 
         AddCandidate(
             candidates,
             Path.Combine(
                 cachePaths.OptiScalerPayloadCacheRoot,
-                ArchiveEntryNormalizer.ResolveOptiScalerCacheEntryName(entry)));
-
-        if (Directory.Exists(cachePaths.OptiScalerPayloadCacheRoot))
-        {
-            foreach (var directory in Directory.EnumerateDirectories(cachePaths.OptiScalerPayloadCacheRoot))
-            {
-                AddCandidate(candidates, directory);
-            }
-        }
+                expectedEntryName));
 
         foreach (var candidate in candidates)
         {
@@ -94,33 +88,82 @@ internal static class StartupArchiveReadinessLocalProbe
         return MissingState(entry.Filename);
     }
 
-    private static ArchivePreparationState ResolveArchiveFileState(
+    private static ArchivePreparationState ResolvePayloadState(
         ArchiveCachePaths cachePaths,
+        IArchiveDownloadManifestStore manifestStore,
         object? rawEntry,
         ArchiveAssetKey key)
     {
         var entry = ArchiveEntryNormalizer.Normalize(rawEntry);
-        var filename = (entry.Filename ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(filename))
+        var cacheRoot = cachePaths.ResolveCacheDirectory(key);
+        var validator = CreateValidator(key);
+        var candidates = new List<string>();
+        var expectedEntryName = ResolveExpectedEntryName(entry, key);
+        var expectedVersion = ResolveExpectedManifestVersion(entry, key, expectedEntryName);
+        var manifestEntry = manifestStore.TryGetEntry(ArchiveAssetRuntimeDataKeys.ToRuntimeDataEntryKey(key));
+        if (IsCurrentPayloadManifestEntry(manifestEntry, expectedVersion, expectedEntryName))
         {
-            return MissingState(filename);
+            AddCandidate(candidates, Path.Combine(cacheRoot, manifestEntry!.CacheEntry.Trim()));
         }
 
-        var path = Path.Combine(cachePaths.ResolveCacheDirectory(key), filename);
-        return IsExistingArchiveFileReady(path)
-            ? ReadyState(filename, path)
-            : MissingState(filename);
+        AddCandidate(candidates, Path.Combine(cacheRoot, expectedEntryName));
+
+        foreach (var candidate in candidates)
+        {
+            if (validator.IsValid(candidate, out _))
+            {
+                return ReadyState(entry.Filename, candidate);
+            }
+        }
+
+        return MissingState(entry.Filename);
     }
 
-    private static bool IsExistingArchiveFileReady(string path)
+    private static string ResolveExpectedEntryName(RemoteArchiveEntry entry, ArchiveAssetKey key)
     {
-        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+        return key == ArchiveAssetKey.OptiPatcher
+            ? ArchivePayloadCacheEntryNames.OptiPatcherRolling
+            : ArchivePayloadCacheEntryNames.ResolveVersionedEntryName(entry, ArchiveAssetRuntimeDataKeys.ToStateKey(key));
+    }
+
+    private static string ResolveExpectedManifestVersion(RemoteArchiveEntry entry, ArchiveAssetKey key, string expectedEntryName)
+    {
+        if (key == ArchiveAssetKey.OptiPatcher)
+        {
+            return ArchivePayloadCacheEntryNames.OptiPatcherRolling;
+        }
+
+        var entryVersion = (entry.Version ?? "").Trim();
+        return string.IsNullOrWhiteSpace(entryVersion) ? expectedEntryName : entryVersion;
+    }
+
+    private static bool IsCurrentPayloadManifestEntry(
+        ArchiveManifestEntry? manifestEntry,
+        string expectedVersion,
+        string expectedEntryName)
+    {
+        if (manifestEntry is null
+            || !string.Equals((manifestEntry.CacheKind ?? "").Trim(), "payload_dir", StringComparison.Ordinal))
         {
             return false;
         }
 
-        return !string.Equals(Path.GetExtension(path), ".zip", StringComparison.OrdinalIgnoreCase)
-               || ArchivePreparationHelpers.IsValidZipFile(path);
+        return string.Equals((manifestEntry.Version ?? "").Trim(), (expectedVersion ?? "").Trim(), StringComparison.Ordinal)
+               && string.Equals((manifestEntry.CacheEntry ?? "").Trim(), (expectedEntryName ?? "").Trim(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static IArchivePayloadValidator CreateValidator(ArchiveAssetKey key)
+    {
+        return key switch
+        {
+            ArchiveAssetKey.Fsr4 => new SingleExtensionPayloadValidator(".dll"),
+            ArchiveAssetKey.OptiPatcher => new OptiPatcherPayloadValidator(),
+            ArchiveAssetKey.SpecialK => new RequiredFilesPayloadValidator(["SpecialK64.dll"]),
+            ArchiveAssetKey.ReFramework => new RequiredFilesPayloadValidator(["dinput8.dll"]),
+            ArchiveAssetKey.UltimateAsiLoader => new RequiredFilesPayloadValidator(["dinput8.dll"]),
+            ArchiveAssetKey.Unreal5 => new NonEmptyPayloadValidator(),
+            _ => new NonEmptyPayloadValidator()
+        };
     }
 
     private static object? GetEntry(IReadOnlyDictionary<string, object?> moduleDownloadLinks, string key)
