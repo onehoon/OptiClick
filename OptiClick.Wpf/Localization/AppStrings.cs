@@ -30,6 +30,10 @@ public sealed record AppStrings
 
     public string ScanTitle { get; init; } = "";
     public string ScanDescription { get; init; } = "";
+    public string ScanAddFolderCardTitle { get; init; } = "";
+    public string ScanAddFolderCardDescription { get; init; } = "";
+    public string ScanTargetsTitle { get; init; } = "";
+    public string ScanTargetsDescription { get; init; } = "";
     public string ScanDefaultFoldersTitle { get; init; } = "";
     public string ScanDefaultFoldersDescription { get; init; } = "";
     public string ScanNoDefaultFolders { get; init; } = "";
@@ -76,10 +80,14 @@ public sealed record AppStrings
 
     public string SettingsTitle { get; init; } = "";
     public string SettingsDescription { get; init; } = "";
+    public string SettingsGeneralSectionTitle { get; init; } = "";
+    public string SettingsManagementSectionTitle { get; init; } = "";
+    public string SettingsSupportSectionTitle { get; init; } = "";
     public string SettingsAppearanceTitle { get; init; } = "";
     public string SettingsAppearanceDescription { get; init; } = "";
     public string SettingsCoverSize { get; init; } = "";
     public string SettingsLanguage { get; init; } = "";
+    public string SettingsLanguageDescription { get; init; } = "";
     public string SettingsUpdatesTitle { get; init; } = "";
     public string SettingsUpdatesDescription { get; init; } = "";
     public string SettingsCheckNow { get; init; } = "";
@@ -87,6 +95,14 @@ public sealed record AppStrings
     public string SettingsDataDescription { get; init; } = "";
     public string SettingsClearCoverCache { get; init; } = "";
     public string SettingsOpenLogFolder { get; init; } = "";
+    public string SettingsLogFolderTitle { get; init; } = "";
+    public string SettingsLogFolderDescription { get; init; } = "";
+    public string SettingsInstallFileCacheTitle { get; init; } = "";
+    public string SettingsInstallFileCacheDescription { get; init; } = "";
+    public string SettingsGitHubSupportTitle { get; init; } = "";
+    public string SettingsGitHubSupportDescription { get; init; } = "";
+    public string SettingsActionOpen { get; init; } = "";
+    public string SettingsActionReset { get; init; } = "";
     public string SettingsWarning { get; init; } = "";
     public string SettingsLanguageChangedTo { get; init; } = "";
     public string SettingsOpenedGitHubSupportRequest { get; init; } = "";
