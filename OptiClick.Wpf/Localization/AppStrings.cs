@@ -72,11 +72,6 @@ public sealed record AppStrings
     public string ScanStartupFailedTryAgain { get; init; } = "";
     public string ScanNoSupportedGamesFoundGuide { get; init; } = "";
     public string ScanBlockedUnsupportedGpuConfiguration { get; init; } = "";
-    public string ScanFolderPreviewTitle { get; init; } = "";
-    public string ScanFolderPreviewSummary { get; init; } = "";
-    public string ScanFolderPreviewSelectedPath { get; init; } = "";
-    public string ScanFolderPreviewNoExplorer { get; init; } = "";
-    public string ScanFolderPreviewNoStart { get; init; } = "";
 
     public string SettingsTitle { get; init; } = "";
     public string SettingsDescription { get; init; } = "";

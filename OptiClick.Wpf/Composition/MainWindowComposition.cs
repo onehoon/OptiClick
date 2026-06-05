@@ -50,11 +50,9 @@ public sealed class MainWindowComposition
         var resultApplier = new MainViewModelResultApplier();
         var runtimeHeaderPresenter = new RuntimeHeaderPresenter();
         var scanFolderListController = new ScanFolderListController(scan.ScanFolderManifestStore);
-        var scanFolderDialogPresenter = new ScanFolderDialogPresenter();
         var scanFolderActionController = new ScanFolderActionController(
             scanFolderListController,
-            scan.FolderPickerService,
-            scanFolderDialogPresenter);
+            scan.FolderPickerService);
         var scanResultCoordinatorFactory = new ScanResultCoordinatorFactory();
         var scanOrchestratorFactory = new ScanOrchestratorFactory();
         var startupNoticePresenter = new StartupNoticePresenter();
@@ -153,7 +151,6 @@ public sealed class MainWindowComposition
                 ScanPipeline = scan.ScanPipeline,
                 ScanFlowController = scan.ScanFlowController,
                 ScanFolderListController = scanFolderListController,
-                ScanFolderDialogPresenter = scanFolderDialogPresenter,
                 ScanFolderActionController = scanFolderActionController,
                 ScanResultCoordinatorFactory = scanResultCoordinatorFactory,
                 ScanOrchestratorFactory = scanOrchestratorFactory

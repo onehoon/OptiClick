@@ -84,7 +84,6 @@ public sealed record MainViewModelResolvedDependencies
     public required LocalizationStateController LocalizationStateController { get; init; }
     public required RuntimeSummaryStateController RuntimeSummaryStateController { get; init; }
     public required MainViewModelBusyStateApplier BusyStateApplier { get; init; }
-    public required ScanFolderDialogPresenter ScanFolderDialogPresenter { get; init; }
     public required ScanFolderActionController ScanFolderActionController { get; init; }
     public required ScanResultCoordinatorFactory ScanResultCoordinatorFactory { get; init; }
     public required ScanOrchestratorFactory ScanOrchestratorFactory { get; init; }

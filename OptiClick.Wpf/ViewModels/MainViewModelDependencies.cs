@@ -71,7 +71,6 @@ public sealed record MainViewModelScanDependencies
     public IShellGameScanPipeline? ScanPipeline { get; init; }
     public ScanFlowController? ScanFlowController { get; init; }
     public ScanFolderListController? ScanFolderListController { get; init; }
-    public ScanFolderDialogPresenter? ScanFolderDialogPresenter { get; init; }
     public ScanFolderActionController? ScanFolderActionController { get; init; }
     public ScanResultCoordinatorFactory? ScanResultCoordinatorFactory { get; init; }
     public ScanOrchestratorFactory? ScanOrchestratorFactory { get; init; }

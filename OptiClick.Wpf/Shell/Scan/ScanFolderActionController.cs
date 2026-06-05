@@ -11,16 +11,13 @@ public sealed class ScanFolderActionController
 {
     private readonly ScanFolderListController _scanFolderListController;
     private readonly IFolderPickerService? _folderPickerService;
-    private readonly ScanFolderDialogPresenter _scanFolderDialogPresenter;
 
     public ScanFolderActionController(
         ScanFolderListController scanFolderListController,
-        IFolderPickerService? folderPickerService,
-        ScanFolderDialogPresenter scanFolderDialogPresenter)
+        IFolderPickerService? folderPickerService)
     {
         _scanFolderListController = scanFolderListController ?? throw new ArgumentNullException(nameof(scanFolderListController));
         _folderPickerService = folderPickerService;
-        _scanFolderDialogPresenter = scanFolderDialogPresenter ?? throw new ArgumentNullException(nameof(scanFolderDialogPresenter));
     }
 
     public ScanFolderActionResult LoadAddedFoldersFromManifest(
@@ -145,23 +142,6 @@ public sealed class ScanFolderActionController
             {
                 AddedFolders = nextAddedFolders
             }
-        };
-    }
-
-    public ScanFolderActionResult OpenFolder(
-        ScanFolderRowViewModel? folder,
-        AppStrings strings)
-    {
-        ArgumentNullException.ThrowIfNull(strings);
-
-        if (folder is null || string.IsNullOrWhiteSpace(folder.Path))
-        {
-            return new ScanFolderActionResult();
-        }
-
-        return new ScanFolderActionResult
-        {
-            DialogRequest = _scanFolderDialogPresenter.BuildPreviewDialog(folder.Path, strings)
         };
     }
 
