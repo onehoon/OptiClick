@@ -57,6 +57,7 @@ public sealed class OptiPatcherInstaller : IOptiPatcherInstaller
             var selected = SelectSinglePayload(preferred);
             if (selected.ErrorCode == ComponentInstallErrorCodes.MultipleCandidates)
             {
+                CleanupTemporaryCandidates(preferred);
                 return ComponentInstallStepResult.Failed(ComponentInstallName.OptiPatcher, selected.ErrorCode);
             }
 
@@ -70,6 +71,7 @@ public sealed class OptiPatcherInstaller : IOptiPatcherInstaller
                 selected = SelectSinglePayload(fallbackAsi);
                 if (selected.ErrorCode == ComponentInstallErrorCodes.MultipleCandidates)
                 {
+                    CleanupTemporaryCandidates(fallbackAsi);
                     return ComponentInstallStepResult.Failed(ComponentInstallName.OptiPatcher, selected.ErrorCode);
                 }
 
@@ -145,6 +147,21 @@ public sealed class OptiPatcherInstaller : IOptiPatcherInstaller
     {
         var normalized = (name ?? "").Trim().ToLowerInvariant();
         return normalized.EndsWith(".asi", StringComparison.Ordinal) && normalized.Contains("optipatcher", StringComparison.Ordinal);
+    }
+
+    private void CleanupTemporaryCandidates(IReadOnlyList<string> candidates)
+    {
+        foreach (var candidate in candidates)
+        {
+            try
+            {
+                _archiveSourceReader.CleanupTemporaryPath(candidate);
+            }
+            catch
+            {
+                // Cleanup failures must not hide the install error.
+            }
+        }
     }
 
     private static (string Path, string ErrorCode) SelectSinglePayload(IReadOnlyList<string> candidates)
