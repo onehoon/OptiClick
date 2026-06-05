@@ -62,14 +62,15 @@ public sealed partial class MainViewModel : ViewModelBase
 
     private StartupFlowRequest BuildStartupFlowRequest()
     {
+        var archiveCachePaths = ArchiveCachePaths.CreateDefault(_localDataPathProvider);
         return new StartupFlowRequest
         {
             AppVersion = GetCurrentAppVersion(),
             LocalDataRoot = _localDataPathProvider.RootDirectory,
             LogDirectory = _appLogger.LogDirectory,
-            CacheArchivesDirectory = _localDataPathProvider.ArchivesDirectory,
-            CacheManifestDirectory = _localDataPathProvider.ManifestDirectory,
-            CachePayloadDirectory = _localDataPathProvider.OptiScalerPayloadDirectory,
+            CacheArchivesDirectory = archiveCachePaths.Root,
+            CacheManifestDirectory = archiveCachePaths.ManifestRoot,
+            CachePayloadDirectory = archiveCachePaths.OptiScalerPayloadCacheRoot,
             RefreshRuntimeContextAsync = async ct =>
             {
                 await RefreshRuntimeContextAsync(ct);

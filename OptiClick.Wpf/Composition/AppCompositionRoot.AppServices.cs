@@ -118,6 +118,13 @@ public sealed partial class AppCompositionRoot
         return new ProcessElevationService(appLogger);
     }
 
+    public bool IsCurrentProcessElevated(
+        IProcessElevationService? processElevationService = null)
+    {
+        var service = processElevationService ?? CreateProcessElevationService();
+        return service.IsCurrentProcessElevated();
+    }
+
     public bool ShouldRelaunchElevated(
         string[] args,
         IProcessElevationService? processElevationService = null)

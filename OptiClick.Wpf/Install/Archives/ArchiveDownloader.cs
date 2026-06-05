@@ -4,12 +4,19 @@ namespace OptiClick.Wpf.Install.Archives;
 
 public sealed record ArchiveDownloadResult
 {
-    public static ArchiveDownloadResult Success(string destinationPath)
+    public static ArchiveDownloadResult Success(
+        string destinationPath,
+        string verificationSource = "",
+        string expectedSha256 = "",
+        string actualSha256 = "")
     {
         return new ArchiveDownloadResult
         {
             IsSuccess = true,
-            DestinationPath = destinationPath
+            DestinationPath = destinationPath,
+            VerificationSource = verificationSource,
+            ExpectedSha256 = expectedSha256,
+            ActualSha256 = actualSha256
         };
     }
 
@@ -26,6 +33,9 @@ public sealed record ArchiveDownloadResult
     public string DestinationPath { get; init; } = "";
     public string ErrorCode { get; init; } = "";
     public string ErrorMessage { get; init; } = "";
+    public string VerificationSource { get; init; } = "";
+    public string ExpectedSha256 { get; init; } = "";
+    public string ActualSha256 { get; init; } = "";
 
     public static ArchiveDownloadResult FromInfrastructure(OptiClick.Infrastructure.Archives.ArchiveDownloadResult result)
     {
@@ -34,7 +44,10 @@ public sealed record ArchiveDownloadResult
             IsSuccess = result.IsSuccess,
             DestinationPath = result.DestinationPath,
             ErrorCode = result.ErrorCode,
-            ErrorMessage = result.ErrorMessage
+            ErrorMessage = result.ErrorMessage,
+            VerificationSource = result.VerificationSource,
+            ExpectedSha256 = result.ExpectedSha256,
+            ActualSha256 = result.ActualSha256
         };
     }
 }

@@ -32,6 +32,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyTitle>OptiClick - Non official OptiScaler Installer</AssemblyTitle>
     <AssemblyDescription>OptiClick - Non official OptiScaler Installer</AssemblyDescription>
     <AssemblyProduct>OptiClick</AssemblyProduct>

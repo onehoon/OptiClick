@@ -43,9 +43,14 @@ public sealed class ArchiveReadinessFlowController
             var merged = ArchivePreparationSnapshotMerger.Merge(optiScalerSnapshot, startupSnapshot);
             var readiness = ArchivePreparationSnapshotMapper.ToInstallPlanSnapshot(merged);
 
+            foreach (var key in ArchivePreparationSequence.StartupReadinessOrder)
+            {
+                logs.Add(Info("archive", FormatArchivePreparationLog(key, merged.Get(key))));
+            }
+
             logs.Add(Info(
                 "archive",
-                $"refresh completed optiscaler={readiness.OptiScalerState} optipatcher={readiness.OptiPatcherState} fsr4={readiness.Fsr4State} unreal5={readiness.Unreal5State}"));
+                $"refresh completed optiscaler={readiness.OptiScalerState} fsr4={readiness.Fsr4State} optipatcher={readiness.OptiPatcherState} specialk={readiness.SpecialKState} reframework={readiness.ReframeworkState} ual={readiness.UalState} unreal5={readiness.Unreal5State}"));
 
             return new ArchiveReadinessFlowResult
             {
@@ -92,5 +97,56 @@ public sealed class ArchiveReadinessFlowController
             Message = message,
             Exception = exception
         };
+    }
+
+    private static string FormatArchivePreparationLog(ArchiveAssetKey key, ArchivePreparationState state)
+    {
+        var stage = state.StageStatus ?? ArchivePreparationStageStatus.Unknown;
+        return $"asset={FormatAssetKey(key)} state={FormatState(state)} source={Normalize(stage.Source, "unknown")} download={Normalize(stage.Download, "unknown")} sha={Normalize(stage.Sha, "unknown")} folder={Normalize(stage.Folder, "unknown")} json={Normalize(stage.Json, "unknown")} duration_ms={FormatDuration(stage.DurationMs)} filename={Normalize(state.Filename, "-")} error={Normalize(state.ErrorMessage, "-")}";
+    }
+
+    private static string FormatAssetKey(ArchiveAssetKey key)
+    {
+        return key switch
+        {
+            ArchiveAssetKey.OptiScaler => ArchiveAssetRuntimeDataKeys.OptiScaler,
+            ArchiveAssetKey.Fsr4 => ArchiveAssetRuntimeDataKeys.Fsr4,
+            ArchiveAssetKey.OptiPatcher => ArchiveAssetRuntimeDataKeys.OptiPatcher,
+            ArchiveAssetKey.SpecialK => ArchiveAssetRuntimeDataKeys.SpecialK,
+            ArchiveAssetKey.ReFramework => ArchiveAssetRuntimeDataKeys.ReFramework,
+            ArchiveAssetKey.UltimateAsiLoader => ArchiveAssetRuntimeDataKeys.UltimateAsiLoader,
+            ArchiveAssetKey.Unreal5 => ArchiveAssetRuntimeDataKeys.Unreal5,
+            _ => key.ToString().ToLowerInvariant()
+        };
+    }
+
+    private static string FormatState(ArchivePreparationState state)
+    {
+        if (state.Downloading)
+        {
+            return "Downloading";
+        }
+
+        if (state.Ready)
+        {
+            return "Ready";
+        }
+
+        if (!string.IsNullOrWhiteSpace(state.ErrorMessage))
+        {
+            return "Failed";
+        }
+
+        return string.IsNullOrWhiteSpace(state.ArchivePath) ? "MissingSource" : "NotReady";
+    }
+
+    private static string FormatDuration(long durationMs)
+    {
+        return durationMs < 0 ? "-" : durationMs.ToString();
+    }
+
+    private static string Normalize(string value, string fallback)
+    {
+        return string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
     }
 }

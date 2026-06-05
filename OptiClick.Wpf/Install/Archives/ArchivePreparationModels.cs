@@ -7,6 +7,19 @@ public sealed record ArchivePreparationState
     public bool Ready { get; init; }
     public bool Downloading { get; init; }
     public string ErrorMessage { get; init; } = "";
+    public ArchivePreparationStageStatus StageStatus { get; init; } = ArchivePreparationStageStatus.Unknown;
+}
+
+public sealed record ArchivePreparationStageStatus
+{
+    public static readonly ArchivePreparationStageStatus Unknown = new();
+
+    public string Source { get; init; } = "";
+    public string Download { get; init; } = "";
+    public string Sha { get; init; } = "";
+    public string Folder { get; init; } = "";
+    public string Json { get; init; } = "";
+    public long DurationMs { get; init; } = -1;
 }
 
 public sealed record ArchiveAssetPreparationResult
@@ -30,6 +43,17 @@ public sealed record ArchivePreparationSnapshot
 
 public sealed record ArchivePreparationSequence
 {
+    public static readonly IReadOnlyList<ArchiveAssetKey> StartupReadinessOrder =
+    [
+        ArchiveAssetKey.OptiScaler,
+        ArchiveAssetKey.Fsr4,
+        ArchiveAssetKey.OptiPatcher,
+        ArchiveAssetKey.SpecialK,
+        ArchiveAssetKey.ReFramework,
+        ArchiveAssetKey.UltimateAsiLoader,
+        ArchiveAssetKey.Unreal5
+    ];
+
     public static readonly IReadOnlyList<ArchiveAssetKey> DefaultStartupOrder =
     [
         ArchiveAssetKey.Fsr4,

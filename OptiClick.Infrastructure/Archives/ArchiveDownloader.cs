@@ -5,12 +5,19 @@ namespace OptiClick.Infrastructure.Archives;
 
 public sealed record ArchiveDownloadResult
 {
-    public static ArchiveDownloadResult Success(string destinationPath)
+    public static ArchiveDownloadResult Success(
+        string destinationPath,
+        string verificationSource = "",
+        string expectedSha256 = "",
+        string actualSha256 = "")
     {
         return new ArchiveDownloadResult
         {
             IsSuccess = true,
-            DestinationPath = destinationPath
+            DestinationPath = destinationPath,
+            VerificationSource = verificationSource,
+            ExpectedSha256 = expectedSha256,
+            ActualSha256 = actualSha256
         };
     }
 
@@ -27,6 +34,9 @@ public sealed record ArchiveDownloadResult
     public string DestinationPath { get; init; } = "";
     public string ErrorCode { get; init; } = "";
     public string ErrorMessage { get; init; } = "";
+    public string VerificationSource { get; init; } = "";
+    public string ExpectedSha256 { get; init; } = "";
+    public string ActualSha256 { get; init; } = "";
 }
 
 public sealed class ArchiveDownloader
@@ -97,7 +107,11 @@ public sealed class ArchiveDownloader
                 }
 
                 File.Move(tempPath, destination);
-                return ArchiveDownloadResult.Success(destination);
+                return ArchiveDownloadResult.Success(
+                    destination,
+                    verification.Source,
+                    verification.ExpectedSha256,
+                    verification.ActualSha256);
             }
             catch (OperationCanceledException) when (cts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
             {
