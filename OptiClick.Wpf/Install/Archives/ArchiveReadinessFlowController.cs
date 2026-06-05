@@ -6,10 +6,14 @@ namespace OptiClick.Wpf.Install.Archives;
 public sealed class ArchiveReadinessFlowController
 {
     private readonly IArchivePreparationCoordinator? _archivePreparationCoordinator;
+    private readonly IOptiScalerVariantArchiveSyncService? _optiScalerVariantArchiveSyncService;
 
-    public ArchiveReadinessFlowController(IArchivePreparationCoordinator? archivePreparationCoordinator)
+    public ArchiveReadinessFlowController(
+        IArchivePreparationCoordinator? archivePreparationCoordinator,
+        IOptiScalerVariantArchiveSyncService? optiScalerVariantArchiveSyncService = null)
     {
         _archivePreparationCoordinator = archivePreparationCoordinator;
+        _optiScalerVariantArchiveSyncService = optiScalerVariantArchiveSyncService;
     }
 
     public async Task<ArchiveReadinessFlowResult> RefreshAsync(
@@ -34,14 +38,38 @@ public sealed class ArchiveReadinessFlowController
 
         try
         {
-            var optiScalerSnapshot = await _archivePreparationCoordinator.PrepareOptiScalerAsync(
-                request.ModuleDownloadLinks,
-                cancellationToken);
+            OptiScalerVariantSyncResult? variantSync = null;
+            ArchivePreparationSnapshot optiScalerSnapshot;
+            if (request.OptiScalerVariantCatalog.HasRuntimeVariants
+                && _optiScalerVariantArchiveSyncService is not null)
+            {
+                variantSync = await _optiScalerVariantArchiveSyncService.SyncAsync(
+                    request.OptiScalerVariantCatalog,
+                    request.PreferredOptiScalerVariant,
+                    cancellationToken);
+                logs.AddRange(variantSync.Logs);
+                optiScalerSnapshot = new ArchivePreparationSnapshot
+                {
+                    States = new Dictionary<ArchiveAssetKey, ArchivePreparationState>
+                    {
+                        [ArchiveAssetKey.OptiScaler] = variantSync.OptiScalerState
+                    }
+                };
+            }
+            else
+            {
+                optiScalerSnapshot = await _archivePreparationCoordinator.PrepareOptiScalerAsync(
+                    request.ModuleDownloadLinks,
+                    cancellationToken);
+            }
+
             var startupSnapshot = await _archivePreparationCoordinator.PrepareStartupArchivesAsync(
                 request.ModuleDownloadLinks,
                 cancellationToken);
             var merged = ArchivePreparationSnapshotMerger.Merge(optiScalerSnapshot, startupSnapshot);
-            var readiness = ArchivePreparationSnapshotMapper.ToInstallPlanSnapshot(merged);
+            var readiness = ApplyOptiScalerVariantReadiness(
+                ArchivePreparationSnapshotMapper.ToInstallPlanSnapshot(merged),
+                variantSync);
 
             foreach (var key in ArchivePreparationSequence.StartupReadinessOrder)
             {
@@ -57,6 +85,7 @@ public sealed class ArchiveReadinessFlowController
                 DidRun = true,
                 IsSuccess = true,
                 Readiness = readiness,
+                OptiScalerVariantSync = variantSync,
                 Logs = logs
             };
         }
@@ -103,6 +132,23 @@ public sealed class ArchiveReadinessFlowController
     {
         var stage = state.StageStatus ?? ArchivePreparationStageStatus.Unknown;
         return $"asset={FormatAssetKey(key)} state={FormatState(state)} source={Normalize(stage.Source, "unknown")} download={Normalize(stage.Download, "unknown")} sha={Normalize(stage.Sha, "unknown")} folder={Normalize(stage.Folder, "unknown")} json={Normalize(stage.Json, "unknown")} duration_ms={FormatDuration(stage.DurationMs)} filename={Normalize(state.Filename, "-")} error={Normalize(state.ErrorMessage, "-")}";
+    }
+
+    private static ArchiveReadinessSnapshot ApplyOptiScalerVariantReadiness(
+        ArchiveReadinessSnapshot readiness,
+        OptiScalerVariantSyncResult? variantSync)
+    {
+        if (variantSync is null)
+        {
+            return readiness;
+        }
+
+        return readiness with
+        {
+            OptiScalerVariant = variantSync.EffectiveVariant,
+            OptiScalerVersion = variantSync.EffectiveVersion,
+            OptiScalerDisplayVersion = variantSync.EffectiveDisplayVersion
+        };
     }
 
     private static string FormatAssetKey(ArchiveAssetKey key)

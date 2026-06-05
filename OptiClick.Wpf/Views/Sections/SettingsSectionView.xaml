@@ -109,6 +109,45 @@
                     </Grid>
                 </ui:Card>
 
+                <ui:Card Style="{StaticResource SettingsItemCardControlStyle}"
+                         HorizontalAlignment="Stretch">
+                    <Grid MinHeight="56">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Style="{StaticResource SettingsIconPanelStyle}">
+                            <ui:SymbolIcon Symbol="Settings24"
+                                           Foreground="{StaticResource AccentPrimaryBrush}"
+                                           FontSize="20"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" />
+                        </Border>
+
+                        <StackPanel Grid.Column="2"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Strings.SettingsOptiScalerVersionTitle}"
+                                       Style="{StaticResource SectionTitleTextStyle}"
+                                       FontSize="14" />
+                            <TextBlock Text="{Binding Strings.SettingsOptiScalerVersionDescription}"
+                                       Style="{StaticResource SmallDescriptionTextStyle}"
+                                       Margin="0,4,0,0" />
+                        </StackPanel>
+
+                        <ComboBox Grid.Column="4"
+                                  Style="{StaticResource SettingsLanguageComboBoxStyle}"
+                                  MinWidth="180"
+                                  ItemsSource="{Binding OptiScalerVariantOptions}"
+                                  DisplayMemberPath="DisplayLabel"
+                                  SelectedValuePath="Variant"
+                                  SelectedValue="{Binding SelectedOptiScalerVariantOption, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </Grid>
+                </ui:Card>
+
                 <TextBlock Text="{Binding Strings.SettingsManagementSectionTitle}"
                            Style="{StaticResource SectionTitleTextStyle}"
                            Margin="0,18,0,8" />

@@ -150,6 +150,9 @@ public sealed record ComponentInstallContext
     public string TargetPath { get; init; } = "";
     public string FinalDllName { get; init; } = "";
     public string OptiScalerPayloadDirectory { get; init; } = "";
+    public string OptiScalerVariant { get; init; } = "";
+    public string OptiScalerVersion { get; init; } = "";
+    public string OptiScalerDisplayVersion { get; init; } = "";
     public string GpuVendor { get; init; } = "";
     public string GpuName { get; init; } = "";
     public string GpuBundleKey { get; init; } = "";

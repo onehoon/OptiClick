@@ -81,6 +81,7 @@ public sealed class MainViewModelResultApplier
             RuntimeData = result.ShouldApplyRemoteDataState ? result.RuntimeData : null,
             RemoteCatalog = result.ShouldApplyRemoteDataState ? result.Catalog : null,
             ModuleDownloadLinks = result.ShouldApplyRemoteDataState ? result.ModuleDownloadLinks : null,
+            OptiScalerVariantCatalog = result.ShouldApplyRemoteDataState ? result.OptiScalerVariantCatalog : null,
             ShouldResetRemoteCatalogDialogGate = result.ResetRemoteCatalogDialogGate,
             ShouldRefreshVisibleGames = result.ShouldRefreshVisibleGames,
             ShouldRefreshArchiveReadiness = result.ShouldRefreshArchiveReadiness,

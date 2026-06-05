@@ -18,7 +18,9 @@ public interface IOptiScalerPayloadCacheService
     Task<OptiScalerPayloadCacheResult> PrepareAsync(
         RemoteArchiveEntry entry,
         string cacheRoot,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        bool forceRebuild = false,
+        IReadOnlySet<string>? cacheEntriesToKeep = null);
 }
 
 public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheService
@@ -49,7 +51,9 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
     public async Task<OptiScalerPayloadCacheResult> PrepareAsync(
         RemoteArchiveEntry entry,
         string cacheRoot,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool forceRebuild = false,
+        IReadOnlySet<string>? cacheEntriesToKeep = null)
     {
         var url = (entry.Url ?? "").Trim();
         var filename = (entry.Filename ?? "").Trim();
@@ -68,10 +72,10 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
         var finalEntryDir = Path.Combine(cacheRoot, cacheEntryName);
         var finalPayloadDir = finalEntryDir;
 
-        if (TryResolvePreparedPayload(cacheRoot, cacheVersion, cacheEntryName, out var preparedPayloadDir))
+        if (!forceRebuild && TryResolvePreparedPayload(cacheRoot, cacheVersion, cacheEntryName, out var preparedPayloadDir))
         {
             WriteCurrentVersionEntry(cacheVersion, filename, cacheEntryName);
-            CleanupStaleOptiScalerEntries(cacheRoot, cacheEntryName);
+            CleanupStaleOptiScalerEntries(cacheRoot, cacheEntryName, cacheEntriesToKeep);
             PruneManifestVersionsWithoutPayload(cacheRoot);
             return new OptiScalerPayloadCacheResult
             {
@@ -161,7 +165,7 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
                 Directory.Delete(backupEntryDir, recursive: true);
             }
 
-            CleanupStaleOptiScalerEntries(cacheRoot, cacheEntryName);
+            CleanupStaleOptiScalerEntries(cacheRoot, cacheEntryName, cacheEntriesToKeep);
             WriteCurrentVersionEntry(cacheVersion, filename, cacheEntryName);
             PruneManifestVersionsWithoutPayload(cacheRoot);
             stageStatus = StageStatuses.WithJsonOk(stageStatus);
@@ -258,7 +262,10 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
                && string.Equals((manifestEntry.CacheEntry ?? "").Trim(), (expectedEntryName ?? "").Trim(), StringComparison.OrdinalIgnoreCase);
     }
 
-    private static void CleanupStaleOptiScalerEntries(string cacheRoot, string keepEntryName)
+    private static void CleanupStaleOptiScalerEntries(
+        string cacheRoot,
+        string keepEntryName,
+        IReadOnlySet<string>? cacheEntriesToKeep)
     {
         if (!Directory.Exists(cacheRoot))
         {
@@ -276,12 +283,17 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
             .Select(static path => new DirectoryInfo(path))
             .OrderByDescending(static info => info.LastWriteTimeUtc)
             .ToArray();
-        var keep = entries
-            .Where(info => string.Equals(info.Name, keepEntryName.Trim(), StringComparison.OrdinalIgnoreCase))
-            .Concat(entries.Where(info => !string.Equals(info.Name, keepEntryName.Trim(), StringComparison.OrdinalIgnoreCase)))
-            .Take(2)
-            .Select(static info => info.FullName)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var keep = cacheEntriesToKeep is null
+            ? entries
+                .Where(info => string.Equals(info.Name, keepEntryName.Trim(), StringComparison.OrdinalIgnoreCase))
+                .Concat(entries.Where(info => !string.Equals(info.Name, keepEntryName.Trim(), StringComparison.OrdinalIgnoreCase)))
+                .Take(2)
+                .Select(static info => info.FullName)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase)
+            : entries
+                .Where(info => cacheEntriesToKeep.Contains(info.Name))
+                .Select(static info => info.FullName)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         foreach (var entry in entries)
         {

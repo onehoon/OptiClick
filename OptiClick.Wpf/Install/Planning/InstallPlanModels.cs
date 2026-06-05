@@ -217,6 +217,9 @@ public sealed record ArchiveReadinessSnapshot
 
     public ArchiveReadinessState OptiScalerState { get; init; } = ArchiveReadinessState.NotReady;
     public string OptiScalerSourceArchive { get; init; } = "";
+    public string OptiScalerVariant { get; init; } = "";
+    public string OptiScalerVersion { get; init; } = "";
+    public string OptiScalerDisplayVersion { get; init; } = "";
     public ArchiveReadinessState Fsr4State { get; init; } = ArchiveReadinessState.NotReady;
     public string Fsr4SourceArchive { get; init; } = "";
     public ArchiveReadinessState UalState { get; init; } = ArchiveReadinessState.NotReady;

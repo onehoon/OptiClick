@@ -11,6 +11,7 @@ public sealed class RuntimeCatalogFlowController
 
     private readonly IRemoteCatalogPipeline? _remoteCatalogPipeline;
     private readonly ModuleDownloadLinkMapBuilder _moduleDownloadLinkMapBuilder;
+    private readonly OptiScalerVariantCatalogBuilder _optiScalerVariantCatalogBuilder;
     private readonly RuntimeCatalogDialogPresenter _dialogPresenter;
     private readonly IRemoteServiceHealthProbe? _remoteServiceHealthProbe;
     private readonly TimeSpan _remoteServiceHealthProbeTimeout;
@@ -20,10 +21,12 @@ public sealed class RuntimeCatalogFlowController
         ModuleDownloadLinkMapBuilder? moduleDownloadLinkMapBuilder = null,
         RuntimeCatalogDialogPresenter? dialogPresenter = null,
         IRemoteServiceHealthProbe? remoteServiceHealthProbe = null,
-        TimeSpan? remoteServiceHealthProbeTimeout = null)
+        TimeSpan? remoteServiceHealthProbeTimeout = null,
+        OptiScalerVariantCatalogBuilder? optiScalerVariantCatalogBuilder = null)
     {
         _remoteCatalogPipeline = remoteCatalogPipeline;
         _moduleDownloadLinkMapBuilder = moduleDownloadLinkMapBuilder ?? new ModuleDownloadLinkMapBuilder();
+        _optiScalerVariantCatalogBuilder = optiScalerVariantCatalogBuilder ?? new OptiScalerVariantCatalogBuilder();
         _dialogPresenter = dialogPresenter ?? new RuntimeCatalogDialogPresenter();
         _remoteServiceHealthProbe = remoteServiceHealthProbe;
         _remoteServiceHealthProbeTimeout = remoteServiceHealthProbeTimeout ?? DefaultRemoteServiceHealthProbeTimeout;
@@ -118,6 +121,11 @@ public sealed class RuntimeCatalogFlowController
         var runtimeData = pipelineResult.RuntimeData ?? RemoteRuntimeData.Empty;
         var catalog = pipelineResult.Catalog ?? ShellGameCatalog.Empty;
         var moduleDownloadLinks = _moduleDownloadLinkMapBuilder.Build(runtimeData.ResourceMaster);
+        var variantCatalogResult = _optiScalerVariantCatalogBuilder.Build(runtimeData.ResourceMaster);
+        foreach (var log in variantCatalogResult.Logs)
+        {
+            logs.Add(log);
+        }
 
         if (catalog.Games.Count == 0)
         {
@@ -131,6 +139,7 @@ public sealed class RuntimeCatalogFlowController
                 RuntimeData = runtimeData,
                 Catalog = catalog,
                 ModuleDownloadLinks = moduleDownloadLinks,
+                OptiScalerVariantCatalog = variantCatalogResult.Catalog,
                 SettingsStatusText = Format(strings.RuntimeRemoteCatalogFailed, "empty_catalog"),
                 DialogRequest = _dialogPresenter.BuildEmptyCatalogDialog(strings),
                 Logs = logs
@@ -146,6 +155,7 @@ public sealed class RuntimeCatalogFlowController
             RuntimeData = runtimeData,
             Catalog = catalog,
             ModuleDownloadLinks = moduleDownloadLinks,
+            OptiScalerVariantCatalog = variantCatalogResult.Catalog,
             SettingsStatusText = loadedText,
             ScanStatusText = loadedText,
             ResetRemoteCatalogDialogGate = true,

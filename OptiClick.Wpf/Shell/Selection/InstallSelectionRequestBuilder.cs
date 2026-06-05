@@ -45,6 +45,7 @@ public sealed class InstallSelectionRequestBuilder
             selectedShellGame,
             selectedTargetPath,
             input.ModuleDownloadLinks,
+            input.LatestArchiveReadiness,
             input.SelectedLanguage);
         var fsr4Required = ShellGameCardMapper.ResolveFsr4Required(selectedShellGame);
         var selectionPopupMessage = BuildSelectionPopupMessage(selectedShellGame, input.SelectedLanguage);
@@ -79,6 +80,7 @@ public sealed class InstallSelectionRequestBuilder
         ShellGameCardModel selectedGame,
         string targetPath,
         IReadOnlyDictionary<string, object?> moduleDownloadLinks,
+        ArchiveReadinessSnapshot archiveReadiness,
         AppLanguage selectedLanguage)
     {
         if (_installStatusResolver is null || string.IsNullOrWhiteSpace(targetPath))
@@ -89,7 +91,7 @@ public sealed class InstallSelectionRequestBuilder
             };
         }
 
-        var (currentVersion, currentDisplayVersion) = ResolveCurrentOptiScalerVersionPair(moduleDownloadLinks);
+        var (currentVersion, currentDisplayVersion) = ResolveCurrentOptiScalerVersionPair(moduleDownloadLinks, archiveReadiness);
         return _installStatusResolver.Resolve(new InstallStatusResolveInput
         {
             TargetPath = targetPath,
@@ -100,8 +102,15 @@ public sealed class InstallSelectionRequestBuilder
     }
 
     private static (string CurrentVersion, string CurrentDisplayVersion) ResolveCurrentOptiScalerVersionPair(
-        IReadOnlyDictionary<string, object?> moduleDownloadLinks)
+        IReadOnlyDictionary<string, object?> moduleDownloadLinks,
+        ArchiveReadinessSnapshot archiveReadiness)
     {
+        if (!string.IsNullOrWhiteSpace(archiveReadiness.OptiScalerVersion)
+            || !string.IsNullOrWhiteSpace(archiveReadiness.OptiScalerDisplayVersion))
+        {
+            return (archiveReadiness.OptiScalerVersion, archiveReadiness.OptiScalerDisplayVersion);
+        }
+
         if (!moduleDownloadLinks.TryGetValue(ArchiveAssetRuntimeDataKeys.OptiScaler, out var rawEntry)
             || rawEntry is not IReadOnlyDictionary<string, object?> entry)
         {

@@ -30,6 +30,13 @@ public sealed class RuntimeShellState
     public IReadOnlyDictionary<string, object?> ModuleDownloadLinks { get; private set; } =
         new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
 
+    public OptiScalerVariantCatalog LatestOptiScalerVariantCatalog { get; private set; } =
+        OptiScalerVariantCatalog.Empty;
+
+    public IReadOnlyList<OptiScalerVariantSelectionOption> LatestOptiScalerVariantSelectionOptions { get; private set; } = [];
+
+    public string EffectiveOptiScalerVariant { get; private set; } = OptiScalerVariantCatalogBuilder.StableVariant;
+
     public void ApplyRuntimeSummary(RuntimeSummaryStateUpdate update)
     {
         ArgumentNullException.ThrowIfNull(update);
@@ -39,12 +46,29 @@ public sealed class RuntimeShellState
     public void ApplyRemoteCatalog(
         RemoteRuntimeData? runtimeData,
         ShellGameCatalog? remoteCatalog,
-        IReadOnlyDictionary<string, object?>? moduleDownloadLinks)
+        IReadOnlyDictionary<string, object?>? moduleDownloadLinks,
+        OptiScalerVariantCatalog? optiScalerVariantCatalog = null)
     {
         LatestRuntimeData = runtimeData ?? RemoteRuntimeData.Empty;
         LatestRemoteCatalog = remoteCatalog ?? ShellGameCatalog.Empty;
         ModuleDownloadLinks = moduleDownloadLinks
             ?? new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        LatestOptiScalerVariantCatalog = optiScalerVariantCatalog ?? OptiScalerVariantCatalog.Empty;
+    }
+
+    public void ApplyOptiScalerVariantSync(OptiScalerVariantSyncResult? result)
+    {
+        if (result is null)
+        {
+            LatestOptiScalerVariantSelectionOptions = [];
+            EffectiveOptiScalerVariant = OptiScalerVariantCatalogBuilder.StableVariant;
+            return;
+        }
+
+        LatestOptiScalerVariantSelectionOptions = result.SelectionOptions ?? [];
+        EffectiveOptiScalerVariant = string.IsNullOrWhiteSpace(result.EffectiveVariant)
+            ? OptiScalerVariantCatalogBuilder.StableVariant
+            : result.EffectiveVariant;
     }
 
     public void SetRemoteCatalogError(string? errorCode, string? detailErrorCode = "")

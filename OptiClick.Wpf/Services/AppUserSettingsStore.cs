@@ -9,6 +9,7 @@ public sealed class AppUserSettings
 {
     public int Version { get; init; } = 1;
     public string LanguagePreference { get; init; } = "auto";
+    public string OptiScalerVariantPreference { get; init; } = "stable";
 }
 
 public interface IAppUserSettingsStore
