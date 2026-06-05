@@ -141,12 +141,10 @@ public static class MainViewModelDependencyResolver
         var startupNoticePresenter = appDependencies.StartupNoticePresenter ?? new StartupNoticePresenter();
         var startupAnnouncementFlowController = appDependencies.StartupAnnouncementFlowController
                                                 ?? new StartupAnnouncementFlowController(startupNoticePresenter);
-        var scanFolderDialogPresenter = scanDependencies.ScanFolderDialogPresenter ?? new ScanFolderDialogPresenter();
         var scanFolderActionController = scanDependencies.ScanFolderActionController
                                          ?? new ScanFolderActionController(
                                              scanFolderListController,
-                                             scanDependencies.FolderPickerService,
-                                             scanFolderDialogPresenter);
+                                             scanDependencies.FolderPickerService);
         var scanResultCoordinatorFactory = scanDependencies.ScanResultCoordinatorFactory ?? new ScanResultCoordinatorFactory();
         var scanOrchestratorFactory = scanDependencies.ScanOrchestratorFactory ?? new ScanOrchestratorFactory();
         var supportIssueContextBuilder = appDependencies.SupportIssueContextBuilder ?? new SupportIssueContextBuilder();
@@ -296,7 +294,6 @@ public static class MainViewModelDependencyResolver
             LocalizationStateController = localizationStateController,
             RuntimeSummaryStateController = runtimeSummaryStateController,
             BusyStateApplier = busyStateApplier,
-            ScanFolderDialogPresenter = scanFolderDialogPresenter,
             ScanFolderActionController = scanFolderActionController,
             ScanResultCoordinatorFactory = scanResultCoordinatorFactory,
             ScanOrchestratorFactory = scanOrchestratorFactory,

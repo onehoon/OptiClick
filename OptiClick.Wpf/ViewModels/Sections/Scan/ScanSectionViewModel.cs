@@ -41,7 +41,6 @@ public sealed class ScanSectionViewModel : ViewModelBase
 
         AddScanFolderCommand = new RelayCommand(_ => AddScanFolder());
         RemoveScanFolderCommand = new RelayCommand(RemoveScanFolder);
-        OpenScanFolderCommand = new RelayCommand(OpenScanFolder);
         SaveAndScanCommand = new AsyncRelayCommand(
             (_, cancellationToken) => SaveAndStartScanAsync(cancellationToken),
             _ => HasAnyEnabledScanFolders(),
@@ -72,8 +71,6 @@ public sealed class ScanSectionViewModel : ViewModelBase
     public RelayCommand AddScanFolderCommand { get; }
 
     public RelayCommand RemoveScanFolderCommand { get; }
-
-    public RelayCommand OpenScanFolderCommand { get; }
 
     public AsyncRelayCommand SaveAndScanCommand { get; }
 
@@ -155,13 +152,6 @@ public sealed class ScanSectionViewModel : ViewModelBase
             parameter as ScanFolderRowViewModel,
             DefaultFolders,
             AddedFolders,
-            Strings));
-    }
-
-    private void OpenScanFolder(object? parameter)
-    {
-        ApplyScanFolderActionResult(_scanFolderActionController.OpenFolder(
-            parameter as ScanFolderRowViewModel,
             Strings));
     }
 
