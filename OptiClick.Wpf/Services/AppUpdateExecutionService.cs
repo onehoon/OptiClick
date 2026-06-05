@@ -1,8 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using System.Security.Cryptography;
-using System.Text;
 using OptiClick.Wpf.Install.Archives;
 using OptiClick.Wpf.Logging;
 using OptiClick.Infrastructure.FileSystem;
@@ -169,12 +167,6 @@ public sealed class AppUpdateExecutionService : IAppUpdateExecutionService
             {
                 _logger.Warning("app-update", "update download final file is empty");
                 return AppUpdateExecutionResult.Failure("download_final_empty");
-            }
-
-            if (!VerifySha256(downloadedOriginalPath, updateInfo.Sha256))
-            {
-                _logger.Warning("app-update", "update download sha256 mismatch");
-                return AppUpdateExecutionResult.Failure("sha256_mismatch");
             }
 
             var resolvedExePath = updateInfo.PackageType switch
@@ -373,50 +365,6 @@ public sealed class AppUpdateExecutionService : IAppUpdateExecutionService
         }
 
         return "";
-    }
-
-    private static bool VerifySha256(string filePath, string? expectedSha)
-    {
-        var normalizedExpected = NormalizeSha(expectedSha);
-        if (string.IsNullOrWhiteSpace(normalizedExpected))
-        {
-            return true;
-        }
-
-        try
-        {
-            using var stream = File.OpenRead(filePath);
-            using var sha = SHA256.Create();
-            var hashBytes = sha.ComputeHash(stream);
-            var builder = new StringBuilder(hashBytes.Length * 2);
-            foreach (var b in hashBytes)
-            {
-                builder.Append(b.ToString("x2"));
-            }
-
-            return string.Equals(builder.ToString(), normalizedExpected, StringComparison.OrdinalIgnoreCase);
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private static string NormalizeSha(string? value)
-    {
-        var normalized = (value ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(normalized))
-        {
-            return "";
-        }
-
-        const string Prefix = "sha256:";
-        if (normalized.StartsWith(Prefix, StringComparison.OrdinalIgnoreCase))
-        {
-            normalized = normalized[Prefix.Length..].Trim();
-        }
-
-        return normalized;
     }
 
     private static string NormalizeStatusCode(string value, string fallback)

@@ -10,6 +10,7 @@ public sealed record DllPayloadInstallRequest
     public string Url { get; init; } = "";
     public string CachedArchivePath { get; init; } = "";
     public string DownloadFileName { get; init; } = "";
+    public string Sha256 { get; init; } = "";
 }
 
 public sealed record DllPayloadInstallResult
@@ -51,7 +52,8 @@ public sealed class DllPayloadInstaller : IDllPayloadInstaller
             SourceDllName = request.SourceDllName,
             Url = request.Url,
             CachedArchivePath = request.CachedArchivePath,
-            DownloadFileName = request.DownloadFileName
+            DownloadFileName = request.DownloadFileName,
+            Sha256 = request.Sha256
         }, cancellationToken);
 
         return new DllPayloadInstallResult
@@ -93,9 +95,10 @@ public sealed class DllPayloadInstaller : IDllPayloadInstaller
             string url,
             string cachedArchivePath,
             string downloadFilename,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            string fallbackSha256 = "")
         {
-            return _inner.ResolveSourcePathAsync(url, cachedArchivePath, downloadFilename, cancellationToken);
+            return _inner.ResolveSourcePathAsync(url, cachedArchivePath, downloadFilename, cancellationToken, fallbackSha256);
         }
 
         public Task<IReadOnlyList<string>> FindFilesAsync(

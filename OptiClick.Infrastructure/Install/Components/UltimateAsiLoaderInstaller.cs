@@ -35,6 +35,7 @@ public sealed class UltimateAsiLoaderInstaller : IUltimateAsiLoaderInstaller
 
         var url = InstallerExecutionHelpers.ExtractModuleUrl(context.ModuleDownloadLinks, "ultimateasiloader");
         var downloadName = ReadEntryFileName(context.ModuleDownloadLinks, "ultimateasiloader");
+        var sha256 = InstallerExecutionHelpers.ExtractModuleSha256(context.ModuleDownloadLinks, "ultimateasiloader");
         var autoDetectedNames = context.UalDetectedNames
             .Where(static name => !string.IsNullOrWhiteSpace(name))
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -56,7 +57,8 @@ public sealed class UltimateAsiLoaderInstaller : IUltimateAsiLoaderInstaller
                     SourceDllName = PayloadDllName,
                     Url = url,
                     CachedArchivePath = context.UalCachedArchivePath,
-                    DownloadFileName = downloadName
+                    DownloadFileName = downloadName,
+                    Sha256 = sha256
                 },
                 cancellationToken);
 
@@ -104,7 +106,8 @@ public sealed class UltimateAsiLoaderInstaller : IUltimateAsiLoaderInstaller
                 SourceDllName = PayloadDllName,
                 Url = url,
                 CachedArchivePath = context.UalCachedArchivePath,
-                DownloadFileName = downloadName
+                DownloadFileName = downloadName,
+                Sha256 = sha256
             },
             cancellationToken);
 

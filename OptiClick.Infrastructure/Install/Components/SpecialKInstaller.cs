@@ -47,6 +47,7 @@ public sealed class SpecialKInstaller : ISpecialKInstaller
 
             var url = InstallerExecutionHelpers.ExtractModuleUrl(context.ModuleDownloadLinks, "specialk");
             var downloadName = ReadEntryFileName(context.ModuleDownloadLinks, "specialk");
+            var sha256 = InstallerExecutionHelpers.ExtractModuleSha256(context.ModuleDownloadLinks, "specialk");
             var install = await _dllPayloadInstaller.InstallAsync(
                 new DllPayloadInstallRequest
                 {
@@ -55,7 +56,8 @@ public sealed class SpecialKInstaller : ISpecialKInstaller
                     SourceDllName = SourceDllName,
                     Url = url,
                     CachedArchivePath = context.SpecialKCachedArchivePath,
-                    DownloadFileName = downloadName
+                    DownloadFileName = downloadName,
+                    Sha256 = sha256
                 },
                 cancellationToken);
 

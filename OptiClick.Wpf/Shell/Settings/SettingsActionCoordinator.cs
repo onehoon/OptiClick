@@ -122,10 +122,10 @@ public sealed class SettingsActionCoordinator
         {
             Kind = AppDialogKind.Warning,
             Severity = DialogSeverity.Warning,
-            Title = isKoreanUi ? "\uC571 \uCE90\uC2DC \uCD08\uAE30\uD654" : "Reset app cache",
+            Title = isKoreanUi ? "\uC124\uCE58 \uD30C\uC77C \uCE90\uC2DC \uCD08\uAE30\uD654" : "Reset install file cache",
             Summary = isKoreanUi
-                ? "\uC7AC\uC0DD\uC131 \uAC00\uB2A5\uD55C \uC571 \uCE90\uC2DC\uB97C \uC0AD\uC81C\uD569\uB2C8\uB2E4.\n\n\uC124\uCE58 \uC544\uCE74\uC774\uBE0C, \uC124\uCE58 \uC784\uC2DC \uD30C\uC77C, \uCEE4\uBC84 \uC774\uBBF8\uC9C0 \uCE90\uC2DC, \uC9C0\uC6D0 \uAC8C\uC784 \uBAA9\uB85D \uCE90\uC2DC, \uC7A5\uCE58 \uC2DD\uBCC4 \uADDC\uCE59 \uCE90\uC2DC, \uCD5C\uCD08 \uC2E4\uD589 \uC900\uBE44 \uAE30\uB85D\uC744 \uC0AD\uC81C\uD569\uB2C8\uB2E4.\n\n\uC0AC\uC6A9\uC790 \uC124\uC815, \uC2A4\uCE94 \uD3F4\uB354 \uBAA9\uB85D, \uB85C\uADF8, \uAC8C\uC784 \uD3F4\uB354\uC5D0 \uC774\uBBF8 \uC124\uCE58\uB41C \uD30C\uC77C\uC740 \uC720\uC9C0\uB429\uB2C8\uB2E4.\n\uC571\uC744 \uB2E4\uC2DC \uC2DC\uC791\uD558\uBA74 \uD544\uC694\uD55C \uB370\uC774\uD130\uB97C \uC790\uB3D9\uC73C\uB85C \uB2E4\uC2DC \uC900\uBE44\uD569\uB2C8\uB2E4.\n\n\uACC4\uC18D\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?"
-                : "Regenerable app cache will be deleted.\n\nThis includes install archives, install temp files, cover image cache, supported-games cache, device identity rules cache, and the first-run preparation marker.\n\nUser settings, scan folder list, logs, and files already installed in game folders will be kept.\nAfter the app restarts, required data will be prepared automatically again.\n\nDo you want to continue?",
+                ? "\uC124\uCE58 \uD30C\uC77C \uC900\uBE44\uC5D0 \uC0AC\uC6A9\uD558\uB294 \uCE90\uC2DC\uB97C \uC0AD\uC81C\uD569\uB2C8\uB2E4.\n\n\uC0AD\uC81C \uB300\uC0C1: ArchivesV2, ArchivesV2 manifest, \uC124\uCE58 \uC784\uC2DC \uD30C\uC77C, \uCD5C\uCD08 \uC2E4\uD589 \uC900\uBE44 \uAE30\uB85D.\n\n\uCEE4\uBC84 \uC774\uBBF8\uC9C0 \uCE90\uC2DC, \uC9C0\uC6D0 \uAC8C\uC784 \uBAA9\uB85D \uCE90\uC2DC, \uC7A5\uCE58 \uC2DD\uBCC4 \uADDC\uCE59 \uCE90\uC2DC, \uC0AC\uC6A9\uC790 \uC124\uC815, \uC2A4\uCE94 \uD3F4\uB354 \uBAA9\uB85D, \uB85C\uADF8, \uAC8C\uC784 \uD3F4\uB354\uC5D0 \uC124\uCE58\uB41C \uD30C\uC77C\uC740 \uC720\uC9C0\uB429\uB2C8\uB2E4.\n\uC571\uC744 \uB2E4\uC2DC \uC2DC\uC791\uD558\uBA74 \uD544\uC694\uD55C \uC124\uCE58 \uD30C\uC77C\uC744 \uC790\uB3D9\uC73C\uB85C \uB2E4\uC2DC \uC900\uBE44\uD569\uB2C8\uB2E4.\n\n\uACC4\uC18D\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?"
+                : "Install file preparation cache will be deleted.\n\nThis includes ArchivesV2 payloads, the ArchivesV2 manifest, install temp files, and the first-run preparation marker.\n\nCover image cache, supported-games cache, device identity rules cache, user settings, scan folder list, logs, and files already installed in game folders will be kept.\nAfter the app restarts, required install files will be prepared automatically again.\n\nDo you want to continue?",
             PrimaryButtonText = isKoreanUi ? "\uCD08\uAE30\uD654" : "Reset",
             SecondaryButtonText = isKoreanUi ? "\uCDE8\uC18C" : "Cancel",
             PrimaryButtonRole = DialogButtonRole.Destructive,
@@ -140,10 +140,10 @@ public sealed class SettingsActionCoordinator
         {
             Kind = AppDialogKind.Success,
             Severity = DialogSeverity.Success,
-            Title = isKoreanUi ? "\uC571 \uCE90\uC2DC \uCD08\uAE30\uD654" : "Reset app cache",
+            Title = isKoreanUi ? "\uC124\uCE58 \uD30C\uC77C \uCE90\uC2DC \uCD08\uAE30\uD654" : "Reset install file cache",
             Summary = isKoreanUi
-                ? "\uC571 \uCE90\uC2DC\uB97C \uCD08\uAE30\uD654\uD588\uC2B5\uB2C8\uB2E4.\n\n\uC571\uC744 \uC0C8\uB85C \uC2DC\uC791\uD574\uC57C \uD569\uB2C8\uB2E4.\n\uD655\uC778\uC744 \uB204\uB974\uBA74 OptiClick\uC774 \uC790\uB3D9\uC73C\uB85C \uB2E4\uC2DC \uC2DC\uC791\uB429\uB2C8\uB2E4."
-                : "App cache has been reset.\n\nThe app needs to restart.\nClick OK to restart OptiClick automatically.",
+                ? "\uC124\uCE58 \uD30C\uC77C \uCE90\uC2DC\uB97C \uCD08\uAE30\uD654\uD588\uC2B5\uB2C8\uB2E4.\n\n\uC571\uC744 \uC0C8\uB85C \uC2DC\uC791\uD574\uC57C \uD569\uB2C8\uB2E4.\n\uD655\uC778\uC744 \uB204\uB974\uBA74 OptiClick\uC774 \uC790\uB3D9\uC73C\uB85C \uB2E4\uC2DC \uC2DC\uC791\uB429\uB2C8\uB2E4."
+                : "Install file cache has been reset.\n\nThe app needs to restart.\nClick OK to restart OptiClick automatically.",
             PrimaryButtonText = isKoreanUi ? "\uD655\uC778" : "OK",
             PrimaryResult = AppDialogResult.Ok
         };
@@ -155,10 +155,10 @@ public sealed class SettingsActionCoordinator
         {
             Kind = AppDialogKind.Warning,
             Severity = DialogSeverity.Warning,
-            Title = isKoreanUi ? "\uC571 \uCE90\uC2DC \uCD08\uAE30\uD654" : "Reset app cache",
+            Title = isKoreanUi ? "\uC124\uCE58 \uD30C\uC77C \uCE90\uC2DC \uCD08\uAE30\uD654" : "Reset install file cache",
             Summary = isKoreanUi
-                ? "\uC77C\uBD80 \uC571 \uCE90\uC2DC\uB97C \uC0AD\uC81C\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.\n\uC571\uC744 \uC885\uB8CC\uD55C \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694."
-                : "Some app cache files could not be deleted.\nPlease close the app and try again.",
+                ? "\uC77C\uBD80 \uC124\uCE58 \uD30C\uC77C \uCE90\uC2DC\uB97C \uC0AD\uC81C\uD558\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.\n\uC571\uC744 \uC885\uB8CC\uD55C \uB4A4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694."
+                : "Some install file cache files could not be deleted.\nPlease close the app and try again.",
             PrimaryButtonText = isKoreanUi ? "\uD655\uC778" : "OK",
             PrimaryResult = AppDialogResult.Ok
         };

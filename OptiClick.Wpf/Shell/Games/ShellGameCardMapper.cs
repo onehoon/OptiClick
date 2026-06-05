@@ -59,6 +59,7 @@ public static class ShellGameCardMapper
 
         var eligibility = Fsr4EligibilityResolver.Resolve(new Fsr4InstallEligibilityContext
         {
+            // FSR4 is enabled for every game unless the current GPU is excluded.
             UseFsr4 = true,
             GpuGroup = ShellGameInstallMetadataResolver.GetGpuGroup(selectedGame),
             GpuBundleKey = ShellGameInstallMetadataResolver.GetGpuBundleKey(selectedGame)

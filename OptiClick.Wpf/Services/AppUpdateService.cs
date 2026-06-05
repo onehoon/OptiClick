@@ -26,7 +26,7 @@ public sealed class AppUpdateService(IAppUpdateVersionComparer versionComparer) 
         }
 
         var latestVersion = RuntimeDataRowReader.GetString(row, "version");
-        var url = RuntimeDataRowReader.GetString(row, "url");
+        var url = RuntimeDataRowReader.GetFirstString(row, "url", "download_url", "source_url");
         if (string.IsNullOrWhiteSpace(url))
         {
             url = RuntimeDataRowReader.GetString(row, "link");
@@ -56,12 +56,6 @@ public sealed class AppUpdateService(IAppUpdateVersionComparer versionComparer) 
             return false;
         }
 
-        var sha = RuntimeDataRowReader.GetString(row, "sha256");
-        if (string.IsNullOrWhiteSpace(sha))
-        {
-            sha = RuntimeDataRowReader.GetString(row, "SHA256");
-        }
-
         var displayVersion = RuntimeDataRowReader.GetString(row, "display_version");
         if (string.IsNullOrWhiteSpace(displayVersion))
         {
@@ -75,7 +69,6 @@ public sealed class AppUpdateService(IAppUpdateVersionComparer versionComparer) 
             url,
             filename,
             RuntimeDataRowReader.GetString(row, "note"),
-            string.IsNullOrWhiteSpace(sha) ? null : sha,
             packageType);
         return true;
     }

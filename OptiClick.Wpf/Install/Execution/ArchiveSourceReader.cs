@@ -10,7 +10,8 @@ public interface IArchiveSourceReader
         string url,
         string cachedArchivePath,
         string downloadFilename,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        string fallbackSha256 = "");
 
     Task<IReadOnlyList<string>> FindFilesAsync(
         string sourcePath,
@@ -48,9 +49,10 @@ public sealed class ArchiveSourceReader : IArchiveSourceReader
         string url,
         string cachedArchivePath,
         string downloadFilename,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string fallbackSha256 = "")
     {
-        return await _inner.ResolveSourcePathAsync(url, cachedArchivePath, downloadFilename, cancellationToken);
+        return await _inner.ResolveSourcePathAsync(url, cachedArchivePath, downloadFilename, cancellationToken, fallbackSha256);
     }
 
     public async Task<IReadOnlyList<string>> FindFilesAsync(
@@ -81,6 +83,8 @@ public sealed class ArchiveSourceReader : IArchiveSourceReader
 
         public void CreateDirectory(string path) => _inner.CreateDirectory(path);
 
+        public void DeleteFile(string path) => _inner.DeleteFile(path);
+
         public IEnumerable<string> EnumerateFiles(string directoryPath, string searchPattern, SearchOption searchOption) =>
             _inner.EnumerateFiles(directoryPath, searchPattern, searchOption);
     }
@@ -98,9 +102,10 @@ public sealed class ArchiveSourceReader : IArchiveSourceReader
             string url,
             string destinationPath,
             TimeSpan timeout,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            string fallbackSha256 = "")
         {
-            var result = await _inner.DownloadAsync(url, destinationPath, timeout, cancellationToken);
+            var result = await _inner.DownloadAsync(url, destinationPath, timeout, cancellationToken, fallbackSha256);
             return new OptiClick.Infrastructure.Archives.ArchiveDownloadResult
             {
                 IsSuccess = result.IsSuccess,

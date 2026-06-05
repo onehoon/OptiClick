@@ -15,7 +15,6 @@ public sealed record AppUpdateInfo(
     string DownloadUrl,
     string DownloadFileName,
     string Note,
-    string? Sha256,
     AppUpdatePackageType PackageType);
 
 public sealed record AppUpdatePreparedFile(

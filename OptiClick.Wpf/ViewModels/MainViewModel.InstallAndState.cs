@@ -311,10 +311,7 @@ public sealed partial class MainViewModel : ViewModelBase
         var result = await _archiveReadinessFlowController.RefreshAsync(
             new ArchiveReadinessFlowRequest
             {
-                ModuleDownloadLinks = _runtimeShellState.ModuleDownloadLinks,
-                // FSR4 is part of the mandatory startup cache. Skipping it can make supported
-                // game installs fail after the user reaches the final install step.
-                Fsr4Enabled = true
+                ModuleDownloadLinks = _runtimeShellState.ModuleDownloadLinks
             },
             cancellationToken);
         _flowLogDispatcher.Dispatch(result.Logs, MainViewModelLogCategories.Install);

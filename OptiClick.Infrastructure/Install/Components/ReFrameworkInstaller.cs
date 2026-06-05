@@ -48,6 +48,7 @@ public sealed class ReFrameworkInstaller : IReFrameworkInstaller
 
         var url = InstallerExecutionHelpers.ExtractModuleUrl(context.ModuleDownloadLinks, "reframework");
         var downloadFileName = ReadEntryFileName(context.ModuleDownloadLinks, "reframework");
+        var sha256 = InstallerExecutionHelpers.ExtractModuleSha256(context.ModuleDownloadLinks, "reframework");
         var result = await _dllPayloadInstaller.InstallAsync(
             new DllPayloadInstallRequest
             {
@@ -56,7 +57,8 @@ public sealed class ReFrameworkInstaller : IReFrameworkInstaller
                 SourceDllName = SourceDllName,
                 Url = url,
                 CachedArchivePath = context.ReFrameworkCachedArchivePath,
-                DownloadFileName = downloadFileName
+                DownloadFileName = downloadFileName,
+                Sha256 = sha256
             },
             cancellationToken);
 

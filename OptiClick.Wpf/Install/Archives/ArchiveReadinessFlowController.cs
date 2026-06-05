@@ -39,7 +39,6 @@ public sealed class ArchiveReadinessFlowController
                 cancellationToken);
             var startupSnapshot = await _archivePreparationCoordinator.PrepareStartupArchivesAsync(
                 request.ModuleDownloadLinks,
-                request.Fsr4Enabled,
                 cancellationToken);
             var merged = ArchivePreparationSnapshotMerger.Merge(optiScalerSnapshot, startupSnapshot);
             var readiness = ArchivePreparationSnapshotMapper.ToInstallPlanSnapshot(merged);

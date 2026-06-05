@@ -18,7 +18,8 @@ public interface IDllPayloadArchiveSourceReader
         string url,
         string cachedArchivePath,
         string downloadFilename,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        string fallbackSha256 = "");
 
     Task<IReadOnlyList<string>> FindFilesAsync(
         string sourcePath,
@@ -45,6 +46,7 @@ public sealed record DllPayloadInstallRequest
     public string Url { get; init; } = "";
     public string CachedArchivePath { get; init; } = "";
     public string DownloadFileName { get; init; } = "";
+    public string Sha256 { get; init; } = "";
 }
 
 public sealed record DllPayloadInstallResult
@@ -101,7 +103,8 @@ public sealed class DllPayloadInstaller
                 request.Url,
                 request.CachedArchivePath,
                 request.DownloadFileName,
-                cancellationToken);
+                cancellationToken,
+                request.Sha256);
             if (string.IsNullOrWhiteSpace(sourcePath))
             {
                 return new DllPayloadInstallResult

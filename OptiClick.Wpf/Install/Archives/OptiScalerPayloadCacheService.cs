@@ -21,6 +21,7 @@ public interface IOptiScalerPayloadCacheService
 
 public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheService
 {
+    private const string PayloadCacheKind = "payload_dir";
     private const string StagePrefix = ".optiscaler_stage_";
     private const string BackupPrefix = ".optiscaler_backup_";
     private readonly IArchiveDownloader _downloader;
@@ -60,17 +61,19 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
 
         Directory.CreateDirectory(cacheRoot);
         var cacheVersion = ArchiveEntryNormalizer.ResolveOptiScalerCacheVersion(entry);
-        var cacheEntryName = ResolveCacheEntryName(entry, cacheRoot);
+        var cacheEntryName = ArchiveEntryNormalizer.ResolveOptiScalerCacheEntryName(entry);
         var finalEntryDir = Path.Combine(cacheRoot, cacheEntryName);
         var finalPayloadDir = finalEntryDir;
 
-        if (_validator.IsValid(finalPayloadDir, out _) && !_manifestStore.IsUpdateNeeded(ArchiveAssetRuntimeDataKeys.OptiScaler, cacheVersion))
+        if (TryResolvePreparedPayload(cacheRoot, cacheVersion, cacheEntryName, out var preparedPayloadDir))
         {
+            WriteCurrentVersionEntry(cacheVersion, filename, cacheEntryName);
             CleanupStaleOptiScalerEntries(cacheRoot, cacheEntryName);
+            PruneManifestVersionsWithoutPayload(cacheRoot);
             return new OptiScalerPayloadCacheResult
             {
                 IsSuccess = true,
-                PayloadDirectory = finalPayloadDir,
+                PayloadDirectory = preparedPayloadDir,
                 CacheEntryName = cacheEntryName,
                 Version = cacheVersion
             };
@@ -88,7 +91,12 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
             Directory.CreateDirectory(workRoot);
             Directory.CreateDirectory(stagingEntryDir);
 
-            var download = await _downloader.DownloadAsync(url, downloadPath, _options.DownloadTimeout, cancellationToken);
+            var download = await _downloader.DownloadAsync(
+                url,
+                downloadPath,
+                _options.DownloadTimeout,
+                cancellationToken,
+                entry.Sha256);
             if (!download.IsSuccess)
             {
                 return new OptiScalerPayloadCacheResult
@@ -138,12 +146,8 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
             }
 
             CleanupStaleOptiScalerEntries(cacheRoot, cacheEntryName);
-            _manifestStore.WriteEntry(
-                ArchiveAssetRuntimeDataKeys.OptiScaler,
-                cacheVersion,
-                filename,
-                cacheKind: "payload_dir",
-                cacheEntry: cacheEntryName);
+            WriteCurrentVersionEntry(cacheVersion, filename, cacheEntryName);
+            PruneManifestVersionsWithoutPayload(cacheRoot);
 
             return new OptiScalerPayloadCacheResult
             {
@@ -175,28 +179,64 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
         }
     }
 
-    private string ResolveCacheEntryName(RemoteArchiveEntry entry, string cacheRoot)
+    private bool TryResolvePreparedPayload(
+        string cacheRoot,
+        string cacheVersion,
+        string cacheEntryName,
+        out string payloadDirectory)
     {
-        var derivedName = ArchiveEntryNormalizer.ResolveOptiScalerCacheEntryName(entry);
-        var manifestEntry = _manifestStore.TryGetEntry(ArchiveAssetRuntimeDataKeys.OptiScaler);
-        if (manifestEntry is null)
+        payloadDirectory = "";
+        var versionEntry = _manifestStore.TryGetVersionEntry(ArchiveAssetRuntimeDataKeys.OptiScaler, cacheVersion);
+        if (IsCurrentPayloadManifestEntry(versionEntry, cacheVersion, cacheEntryName))
         {
-            return derivedName;
+            var manifestPayloadDir = Path.Combine(cacheRoot, versionEntry!.CacheEntry.Trim());
+            if (_validator.IsValid(manifestPayloadDir, out _))
+            {
+                payloadDirectory = manifestPayloadDir;
+                return true;
+            }
         }
 
-        if (!string.Equals((manifestEntry.CacheKind ?? "").Trim(), "payload_dir", StringComparison.Ordinal))
+        var expectedPayloadDir = Path.Combine(cacheRoot, cacheEntryName);
+        if (_validator.IsValid(expectedPayloadDir, out _))
         {
-            return derivedName;
+            payloadDirectory = expectedPayloadDir;
+            return true;
         }
 
-        var manifestCacheEntry = (manifestEntry.CacheEntry ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(manifestCacheEntry))
+        return false;
+    }
+
+    private void WriteCurrentVersionEntry(string cacheVersion, string filename, string cacheEntryName)
+    {
+        _manifestStore.WriteVersionEntry(
+            ArchiveAssetRuntimeDataKeys.OptiScaler,
+            cacheVersion,
+            filename,
+            PayloadCacheKind,
+            cacheEntryName);
+    }
+
+    private void PruneManifestVersionsWithoutPayload(string cacheRoot)
+    {
+        _manifestStore.PruneVersionEntriesByCacheEntry(
+            ArchiveAssetRuntimeDataKeys.OptiScaler,
+            ResolveExistingPayloadCacheEntries(cacheRoot));
+    }
+
+    private static bool IsCurrentPayloadManifestEntry(
+        ArchiveManifestEntry? manifestEntry,
+        string expectedVersion,
+        string expectedEntryName)
+    {
+        if (manifestEntry is null
+            || !string.Equals((manifestEntry.CacheKind ?? "").Trim(), PayloadCacheKind, StringComparison.Ordinal))
         {
-            return derivedName;
+            return false;
         }
 
-        var manifestPayloadDir = Path.Combine(cacheRoot, manifestCacheEntry);
-        return _validator.IsValid(manifestPayloadDir, out _) ? manifestCacheEntry : derivedName;
+        return string.Equals((manifestEntry.Version ?? "").Trim(), (expectedVersion ?? "").Trim(), StringComparison.Ordinal)
+               && string.Equals((manifestEntry.CacheEntry ?? "").Trim(), (expectedEntryName ?? "").Trim(), StringComparison.OrdinalIgnoreCase);
     }
 
     private static void CleanupStaleOptiScalerEntries(string cacheRoot, string keepEntryName)
@@ -206,32 +246,50 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
             return;
         }
 
-        var keep = keepEntryName.Trim();
-        foreach (var entryPath in Directory.EnumerateFileSystemEntries(cacheRoot))
+        var entries = Directory
+            .EnumerateDirectories(cacheRoot)
+            .Where(static path =>
+            {
+                var name = Path.GetFileName(path);
+                return !name.StartsWith(StagePrefix, StringComparison.Ordinal)
+                       && !name.StartsWith(BackupPrefix, StringComparison.Ordinal);
+            })
+            .Select(static path => new DirectoryInfo(path))
+            .OrderByDescending(static info => info.LastWriteTimeUtc)
+            .ToArray();
+        var keep = entries
+            .Where(info => string.Equals(info.Name, keepEntryName.Trim(), StringComparison.OrdinalIgnoreCase))
+            .Concat(entries.Where(info => !string.Equals(info.Name, keepEntryName.Trim(), StringComparison.OrdinalIgnoreCase)))
+            .Take(2)
+            .Select(static info => info.FullName)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var entry in entries)
         {
-            var name = Path.GetFileName(entryPath);
-            if (string.Equals(name, keep, StringComparison.OrdinalIgnoreCase))
+            if (keep.Contains(entry.FullName))
             {
                 continue;
             }
 
-            if (string.Equals(name, "cache_manifest.json", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            if (Directory.Exists(entryPath))
-            {
-                TryDeleteDirectory(entryPath);
-                continue;
-            }
-
-            var ext = Path.GetExtension(entryPath);
-            if (ext is ".7z" or ".zip" or ".rar" or ".tar" or ".gz" or ".xz" or ".bz2" or ".asi")
-            {
-                ArchivePreparationHelpers.TryDeleteFile(entryPath);
-            }
+            TryDeleteDirectory(entry.FullName);
         }
+    }
+
+    private static IEnumerable<string> ResolveExistingPayloadCacheEntries(string cacheRoot)
+    {
+        if (!Directory.Exists(cacheRoot))
+        {
+            return [];
+        }
+
+        return Directory
+            .EnumerateDirectories(cacheRoot)
+            .Select(static path => Path.GetFileName(path))
+            .Where(static name =>
+                !string.IsNullOrWhiteSpace(name)
+                && !name.StartsWith(StagePrefix, StringComparison.Ordinal)
+                && !name.StartsWith(BackupPrefix, StringComparison.Ordinal))
+            .Select(static name => name!);
     }
 
     private static void CopyDirectory(string sourceDir, string destinationDir)

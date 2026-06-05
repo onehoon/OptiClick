@@ -19,21 +19,22 @@ public sealed record ArchiveCachePaths
     public static ArchiveCachePaths CreateDefault(IAppLocalDataPathProvider? localDataPathProvider = null)
     {
         var pathProvider = localDataPathProvider ?? new AppLocalDataPathProvider();
-        var archivesRoot = pathProvider.ArchivesDirectory;
-        var optiScalerArchiveRoot = Path.Combine(archivesRoot, "optiscaler");
+        var archivesRoot = Path.Combine(pathProvider.RootDirectory, "ArchivesV2");
+        var manifestRoot = Path.Combine(pathProvider.ManifestDirectory, "ArchivesV2");
+        var optiScalerArchiveRoot = Path.Combine(archivesRoot, "OptiScaler");
 
         return new ArchiveCachePaths
         {
             Root = archivesRoot,
-            ManifestRoot = pathProvider.ManifestDirectory,
+            ManifestRoot = manifestRoot,
             OptiScalerCacheDir = optiScalerArchiveRoot,
-            Fsr4CacheDir = Path.Combine(archivesRoot, "fsr4"),
-            OptiPatcherCacheDir = Path.Combine(archivesRoot, "optipatcher"),
-            SpecialKCacheDir = Path.Combine(archivesRoot, "specialk"),
-            ReFrameworkCacheDir = Path.Combine(archivesRoot, "reframework"),
-            UltimateAsiLoaderCacheDir = Path.Combine(archivesRoot, "ual"),
-            Unreal5CacheDir = Path.Combine(archivesRoot, "unreal5"),
-            OptiScalerPayloadCacheRoot = Path.Combine(optiScalerArchiveRoot, "payload")
+            Fsr4CacheDir = Path.Combine(archivesRoot, "FSR4"),
+            OptiPatcherCacheDir = Path.Combine(archivesRoot, "OptiPatcher"),
+            SpecialKCacheDir = Path.Combine(archivesRoot, "SpecialK"),
+            ReFrameworkCacheDir = Path.Combine(archivesRoot, "REFramework"),
+            UltimateAsiLoaderCacheDir = Path.Combine(archivesRoot, "UltimateAsiLoader"),
+            Unreal5CacheDir = Path.Combine(archivesRoot, "Unreal5"),
+            OptiScalerPayloadCacheRoot = optiScalerArchiveRoot
         };
     }
 

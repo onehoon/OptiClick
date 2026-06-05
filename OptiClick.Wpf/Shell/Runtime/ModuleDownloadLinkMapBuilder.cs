@@ -41,6 +41,11 @@ public sealed class ModuleDownloadLinkMapBuilder
             if (!entry.ContainsKey("url"))
             {
                 var url = ReadFallbackString(entry, "download_url");
+                if (string.IsNullOrWhiteSpace(url))
+                {
+                    url = ReadFallbackString(entry, "source_url");
+                }
+
                 if (!string.IsNullOrWhiteSpace(url))
                 {
                     entry["url"] = url;

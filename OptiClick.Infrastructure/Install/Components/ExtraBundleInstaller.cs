@@ -65,6 +65,11 @@ public sealed class ExtraBundleInstaller : IExtraBundleInstaller
         var url = InstallerExecutionHelpers.ReadString(entry, "url");
         if (string.IsNullOrWhiteSpace(url))
         {
+            url = InstallerExecutionHelpers.ReadFirstString(entry, "download_url", "source_url");
+        }
+
+        if (string.IsNullOrWhiteSpace(url))
+        {
             return ComponentInstallStepResult.Failed(
                 ComponentInstallName.ExtraBundle,
                 ComponentInstallErrorCodes.MissingMetadata,
@@ -89,11 +94,12 @@ public sealed class ExtraBundleInstaller : IExtraBundleInstaller
             Guid.NewGuid().ToString("N"));
         var downloadPath = Path.Combine(tempRoot, fileName);
         var extractPath = Path.Combine(tempRoot, "payload");
+        var sha256 = InstallerExecutionHelpers.ReadFirstString(entry, "sha256", "SHA256");
 
         try
         {
             _fileSystem.CreateDirectory(tempRoot);
-            var download = await _downloader.DownloadAsync(url, downloadPath, _downloadTimeout, cancellationToken);
+            var download = await _downloader.DownloadAsync(url, downloadPath, _downloadTimeout, cancellationToken, sha256);
             if (!download.IsSuccess)
             {
                 return ComponentInstallStepResult.Failed(

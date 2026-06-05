@@ -45,7 +45,8 @@ public interface IArchiveDownloader
         string url,
         string destinationPath,
         TimeSpan timeout,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        string fallbackSha256 = "");
 }
 
 public sealed class ArchiveDownloader : IArchiveDownloader
@@ -66,10 +67,11 @@ public sealed class ArchiveDownloader : IArchiveDownloader
         string url,
         string destinationPath,
         TimeSpan timeout,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        string fallbackSha256 = "")
     {
         // Compatibility wrapper: WPF contract stays stable while Infrastructure owns network/download implementation.
-        var result = await _inner.DownloadAsync(url, destinationPath, timeout, cancellationToken);
+        var result = await _inner.DownloadAsync(url, destinationPath, timeout, cancellationToken, fallbackSha256);
         return ArchiveDownloadResult.FromInfrastructure(result);
     }
 }
