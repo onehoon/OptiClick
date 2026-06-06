@@ -5,6 +5,7 @@ namespace OptiClick.Infrastructure.Install.Uninstall;
 public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuilder
 {
     private static readonly string[] AllowedExtensions = [".dll", ".asi"];
+    private const string OptiScalerConfigFileName = "OptiScaler.ini";
 
     private readonly IOptiClickUninstallFileSystem _fileSystem;
     private readonly IOptiClickUninstallSignatureDetector _signatureDetector;
@@ -102,7 +103,8 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
                 continue;
             }
 
-            if (!IsAllowedExtension(fullPath))
+            var signaturelessExactTarget = ResolveSignaturelessExactTarget(fullPath, exactTargets);
+            if (!IsAllowedExtension(fullPath) && signaturelessExactTarget is null)
             {
                 skipped.Add(new UninstallSkippedFile
                 {
@@ -112,15 +114,29 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
                 continue;
             }
 
-            var detection = _signatureDetector.Detect(fullPath);
-            if (!ShouldIncludeDetection(fullPath, detection, exactTargets, out var candidateKind, out var skipReason))
+            UninstallCandidateKind candidateKind;
+            string matchedText;
+            var requiresSignatureValidation = true;
+            if (signaturelessExactTarget is not null)
             {
-                skipped.Add(new UninstallSkippedFile
+                candidateKind = signaturelessExactTarget.Kind;
+                matchedText = "exact_filename";
+                requiresSignatureValidation = false;
+            }
+            else
+            {
+                var detection = _signatureDetector.Detect(fullPath);
+                if (!ShouldIncludeDetection(fullPath, detection, exactTargets, out candidateKind, out var skipReason))
                 {
-                    FullPath = fullPath,
-                    Reason = skipReason
-                });
-                continue;
+                    skipped.Add(new UninstallSkippedFile
+                    {
+                        FullPath = fullPath,
+                        Reason = skipReason
+                    });
+                    continue;
+                }
+
+                matchedText = detection.MatchedText;
             }
 
             var isReadOnly = false;
@@ -138,8 +154,9 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
                 FullPath = fullPath,
                 RelativePath = relativePath,
                 Kind = candidateKind,
-                MatchedText = detection.MatchedText,
-                IsReadOnly = isReadOnly
+                MatchedText = matchedText,
+                IsReadOnly = isReadOnly,
+                RequiresSignatureValidation = requiresSignatureValidation
             };
 
             _logger.Info(
@@ -207,12 +224,12 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
         return normalized;
     }
 
-    private static Dictionary<string, HashSet<UninstallCandidateKind>> BuildExactTargetMap(
+    private static Dictionary<string, List<ExactTargetRule>> BuildExactTargetMap(
         string targetPath,
         IReadOnlyList<UninstallComponentTarget> targets,
         ICollection<UninstallSkippedFile> skipped)
     {
-        var map = new Dictionary<string, HashSet<UninstallCandidateKind>>(StringComparer.OrdinalIgnoreCase);
+        var map = new Dictionary<string, List<ExactTargetRule>>(StringComparer.OrdinalIgnoreCase);
         foreach (var target in targets ?? Array.Empty<UninstallComponentTarget>())
         {
             if (!TryResolveComponentTarget(targetPath, target.RelativePath, out var fullPath, out var reason))
@@ -225,7 +242,7 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
                 continue;
             }
 
-            if (!IsAllowedExtension(fullPath))
+            if (!IsAllowedExactTarget(fullPath, target))
             {
                 skipped.Add(new UninstallSkippedFile
                 {
@@ -235,13 +252,17 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
                 continue;
             }
 
-            if (!map.TryGetValue(fullPath, out var kinds))
+            if (!map.TryGetValue(fullPath, out var rules))
             {
-                kinds = new HashSet<UninstallCandidateKind>();
-                map[fullPath] = kinds;
+                rules = [];
+                map[fullPath] = rules;
             }
 
-            kinds.Add(target.Kind);
+            var rule = new ExactTargetRule(target.Kind, target.RequiresSignatureValidation);
+            if (!rules.Contains(rule))
+            {
+                rules.Add(rule);
+            }
         }
 
         return map;
@@ -300,10 +321,40 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
         return AllowedExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase);
     }
 
+    private static bool IsAllowedExactTarget(string fullPath, UninstallComponentTarget target)
+    {
+        return IsAllowedExtension(fullPath)
+               || IsSignaturelessOptiScalerConfigTarget(fullPath, target);
+    }
+
+    private static bool IsSignaturelessOptiScalerConfigTarget(string fullPath, UninstallComponentTarget target)
+    {
+        if (target.RequiresSignatureValidation || target.Kind != UninstallCandidateKind.OptiScaler)
+        {
+            return false;
+        }
+
+        var normalizedRelativePath = NormalizeComponentTargetRelativePath(target.RelativePath);
+        return string.Equals(normalizedRelativePath, OptiScalerConfigFileName, StringComparison.OrdinalIgnoreCase)
+               && string.Equals(Path.GetFileName(fullPath), OptiScalerConfigFileName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static ExactTargetRule? ResolveSignaturelessExactTarget(
+        string fullPath,
+        IReadOnlyDictionary<string, List<ExactTargetRule>> exactTargets)
+    {
+        return exactTargets.TryGetValue(fullPath, out var rules)
+            ? rules.FirstOrDefault(rule =>
+                !rule.RequiresSignatureValidation
+                && rule.Kind == UninstallCandidateKind.OptiScaler
+                && string.Equals(Path.GetFileName(fullPath), OptiScalerConfigFileName, StringComparison.OrdinalIgnoreCase))
+            : null;
+    }
+
     private static bool ShouldIncludeDetection(
         string fullPath,
         UninstallSignatureDetection detection,
-        IReadOnlyDictionary<string, HashSet<UninstallCandidateKind>> exactTargets,
+        IReadOnlyDictionary<string, List<ExactTargetRule>> exactTargets,
         out UninstallCandidateKind candidateKind,
         out string skipReason)
     {
@@ -311,8 +362,7 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
         skipReason = "";
         if (!detection.IsMatch)
         {
-            if (exactTargets.TryGetValue(fullPath, out var reFrameworkAllowedKinds)
-                && reFrameworkAllowedKinds.Contains(UninstallCandidateKind.ReFramework)
+            if (ExactTargetsContainKind(exactTargets, fullPath, UninstallCandidateKind.ReFramework)
                 && string.Equals(
                     ResolveDetectionSkipReason(detection),
                     UninstallSkipReasons.VersionInfoUnavailable,
@@ -331,8 +381,7 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
             return true;
         }
 
-        if (exactTargets.TryGetValue(fullPath, out var allowedKinds)
-            && allowedKinds.Contains(detection.Kind))
+        if (ExactTargetsContainKind(exactTargets, fullPath, detection.Kind))
         {
             return true;
         }
@@ -361,12 +410,7 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
     {
         fullPath = "";
         reason = "";
-        var normalizedRelative = (relativePath ?? "").Trim().Replace('\\', '/');
-        while (normalizedRelative.StartsWith("./", StringComparison.Ordinal))
-        {
-            normalizedRelative = normalizedRelative[2..];
-        }
-
+        var normalizedRelative = NormalizeComponentTargetRelativePath(relativePath);
         if (string.IsNullOrWhiteSpace(normalizedRelative)
             || Path.IsPathRooted(normalizedRelative))
         {
@@ -392,6 +436,26 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
         }
     }
 
+    private static string NormalizeComponentTargetRelativePath(string relativePath)
+    {
+        var normalizedRelative = (relativePath ?? "").Trim().Replace('\\', '/');
+        while (normalizedRelative.StartsWith("./", StringComparison.Ordinal))
+        {
+            normalizedRelative = normalizedRelative[2..];
+        }
+
+        return normalizedRelative.Trim('/');
+    }
+
+    private static bool ExactTargetsContainKind(
+        IReadOnlyDictionary<string, List<ExactTargetRule>> exactTargets,
+        string fullPath,
+        UninstallCandidateKind kind)
+    {
+        return exactTargets.TryGetValue(fullPath, out var rules)
+               && rules.Any(rule => rule.Kind == kind);
+    }
+
     private static string ResolveDetectionSkipReason(UninstallSignatureDetection detection)
     {
         if (!string.IsNullOrWhiteSpace(detection.Reason))
@@ -403,4 +467,6 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
             ? UninstallSkipReasons.SignatureNotMatched
             : UninstallSkipReasons.VersionInfoUnavailable;
     }
+
+    private sealed record ExactTargetRule(UninstallCandidateKind Kind, bool RequiresSignatureValidation);
 }

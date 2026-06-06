@@ -4,6 +4,8 @@ namespace OptiClick.Infrastructure.Install.Uninstall;
 
 public sealed class OptiClickUninstallExecutor : IOptiClickUninstallExecutor
 {
+    private const string OptiScalerConfigFileName = "OptiScaler.ini";
+
     private readonly IOptiClickUninstallFileSystem _fileSystem;
     private readonly IOptiClickUninstallSignatureDetector _signatureDetector;
     private readonly IOptiClickUninstallLogger _logger;
@@ -113,13 +115,25 @@ public sealed class OptiClickUninstallExecutor : IOptiClickUninstallExecutor
                 continue;
             }
 
-            var detection = _signatureDetector.Detect(fullPath);
-            if (!IsSignatureStillEligible(candidate, detection))
+            if (candidate.RequiresSignatureValidation)
+            {
+                var detection = _signatureDetector.Detect(fullPath);
+                if (!IsSignatureStillEligible(candidate, detection))
+                {
+                    skipped.Add(new UninstallSkippedFile
+                    {
+                        FullPath = fullPath,
+                        Reason = UninstallSkipReasons.SignatureChanged
+                    });
+                    continue;
+                }
+            }
+            else if (!CanDeleteWithoutSignatureValidation(candidate, relativePath))
             {
                 skipped.Add(new UninstallSkippedFile
                 {
                     FullPath = fullPath,
-                    Reason = UninstallSkipReasons.SignatureChanged
+                    Reason = UninstallSkipReasons.SignatureValidationRequired
                 });
                 continue;
             }
@@ -288,6 +302,15 @@ public sealed class OptiClickUninstallExecutor : IOptiClickUninstallExecutor
                && string.Equals(
                    ResolveDetectionSkipReason(detection),
                    UninstallSkipReasons.VersionInfoUnavailable,
+                   StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool CanDeleteWithoutSignatureValidation(UninstallCandidate candidate, string relativePath)
+    {
+        return candidate.Kind == UninstallCandidateKind.OptiScaler
+               && string.Equals(
+                   (relativePath ?? "").Replace('\\', '/'),
+                   OptiScalerConfigFileName,
                    StringComparison.OrdinalIgnoreCase);
     }
 

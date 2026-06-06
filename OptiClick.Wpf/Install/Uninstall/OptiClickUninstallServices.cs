@@ -74,12 +74,24 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
         }
 
         var targets = new List<InfrastructureUninstall.UninstallComponentTarget>();
+        AddOptiScalerConfigTarget(targets);
         AddReFrameworkTarget(targets, ShellGameInstallMetadataResolver.GetReFrameworkUrl(game));
         AddSpecialKTarget(targets, ShellGameInstallMetadataResolver.GetSpecialK(game), ResolveFinalProxyDllName(request, game));
         AddUltimateAsiLoaderTargets(targets, ShellGameInstallMetadataResolver.GetUltimateAsiLoader(game), request.UalDetectedNames);
         return targets
             .DistinctBy(static target => $"{target.Kind}:{NormalizeTargetKey(target.RelativePath)}")
             .ToArray();
+    }
+
+    private static void AddOptiScalerConfigTarget(
+        ICollection<InfrastructureUninstall.UninstallComponentTarget> targets)
+    {
+        targets.Add(new InfrastructureUninstall.UninstallComponentTarget
+        {
+            Kind = InfrastructureUninstall.UninstallCandidateKind.OptiScaler,
+            RelativePath = "OptiScaler.ini",
+            RequiresSignatureValidation = false
+        });
     }
 
     private static IReadOnlyList<InfrastructureUninstall.UninstallEngineIniCleanupTarget> BuildEngineIniCleanupTargets(
