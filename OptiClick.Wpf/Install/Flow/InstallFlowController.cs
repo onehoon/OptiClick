@@ -1,5 +1,5 @@
 ﻿using System.Globalization;
-using System.IO;
+using System.Diagnostics;
 using OptiClick.Wpf.Install.Config;
 using OptiClick.Wpf.Install.Execution;
 using OptiClick.Wpf.Install.Gates;
@@ -86,23 +86,7 @@ public sealed class InstallFlowController
         var plan = planBuildResult.Plan;
 
         var selectedShellGame = ShellGameCardMapper.Map(request.SelectedGame);
-        var selectedMatch = request.SelectionState.SelectedMatchResult;
-        var selectedExePath = ResolveSelectedExePath(selectedMatch, selectedShellGame);
-        var targetPathHint = ResolveTargetPathHint(request.TargetPathByGameId, selectedShellGame.GameId);
-        var preferredProxyName = ShellGameInstallMetadataResolver.GetOptiScalerDllName(selectedShellGame);
-        var reFrameworkValue = ShellGameInstallMetadataResolver.GetReFrameworkUrl(selectedShellGame);
-        var specialKValue = ShellGameInstallMetadataResolver.GetSpecialK(selectedShellGame);
-        var extraBundleAlias = ShellGameInstallMetadataResolver.GetExtraBundle(selectedShellGame);
-        var gpuBundleKey = ShellGameInstallMetadataResolver.GetGpuBundleKey(selectedShellGame);
-        var gpuGroup = ShellGameInstallMetadataResolver.GetGpuGroup(selectedShellGame);
         var fsr4Required = planBuildInput.IsFsr4Required;
-        var effectiveExcludePatterns = ExcludePatternResolver.Resolve(selectedShellGame, request.ModuleDownloadLinks);
-        logs.Add(Info(
-            "install",
-            $"install requested game_id={selectedShellGame.GameId} target_ready={!string.IsNullOrWhiteSpace(plan.TargetFolder)} final_proxy={NormalizeStatusCode(plan.FinalProxyDllName, "missing")}"));
-        logs.Add(Info(
-            "install-context",
-            $"selected_game=\"{ResolveGameDisplayName(selectedShellGame)}\" selected_exe={NormalizeStatusCode(selectedExePath, "missing")} target_hint={NormalizeStatusCode(targetPathHint, "missing")} resolved_target={NormalizeStatusCode(plan.TargetFolder, "missing")} final_dll={NormalizeStatusCode(plan.FinalProxyDllName, "missing")} preferred_dll={NormalizeStatusCode(preferredProxyName, "missing")} reframework={NormalizeStatusCode(reFrameworkValue, "none")} specialk={NormalizeStatusCode(specialKValue, "none")} extra_bundle={NormalizeStatusCode(extraBundleAlias, "none")} fsr4_required={FormatBool(fsr4Required)} gpu_bundle_key={NormalizeStatusCode(gpuBundleKey, "none")} gpu_group={NormalizeStatusCode(gpuGroup, "none")} exclude_count={effectiveExcludePatterns.Count} exclude_patterns={FormatPatterns(effectiveExcludePatterns)}"));
         var componentReview = _componentInstallParityReviewBuilder.Build(new ComponentInstallParityReviewInput
         {
             Plan = plan,
@@ -162,8 +146,6 @@ public sealed class InstallFlowController
             };
         }
 
-        logs.Add(Info("install-gate", "passed reason=ready"));
-
         var context = _componentInstallContextBuilder.Build(new ComponentInstallContextBuildInput
         {
             Plan = plan,
@@ -183,13 +165,10 @@ public sealed class InstallFlowController
                 };
             }
         }
-        logs.Add(Info(
-            "install-context",
-            $"optiscaler_variant={NormalizeStatusCode(context.OptiScalerVariant, "missing")} optiscaler_version={NormalizeStatusCode(context.OptiScalerVersion, "missing")} optiscaler_display_version={NormalizeStatusCode(context.OptiScalerDisplayVersion, "missing")} payload={NormalizeStatusCode(context.OptiScalerPayloadDirectory, "missing")} final_dll={NormalizeStatusCode(context.FinalDllName, "missing")} preferred_dll={NormalizeStatusCode(preferredProxyName, "missing")} fsr4_required={FormatBool(context.Fsr4Required)} fsr4_source={NormalizeStatusCode(context.Fsr4SourceArchive, "missing")} module_links={context.ModuleDownloadLinks.Count}"));
         ComponentInstallResult installResult;
+        var stopwatch = Stopwatch.StartNew();
         try
         {
-            logs.Add(Info("install", "execution started"));
             installResult = await _componentInstallCoordinator.ExecuteAsync(context, cancellationToken);
         }
         catch (Exception ex)
@@ -205,15 +184,6 @@ public sealed class InstallFlowController
             };
         }
 
-        var coreStep = installResult.Steps.FirstOrDefault(static step => step.Component == ComponentInstallName.OptiScalerCore);
-        logs.Add(Info(
-            "install-result",
-            $"core_install_result={FormatStepResult(coreStep)} core_code={NormalizeStatusCode(coreStep?.ErrorCode, "none")}"));
-        var extraStep = installResult.Steps.FirstOrDefault(static step => step.Component == ComponentInstallName.ExtraBundle);
-        logs.Add(Info(
-            "install-result",
-            $"extra_bundle alias={NormalizeStatusCode(extraBundleAlias, "none")} result={FormatStepResult(extraStep)} code={NormalizeStatusCode(extraStep?.ErrorCode, "none")}"));
-
         var applyResult = _installResultApplier.Apply(new InstallResultApplyRequest
         {
             Plan = plan,
@@ -222,8 +192,14 @@ public sealed class InstallFlowController
             SelectionState = request.SelectionState,
             Strings = request.Strings
         });
+        stopwatch.Stop();
         logs.AddRange(applyResult.Logs);
-        logs.Add(Info("install-result", $"final_install_success={applyResult.FinalSuccess.ToString().ToLowerInvariant()}"));
+        logs.Add(CreateInstallCompletionLog(
+            selectedShellGame,
+            context,
+            installResult,
+            applyResult,
+            stopwatch.ElapsedMilliseconds));
 
         return new InstallFlowResult
         {
@@ -236,6 +212,60 @@ public sealed class InstallFlowController
             ApplyResult = applyResult,
             Logs = logs
         };
+    }
+
+    private static InstallFlowLogEntry CreateInstallCompletionLog(
+        ShellGameCardModel selectedGame,
+        ComponentInstallContext context,
+        ComponentInstallResult installResult,
+        InstallResultApplyResult applyResult,
+        long durationMs)
+    {
+        var message = FormatInstallCompletionLog(
+            selectedGame,
+            context,
+            installResult,
+            applyResult,
+            durationMs);
+
+        return applyResult.FinalSuccess
+            ? Info("install", message)
+            : Error("install", message);
+    }
+
+    private static string FormatInstallCompletionLog(
+        ShellGameCardModel selectedGame,
+        ComponentInstallContext context,
+        ComponentInstallResult installResult,
+        InstallResultApplyResult applyResult,
+        long durationMs)
+    {
+        var steps = installResult?.Steps ?? Array.Empty<ComponentInstallStepResult>();
+        var failedStep = installResult?.FailedStep
+            ?? steps.FirstOrDefault(static step => step.Status == ComponentInstallStatus.Failed);
+        var failureCode = !string.IsNullOrWhiteSpace(applyResult.ConfigFailureCode)
+            ? applyResult.ConfigFailureCode
+            : NormalizeStatusCode(failedStep?.ErrorCode, "none");
+        var baseMessage =
+            $"completed success={FormatBool(applyResult.FinalSuccess)} game_id={NormalizeStatusCode(selectedGame.GameId, "missing")} variant={NormalizeStatusCode(context.OptiScalerVariant, "missing")} version={NormalizeStatusCode(context.OptiScalerDisplayVersion, NormalizeStatusCode(context.OptiScalerVersion, "missing"))} final_dll={NormalizeStatusCode(context.FinalDllName, "missing")} components={FormatComponentCounts(steps)} config_errors={applyResult.ConfigErrorCount} duration_ms={durationMs}";
+
+        if (applyResult.FinalSuccess)
+        {
+            return baseMessage;
+        }
+
+        var failedComponent = failedStep is not null
+            ? failedStep.Component.ToString()
+            : !string.IsNullOrWhiteSpace(applyResult.ConfigFailureCode)
+                ? "config"
+                : "none";
+        var failureMessage = failedStep is not null
+            ? failedStep.Message
+            : !string.IsNullOrWhiteSpace(applyResult.ConfigFailureCode)
+                ? "config apply failed"
+                : "-";
+
+        return $"{baseMessage} failed_component={NormalizeStatusCode(failedComponent, "none")} code={NormalizeStatusCode(failureCode, "unknown_error")} message={Quote(NormalizeStatusCode(failureMessage, "-"))}";
     }
 
     private static bool IsExtraBundleReady(
@@ -334,88 +364,6 @@ public sealed class InstallFlowController
             .ToArray();
     }
 
-    private static string ResolveSelectedExePath(ShellGameMatchResult? selectedMatch, ShellGameCardModel game)
-    {
-        var matchedExe = (selectedMatch?.MatchedExe ?? "").Trim();
-        var matchedFolder = (selectedMatch?.FolderPath ?? "").Trim();
-        if (!string.IsNullOrWhiteSpace(matchedExe))
-        {
-            if (!string.IsNullOrWhiteSpace(matchedFolder)
-                && !Path.IsPathRooted(matchedExe))
-            {
-                return Path.Combine(matchedFolder, matchedExe);
-            }
-
-            return matchedExe;
-        }
-
-        return (game.MatchExe ?? "").Trim();
-    }
-
-    private static string ResolveTargetPathHint(
-        IReadOnlyDictionary<string, string> targetPathByGameId,
-        string gameId)
-    {
-        var normalizedGameId = (gameId ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(normalizedGameId))
-        {
-            return "";
-        }
-
-        return targetPathByGameId.TryGetValue(normalizedGameId, out var targetPath)
-            ? (targetPath ?? "").Trim()
-            : "";
-    }
-
-    private static string ResolveGameDisplayName(ShellGameCardModel game)
-    {
-        var displayName = game.DisplayName.Trim();
-        if (!string.IsNullOrWhiteSpace(displayName))
-        {
-            return displayName;
-        }
-
-        var gameNameEn = game.GameNameEn.Trim();
-        if (!string.IsNullOrWhiteSpace(gameNameEn))
-        {
-            return gameNameEn;
-        }
-
-        var gameNameKr = game.GameNameKr.Trim();
-        if (!string.IsNullOrWhiteSpace(gameNameKr))
-        {
-            return gameNameKr;
-        }
-
-        return game.GameId.Trim();
-    }
-
-    private static string FormatPatterns(IReadOnlyList<string> patterns)
-    {
-        if (patterns.Count == 0)
-        {
-            return "-";
-        }
-
-        return string.Join(",", patterns);
-    }
-
-    private static string FormatStepResult(ComponentInstallStepResult? step)
-    {
-        if (step is null)
-        {
-            return "not_executed";
-        }
-
-        return step.Status switch
-        {
-            ComponentInstallStatus.Success => "success",
-            ComponentInstallStatus.Skipped => "skipped",
-            ComponentInstallStatus.Failed => "failed",
-            _ => "unknown"
-        };
-    }
-
     private static bool TryResolveModuleLinkEntry(
         IReadOnlyDictionary<string, object?> moduleDownloadLinks,
         string alias,
@@ -447,5 +395,29 @@ public sealed class InstallFlowController
 
         entry = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         return false;
+    }
+
+    private static string FormatComponentCounts(IReadOnlyList<ComponentInstallStepResult> steps)
+    {
+        if (steps.Count == 0)
+        {
+            return "none";
+        }
+
+        var success = steps.Count(static step => step.Status == ComponentInstallStatus.Success);
+        var skipped = steps.Count(static step => step.Status == ComponentInstallStatus.Skipped);
+        var failed = steps.Count(static step => step.Status == ComponentInstallStatus.Failed);
+        return $"success:{success},skipped:{skipped},failed:{failed}";
+    }
+
+    private static string Quote(string value)
+    {
+        var safeValue = value ?? "";
+        var escaped = safeValue
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal)
+            .Replace("\r", "\\r", StringComparison.Ordinal)
+            .Replace("\n", "\\n", StringComparison.Ordinal);
+        return $"\"{escaped}\"";
     }
 }

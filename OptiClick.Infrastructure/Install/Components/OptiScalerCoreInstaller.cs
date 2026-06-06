@@ -158,10 +158,6 @@ public sealed class OptiScalerCoreInstaller : IOptiScalerCoreInstaller
 
         var normalizedTargetPath = NormalizeTargetDirectory(context.TargetPath);
         var payload = (context.OptiScalerPayloadDirectory ?? "").Trim();
-        _logger.Info(
-            "Install.Core",
-            $"install context target={context.TargetPath} resolved_target={normalizedTargetPath} payload={payload} final_dll={context.FinalDllName} preferred_dll={context.PreferredProxyDllName} exclude_count={context.ExcludePatterns.Count}");
-        _logger.Info("Install.Core", $"target validate start target={context.TargetPath} resolved_target={normalizedTargetPath}");
         if (!_fileSystem.DirectoryExists(normalizedTargetPath))
         {
             _logger.Error("Install.Core", $"failed stage=target_validate code=invalid_target_folder target={normalizedTargetPath}");
@@ -214,7 +210,6 @@ public sealed class OptiScalerCoreInstaller : IOptiScalerCoreInstaller
         var operations = new List<OptiScalerCoreInstallOperation>();
         try
         {
-            _logger.Info("Install.Core", $"final proxy resolved {finalDll}");
             BackupManagedDlls(normalizedTargetPath, operations);
             RemoveLegacyFiles(normalizedTargetPath, operations);
             CopyPayloadTree(payload, normalizedTargetPath, operations, context.ExcludePatterns);
@@ -228,7 +223,6 @@ public sealed class OptiScalerCoreInstaller : IOptiScalerCoreInstaller
                     "OptiScaler.ini not found after install.");
             }
 
-            _logger.Info("Install.Core", "install success");
             return OptiScalerCoreInstallResult.Success(operations);
         }
         catch (InvalidOperationException ex)
@@ -270,35 +264,28 @@ public sealed class OptiScalerCoreInstaller : IOptiScalerCoreInstaller
 
     private void BackupManagedDlls(string targetPath, List<OptiScalerCoreInstallOperation> operations)
     {
-        _logger.Info("Install.Core", "backup scan start");
         foreach (var name in ManagedBackupCandidates)
         {
             var path = Path.Combine(targetPath, name);
             if (!_fileSystem.FileExists(path))
             {
-                _logger.Info("Install.Core", $"backup candidate {name} exists=false");
                 continue;
             }
 
             if (!_detectors.IsOptiScalerManagedProxyDll(path))
             {
-                _logger.Warning("Install.Core", $"backup candidate {name} exists=true managed=false");
                 continue;
             }
-
-            _logger.Info("Install.Core", $"backup candidate {name} exists=true managed=true");
 
             EnsureWritableIfExists(path);
             var backup = Path.Combine(targetPath, $"old_opti_{name}");
             _fileSystem.MoveFile(path, backup, overwrite: true);
-            _logger.Info("Install.Core", $"backup created old_opti_{name}");
             operations.Add(new OptiScalerCoreInstallOperation { Kind = "backup", Source = path, Destination = backup });
         }
     }
 
     private void RemoveLegacyFiles(string targetPath, List<OptiScalerCoreInstallOperation> operations)
     {
-        _logger.Info("Install.Core", "legacy cleanup start");
         foreach (var name in OptiScalerLegacyCleanupPolicy.TargetFileNames)
         {
             var path = Path.Combine(targetPath, name);
@@ -311,11 +298,8 @@ public sealed class OptiScalerCoreInstaller : IOptiScalerCoreInstaller
 
             if (!_fileSystem.FileExists(path))
             {
-                _logger.Info("Install.Core", $"legacy target {name} exists=false");
                 continue;
             }
-
-            _logger.Info("Install.Core", $"legacy target {name} exists=true");
 
             try
             {
@@ -332,7 +316,6 @@ public sealed class OptiScalerCoreInstaller : IOptiScalerCoreInstaller
             try
             {
                 _fileSystem.DeleteFile(path);
-                _logger.Info("Install.Core", $"legacy delete {name} success");
             }
             catch (Exception ex)
             {
@@ -344,8 +327,6 @@ public sealed class OptiScalerCoreInstaller : IOptiScalerCoreInstaller
 
             operations.Add(new OptiScalerCoreInstallOperation { Kind = "delete_legacy", Source = path });
         }
-
-        _logger.Info("Install.Core", "legacy cleanup completed");
     }
 
     private void CopyPayloadTree(
@@ -358,13 +339,9 @@ public sealed class OptiScalerCoreInstaller : IOptiScalerCoreInstaller
         foreach (var sourceFile in files)
         {
             var relative = Path.GetRelativePath(payloadRoot, sourceFile).Replace('\\', '/');
-            if (IsRequiredPayloadFile(relative))
+            if (!IsRequiredPayloadFile(relative)
+                && TryResolveMatchedExcludePattern(relative, excludePatterns, out _))
             {
-                _logger.Info("Install.Core", $"required payload preserved relative={relative}");
-            }
-            else if (TryResolveMatchedExcludePattern(relative, excludePatterns, out var matchedPattern))
-            {
-                _logger.Info("Install.Core", $"excluded relative={relative} pattern={matchedPattern}");
                 continue;
             }
 

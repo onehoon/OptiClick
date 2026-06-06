@@ -184,10 +184,7 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
     {
         var safeCatalog = catalog ?? OptiScalerVariantCatalog.Empty;
         var preferred = NormalizeVariant(preferredVariant);
-        var logs = new List<Install.Flow.InstallFlowLogEntry>
-        {
-            Info("archive", $"optiscaler variants sync start variants={safeCatalog.Options.Count} preferred={preferred}")
-        };
+        var logs = new List<Install.Flow.InstallFlowLogEntry>();
 
         if (!safeCatalog.HasRuntimeVariants)
         {
@@ -230,9 +227,12 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
 
             var entry = CreateManifestEntry(option, desiredCacheEntry, desiredPayloadDirectory, result, now);
             nextEntries[option.Variant] = entry;
-            logs.Add(Info(
-                "archive",
-                $"optiscaler variant sync variant={option.Variant} version={Normalize(option.Version, "-")} state={entry.State} ready={entry.Ready.ToString().ToLowerInvariant()} cache_entry={Normalize(entry.CacheEntry, "-")} error={Normalize(entry.ErrorCode, "-")} force_rebuild={forceRebuild.ToString().ToLowerInvariant()}"));
+            if (!entry.Ready)
+            {
+                logs.Add(Warning(
+                    "archive",
+                    $"optiscaler variant sync failed variant={option.Variant} version={Normalize(option.Version, "-")} state={entry.State} cache_entry={Normalize(entry.CacheEntry, "-")} error={Normalize(entry.ErrorCode, "-")} force_rebuild={forceRebuild.ToString().ToLowerInvariant()}"));
+            }
         }
 
         foreach (var removed in previousManifest.Variants.Values

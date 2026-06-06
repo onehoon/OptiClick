@@ -31,10 +31,7 @@ public sealed class ArchiveReadinessFlowController
             };
         }
 
-        var logs = new List<InstallFlowLogEntry>
-        {
-            Info("archive", "refresh start")
-        };
+        var logs = new List<InstallFlowLogEntry>();
 
         try
         {
@@ -73,12 +70,16 @@ public sealed class ArchiveReadinessFlowController
 
             foreach (var key in ArchivePreparationSequence.StartupReadinessOrder)
             {
-                logs.Add(Info("archive", FormatArchivePreparationLog(key, merged.Get(key))));
+                var state = merged.Get(key);
+                if (ShouldLogArchiveDetail(state))
+                {
+                    logs.Add(Info("archive", FormatArchivePreparationLog(key, state)));
+                }
             }
 
             logs.Add(Info(
                 "archive",
-                $"refresh completed optiscaler={readiness.OptiScalerState} fsr4={readiness.Fsr4State} optipatcher={readiness.OptiPatcherState} specialk={readiness.SpecialKState} reframework={readiness.ReframeworkState} ual={readiness.UalState} unreal5={readiness.Unreal5State}"));
+                $"refresh completed all_ready={FormatBool(IsAllReady(readiness))} optiscaler={readiness.OptiScalerState} fsr4={readiness.Fsr4State} optipatcher={readiness.OptiPatcherState} specialk={readiness.SpecialKState} reframework={readiness.ReframeworkState} ual={readiness.UalState} unreal5={readiness.Unreal5State}"));
 
             return new ArchiveReadinessFlowResult
             {
@@ -132,6 +133,24 @@ public sealed class ArchiveReadinessFlowController
     {
         var stage = state.StageStatus ?? ArchivePreparationStageStatus.Unknown;
         return $"asset={FormatAssetKey(key)} state={FormatState(state)} source={Normalize(stage.Source, "unknown")} download={Normalize(stage.Download, "unknown")} sha={Normalize(stage.Sha, "unknown")} folder={Normalize(stage.Folder, "unknown")} json={Normalize(stage.Json, "unknown")} duration_ms={FormatDuration(stage.DurationMs)} filename={Normalize(state.Filename, "-")} error={Normalize(state.ErrorMessage, "-")}";
+    }
+
+    private static bool ShouldLogArchiveDetail(ArchivePreparationState state)
+    {
+        return !state.Ready
+               || state.Downloading
+               || !string.IsNullOrWhiteSpace(state.ErrorMessage);
+    }
+
+    private static bool IsAllReady(ArchiveReadinessSnapshot readiness)
+    {
+        return readiness.OptiScalerState == ArchiveReadinessState.Ready
+               && readiness.Fsr4State == ArchiveReadinessState.Ready
+               && readiness.OptiPatcherState == ArchiveReadinessState.Ready
+               && readiness.SpecialKState == ArchiveReadinessState.Ready
+               && readiness.ReframeworkState == ArchiveReadinessState.Ready
+               && readiness.UalState == ArchiveReadinessState.Ready
+               && readiness.Unreal5State == ArchiveReadinessState.Ready;
     }
 
     private static ArchiveReadinessSnapshot ApplyOptiScalerVariantReadiness(
@@ -189,6 +208,11 @@ public sealed class ArchiveReadinessFlowController
     private static string FormatDuration(long durationMs)
     {
         return durationMs < 0 ? "-" : durationMs.ToString();
+    }
+
+    private static string FormatBool(bool value)
+    {
+        return value.ToString().ToLowerInvariant();
     }
 
     private static string Normalize(string value, string fallback)

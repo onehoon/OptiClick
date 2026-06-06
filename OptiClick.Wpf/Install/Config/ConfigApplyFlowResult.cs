@@ -7,5 +7,6 @@ public sealed record ConfigApplyFlowResult
     public bool IsSuccess { get; init; } = true;
     public string FailureMessage { get; init; } = "";
     public string FailureCode { get; init; } = "";
+    public int ErrorCount { get; init; }
     public IReadOnlyList<InstallFlowLogEntry> Logs { get; init; } = [];
 }

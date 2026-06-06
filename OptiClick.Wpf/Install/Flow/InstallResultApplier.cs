@@ -48,7 +48,6 @@ public sealed class InstallResultApplier : IInstallResultApplier
             InstallSucceeded = coreSucceeded
         });
         logs.AddRange(configApplyResult.Logs);
-        logs.Add(Info("config", $"ini_edit_result={ResolveIniEditResult(coreSucceeded, request.InstallResult.IsSuccess, configApplyResult.IsSuccess)}"));
 
         if (coreSucceeded)
         {
@@ -70,18 +69,6 @@ public sealed class InstallResultApplier : IInstallResultApplier
                 request.Plan.FinalProxyDllName,
                 request.Strings.InstallPostCompletedWithNameTemplate)
             : "";
-
-        if (finalSuccess)
-        {
-            logs.Add(Info("install", $"execution completed success target={request.Plan.TargetFolder}"));
-        }
-        else
-        {
-            var failureCode = string.IsNullOrWhiteSpace(configApplyResult.FailureCode)
-                ? NormalizeStatusCode(request.InstallResult.FailedStep?.ErrorCode, "unknown_error")
-                : NormalizeStatusCode(configApplyResult.FailureCode, "unknown_error");
-            logs.Add(Error("install", $"execution completed failure code={failureCode}"));
-        }
 
         var presentation = _installResultPresentationResolver?.Resolve(new InstallResultPresentationInput
         {
@@ -108,6 +95,8 @@ public sealed class InstallResultApplier : IInstallResultApplier
         {
             FinalSuccess = finalSuccess,
             StatusText = statusText,
+            ConfigErrorCount = configApplyResult.ErrorCount,
+            ConfigFailureCode = configApplyResult.FailureCode,
             PopupRequest = popupRequest,
             Logs = logs
         };
@@ -130,49 +119,9 @@ public sealed class InstallResultApplier : IInstallResultApplier
         return installResult.IsSuccess;
     }
 
-    private static string ResolveIniEditResult(bool coreSucceeded, bool installSucceeded, bool configSucceeded)
-    {
-        if (!coreSucceeded)
-        {
-            return "skipped_core_failed";
-        }
-
-        if (!installSucceeded)
-        {
-            return configSucceeded ? "success_partial_install_failed" : "failed_partial_install_failed";
-        }
-
-        return configSucceeded ? "success" : "failed";
-    }
-
-    private static InstallFlowLogEntry Info(string category, string message)
-    {
-        return new InstallFlowLogEntry
-        {
-            Level = "info",
-            Category = category,
-            Message = message
-        };
-    }
-
-    private static InstallFlowLogEntry Error(string category, string message)
-    {
-        return new InstallFlowLogEntry
-        {
-            Level = "error",
-            Category = category,
-            Message = message
-        };
-    }
-
     private static string Format(string template, params object[] args)
     {
         return string.Format(CultureInfo.CurrentCulture, template ?? "", args ?? []);
     }
 
-    private static string NormalizeStatusCode(string? value, string fallback)
-    {
-        var normalized = (value ?? "").Trim();
-        return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
-    }
 }

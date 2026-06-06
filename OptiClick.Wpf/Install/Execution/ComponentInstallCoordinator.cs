@@ -46,20 +46,10 @@ public sealed class ComponentInstallCoordinator : IComponentInstallCoordinator
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var preferredProxyName = ResolvePreferredProxyName(context);
-        var reFrameworkValue = ShellGameInstallMetadataResolver.GetReFrameworkUrl(context.Game);
-        var specialKValue = ShellGameInstallMetadataResolver.GetSpecialK(context.Game);
-        var extraBundleAlias = ShellGameInstallMetadataResolver.GetExtraBundle(context.Game);
-        _logger.Info(
-            "Install",
-            $"execution start game_id={(context.Game?.GameId ?? "").Trim()} target={context.TargetPath} optiscaler_variant={NormalizeStepMessage(context.OptiScalerVariant)} optiscaler_version={NormalizeStepMessage(context.OptiScalerVersion)} optiscaler_display_version={NormalizeStepMessage(context.OptiScalerDisplayVersion)} payload={context.OptiScalerPayloadDirectory} final_dll={context.FinalDllName} preferred_dll={preferredProxyName} reframework={NormalizeStepMessage(reFrameworkValue)} specialk={NormalizeStepMessage(specialKValue)} extra_bundle={NormalizeStepMessage(extraBundleAlias)}");
         var steps = new List<ComponentInstallStepResult>();
         var executionContext = PrepareExecutionContext(context);
 
         var core = _coreInstaller.Install(executionContext);
-        _logger.Info(
-            "Install",
-            $"component={ComponentInstallName.OptiScalerCore} status={core.Status} code={core.ErrorCode} message={NormalizeStepMessage(core.Message)}");
         steps.Add(core);
         if (core.Status == ComponentInstallStatus.Failed)
         {
@@ -84,12 +74,8 @@ public sealed class ComponentInstallCoordinator : IComponentInstallCoordinator
 
         foreach (var step in inOrder)
         {
-            _logger.Info("Install", $"component={step.Name} start");
             var result = await step.Run();
             steps.Add(result);
-            _logger.Info(
-                "Install",
-                $"component={result.Component} status={result.Status} code={result.ErrorCode} message={NormalizeStepMessage(result.Message)}");
             if (result.Status == ComponentInstallStatus.Failed)
             {
                 _logger.Error(
@@ -99,7 +85,6 @@ public sealed class ComponentInstallCoordinator : IComponentInstallCoordinator
             }
         }
 
-        _logger.Info("Install", "execution components_completed");
         return new ComponentInstallResult
         {
             IsSuccess = true,
