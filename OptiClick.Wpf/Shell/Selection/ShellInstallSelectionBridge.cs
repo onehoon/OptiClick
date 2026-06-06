@@ -97,7 +97,7 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
 
             runningState = runningState with
             {
-                RunningInstallButtonPresentation = BuildInstallButtonPresentation(runningState)
+                RunningInstallButtonPresentation = BuildInstallRunningButtonPresentation(runningState)
             };
 
             if (selectedGame is null)
@@ -351,6 +351,19 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
                 ReinstallingButton = strings.InstallButtonReinstalling,
                 LoadingButton = strings.InstallButtonLoading
             });
+    }
+
+    private InstallButtonPresentation BuildInstallRunningButtonPresentation(ShellInstallSelectionState state)
+    {
+        if (state.SelectedGame is null)
+        {
+            return BuildInstallButtonPresentation(state);
+        }
+
+        return BuildInstallButtonPresentation(state with
+        {
+            InstallInProgress = true
+        });
     }
 
     private InstallSummaryPresentation BuildSummary(ShellGameCardModel? game, string language, InstallStatusSnapshot installStatus)

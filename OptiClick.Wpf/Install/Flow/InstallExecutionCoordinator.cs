@@ -2,16 +2,29 @@ using OptiClick.Wpf.Install.Planning;
 using OptiClick.Wpf.Install.UiState;
 using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Shell.Selection;
+using System.Diagnostics;
 
 namespace OptiClick.Wpf.Install.Flow;
 
 public sealed class InstallExecutionCoordinator
 {
-    private readonly InstallFlowController _installFlowController;
+    private readonly Func<InstallFlowRequest, CancellationToken, Task<InstallFlowResult>> _executeInstallFlowAsync;
 
     public InstallExecutionCoordinator(InstallFlowController installFlowController)
+        : this(CreateExecuteInstallFlowAsync(installFlowController))
     {
-        _installFlowController = installFlowController ?? throw new ArgumentNullException(nameof(installFlowController));
+    }
+
+    internal InstallExecutionCoordinator(Func<InstallFlowRequest, CancellationToken, Task<InstallFlowResult>> executeInstallFlowAsync)
+    {
+        _executeInstallFlowAsync = executeInstallFlowAsync ?? throw new ArgumentNullException(nameof(executeInstallFlowAsync));
+    }
+
+    private static Func<InstallFlowRequest, CancellationToken, Task<InstallFlowResult>> CreateExecuteInstallFlowAsync(
+        InstallFlowController installFlowController)
+    {
+        ArgumentNullException.ThrowIfNull(installFlowController);
+        return installFlowController.ExecuteAsync;
     }
 
     public async Task<InstallExecutionCoordinatorResult> RunAsync(
@@ -26,17 +39,51 @@ public sealed class InstallExecutionCoordinator
             request.SelectionStateBeforeExecution,
             request.Strings);
         request.ApplyInstallBusyState(true, null, operationOverlayMessage);
+        var overlayTimer = Stopwatch.StartNew();
+        InstallFlowResult? result = null;
         try
         {
+            result = await _executeInstallFlowAsync(request.FlowRequest, cancellationToken);
             return new InstallExecutionCoordinatorResult
             {
-                Result = await _installFlowController.ExecuteAsync(request.FlowRequest, cancellationToken)
+                Result = result
             };
         }
         finally
         {
-            request.ApplyInstallBusyState(false, request.SelectionStateBeforeExecution, "");
+            try
+            {
+                await DelayForMinimumOverlayDurationAsync(
+                    request,
+                    overlayTimer.Elapsed,
+                    result,
+                    cancellationToken);
+            }
+            finally
+            {
+                request.ApplyInstallBusyState(false, request.SelectionStateBeforeExecution, "");
+            }
         }
+    }
+
+    private static async Task DelayForMinimumOverlayDurationAsync(
+        InstallExecutionCoordinatorRequest request,
+        TimeSpan elapsed,
+        InstallFlowResult? result,
+        CancellationToken cancellationToken)
+    {
+        if (result is null || !result.DidStart || result.WasBlocked)
+        {
+            return;
+        }
+
+        var remaining = request.MinimumOperationOverlayDuration - elapsed;
+        if (remaining <= TimeSpan.Zero)
+        {
+            return;
+        }
+
+        await request.DelayAsync(remaining, cancellationToken);
     }
 
     private static string ResolveInstallOperationOverlayMessage(
@@ -75,4 +122,6 @@ public sealed record InstallExecutionCoordinatorRequest
     public required ShellInstallSelectionState SelectionStateBeforeExecution { get; init; }
     public required AppStrings Strings { get; init; }
     public required Action<bool, ShellInstallSelectionState?, string> ApplyInstallBusyState { get; init; }
+    public TimeSpan MinimumOperationOverlayDuration { get; init; } = TimeSpan.FromSeconds(1);
+    public Func<TimeSpan, CancellationToken, Task> DelayAsync { get; init; } = Task.Delay;
 }
