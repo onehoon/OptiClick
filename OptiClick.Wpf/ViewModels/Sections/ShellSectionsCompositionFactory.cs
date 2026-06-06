@@ -44,6 +44,12 @@ public sealed class ShellSectionsCompositionFactory
         var addedFolders = input.SeedMockScanFolders
             ? new ObservableCollection<ScanFolderRowViewModel>(input.MockDataProvider.CreateAddedFolders())
             : new ObservableCollection<ScanFolderRowViewModel>(LoadAddedScanFoldersFromManifest(input, defaultFolders));
+        scan.ScanFolderListController.RelocalizeRows(
+            defaultFolders,
+            addedFolders,
+            input.StringsAccessor(),
+            AddedFolderStatusBrush,
+            MissingFolderStatusBrush);
 
         var scanResultCoordinator = scan.ScanResultCoordinatorFactory.Create(
             new ScanResultCoordinatorFactoryInput

@@ -11,7 +11,7 @@
                  Width="1130"
                  Height="660"
                  MinWidth="920"
-                 MinHeight="620"
+                 MinHeight="635"
                  WindowStartupLocation="CenterScreen"
                  UseLayoutRounding="True"
                  SnapsToDevicePixels="True"

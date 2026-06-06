@@ -32,6 +32,7 @@ public sealed class OptiPatcherArchivePreparationService
                 CacheRoot = cacheDirectory,
                 CacheEntryName = ArchivePayloadCacheEntryNames.OptiPatcherRolling,
                 Validator = new OptiPatcherPayloadValidator(),
+                // OptiPatcher is refreshed on every startup because the upstream ASI can change frequently.
                 ForceRefresh = true,
                 AllowExistingFallback = true,
                 AllowDirectPayloadFile = true,

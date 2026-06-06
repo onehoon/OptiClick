@@ -46,7 +46,7 @@
         <ScrollViewer Grid.Row="1"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled"
-                      CanContentScroll="True"
+                      CanContentScroll="False"
                       Padding="0,0,10,0">
             <StackPanel>
                 <ui:Card Style="{StaticResource RaisedPanelCardControlStyle}"
@@ -97,11 +97,6 @@
                          Margin="0,0,18,0"
                          HorizontalAlignment="Stretch">
                     <StackPanel>
-                        <TextBlock Text="{Binding Strings.ScanTargetsTitle}"
-                                   Style="{StaticResource SectionTitleTextStyle}" />
-                        <TextBlock Text="{Binding Strings.ScanTargetsDescription}"
-                                   Style="{StaticResource SectionDescriptionTextStyle}" />
-
                         <Grid Style="{StaticResource ScanFolderGroupHeaderStyle}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -221,21 +216,17 @@
                                                              OnContent=""
                                                              OffContent="" />
 
-                                            <StackPanel Grid.Column="2"
-                                                        VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Name}"
-                                                           Style="{StaticResource ScanFolderNameTextStyle}"
-                                                           ToolTip="{Binding Name}" />
-                                                <TextBlock Text="{Binding Path}"
-                                                           Style="{StaticResource ScanFolderPathTextStyle}"
-                                                           Foreground="{Binding PathForeground}"
-                                                           ToolTip="{Binding Path}"
-                                                           Margin="0,3,0,0" />
-                                            </StackPanel>
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{Binding Path}"
+                                                       Style="{StaticResource ScanFolderNameTextStyle}"
+                                                       Foreground="{Binding PathForeground}"
+                                                       ToolTip="{Binding Path}"
+                                                       VerticalAlignment="Center" />
 
                                             <Border Grid.Column="4"
                                                     Style="{StaticResource ScanFolderStatusPillStyle}"
-                                                    Background="{Binding StatusBackground}">
+                                                    Background="{Binding StatusBackground}"
+                                                    Visibility="{Binding MissingVisibility}">
                                                 <TextBlock Text="{Binding Status}"
                                                            Foreground="{Binding StatusForeground}"
                                                            FontSize="11.5"

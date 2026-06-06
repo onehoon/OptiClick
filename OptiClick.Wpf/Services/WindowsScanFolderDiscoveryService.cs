@@ -61,7 +61,7 @@ public sealed partial class WindowsScanFolderDiscoveryService : IScanFolderDisco
         rows.Add(new ScanFolderRowViewModel(
             name,
             normalizedPath,
-            "Auto detected",
+            "",
             true,
             true,
             false,
