@@ -1,6 +1,7 @@
 # 🚀 OptiClick
 
-<img width="1920" alt="Installer" src="https://github.com/user-attachments/assets/55d0559d-dce5-40c5-b333-6876837c2948" />
+
+<img width="1130" alt="Installer" src="https://github.com/user-attachments/assets/3897fad3-f61d-48c6-b595-0ace51f3abad" />
 
 
 <p align="center">
