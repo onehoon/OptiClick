@@ -80,6 +80,15 @@ public static class PopupMarkupParser
         var cursor = 0;
         while (cursor < normalizedText.Length)
         {
+            if (normalizedText[cursor] == '['
+                && cursor + 1 < normalizedText.Length
+                && normalizedText[cursor + 1] == '[')
+            {
+                AddText(GetActiveSegments(inlineSegments, currentBulletSegments), "[", isEmphasis);
+                cursor += 2;
+                continue;
+            }
+
             if (TryReadMarkupToken(normalizedText, cursor, out var token, out var tokenLength))
             {
                 cursor += tokenLength;
@@ -157,6 +166,11 @@ public static class PopupMarkupParser
             BulletItems = bulletItems,
             PlainText = BuildPlainText(normalizedInline).Trim()
         };
+    }
+
+    public static string EscapeLiteralText(string? value)
+    {
+        return (value ?? "").Replace("[", "[[", StringComparison.Ordinal);
     }
 
     private static List<PopupMarkupInlineSegment> GetActiveSegments(

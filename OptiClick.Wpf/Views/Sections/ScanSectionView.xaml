@@ -33,6 +33,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -43,79 +44,79 @@
                        Style="{StaticResource PageDescriptionTextStyle}" />
         </StackPanel>
 
-        <ScrollViewer Grid.Row="1"
+        <ui:Card Grid.Row="1"
+                 Style="{StaticResource RaisedPanelCardControlStyle}"
+                 Padding="16"
+                 Margin="0,0,18,10"
+                 HorizontalAlignment="Stretch">
+            <Grid MinHeight="76">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0"
+                        Width="46"
+                        Height="46"
+                        CornerRadius="12"
+                        Background="{StaticResource SurfaceHoverBrush}"
+                        VerticalAlignment="Center">
+                    <ui:SymbolIcon Symbol="FolderAdd24"
+                                   Foreground="{StaticResource AccentPrimaryBrush}"
+                                   FontSize="24"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                </Border>
+
+                <StackPanel Grid.Column="2"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Strings.ScanAddFolderCardTitle}"
+                               Style="{StaticResource SectionTitleTextStyle}" />
+                    <TextBlock Text="{Binding Strings.ScanAddFolderCardDescription}"
+                               Style="{StaticResource SectionDescriptionTextStyle}"
+                               Margin="0,7,0,0" />
+                </StackPanel>
+
+                <Button Grid.Column="4"
+                        Content="{Binding Strings.ScanAddFolder}"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Command="{Binding AddScanFolderCommand}"
+                        VerticalAlignment="Center" />
+            </Grid>
+        </ui:Card>
+
+        <ScrollViewer Grid.Row="2"
                       VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled"
                       CanContentScroll="False"
                       Padding="0,0,10,0">
-            <StackPanel>
-                <ui:Card Style="{StaticResource RaisedPanelCardControlStyle}"
-                         Padding="22"
-                         Margin="0,0,18,14"
-                         HorizontalAlignment="Stretch">
-                    <Grid MinHeight="108">
+            <ui:Card Style="{StaticResource PanelCardControlStyle}"
+                     Padding="18"
+                     Margin="0,0,18,0"
+                     HorizontalAlignment="Stretch">
+                <StackPanel>
+                    <Grid Style="{StaticResource ScanFolderGroupHeaderStyle}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="10" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="16" />
-                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-
-                        <Border Grid.Column="0"
-                                Width="46"
-                                Height="46"
-                                CornerRadius="12"
-                                Background="{StaticResource SurfaceHoverBrush}"
-                                VerticalAlignment="Center">
-                            <ui:SymbolIcon Symbol="FolderAdd24"
-                                           Foreground="{StaticResource AccentPrimaryBrush}"
-                                           FontSize="24"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center" />
-                        </Border>
-
-                        <StackPanel Grid.Column="2"
-                                    VerticalAlignment="Center">
-                            <TextBlock Text="{Binding Strings.ScanAddFolderCardTitle}"
-                                       Style="{StaticResource SectionTitleTextStyle}" />
-                            <TextBlock Text="{Binding Strings.ScanAddFolderCardDescription}"
-                                       Style="{StaticResource SectionDescriptionTextStyle}"
-                                       Margin="0,7,0,0" />
+                        <ui:SymbolIcon Grid.Column="0"
+                                       Symbol="Search24"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontSize="18"
+                                       VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="{Binding Strings.ScanDefaultFoldersTitle}"
+                                       Style="{StaticResource SectionTitleTextStyle}"
+                                       FontSize="14" />
+                            <TextBlock Text="{Binding Strings.ScanDefaultFoldersDescription}"
+                                       Style="{StaticResource SmallDescriptionTextStyle}" />
                         </StackPanel>
-
-                        <Button Grid.Column="4"
-                                Content="{Binding Strings.ScanAddFolder}"
-                                Style="{StaticResource SecondaryButtonStyle}"
-                                Command="{Binding AddScanFolderCommand}"
-                                VerticalAlignment="Center" />
                     </Grid>
-                </ui:Card>
-
-                <ui:Card Style="{StaticResource PanelCardControlStyle}"
-                         Padding="18"
-                         Margin="0,0,18,0"
-                         HorizontalAlignment="Stretch">
-                    <StackPanel>
-                        <Grid Style="{StaticResource ScanFolderGroupHeaderStyle}">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="10" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <ui:SymbolIcon Grid.Column="0"
-                                           Symbol="Search24"
-                                           Foreground="{StaticResource TextSecondaryBrush}"
-                                           FontSize="18"
-                                           VerticalAlignment="Center" />
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="{Binding Strings.ScanDefaultFoldersTitle}"
-                                           Style="{StaticResource SectionTitleTextStyle}"
-                                           FontSize="14" />
-                                <TextBlock Text="{Binding Strings.ScanDefaultFoldersDescription}"
-                                           Style="{StaticResource SmallDescriptionTextStyle}" />
-                            </StackPanel>
-                        </Grid>
 
                         <TextBlock Text="{Binding Strings.ScanNoDefaultFolders}"
                                    Visibility="{Binding DefaultFoldersEmptyVisibility}"
@@ -248,12 +249,11 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </StackPanel>
-                </ui:Card>
-            </StackPanel>
+                </StackPanel>
+            </ui:Card>
         </ScrollViewer>
 
-        <Grid Grid.Row="2"
+        <Grid Grid.Row="3"
               Margin="0,14,18,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />

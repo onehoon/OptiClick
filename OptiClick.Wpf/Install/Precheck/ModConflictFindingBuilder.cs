@@ -158,6 +158,8 @@ public sealed record ModConflictNoticeDecision
 {
     public ModConflictNoticeMode Mode { get; init; }
     public string NoticeText { get; init; } = "";
+    public string HeaderText { get; init; } = "";
+    public string FooterText { get; init; } = "";
     public IReadOnlyList<string> Lines { get; init; } = Array.Empty<string>();
 }
 
@@ -187,9 +189,12 @@ public sealed class ModConflictNoticeBuilder
 
         var genericLines = normalizedFindings.Select(finding => FormatFinding(finding, useKorean)).ToArray();
         var noticeText = BuildGenericNotice(genericLines, useKorean);
+        var (headerText, footerText) = ExtractGenericNoticeChrome(noticeText);
         return new ModConflictNoticeDecision
         {
             Mode = ModConflictNoticeMode.GenericModConflict,
+            HeaderText = headerText,
+            FooterText = footerText,
             Lines = genericLines,
             NoticeText = noticeText
         };
@@ -219,6 +224,26 @@ public sealed class ModConflictNoticeBuilder
                 "",
                 footer
             }).Trim();
+    }
+
+    private static (string HeaderText, string FooterText) ExtractGenericNoticeChrome(string noticeText)
+    {
+        var normalized = (noticeText ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            return ("", "");
+        }
+
+        var headerEnd = normalized.IndexOf("\n\n", StringComparison.Ordinal);
+        var footerStart = normalized.LastIndexOf("\n\n", StringComparison.Ordinal);
+        if (headerEnd < 0 || footerStart <= headerEnd)
+        {
+            return (normalized, "");
+        }
+
+        return (
+            normalized[..headerEnd].Trim(),
+            normalized[(footerStart + 2)..].Trim());
     }
 
     private static string FormatFinding(ModConflictFinding finding, bool useKorean)

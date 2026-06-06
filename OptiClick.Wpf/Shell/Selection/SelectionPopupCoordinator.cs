@@ -131,6 +131,8 @@ public sealed class SelectionPopupCoordinator
             },
             Title = dialogTitle,
             Summary = (request.Message ?? "").Trim(),
+            BulletItems = request.BulletItems ?? Array.Empty<string>(),
+            FooterText = (request.FooterText ?? "").Trim(),
             PrimaryButtonText = strings.DialogButtonOk,
             SecondaryButtonText = ""
         };
@@ -145,7 +147,9 @@ public sealed class SelectionPopupCoordinator
             selectionState.SelectedGameId ?? selectedGame?.GameEntry.GameId,
             "none");
         var normalizedMessage = NormalizeSelectionPopupMessage(request.Message);
-        var material = $"{selectedGameId}|{request.Kind}|{normalizedMessage}";
+        var normalizedBullets = NormalizeSelectionPopupMessage(string.Join("\n", request.BulletItems ?? Array.Empty<string>()));
+        var normalizedFooter = NormalizeSelectionPopupMessage(request.FooterText);
+        var material = $"{selectedGameId}|{request.Kind}|{normalizedMessage}|{normalizedBullets}|{normalizedFooter}";
         var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(material))).ToLowerInvariant();
         return hash.Length > 16 ? hash[..16] : hash;
     }
