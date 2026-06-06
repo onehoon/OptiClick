@@ -31,11 +31,16 @@ public sealed class InstallSelectionPrecheckFlow
         };
 
         var modNoticeMessage = (outcome.ModNoticeMessage ?? "").Trim();
+        var modNoticeBulletItems = NormalizeBulletItems(outcome.ModNoticeBulletItems);
+        var modNoticeFooterText = (outcome.ModNoticeFooterText ?? "").Trim();
+        var hasModNotice = !string.IsNullOrWhiteSpace(modNoticeMessage)
+                           || modNoticeBulletItems.Count > 0
+                           || !string.IsNullOrWhiteSpace(modNoticeFooterText);
         var popupMessage = (outcome.PopupMessage ?? "").Trim();
         var precheckPopupMessage = string.Join("\n\n", new[] { popupMessage, modNoticeMessage }.Where(message => !string.IsNullOrWhiteSpace(message))).Trim();
         if (!outcome.Ok)
         {
-            if (!string.IsNullOrWhiteSpace(precheckPopupMessage))
+            if (!string.IsNullOrWhiteSpace(precheckPopupMessage) || modNoticeBulletItems.Count > 0 || !string.IsNullOrWhiteSpace(modNoticeFooterText))
             {
                 return new InstallSelectionPrecheckFlowResult
                 {
@@ -45,7 +50,9 @@ public sealed class InstallSelectionPrecheckFlow
                         new PopupRequest
                         {
                             Type = PopupRequestType.Precheck,
-                            Message = precheckPopupMessage
+                            Message = precheckPopupMessage,
+                            BulletItems = modNoticeBulletItems,
+                            FooterText = modNoticeFooterText
                         }
                     }
                 };
@@ -59,12 +66,14 @@ public sealed class InstallSelectionPrecheckFlow
 
         var normalizedSelectionPopupMessage = (selectionPopupMessage ?? "").Trim();
         var requests = new List<PopupRequest>();
-        if (!string.IsNullOrWhiteSpace(modNoticeMessage))
+        if (hasModNotice)
         {
             requests.Add(new PopupRequest
             {
                 Type = PopupRequestType.ModNotice,
-                Message = modNoticeMessage
+                Message = modNoticeMessage,
+                BulletItems = modNoticeBulletItems,
+                FooterText = modNoticeFooterText
             });
         }
 
@@ -94,5 +103,12 @@ public sealed class InstallSelectionPrecheckFlow
             ConfirmAfterPopupChain = true
         };
     }
-}
 
+    private static IReadOnlyList<string> NormalizeBulletItems(IEnumerable<string>? source)
+    {
+        return (source ?? Array.Empty<string>())
+            .Select(static item => (item ?? "").Trim())
+            .Where(static item => !string.IsNullOrWhiteSpace(item))
+            .ToArray();
+    }
+}

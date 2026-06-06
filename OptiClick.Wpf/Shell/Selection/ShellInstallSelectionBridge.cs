@@ -4,6 +4,7 @@ using OptiClick.Wpf.Install.Planning;
 using OptiClick.Wpf.Install.Precheck;
 using OptiClick.Wpf.Install.UiState;
 using OptiClick.Wpf.Localization;
+using OptiClick.Wpf.Shell.Dialogs.Markup;
 using OptiClick.Wpf.Shell.Games;
 using OptiClick.Wpf.Shell.Games.Actions;
 using OptiClick.Wpf.Shell.Scan;
@@ -415,13 +416,24 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
             }
         }
 
+        var useStructuredModNotice = noticeDecision.Mode == ModConflictNoticeMode.GenericModConflict;
+        var modNoticeMessage = useStructuredModNotice
+            ? PickFirstNonEmpty(noticeDecision.HeaderText, noticeDecision.NoticeText)
+            : noticeDecision.NoticeText;
+
         return new InstallSelectionPrecheckOutcome
         {
             Ok = precheckResult.Ok,
             Error = (precheckResult.RawErrorMessage ?? "").Trim(),
             ResolvedDllName = (precheckResult.ResolvedDllName ?? "").Trim(),
             PopupMessage = popupMessage,
-            ModNoticeMessage = noticeDecision.NoticeText
+            ModNoticeMessage = modNoticeMessage,
+            ModNoticeBulletItems = useStructuredModNotice
+                ? EscapeMarkupLiteralLines(noticeDecision.Lines)
+                : Array.Empty<string>(),
+            ModNoticeFooterText = useStructuredModNotice
+                ? (noticeDecision.FooterText ?? "").Trim()
+                : ""
         };
     }
 
@@ -439,11 +451,21 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
                     PopupRequestType.Selection => ShellPopupRequestKind.SelectionNotice,
                     _ => ShellPopupRequestKind.SelectionNotice
                 },
-                Message = popup.Message
+                Message = popup.Message,
+                BulletItems = popup.BulletItems,
+                FooterText = popup.FooterText
             });
         }
 
         return list;
+    }
+
+    private static IReadOnlyList<string> EscapeMarkupLiteralLines(IEnumerable<string>? lines)
+    {
+        return (lines ?? Array.Empty<string>())
+            .Select(static line => PopupMarkupParser.EscapeLiteralText(line).Trim())
+            .Where(static line => !string.IsNullOrWhiteSpace(line))
+            .ToArray();
     }
 
     private static ShellGameCardModel? ResolveSelectedGame(IReadOnlyList<ShellGameCardModel> games, int selectedIndex)

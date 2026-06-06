@@ -18,6 +18,8 @@ public sealed record ShellPopupRequest
 {
     public ShellPopupRequestKind Kind { get; init; }
     public string Message { get; init; } = "";
+    public IReadOnlyList<string> BulletItems { get; init; } = Array.Empty<string>();
+    public string FooterText { get; init; } = "";
 }
 
 public sealed class ShellPopupRequestQueue

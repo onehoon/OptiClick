@@ -75,6 +75,8 @@ public sealed record InstallSelectionPrecheckOutcome
     public string ResolvedDllName { get; init; } = "";
     public string PopupMessage { get; init; } = "";
     public string ModNoticeMessage { get; init; } = "";
+    public IReadOnlyList<string> ModNoticeBulletItems { get; init; } = Array.Empty<string>();
+    public string ModNoticeFooterText { get; init; } = "";
 }
 
 public enum PopupRequestType
@@ -88,6 +90,8 @@ public sealed record PopupRequest
 {
     public PopupRequestType Type { get; init; }
     public string Message { get; init; } = "";
+    public IReadOnlyList<string> BulletItems { get; init; } = Array.Empty<string>();
+    public string FooterText { get; init; } = "";
 }
 
 public sealed record InstallSelectionPrecheckFlowResult
