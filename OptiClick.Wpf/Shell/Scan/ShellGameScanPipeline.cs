@@ -115,7 +115,6 @@ public sealed class ShellGameScanPipeline : IShellGameScanPipeline
                 matchByGameId[gameId] = match;
                 targetPathByGameId[gameId] = targetPath;
                 matchedCount++;
-                _logger.Info("scan", $"match game_id={gameId} exe={match.MatchedExe} target={targetPath}");
             }
         }
 

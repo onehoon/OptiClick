@@ -6,6 +6,8 @@ public sealed record InstallResultApplyResult
 {
     public bool FinalSuccess { get; init; }
     public string StatusText { get; init; } = "";
+    public int ConfigErrorCount { get; init; }
+    public string ConfigFailureCode { get; init; } = "";
     public PopupPresentationRequest? PopupRequest { get; init; }
     public IReadOnlyList<InstallFlowLogEntry> Logs { get; init; } = [];
 }

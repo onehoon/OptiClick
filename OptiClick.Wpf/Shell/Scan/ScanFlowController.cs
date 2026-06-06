@@ -137,12 +137,6 @@ public sealed class ScanFlowController
             {
                 logs.Add(Info("scan", $"startup auto scan started folder_count={scanFolders.Length}"));
             }
-            else
-            {
-                logs.Add(Info(
-                    "scan",
-                    $"scan started folder_count={scanFolders.Length} catalog_games={safeCatalog.Games.Count}"));
-            }
 
             var pipelineResult = await _scanPipeline.ScanAsync(new ShellGameScanRequest
             {
@@ -186,10 +180,6 @@ public sealed class ScanFlowController
 
             if (summary.ExecutableCount == 0)
             {
-                logs.Add(Info(
-                    "scan",
-                    $"scan completed executable_count={summary.ExecutableCount} candidate_exe_count={summary.CandidateExecutableCount} matched={summary.MatchedCount} unmatched={summary.UnmatchedCount} multiple={summary.MultipleCandidateCount} disabled={summary.DisabledCount} unsupported={summary.UnsupportedCount} duplicate={summary.DuplicateMatchCount} visible_games={summary.VisibleGameCount}"));
-
                 return new ScanFlowResult
                 {
                     DidRun = true,
@@ -208,10 +198,6 @@ public sealed class ScanFlowController
             if (summary.MatchedCount == 0)
             {
                 var statusText = Format(strings.ScanNoSupportedGamesMatchedFromExecutables, summary.ExecutableCount);
-                logs.Add(Info(
-                    "scan",
-                    $"scan completed executable_count={summary.ExecutableCount} candidate_exe_count={summary.CandidateExecutableCount} matched={summary.MatchedCount} unmatched={summary.UnmatchedCount} multiple={summary.MultipleCandidateCount} disabled={summary.DisabledCount} unsupported={summary.UnsupportedCount} duplicate={summary.DuplicateMatchCount} visible_games={summary.VisibleGameCount}"));
-
                 return new ScanFlowResult
                 {
                     DidRun = true,
@@ -226,10 +212,6 @@ public sealed class ScanFlowController
                     Logs = logs
                 };
             }
-
-            logs.Add(Info(
-                "scan",
-                $"scan completed executable_count={summary.ExecutableCount} candidate_exe_count={summary.CandidateExecutableCount} matched={summary.MatchedCount} unmatched={summary.UnmatchedCount} multiple={summary.MultipleCandidateCount} disabled={summary.DisabledCount} unsupported={summary.UnsupportedCount} duplicate={summary.DuplicateMatchCount} visible_games={summary.VisibleGameCount}"));
 
             return new ScanFlowResult
             {

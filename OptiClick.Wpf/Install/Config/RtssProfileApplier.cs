@@ -34,15 +34,16 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
             var globalPath = Path.Combine(installPath, "Profiles", "Global");
             if (!File.Exists(globalPath))
             {
-                logs.Add(Info($"[RTSS] Global file not found, skipping fix: {globalPath}"));
                 return new RtssProfileApplyResult { Logs = logs };
             }
 
             var globalChanged = ApplyGlobalSettings(globalPath, logs);
             var gameProfileChanged = ApplyGameProfileOverlay(game, selectedMatch, installPath, globalPath, logs);
+            var restarted = false;
             if (globalChanged || gameProfileChanged)
             {
-                RestartRtssSilently(installPath, logs);
+                restarted = RestartRtssSilently(installPath, logs);
+                logs.Add(Info($"[RTSS] completed global_changed={FormatBool(globalChanged)} game_profile_changed={FormatBool(gameProfileChanged)} restarted={FormatBool(restarted)}"));
             }
         }
         catch (Exception ex)
@@ -99,10 +100,8 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
                 updated.Add(line);
             }
 
-            logs.Add(Info($"[RTSS] Pre-fix values: ReflexSetLatencyMarker={Normalize(reflex)}, UseDetours={Normalize(detours)}"));
             if (string.Equals(reflex, "0", StringComparison.Ordinal) && string.Equals(detours, "1", StringComparison.Ordinal))
             {
-                logs.Add(Info("[RTSS] Settings already OK, no changes needed"));
                 return false;
             }
 
@@ -126,7 +125,6 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
             {
                 File.WriteAllBytes(globalPath, EncodeText(newText, encoding, bom));
             });
-            logs.Add(Info($"[RTSS] Global file updated: {globalPath}"));
             return true;
         }
         catch (Exception ex)
@@ -153,7 +151,6 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
             var exeName = ResolveExeName(game, selectedMatch);
             if (string.IsNullOrWhiteSpace(exeName))
             {
-                logs.Add(Info("[RTSS] Missing game exe name; skipping game profile overlay"));
                 return false;
             }
 
@@ -163,11 +160,6 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
             {
                 Directory.CreateDirectory(profilesDir);
                 File.Copy(globalPath, profilePath, overwrite: false);
-                logs.Add(Info($"[RTSS] Created game profile from Global: {profilePath}"));
-            }
-            else
-            {
-                logs.Add(Info($"[RTSS] Existing game profile found; editing in place: {profilePath}"));
             }
 
             WithTemporaryWriteAccess(profilePath, logs, () =>
@@ -191,7 +183,6 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
                 });
                 File.WriteAllBytes(profilePath, EncodeText(updated, encoding, bom));
             });
-            logs.Add(Info($"[RTSS] Game profile updated: {profilePath}"));
             return true;
         }
         catch (Exception ex)
@@ -220,15 +211,14 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
         return string.IsNullOrWhiteSpace(fallback) ? "" : Path.GetFileName(fallback);
     }
 
-    private static void RestartRtssSilently(string installPath, List<InstallFlowLogEntry> logs)
+    private static bool RestartRtssSilently(string installPath, List<InstallFlowLogEntry> logs)
     {
         try
         {
             var rtssExePath = Path.Combine(installPath, "RTSS.exe");
             if (!File.Exists(rtssExePath))
             {
-                logs.Add(Info($"[RTSS] RTSS executable not found, skipping restart: {rtssExePath}"));
-                return;
+                return false;
             }
 
             foreach (var process in Process.GetProcessesByName("RTSS"))
@@ -244,11 +234,12 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
                 UseShellExecute = false,
                 CreateNoWindow = true
             });
-            logs.Add(Info("[RTSS] Restarted RTSS silently"));
+            return true;
         }
         catch (Exception ex)
         {
             logs.Add(Warning($"[RTSS] Failed to restart RTSS silently: {ex.Message}"));
+            return false;
         }
     }
 
@@ -261,7 +252,6 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
             if (wasReadOnly)
             {
                 File.SetAttributes(filePath, attributes & ~FileAttributes.ReadOnly);
-                logs.Add(Info($"[RTSS] Temporarily removed read-only from file: {filePath}"));
             }
 
             action();
@@ -271,7 +261,6 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
             if (wasReadOnly)
             {
                 File.SetAttributes(filePath, attributes);
-                logs.Add(Info($"[RTSS] Restored read-only on file: {filePath}"));
             }
         }
     }
@@ -467,10 +456,9 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
         return normalized;
     }
 
-    private static string Normalize(string? value)
+    private static string FormatBool(bool value)
     {
-        var normalized = (value ?? "").Trim();
-        return string.IsNullOrWhiteSpace(normalized) ? "-" : normalized;
+        return value.ToString().ToLowerInvariant();
     }
 
     private static InstallFlowLogEntry Info(string message)
