@@ -32,8 +32,6 @@ public sealed record AppStrings
     public string ScanDescription { get; init; } = "";
     public string ScanAddFolderCardTitle { get; init; } = "";
     public string ScanAddFolderCardDescription { get; init; } = "";
-    public string ScanTargetsTitle { get; init; } = "";
-    public string ScanTargetsDescription { get; init; } = "";
     public string ScanDefaultFoldersTitle { get; init; } = "";
     public string ScanDefaultFoldersDescription { get; init; } = "";
     public string ScanNoDefaultFolders { get; init; } = "";

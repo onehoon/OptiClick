@@ -108,22 +108,57 @@ public sealed class SettingsSectionViewModel : ViewModelBase
         IEnumerable<OptiScalerVariantSelectionOption> options,
         string selectedVariant)
     {
+        var nextOptions = (options ?? []).ToArray();
+        var normalizedSelectedVariant = string.IsNullOrWhiteSpace(selectedVariant) ? "stable" : selectedVariant;
         _suppressOptiScalerVariantApply = true;
         try
         {
-            OptiScalerVariantOptions.Clear();
-            foreach (var option in options ?? [])
+            var optionsChanged = !AreSameOptiScalerVariantOptions(OptiScalerVariantOptions, nextOptions);
+            if (optionsChanged)
             {
-                OptiScalerVariantOptions.Add(option);
+                OptiScalerVariantOptions.Clear();
+                foreach (var option in nextOptions)
+                {
+                    OptiScalerVariantOptions.Add(option);
+                }
             }
 
-            _selectedOptiScalerVariantOption = string.IsNullOrWhiteSpace(selectedVariant) ? "stable" : selectedVariant;
-            OnPropertyChanged(nameof(SelectedOptiScalerVariantOption));
+            if (optionsChanged
+                || !string.Equals(_selectedOptiScalerVariantOption, normalizedSelectedVariant, StringComparison.Ordinal))
+            {
+                _selectedOptiScalerVariantOption = normalizedSelectedVariant;
+                OnPropertyChanged(nameof(SelectedOptiScalerVariantOption));
+            }
         }
         finally
         {
             _suppressOptiScalerVariantApply = false;
         }
+    }
+
+    private static bool AreSameOptiScalerVariantOptions(
+        IList<OptiScalerVariantSelectionOption> current,
+        IReadOnlyList<OptiScalerVariantSelectionOption> next)
+    {
+        if (current.Count != next.Count)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < current.Count; index++)
+        {
+            var left = current[index];
+            var right = next[index];
+            if (!string.Equals(left.Variant, right.Variant, StringComparison.Ordinal)
+                || !string.Equals(left.DisplayLabel, right.DisplayLabel, StringComparison.Ordinal)
+                || !string.Equals(left.Version, right.Version, StringComparison.Ordinal)
+                || !string.Equals(left.DisplayVersion, right.DisplayVersion, StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public void RefreshLocalization()

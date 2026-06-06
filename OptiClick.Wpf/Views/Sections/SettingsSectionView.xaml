@@ -223,10 +223,6 @@
                     </Grid>
                 </ui:Card>
 
-                <TextBlock Text="{Binding SettingsStatusText}"
-                           Style="{StaticResource SmallDescriptionTextStyle}"
-                           Margin="2,0,0,8" />
-
                 <TextBlock Text="{Binding Strings.SettingsSupportSectionTitle}"
                            Style="{StaticResource SectionTitleTextStyle}"
                            Margin="0,18,0,8" />
