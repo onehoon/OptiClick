@@ -1,6 +1,7 @@
 using System.Windows;
 using OptiClick.Infrastructure.Windows;
 using OptiClick.Wpf.Logging;
+using OptiClick.Wpf.Services;
 using OptiClick.Wpf.ViewModels;
 
 namespace OptiClick.Wpf.Composition;
@@ -38,9 +39,15 @@ public sealed class AppBootstrapper
         startupLogger.Info(MainViewModelLogCategories.App, "milestone app_process_started");
         startupLogger.Info(MainViewModelLogCategories.App, "milestone app_bootstrapper_started");
         var isElevatedRelaunchChild = startupEventArgs.Args.Any(arg => string.Equals(arg, ProcessElevationService.ElevatedRelaunchArgument, StringComparison.OrdinalIgnoreCase));
+        var shouldRequestForegroundAfterUpdate = AppUpdateStartupArguments.RequestsForegroundAfterUpdate(startupEventArgs.Args);
         if (isElevatedRelaunchChild)
         {
             startupLogger.Info(MainViewModelLogCategories.App, "milestone elevation_relaunch_child_started");
+        }
+
+        if (shouldRequestForegroundAfterUpdate)
+        {
+            startupLogger.Info(MainViewModelLogCategories.App, "milestone update_foreground_request_detected");
         }
 
         if (root.ShouldRelaunchElevated(startupEventArgs.Args))
@@ -73,6 +80,10 @@ public sealed class AppBootstrapper
         app.MainWindow = mainWindow;
         mainWindow.Show();
         startupLogger.Info(MainViewModelLogCategories.App, "milestone main_window_shown");
+        if (shouldRequestForegroundAfterUpdate)
+        {
+            WindowForegroundActivationService.RequestForeground(mainWindow, startupLogger);
+        }
 
         if (mainWindow.DataContext is MainViewModel viewModel)
         {

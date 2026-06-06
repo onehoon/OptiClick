@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using OptiClick.Wpf.Install.Archives;
 using OptiClick.Wpf.Logging;
 using OptiClick.Infrastructure.FileSystem;
@@ -53,7 +54,8 @@ public sealed class AppUpdateExecutionService : IAppUpdateExecutionService
     private readonly IArchiveDownloader _archiveDownloader;
     private readonly IArchiveExtractor _archiveExtractor;
     private readonly IAppLogger _logger;
-    private readonly Func<ProcessStartInfo, bool> _processStarter;
+    private readonly Func<ProcessStartInfo, int?> _processStarter;
+    private readonly Func<int, bool> _foregroundPermissionGrant;
     private readonly Func<string?> _processPathProvider;
     private readonly Func<DateTimeOffset> _clock;
     private readonly TimeSpan _downloadTimeout;
@@ -63,7 +65,8 @@ public sealed class AppUpdateExecutionService : IAppUpdateExecutionService
         IArchiveDownloader? archiveDownloader = null,
         IArchiveExtractor? archiveExtractor = null,
         IAppLogger? logger = null,
-        Func<ProcessStartInfo, bool>? processStarter = null,
+        Func<ProcessStartInfo, int?>? processStarter = null,
+        Func<int, bool>? foregroundPermissionGrant = null,
         Func<string?>? processPathProvider = null,
         Func<DateTimeOffset>? clock = null,
         TimeSpan? downloadTimeout = null)
@@ -76,6 +79,7 @@ public sealed class AppUpdateExecutionService : IAppUpdateExecutionService
                 new Windows11OnlyOperatingSystemSupportPolicy()));
         _logger = logger ?? NullAppLogger.Instance;
         _processStarter = processStarter ?? StartProcess;
+        _foregroundPermissionGrant = foregroundPermissionGrant ?? TryAllowSetForegroundWindow;
         _processPathProvider = processPathProvider ?? (() => Environment.ProcessPath);
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
         _downloadTimeout = downloadTimeout ?? DefaultDownloadTimeout;
@@ -261,14 +265,17 @@ public sealed class AppUpdateExecutionService : IAppUpdateExecutionService
         {
             FileName = path,
             WorkingDirectory = Path.GetDirectoryName(path) ?? "",
+            Arguments = AppUpdateStartupArguments.ForegroundAfterUpdate,
             UseShellExecute = true
         };
-        if (!_processStarter(startInfo))
+        var processId = _processStarter(startInfo);
+        if (processId is null)
         {
             _logger.Warning("app-update", "update executable launch failed");
             return AppUpdateExecutionResult.Failure("launch_failed");
         }
 
+        TryGrantForegroundPermission(processId.Value);
         return AppUpdateExecutionResult.Success(new AppUpdatePreparedFile("", "", Path.GetFileName(path), path));
     }
 
@@ -280,17 +287,55 @@ public sealed class AppUpdateExecutionService : IAppUpdateExecutionService
             utcNow.ToString("yyyyMMddHHmmss"));
     }
 
-    private static bool StartProcess(ProcessStartInfo info)
+    private static int? StartProcess(ProcessStartInfo info)
     {
         try
         {
-            return Process.Start(info) is not null;
+            using var process = Process.Start(info);
+            return process?.Id;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private void TryGrantForegroundPermission(int processId)
+    {
+        if (processId <= 0)
+        {
+            return;
+        }
+
+        try
+        {
+            _foregroundPermissionGrant(processId);
+        }
+        catch (Exception ex)
+        {
+            _logger.Warning("app-update", $"foreground permission grant failed type={ex.GetType().Name}");
+        }
+    }
+
+    private static bool TryAllowSetForegroundWindow(int processId)
+    {
+        if (!OperatingSystem.IsWindows() || processId <= 0)
+        {
+            return false;
+        }
+
+        try
+        {
+            return AllowSetForegroundWindow(processId);
         }
         catch
         {
             return false;
         }
     }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool AllowSetForegroundWindow(int dwProcessId);
 
     private static string ResolveDownloadFileName(AppUpdateInfo updateInfo)
     {
