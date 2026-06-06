@@ -49,6 +49,7 @@ public static class UninstallSkipReasons
     public const string MissingAtExecution = "missing_at_execution";
     public const string DirectoryAtExecution = "directory_at_execution";
     public const string SignatureChanged = "signature_changed";
+    public const string SignatureValidationRequired = "signature_validation_required";
     public const string ConfigTargetMissing = "config_target_missing";
     public const string ConfigEntryMissing = "config_entry_missing";
 }
@@ -57,6 +58,7 @@ public sealed record UninstallComponentTarget
 {
     public UninstallCandidateKind Kind { get; init; }
     public string RelativePath { get; init; } = "";
+    public bool RequiresSignatureValidation { get; init; } = true;
 }
 
 public sealed record UninstallPlanBuildRequest
@@ -82,6 +84,7 @@ public sealed record UninstallCandidate
     public UninstallCandidateKind Kind { get; init; }
     public string MatchedText { get; init; } = "";
     public bool IsReadOnly { get; init; }
+    public bool RequiresSignatureValidation { get; init; } = true;
 }
 
 public sealed record UninstallSkippedFile
