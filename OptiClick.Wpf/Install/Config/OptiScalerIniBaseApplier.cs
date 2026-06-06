@@ -14,8 +14,9 @@ public sealed class OptiScalerIniBaseApplier : IOptiScalerIniBaseApplier
     public ConfigProfileApplySummary ApplyBase(
         string targetFolder,
         string fileName,
-        IReadOnlyDictionary<string, string> settings)
+        IReadOnlyDictionary<string, string> settings,
+        string profileName = "optiscaler_ini_base")
     {
-        return _iniProfileEditor.ApplyOptiScalerIniBase(targetFolder, fileName, settings);
+        return _iniProfileEditor.ApplyOptiScalerIniBase(targetFolder, fileName, settings, profileName);
     }
 }

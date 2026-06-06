@@ -44,6 +44,7 @@ public sealed class InstallResultApplier : IInstallResultApplier
             Plan = request.Plan,
             OptiScalerIniSettings = request.SelectedGame.InstallMetadata?.IniSettings
                                     ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
+            CommonOptiScalerIniSettings = request.CommonOptiScalerIniSettings,
             Strings = request.Strings,
             InstallSucceeded = coreSucceeded
         });

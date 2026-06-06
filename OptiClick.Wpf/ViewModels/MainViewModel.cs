@@ -26,6 +26,7 @@ using OptiClick.Wpf.Shell.Gpu;
 using OptiClick.Wpf.Shell.Games.GpuBundle;
 using OptiClick.Wpf.Shell.Localization;
 using OptiClick.Wpf.Shell.Navigation;
+using OptiClick.Wpf.Shell.OptiScaler;
 using OptiClick.Wpf.Shell.Runtime;
 using OptiClick.Wpf.Shell.Scan;
 using OptiClick.Wpf.Shell.Selection;
@@ -36,6 +37,7 @@ using OptiClick.Wpf.Shell.Update;
 using OptiClick.Wpf.Shell.Wiki;
 using OptiClick.Wpf.ViewModels.Sections;
 using OptiClick.Wpf.ViewModels.Sections.Home;
+using OptiClick.Wpf.ViewModels.Sections.OptiScaler;
 using OptiClick.Wpf.ViewModels.Sections.Scan;
 using OptiClick.Wpf.ViewModels.Sections.Settings;
 using OptiClick.Wpf.ViewModels.Sections.SupportedGames;
@@ -87,6 +89,7 @@ public sealed partial class MainViewModel : ViewModelBase
     private readonly IInstallManagementDialogService _installManagementDialogService;
     private readonly OnceDialogGate _remoteCatalogDialogGate;
     private readonly UserSettingsController _userSettingsController;
+    private readonly IOptiScalerCommonIniSettingsStore _optiScalerCommonIniSettingsStore;
     private readonly ScanVisibleGameResolver _scanVisibleGameResolver;
     private readonly StartupNoticePresenter _startupNoticePresenter;
     private readonly StartupAnnouncementFlowController _startupAnnouncementFlowController;
@@ -177,6 +180,7 @@ public sealed partial class MainViewModel : ViewModelBase
         _installManagementDialogService = resolved.InstallManagementDialogService;
         _remoteCatalogDialogGate = resolved.RemoteCatalogDialogGate;
         _userSettingsController = resolved.UserSettingsController;
+        _optiScalerCommonIniSettingsStore = new OptiScalerCommonIniSettingsStore(_localDataPathProvider, _appLogger);
         _scanVisibleGameResolver = resolved.ScanVisibleGameResolver;
         _installPopupPresenter = resolved.InstallPopupPresenter;
         _archiveReadinessFlowController = resolved.ArchiveReadinessFlowController;
@@ -278,18 +282,22 @@ public sealed partial class MainViewModel : ViewModelBase
                     OpenGameSupportRequestCommandAccessor = () => _openGameSupportRequestCommand,
                     UpdateStartupPreparationState = UpdateStartupPreparationState
                 },
+                OptiScaler = new OptiScalerSectionCompositionInput
+                {
+                    OptiScalerVariantOptions = optiScalerVariantOptions,
+                    InitialOptiScalerVariantOption = OptiScalerVariantCatalogBuilder.StableVariant,
+                    InitialCommonIniSettings = _optiScalerCommonIniSettingsStore.Load(),
+                    SaveSettings = SaveOptiScalerSettings
+                },
                 Settings = new SettingsSectionCompositionInput
                 {
                     DialogPresenter = _dialogPresenter,
                     LocalDataPathProvider = _localDataPathProvider,
                     AppLogger = _appLogger,
                     SettingsLanguageOptions = settingsLanguageOptions,
-                    OptiScalerVariantOptions = optiScalerVariantOptions,
                     InitialSettingsLanguageOption = LanguageOptionAuto,
-                    InitialOptiScalerVariantOption = OptiScalerVariantCatalogBuilder.StableVariant,
                     IsKoreanUi = () => IsKoreanUi,
                     ApplySettingsLanguageOption = ApplySettingsLanguageOption,
-                    ApplyOptiScalerVariantOption = ApplySettingsOptiScalerVariantOption,
                     IsInstallExecutionInProgress = () => _isInstallExecutionInProgress,
                     OpenLogFolder = OpenLogFolder,
                     OpenSupportRequest = OpenSupportRequest,
@@ -300,6 +308,7 @@ public sealed partial class MainViewModel : ViewModelBase
         Home = sections.Home;
         SupportedGames = sections.SupportedGames;
         Scan = sections.Scan;
+        OptiScaler = sections.OptiScaler;
         Settings = sections.Settings;
 
         _selectedLanguage = _languageProvider.CurrentLanguage;
@@ -327,6 +336,7 @@ public sealed partial class MainViewModel : ViewModelBase
     public HomeSectionViewModel Home { get; }
     public ScanSectionViewModel Scan { get; }
     public SupportedGamesSectionViewModel SupportedGames { get; }
+    public OptiScalerSectionViewModel OptiScaler { get; }
     public SettingsSectionViewModel Settings { get; }
     public StartupPreparationState StartupPreparationState
     {
@@ -467,6 +477,14 @@ public sealed partial class MainViewModel : ViewModelBase
         var normalized = NormalizeOptiScalerVariantPreference(option);
         _optiScalerVariantPreference = normalized;
         SaveUserSettings();
+    }
+
+    private void SaveOptiScalerSettings(
+        string optiScalerVariantOption,
+        OptiScalerCommonIniSettingsDocument commonIniSettings)
+    {
+        ApplySettingsOptiScalerVariantOption(optiScalerVariantOption);
+        _optiScalerCommonIniSettingsStore.Save(commonIniSettings);
     }
 
     private AppLanguage ResolveAutoLanguage()

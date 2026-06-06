@@ -156,9 +156,12 @@ public sealed class IniProfileEditor
     public ConfigProfileApplySummary ApplyOptiScalerIniBase(
         string targetPath,
         string relativePath,
-        IReadOnlyDictionary<string, string> iniSettings)
+        IReadOnlyDictionary<string, string> iniSettings,
+        string profileName = "optiscaler_ini_base")
     {
-        const string profileName = "optiscaler_ini_base";
+        var normalizedProfileName = string.IsNullOrWhiteSpace(profileName)
+            ? "optiscaler_ini_base"
+            : profileName.Trim();
         var applied = new List<ConfigProfileAppliedRow>();
         var skipped = new List<ConfigProfileSkippedRow>();
         var errors = new List<ConfigProfileError>();
@@ -167,13 +170,13 @@ public sealed class IniProfileEditor
         {
             skipped.Add(new ConfigProfileSkippedRow
             {
-                ProfileName = profileName,
+                ProfileName = normalizedProfileName,
                 ReasonCode = ConfigSkipReasons.Unchanged,
                 Detail = "no_ini_settings"
             });
             return new ConfigProfileApplySummary
             {
-                ProfileName = profileName,
+                ProfileName = normalizedProfileName,
                 Changed = false,
                 Completed = true,
                 Applied = applied,
@@ -188,14 +191,14 @@ public sealed class IniProfileEditor
         {
             skipped.Add(new ConfigProfileSkippedRow
             {
-                ProfileName = profileName,
+                ProfileName = normalizedProfileName,
                 ReasonCode = ConfigSkipReasons.TargetFileNotFound,
                 Detail = normalizedRelativePath
             });
 
             return new ConfigProfileApplySummary
             {
-                ProfileName = profileName,
+                ProfileName = normalizedProfileName,
                 Changed = false,
                 Completed = true,
                 Applied = applied,
@@ -212,7 +215,7 @@ public sealed class IniProfileEditor
             {
                 skipped.Add(new ConfigProfileSkippedRow
                 {
-                    ProfileName = profileName,
+                    ProfileName = normalizedProfileName,
                     ReasonCode = ConfigSkipReasons.MissingRequiredField,
                     Detail = "section:key"
                 });
@@ -224,7 +227,7 @@ public sealed class IniProfileEditor
             {
                 skipped.Add(new ConfigProfileSkippedRow
                 {
-                    ProfileName = profileName,
+                    ProfileName = normalizedProfileName,
                     ReasonCode = ConfigSkipReasons.MissingRequiredField,
                     Detail = normalizedKey
                 });
@@ -237,7 +240,7 @@ public sealed class IniProfileEditor
             {
                 skipped.Add(new ConfigProfileSkippedRow
                 {
-                    ProfileName = profileName,
+                    ProfileName = normalizedProfileName,
                     ReasonCode = ConfigSkipReasons.MissingRequiredField,
                     Detail = normalizedKey
                 });
@@ -257,7 +260,7 @@ public sealed class IniProfileEditor
         {
             return new ConfigProfileApplySummary
             {
-                ProfileName = profileName,
+                ProfileName = normalizedProfileName,
                 Changed = false,
                 Completed = true,
                 Applied = applied,
@@ -284,7 +287,7 @@ public sealed class IniProfileEditor
                         createMissingFile: false,
                         trackApplied: fileApplied,
                         trackSkipped: fileSkipped,
-                        profileName: profileName);
+                        profileName: normalizedProfileName);
                     changedAny = changedAny || changed;
                 },
                 restoreOriginalReadonly: true);
@@ -295,7 +298,7 @@ public sealed class IniProfileEditor
         {
             errors.Add(new ConfigProfileError
             {
-                ProfileName = profileName,
+                ProfileName = normalizedProfileName,
                 ReasonCode = ConfigErrorReasons.ApplyException,
                 Detail = ex.Message,
                 TargetPath = absolutePath
@@ -304,7 +307,7 @@ public sealed class IniProfileEditor
 
         return new ConfigProfileApplySummary
         {
-            ProfileName = profileName,
+            ProfileName = normalizedProfileName,
             Changed = changedAny,
             Completed = true,
             Applied = applied,

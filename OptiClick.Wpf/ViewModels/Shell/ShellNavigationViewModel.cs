@@ -19,6 +19,8 @@ public sealed class ShellNavigationViewModel : ViewModelBase
 
     public bool IsScanViewActive => CurrentViewKind == ShellViewKind.Scan;
 
+    public bool IsOptiScalerViewActive => CurrentViewKind == ShellViewKind.OptiScaler;
+
     public bool IsSettingsViewActive => CurrentViewKind == ShellViewKind.Settings;
 
     public void Refresh()
@@ -27,6 +29,7 @@ public sealed class ShellNavigationViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsHomeViewActive));
         OnPropertyChanged(nameof(IsSupportedGamesWikiViewActive));
         OnPropertyChanged(nameof(IsScanViewActive));
+        OnPropertyChanged(nameof(IsOptiScalerViewActive));
         OnPropertyChanged(nameof(IsSettingsViewActive));
     }
 }

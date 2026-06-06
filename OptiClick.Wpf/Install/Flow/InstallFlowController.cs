@@ -190,6 +190,7 @@ public sealed class InstallFlowController
             InstallResult = installResult,
             SelectedGame = selectedShellGame,
             SelectionState = request.SelectionState,
+            CommonOptiScalerIniSettings = request.CommonOptiScalerIniSettings,
             Strings = request.Strings
         });
         stopwatch.Stop();
