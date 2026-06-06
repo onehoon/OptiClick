@@ -17,6 +17,8 @@ public sealed record InstallFlowRequest
     public required IReadOnlyDictionary<string, ShellGameMatchResult> MatchByGameId { get; init; }
     public required IReadOnlyDictionary<string, string> TargetPathByGameId { get; init; }
     public required IReadOnlyDictionary<string, object?> ModuleDownloadLinks { get; init; }
+    public IReadOnlyDictionary<string, string> CommonOptiScalerIniSettings { get; init; } =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     public required bool IsWindowsSupported { get; init; }
     public required bool IsInstallExecutionInProgress { get; init; }
     public required bool IsAppUpdateInProgress { get; init; }

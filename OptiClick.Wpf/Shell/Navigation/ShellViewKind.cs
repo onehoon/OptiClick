@@ -5,5 +5,6 @@ public enum ShellViewKind
     Home,
     SupportedGamesWiki,
     Scan,
+    OptiScaler,
     Settings
 }

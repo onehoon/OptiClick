@@ -93,6 +93,7 @@ public sealed class MainViewModelFlowRequestFactory
         IReadOnlyDictionary<string, ShellGameMatchResult> matchByGameId,
         IReadOnlyDictionary<string, string> targetPathByGameId,
         IReadOnlyDictionary<string, object?> moduleDownloadLinks,
+        IReadOnlyDictionary<string, string> commonOptiScalerIniSettings,
         bool isWindowsSupported,
         bool isInstallExecutionInProgress,
         bool isAppUpdateInProgress,
@@ -109,6 +110,8 @@ public sealed class MainViewModelFlowRequestFactory
             MatchByGameId = matchByGameId,
             TargetPathByGameId = targetPathByGameId,
             ModuleDownloadLinks = moduleDownloadLinks,
+            CommonOptiScalerIniSettings = commonOptiScalerIniSettings
+                                           ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
             IsWindowsSupported = isWindowsSupported,
             IsInstallExecutionInProgress = isInstallExecutionInProgress,
             IsAppUpdateInProgress = isAppUpdateInProgress,

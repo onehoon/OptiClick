@@ -12,6 +12,7 @@ using OptiClick.Wpf.Services;
 using OptiClick.Wpf.Shell.Dialogs;
 using OptiClick.Wpf.Shell.Flow;
 using OptiClick.Wpf.Shell.Navigation;
+using OptiClick.Wpf.Shell.OptiScaler;
 using OptiClick.Wpf.Shell.Scan;
 using OptiClick.Wpf.Shell.Startup;
 using OptiClick.Wpf.Shell.Wiki;
@@ -32,6 +33,7 @@ public sealed class ShellSectionsCompositionFactory
         var home = input.Home;
         var scan = input.Scan;
         var supportedGames = input.SupportedGames;
+        var optiScaler = input.OptiScaler;
         var settings = input.Settings;
 
         var games = input.SeedMockGameCards
@@ -123,6 +125,14 @@ public sealed class ShellSectionsCompositionFactory
                     OpenGameSupportRequestCommandAccessor = supportedGames.OpenGameSupportRequestCommandAccessor,
                     UpdateStartupPreparationState = supportedGames.UpdateStartupPreparationState
                 },
+                OptiScaler = new OptiScalerSectionFactoryInput
+                {
+                    StringsAccessor = input.StringsAccessor,
+                    OptiScalerVariantOptions = optiScaler.OptiScalerVariantOptions,
+                    InitialOptiScalerVariantOption = optiScaler.InitialOptiScalerVariantOption,
+                    InitialCommonIniSettings = optiScaler.InitialCommonIniSettings,
+                    SaveSettings = optiScaler.SaveSettings
+                },
                 Settings = new SettingsSectionFactoryInput
                 {
                     StringsAccessor = input.StringsAccessor,
@@ -131,11 +141,8 @@ public sealed class ShellSectionsCompositionFactory
                     AppLogger = settings.AppLogger,
                     IsKoreanUi = settings.IsKoreanUi,
                     SettingsLanguageOptions = settings.SettingsLanguageOptions,
-                    OptiScalerVariantOptions = settings.OptiScalerVariantOptions,
                     InitialSettingsLanguageOption = settings.InitialSettingsLanguageOption,
-                    InitialOptiScalerVariantOption = settings.InitialOptiScalerVariantOption,
                     ApplySettingsLanguageOption = settings.ApplySettingsLanguageOption,
-                    ApplyOptiScalerVariantOption = settings.ApplyOptiScalerVariantOption,
                     IsInstallExecutionInProgress = settings.IsInstallExecutionInProgress,
                     OpenLogFolder = settings.OpenLogFolder,
                     OpenSupportRequest = settings.OpenSupportRequest,
@@ -168,6 +175,7 @@ public sealed record ShellSectionsCompositionFactoryInput
     public required HomeSectionCompositionInput Home { get; init; }
     public required ScanSectionCompositionInput Scan { get; init; }
     public required SupportedGamesSectionCompositionInput SupportedGames { get; init; }
+    public required OptiScalerSectionCompositionInput OptiScaler { get; init; }
     public required SettingsSectionCompositionInput Settings { get; init; }
 }
 
@@ -230,14 +238,19 @@ public sealed record SettingsSectionCompositionInput
     public required IAppLocalDataPathProvider LocalDataPathProvider { get; init; }
     public required IAppLogger AppLogger { get; init; }
     public required ObservableCollection<string> SettingsLanguageOptions { get; init; }
-    public required ObservableCollection<OptiScalerVariantSelectionOption> OptiScalerVariantOptions { get; init; }
     public required string InitialSettingsLanguageOption { get; init; }
-    public required string InitialOptiScalerVariantOption { get; init; }
     public required Func<bool> IsKoreanUi { get; init; }
     public required Action<string> ApplySettingsLanguageOption { get; init; }
-    public required Action<string> ApplyOptiScalerVariantOption { get; init; }
     public required Func<bool> IsInstallExecutionInProgress { get; init; }
     public required Action OpenLogFolder { get; init; }
     public required Action OpenSupportRequest { get; init; }
     public Action<Exception>? OnRefreshInstallFilesException { get; init; }
+}
+
+public sealed record OptiScalerSectionCompositionInput
+{
+    public required ObservableCollection<OptiScalerVariantSelectionOption> OptiScalerVariantOptions { get; init; }
+    public required string InitialOptiScalerVariantOption { get; init; }
+    public required OptiScalerCommonIniSettingsDocument InitialCommonIniSettings { get; init; }
+    public required Action<string, OptiScalerCommonIniSettingsDocument> SaveSettings { get; init; }
 }
