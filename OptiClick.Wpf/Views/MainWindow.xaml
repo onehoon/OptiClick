@@ -33,6 +33,9 @@
         <DataTemplate x:Key="ScanSectionTemplate">
             <sections:ScanSectionView DataContext="{Binding Scan}" />
         </DataTemplate>
+        <DataTemplate x:Key="OptiScalerSectionTemplate">
+            <sections:OptiScalerSectionView DataContext="{Binding OptiScaler}" />
+        </DataTemplate>
         <DataTemplate x:Key="SettingsSectionTemplate">
             <sections:SettingsSectionView DataContext="{Binding Settings}" />
         </DataTemplate>
@@ -211,7 +214,7 @@
                                    ToolTip="{Binding Strings.NavHome}"
                                    AutomationProperties.Name="{Binding Strings.NavHome}"
                                    AutomationProperties.PositionInSet="1"
-                                   AutomationProperties.SizeOfSet="4"
+                                   AutomationProperties.SizeOfSet="5"
                                    TabIndex="0"
                                    Style="{StaticResource SideRailIconButtonStyle}">
                             <ui:SymbolIcon Symbol="Home24"
@@ -227,7 +230,7 @@
                                    ToolTip="{Binding Strings.NavScan}"
                                    AutomationProperties.Name="{Binding Strings.NavScan}"
                                    AutomationProperties.PositionInSet="2"
-                                   AutomationProperties.SizeOfSet="4"
+                                   AutomationProperties.SizeOfSet="5"
                                    TabIndex="1"
                                    Style="{StaticResource SideRailIconButtonStyle}">
                             <ui:SymbolIcon Symbol="Search24"
@@ -243,10 +246,26 @@
                                    ToolTip="{Binding Strings.NavSupportedGamesWiki}"
                                    AutomationProperties.Name="{Binding Strings.NavSupportedGamesWiki}"
                                    AutomationProperties.PositionInSet="3"
-                                   AutomationProperties.SizeOfSet="4"
+                                   AutomationProperties.SizeOfSet="5"
                                    TabIndex="2"
                                    Style="{StaticResource SideRailIconButtonStyle}">
                             <ui:SymbolIcon Symbol="XboxController24"
+                                           Filled="True"
+                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                           FontSize="24"
+                                           Width="26"
+                                           Height="26" />
+                        </ui:Button>
+
+                        <ui:Button Command="{Binding Commands.ShowOptiScalerCommand}"
+                                   Tag="{Binding Navigation.IsOptiScalerViewActive}"
+                                   ToolTip="{Binding Strings.NavOptiScaler}"
+                                   AutomationProperties.Name="{Binding Strings.NavOptiScaler}"
+                                   AutomationProperties.PositionInSet="4"
+                                   AutomationProperties.SizeOfSet="5"
+                                   TabIndex="3"
+                                   Style="{StaticResource SideRailIconButtonStyle}">
+                            <ui:SymbolIcon Symbol="Gauge24"
                                            Filled="True"
                                            Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                                            FontSize="24"
@@ -260,9 +279,9 @@
                                Tag="{Binding Navigation.IsSettingsViewActive}"
                                ToolTip="{Binding Strings.NavSettings}"
                                AutomationProperties.Name="{Binding Strings.NavSettings}"
-                               AutomationProperties.PositionInSet="4"
-                               AutomationProperties.SizeOfSet="4"
-                               TabIndex="3"
+                               AutomationProperties.PositionInSet="5"
+                               AutomationProperties.SizeOfSet="5"
+                               TabIndex="4"
                                Style="{StaticResource SideRailFooterIconButtonStyle}">
                         <ui:SymbolIcon Symbol="Settings24"
                                        Filled="True"
@@ -290,6 +309,10 @@
                                     <DataTrigger Binding="{Binding DataContext.Navigation.CurrentViewKind, ElementName=ShellWindow}"
                                                  Value="{x:Static navigation:ShellViewKind.Scan}">
                                         <Setter Property="ContentTemplate" Value="{StaticResource ScanSectionTemplate}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding DataContext.Navigation.CurrentViewKind, ElementName=ShellWindow}"
+                                                 Value="{x:Static navigation:ShellViewKind.OptiScaler}">
+                                        <Setter Property="ContentTemplate" Value="{StaticResource OptiScalerSectionTemplate}" />
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding DataContext.Navigation.CurrentViewKind, ElementName=ShellWindow}"
                                                  Value="{x:Static navigation:ShellViewKind.Settings}">

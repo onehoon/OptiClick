@@ -88,6 +88,7 @@ public sealed partial class MainViewModel : ViewModelBase
         }
 
         Settings.ApplyLoadedSettings(ResolveLanguageOptionFromState(_languagePreference));
+        OptiScaler.ApplySavedSettings(_optiScalerVariantPreference, _optiScalerCommonIniSettingsStore.Load());
     }
 
     private void SaveUserSettings() => _userSettingsController.SavePreferencesNonBlocking(

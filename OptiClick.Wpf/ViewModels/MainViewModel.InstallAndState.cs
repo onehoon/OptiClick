@@ -11,6 +11,7 @@ using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Shell.RuntimeData;
 using OptiClick.Wpf.Shell.Games;
 using OptiClick.Wpf.Shell.Localization;
+using OptiClick.Wpf.Shell.OptiScaler;
 using OptiClick.Wpf.Shell.Scan;
 using OptiClick.Wpf.Shell.Selection;
 using OptiClick.Wpf.Threading;
@@ -226,6 +227,7 @@ public sealed partial class MainViewModel : ViewModelBase
             _scannedGameState.MatchByGameId,
             _scannedGameState.TargetPathByGameId,
             _runtimeShellState.ModuleDownloadLinks,
+            OptiScalerCommonIniSettingsMaterializer.Materialize(_optiScalerCommonIniSettingsStore.Load()),
             EnsureOperatingSystemPolicyEvaluated().IsSupported,
             _isInstallExecutionInProgress,
             _isAppUpdateInProgress,
@@ -329,7 +331,7 @@ public sealed partial class MainViewModel : ViewModelBase
     private void ApplyOptiScalerVariantSyncResult(OptiScalerVariantSyncResult? result)
     {
         _runtimeShellState.ApplyOptiScalerVariantSync(result);
-        Settings.ApplyOptiScalerVariantOptions(
+        OptiScaler.ApplyOptiScalerVariantOptions(
             _runtimeShellState.LatestOptiScalerVariantSelectionOptions,
             _runtimeShellState.EffectiveOptiScalerVariant);
 
@@ -476,6 +478,7 @@ public sealed partial class MainViewModel : ViewModelBase
         Strings = _appStringsProvider.Get(SelectedLanguage);
         Scan.RefreshLocalization();
         Settings.RefreshLocalization();
+        OptiScaler.RefreshLocalization();
         Home.RefreshLocalization();
         OnPropertyChanged(nameof(WindowTitleWithVersion));
     }

@@ -38,7 +38,9 @@ public sealed class ConfigApplyFlowController
         }
 
         var optiScalerIniSettings = NormalizeIniSettings(request.OptiScalerIniSettings);
-        if (optiScalerIniSettings.Count > 0 && _optiScalerIniBaseApplier is null)
+        var commonOptiScalerIniSettings = NormalizeIniSettings(request.CommonOptiScalerIniSettings);
+        if ((optiScalerIniSettings.Count > 0 || commonOptiScalerIniSettings.Count > 0)
+            && _optiScalerIniBaseApplier is null)
         {
             logs.Add(Error("config-apply", "config apply failed reason=ini_profile_editor_missing"));
             return Failure(request.Strings.InstallFailedConfigApply, "ini_profile_editor_missing", logs, errorCount: 1);
@@ -48,14 +50,26 @@ public sealed class ConfigApplyFlowController
         {
             var loggedErrorKeys = new HashSet<string>(StringComparer.Ordinal);
             ConfigProfileApplySummary? baseSummary = null;
+            ConfigProfileApplySummary? commonSummary = null;
             if (optiScalerIniSettings.Count > 0)
             {
                 baseSummary = _optiScalerIniBaseApplier!.ApplyBase(
                     request.Plan.TargetFolder,
                     "OptiScaler.ini",
                     optiScalerIniSettings);
-                AddConfigErrorLogs(logs, baseSummary, loggedErrorKeys);
+                AddConfigItemLogs(logs, baseSummary, loggedErrorKeys);
                 AddIncompleteSummaryLog(logs, baseSummary);
+            }
+
+            if (commonOptiScalerIniSettings.Count > 0)
+            {
+                commonSummary = _optiScalerIniBaseApplier!.ApplyBase(
+                    request.Plan.TargetFolder,
+                    "OptiScaler.ini",
+                    commonOptiScalerIniSettings,
+                    "optiscaler_ini_common");
+                AddConfigItemLogs(logs, commonSummary, loggedErrorKeys);
+                AddIncompleteSummaryLog(logs, commonSummary);
             }
 
             var applyContext = new ConfigProfileApplyContext
@@ -67,19 +81,16 @@ public sealed class ConfigApplyFlowController
             var profileResult = _configProfileApplier.Apply(applyContext);
             foreach (var summary in profileResult.Summaries)
             {
-                AddConfigErrorLogs(logs, summary, loggedErrorKeys);
+                AddConfigItemLogs(logs, summary, loggedErrorKeys);
                 AddIncompleteSummaryLog(logs, summary);
             }
             AddConfigErrorLogs(logs, profileResult.Errors, loggedErrorKeys);
 
-            var hasBaseFailure = baseSummary is not null
-                                 && (!baseSummary.Completed
-                                     || baseSummary.Errors.Count > 0
-                                     || CountErrors(baseSummary) > 0);
+            var hasBaseFailure = HasSummaryFailure(baseSummary) || HasSummaryFailure(commonSummary);
             var hasProfileFailure = profileResult.Errors.Count > 0
                                     || profileResult.Summaries.Any(static summary => !summary.Completed)
                                     || profileResult.Summaries.Any(static summary => CountErrors(summary) > 0);
-            var totalErrorCount = CountTotalErrors(baseSummary, profileResult);
+            var totalErrorCount = CountTotalErrors([baseSummary, commonSummary], profileResult);
             if (hasBaseFailure || hasProfileFailure)
             {
                 logs.Add(Error("config-apply", $"config apply failed target={request.Plan.TargetFolder}"));
@@ -131,6 +142,16 @@ public sealed class ConfigApplyFlowController
         };
     }
 
+    private static InstallFlowLogEntry Info(string category, string message)
+    {
+        return new InstallFlowLogEntry
+        {
+            Level = "info",
+            Category = category,
+            Message = message
+        };
+    }
+
     private static IReadOnlyDictionary<string, string> NormalizeIniSettings(IReadOnlyDictionary<string, string>? settings)
     {
         if (settings is null || settings.Count == 0)
@@ -153,11 +174,26 @@ public sealed class ConfigApplyFlowController
         return normalized;
     }
 
-    private static void AddConfigErrorLogs(
+    private static void AddConfigItemLogs(
         List<InstallFlowLogEntry> logs,
         ConfigProfileApplySummary summary,
         ISet<string> loggedErrorKeys)
     {
+        var profileName = NormalizeStatusCode(summary.ProfileName, "config_profile");
+        foreach (var applied in summary.Applied)
+        {
+            logs.Add(Info(
+                "config",
+                $"{profileName} item status=applied key={Quote(LogTargetKey(applied.TargetKey, applied.ValuePath))} old={Quote(applied.OldValue)} new={Quote(applied.NewValue)}"));
+        }
+
+        foreach (var skipped in summary.Skipped)
+        {
+            logs.Add(Info(
+                "config",
+                $"{profileName} item status=skipped reason={NormalizeStatusCode(skipped.ReasonCode, "unknown")} key={Quote(LogTargetKey(skipped.TargetKey, skipped.ValuePath, skipped.Detail))} old={Quote(skipped.OldValue)} new={Quote(skipped.NewValue)} detail={Quote(skipped.Detail)}"));
+        }
+
         AddConfigErrorLogs(logs, summary.Errors, loggedErrorKeys);
     }
 
@@ -187,7 +223,7 @@ public sealed class ConfigApplyFlowController
 
             logs.Add(Error(
                 "config",
-                $"{NormalizeStatusCode(error.ProfileName, "config_profile")} item status=error reason={NormalizeStatusCode(error.ReasonCode, "unknown")} target={Quote(LogTarget(error.TargetPath))} key={Quote(LogTargetKey(error.TargetKey, error.ValuePath, error.Detail))} old={Quote(error.OldValue)} new={Quote(error.NewValue)} detail={Quote(error.Detail)}"));
+                $"{NormalizeStatusCode(error.ProfileName, "config_profile")} item status=error reason={NormalizeStatusCode(error.ReasonCode, "unknown")} key={Quote(LogTargetKey(error.TargetKey, error.ValuePath, error.Detail))} old={Quote(error.OldValue)} new={Quote(error.NewValue)} detail={Quote(error.Detail)}"));
         }
     }
 
@@ -196,9 +232,19 @@ public sealed class ConfigApplyFlowController
         return Math.Max(summary.ErrorCount, summary.Errors.Count);
     }
 
-    private static int CountTotalErrors(ConfigProfileApplySummary? baseSummary, ConfigProfileApplyResult profileResult)
+    private static bool HasSummaryFailure(ConfigProfileApplySummary? summary)
     {
-        var total = baseSummary is null ? 0 : CountErrors(baseSummary);
+        return summary is not null
+               && (!summary.Completed
+                   || summary.Errors.Count > 0
+                   || CountErrors(summary) > 0);
+    }
+
+    private static int CountTotalErrors(
+        IEnumerable<ConfigProfileApplySummary?> optiScalerIniSummaries,
+        ConfigProfileApplyResult profileResult)
+    {
+        var total = optiScalerIniSummaries.Sum(static summary => summary is null ? 0 : CountErrors(summary));
         var profileErrorKeys = new HashSet<string>(StringComparer.Ordinal);
         foreach (var summary in profileResult.Summaries)
         {

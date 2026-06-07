@@ -1,6 +1,7 @@
 using OptiClick.Wpf.Shell.Navigation;
 using OptiClick.Wpf.Shell.Settings;
 using OptiClick.Wpf.ViewModels.Sections.Home;
+using OptiClick.Wpf.ViewModels.Sections.OptiScaler;
 using OptiClick.Wpf.ViewModels.Sections.Scan;
 using OptiClick.Wpf.ViewModels.Sections.Settings;
 using OptiClick.Wpf.ViewModels.Sections.SupportedGames;
@@ -15,12 +16,14 @@ public sealed class ShellSectionsFactory
         ArgumentNullException.ThrowIfNull(input.Home);
         ArgumentNullException.ThrowIfNull(input.Scan);
         ArgumentNullException.ThrowIfNull(input.SupportedGames);
+        ArgumentNullException.ThrowIfNull(input.OptiScaler);
         ArgumentNullException.ThrowIfNull(input.Settings);
 
         return new ShellSections(
             CreateHome(input.Home),
             CreateScan(input.Scan),
             CreateSupportedGames(input.SupportedGames),
+            CreateOptiScaler(input.OptiScaler),
             CreateSettings(input.Settings));
     }
 
@@ -88,16 +91,26 @@ public sealed class ShellSectionsFactory
                 StringsAccessor = input.StringsAccessor,
                 IsKoreanUi = input.IsKoreanUi,
                 SettingsLanguageOptions = input.SettingsLanguageOptions,
-                OptiScalerVariantOptions = input.OptiScalerVariantOptions,
                 InitialSettingsLanguageOption = input.InitialSettingsLanguageOption,
-                InitialOptiScalerVariantOption = input.InitialOptiScalerVariantOption,
                 ApplySettingsLanguageOption = input.ApplySettingsLanguageOption,
-                ApplyOptiScalerVariantOption = input.ApplyOptiScalerVariantOption,
                 SettingsActionCoordinator = settingsActionCoordinator,
                 IsInstallExecutionInProgress = input.IsInstallExecutionInProgress,
                 OpenLogFolderCommand = new RelayCommand(_ => input.OpenLogFolder()),
                 OpenSupportRequestCommand = new RelayCommand(_ => input.OpenSupportRequest()),
                 OnRefreshInstallFilesException = input.OnRefreshInstallFilesException
+            });
+    }
+
+    private static OptiScalerSectionViewModel CreateOptiScaler(OptiScalerSectionFactoryInput input)
+    {
+        return new OptiScalerSectionViewModel(
+            new OptiScalerSectionViewModelOptions
+            {
+                StringsAccessor = input.StringsAccessor,
+                OptiScalerVariantOptions = input.OptiScalerVariantOptions,
+                InitialOptiScalerVariantOption = input.InitialOptiScalerVariantOption,
+                InitialCommonIniSettings = input.InitialCommonIniSettings,
+                SaveSettings = input.SaveSettings
             });
     }
 }

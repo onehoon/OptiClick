@@ -12,5 +12,7 @@ public sealed record InstallResultApplyRequest
     public required ComponentInstallResult InstallResult { get; init; }
     public required ShellGameCardModel SelectedGame { get; init; }
     public required ShellInstallSelectionState SelectionState { get; init; }
+    public IReadOnlyDictionary<string, string> CommonOptiScalerIniSettings { get; init; } =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     public required AppStrings Strings { get; init; }
 }
