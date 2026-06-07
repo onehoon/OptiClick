@@ -57,7 +57,7 @@ public sealed class ConfigApplyFlowController
                     request.Plan.TargetFolder,
                     "OptiScaler.ini",
                     optiScalerIniSettings);
-                AddConfigErrorLogs(logs, baseSummary, loggedErrorKeys);
+                AddConfigItemLogs(logs, baseSummary, loggedErrorKeys);
                 AddIncompleteSummaryLog(logs, baseSummary);
             }
 
@@ -68,7 +68,7 @@ public sealed class ConfigApplyFlowController
                     "OptiScaler.ini",
                     commonOptiScalerIniSettings,
                     "optiscaler_ini_common");
-                AddConfigErrorLogs(logs, commonSummary, loggedErrorKeys);
+                AddConfigItemLogs(logs, commonSummary, loggedErrorKeys);
                 AddIncompleteSummaryLog(logs, commonSummary);
             }
 
@@ -81,7 +81,7 @@ public sealed class ConfigApplyFlowController
             var profileResult = _configProfileApplier.Apply(applyContext);
             foreach (var summary in profileResult.Summaries)
             {
-                AddConfigErrorLogs(logs, summary, loggedErrorKeys);
+                AddConfigItemLogs(logs, summary, loggedErrorKeys);
                 AddIncompleteSummaryLog(logs, summary);
             }
             AddConfigErrorLogs(logs, profileResult.Errors, loggedErrorKeys);
@@ -142,6 +142,16 @@ public sealed class ConfigApplyFlowController
         };
     }
 
+    private static InstallFlowLogEntry Info(string category, string message)
+    {
+        return new InstallFlowLogEntry
+        {
+            Level = "info",
+            Category = category,
+            Message = message
+        };
+    }
+
     private static IReadOnlyDictionary<string, string> NormalizeIniSettings(IReadOnlyDictionary<string, string>? settings)
     {
         if (settings is null || settings.Count == 0)
@@ -164,11 +174,26 @@ public sealed class ConfigApplyFlowController
         return normalized;
     }
 
-    private static void AddConfigErrorLogs(
+    private static void AddConfigItemLogs(
         List<InstallFlowLogEntry> logs,
         ConfigProfileApplySummary summary,
         ISet<string> loggedErrorKeys)
     {
+        var profileName = NormalizeStatusCode(summary.ProfileName, "config_profile");
+        foreach (var applied in summary.Applied)
+        {
+            logs.Add(Info(
+                "config",
+                $"{profileName} item status=applied key={Quote(LogTargetKey(applied.TargetKey, applied.ValuePath))} old={Quote(applied.OldValue)} new={Quote(applied.NewValue)}"));
+        }
+
+        foreach (var skipped in summary.Skipped)
+        {
+            logs.Add(Info(
+                "config",
+                $"{profileName} item status=skipped reason={NormalizeStatusCode(skipped.ReasonCode, "unknown")} key={Quote(LogTargetKey(skipped.TargetKey, skipped.ValuePath, skipped.Detail))} old={Quote(skipped.OldValue)} new={Quote(skipped.NewValue)} detail={Quote(skipped.Detail)}"));
+        }
+
         AddConfigErrorLogs(logs, summary.Errors, loggedErrorKeys);
     }
 
@@ -198,7 +223,7 @@ public sealed class ConfigApplyFlowController
 
             logs.Add(Error(
                 "config",
-                $"{NormalizeStatusCode(error.ProfileName, "config_profile")} item status=error reason={NormalizeStatusCode(error.ReasonCode, "unknown")} target={Quote(LogTarget(error.TargetPath))} key={Quote(LogTargetKey(error.TargetKey, error.ValuePath, error.Detail))} old={Quote(error.OldValue)} new={Quote(error.NewValue)} detail={Quote(error.Detail)}"));
+                $"{NormalizeStatusCode(error.ProfileName, "config_profile")} item status=error reason={NormalizeStatusCode(error.ReasonCode, "unknown")} key={Quote(LogTargetKey(error.TargetKey, error.ValuePath, error.Detail))} old={Quote(error.OldValue)} new={Quote(error.NewValue)} detail={Quote(error.Detail)}"));
         }
     }
 
