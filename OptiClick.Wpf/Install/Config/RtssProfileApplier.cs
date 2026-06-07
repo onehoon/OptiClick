@@ -19,32 +19,57 @@ public sealed record RtssProfileApplyResult
     public IReadOnlyList<InstallFlowLogEntry> Logs { get; init; } = Array.Empty<InstallFlowLogEntry>();
 }
 
+internal sealed record RtssRestartResult
+{
+    public bool Restarted { get; init; }
+    public string Error { get; init; } = "";
+}
+
 public sealed class RtssProfileApplier : IRtssProfileApplier
 {
     private static readonly RegistryHive[] RegistryRoots = [RegistryHive.LocalMachine, RegistryHive.CurrentUser];
     private static readonly RegistryView[] RegistryViews = [RegistryView.Registry64, RegistryView.Registry32];
     private static readonly string[] RegistrySubKeys = [@"SOFTWARE\WOW6432Node\Unwinder\RTSS", @"SOFTWARE\Unwinder\RTSS"];
 
+    private readonly Func<string> _installPathResolver;
+    private readonly Func<string, RtssRestartResult> _restartRtss;
+
+    public RtssProfileApplier()
+        : this(ResolveRtssInstallPath, RestartRtssSilently)
+    {
+    }
+
+    internal RtssProfileApplier(
+        Func<string> installPathResolver,
+        Func<string, RtssRestartResult> restartRtss)
+    {
+        _installPathResolver = installPathResolver ?? throw new ArgumentNullException(nameof(installPathResolver));
+        _restartRtss = restartRtss ?? throw new ArgumentNullException(nameof(restartRtss));
+    }
+
     public RtssProfileApplyResult Apply(ShellGameCardModel? game, ShellGameMatchResult? selectedMatch)
     {
         var logs = new List<InstallFlowLogEntry>();
         try
         {
-            var installPath = ResolveRtssInstallPath();
+            var installPath = _installPathResolver();
             var globalPath = Path.Combine(installPath, "Profiles", "Global");
             if (!File.Exists(globalPath))
             {
                 return new RtssProfileApplyResult { Logs = logs };
             }
 
-            var globalChanged = ApplyGlobalSettings(globalPath, logs);
-            var gameProfileChanged = ApplyGameProfileOverlay(game, selectedMatch, installPath, globalPath, logs);
-            var restarted = false;
-            if (globalChanged || gameProfileChanged)
+            var globalResult = ApplyGlobalSettings(globalPath);
+            foreach (var item in globalResult.Items)
             {
-                restarted = RestartRtssSilently(installPath, logs);
-                logs.Add(Info($"[RTSS] completed global_changed={FormatBool(globalChanged)} game_profile_changed={FormatBool(gameProfileChanged)} restarted={FormatBool(restarted)}"));
+                logs.Add(Info(FormatGlobalItemLog(item)));
             }
+
+            var profileOutcome = ApplyGameProfileOverlay(game, selectedMatch, installPath, globalPath);
+            var restart = globalResult.Changed || profileOutcome.ProfileChanged
+                ? _restartRtss(installPath)
+                : new RtssRestartResult();
+            logs.Add(Info(FormatProfileLog(profileOutcome, restart)));
         }
         catch (Exception ex)
         {
@@ -54,7 +79,33 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
         return new RtssProfileApplyResult { Logs = logs };
     }
 
-    private static bool ApplyGlobalSettings(string globalPath, List<InstallFlowLogEntry> logs)
+    private sealed record RtssGlobalApplyResult
+    {
+        public IReadOnlyList<RtssGlobalItemLog> Items { get; init; } = Array.Empty<RtssGlobalItemLog>();
+        public bool Changed { get; init; }
+    }
+
+    private sealed record RtssGlobalItemLog
+    {
+        public string Key { get; init; } = "";
+        public string Status { get; init; } = "";
+        public string Reason { get; init; } = "";
+        public string OldValue { get; init; } = "";
+        public string NewValue { get; init; } = "";
+        public string Detail { get; init; } = "";
+    }
+
+    private sealed record RtssGameProfileApplyOutcome
+    {
+        public string Status { get; init; } = "";
+        public string Reason { get; init; } = "";
+        public string Action { get; init; } = "";
+        public string ExeName { get; init; } = "";
+        public bool ProfileChanged { get; init; }
+        public string Detail { get; init; } = "";
+    }
+
+    private static RtssGlobalApplyResult ApplyGlobalSettings(string globalPath)
     {
         try
         {
@@ -65,6 +116,8 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
 
             string? reflex = null;
             string? detours = null;
+            var reflexChanged = false;
+            var detoursChanged = false;
             var updated = new List<string>(lines.Count + 2);
             var hasReflex = false;
             var hasDetours = false;
@@ -84,6 +137,7 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
                 if (string.Equals(key, "ReflexSetLatencyMarker", StringComparison.Ordinal))
                 {
                     reflex = value;
+                    reflexChanged |= !string.Equals(value, "0", StringComparison.Ordinal);
                     updated.Add("ReflexSetLatencyMarker=0");
                     hasReflex = true;
                     continue;
@@ -92,6 +146,7 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
                 if (string.Equals(key, "UseDetours", StringComparison.Ordinal))
                 {
                     detours = value;
+                    detoursChanged |= !string.Equals(value, "1", StringComparison.Ordinal);
                     updated.Add("UseDetours=1");
                     hasDetours = true;
                     continue;
@@ -100,19 +155,32 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
                 updated.Add(line);
             }
 
-            if (string.Equals(reflex, "0", StringComparison.Ordinal) && string.Equals(detours, "1", StringComparison.Ordinal))
-            {
-                return false;
-            }
-
             if (!hasReflex)
             {
+                reflexChanged = true;
                 updated.Add("ReflexSetLatencyMarker=0");
             }
 
             if (!hasDetours)
             {
+                detoursChanged = true;
                 updated.Add("UseDetours=1");
+            }
+
+            var changed = reflexChanged || detoursChanged;
+            var items = new[]
+            {
+                CreateGlobalItem("ReflexSetLatencyMarker", hasReflex ? reflex ?? "" : "<missing>", "0", reflexChanged),
+                CreateGlobalItem("UseDetours", hasDetours ? detours ?? "" : "<missing>", "1", detoursChanged)
+            };
+
+            if (!changed)
+            {
+                return new RtssGlobalApplyResult
+                {
+                    Items = items,
+                    Changed = false
+                };
             }
 
             var newText = string.Join(lineEnding, updated);
@@ -121,74 +189,126 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
                 newText += lineEnding;
             }
 
-            WithTemporaryWriteAccess(globalPath, logs, () =>
+            WithTemporaryWriteAccess(globalPath, () =>
             {
                 File.WriteAllBytes(globalPath, EncodeText(newText, encoding, bom));
             });
-            return true;
+            return new RtssGlobalApplyResult
+            {
+                Items = items,
+                Changed = true
+            };
         }
         catch (Exception ex)
         {
-            logs.Add(Warning($"[RTSS] Failed to apply Global settings fix: {ex.Message}"));
-            return false;
+            return new RtssGlobalApplyResult
+            {
+                Items =
+                [
+                    CreateGlobalErrorItem("ReflexSetLatencyMarker", "0", ex.Message),
+                    CreateGlobalErrorItem("UseDetours", "1", ex.Message)
+                ],
+                Changed = false
+            };
         }
     }
 
-    private static bool ApplyGameProfileOverlay(
+    private static RtssGameProfileApplyOutcome ApplyGameProfileOverlay(
         ShellGameCardModel? game,
         ShellGameMatchResult? selectedMatch,
         string installPath,
-        string globalPath,
-        List<InstallFlowLogEntry> logs)
+        string globalPath)
     {
         try
         {
-            if (game is null || !ShellGameInstallMetadataResolver.GetRtssOverlay(game))
+            if (game is null)
             {
-                return false;
+                return new RtssGameProfileApplyOutcome
+                {
+                    Status = "not_applicable",
+                    Reason = "game_missing"
+                };
+            }
+
+            if (!ShellGameInstallMetadataResolver.GetRtssOverlay(game))
+            {
+                return new RtssGameProfileApplyOutcome
+                {
+                    Status = "not_applicable",
+                    Reason = "rtss_overlay_false"
+                };
             }
 
             var exeName = ResolveExeName(game, selectedMatch);
             if (string.IsNullOrWhiteSpace(exeName))
             {
-                return false;
+                return new RtssGameProfileApplyOutcome
+                {
+                    Status = "skipped",
+                    Reason = "exe_missing"
+                };
             }
 
             var profilesDir = Path.Combine(installPath, "Profiles");
             var profilePath = Path.Combine(profilesDir, $"{exeName}.cfg");
+            var created = false;
             if (!File.Exists(profilePath))
             {
                 Directory.CreateDirectory(profilesDir);
                 File.Copy(globalPath, profilePath, overwrite: false);
+                created = true;
             }
 
-            WithTemporaryWriteAccess(profilePath, logs, () =>
+            var (text, encoding, bom) = DecodeText(File.ReadAllBytes(profilePath));
+            var updated = ApplyIniSectionKeyValues(text, new Dictionary<string, IReadOnlyList<KeyValuePair<string, string>>>(StringComparer.OrdinalIgnoreCase)
             {
-                var (text, encoding, bom) = DecodeText(File.ReadAllBytes(profilePath));
-                var updated = ApplyIniSectionKeyValues(text, new Dictionary<string, IReadOnlyList<KeyValuePair<string, string>>>(StringComparer.OrdinalIgnoreCase)
-                {
-                    ["OSD"] = [new("EnableOSD", "0")],
-                    ["Hooking"] =
-                    [
-                        new("EnableHooking", "0"),
-                        new("HookDirect3D8", "0"),
-                        new("HookDirect3D9", "0"),
-                        new("HookDXGI", "0"),
-                        new("HookDirect3D12", "0"),
-                        new("HookOpenGL", "0"),
-                        new("HookVulkan", "0"),
-                        new("UseDetours", "1")
-                    ],
-                    ["Framerate"] = [new("ReflexSetLatencyMarker", "0")]
-                });
-                File.WriteAllBytes(profilePath, EncodeText(updated, encoding, bom));
+                ["OSD"] = [new("EnableOSD", "0")],
+                ["Hooking"] =
+                [
+                    new("EnableHooking", "0"),
+                    new("HookDirect3D8", "0"),
+                    new("HookDirect3D9", "0"),
+                    new("HookDXGI", "0"),
+                    new("HookDirect3D12", "0"),
+                    new("HookOpenGL", "0"),
+                    new("HookVulkan", "0"),
+                    new("UseDetours", "1")
+                ],
+                ["Framerate"] = [new("ReflexSetLatencyMarker", "0")]
             });
-            return true;
+
+            if (created || !string.Equals(text, updated, StringComparison.Ordinal))
+            {
+                WithTemporaryWriteAccess(profilePath, () =>
+                {
+                    File.WriteAllBytes(profilePath, EncodeText(updated, encoding, bom));
+                });
+
+                return new RtssGameProfileApplyOutcome
+                {
+                    Status = "applied",
+                    Action = created ? "created" : "updated",
+                    ExeName = exeName,
+                    ProfileChanged = true
+                };
+            }
+
+            return new RtssGameProfileApplyOutcome
+            {
+                Status = "skipped",
+                Reason = "unchanged",
+                Action = "none",
+                ExeName = exeName
+            };
         }
         catch (Exception ex)
         {
-            logs.Add(Warning($"[RTSS] Failed to apply game profile overlay: {ex.Message}"));
-            return false;
+            return new RtssGameProfileApplyOutcome
+            {
+                Status = "error",
+                Reason = "apply_failed",
+                Detail = ex.Message
+            };
         }
     }
 
@@ -211,14 +331,60 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
         return string.IsNullOrWhiteSpace(fallback) ? "" : Path.GetFileName(fallback);
     }
 
-    private static bool RestartRtssSilently(string installPath, List<InstallFlowLogEntry> logs)
+    private static RtssGlobalItemLog CreateGlobalItem(string key, string oldValue, string newValue, bool changed)
+    {
+        return new RtssGlobalItemLog
+        {
+            Key = key,
+            Status = changed ? "applied" : "skipped",
+            Reason = changed ? "" : "unchanged",
+            OldValue = oldValue,
+            NewValue = newValue
+        };
+    }
+
+    private static RtssGlobalItemLog CreateGlobalErrorItem(string key, string newValue, string detail)
+    {
+        return new RtssGlobalItemLog
+        {
+            Key = key,
+            Status = "error",
+            Reason = "apply_failed",
+            OldValue = "<unread>",
+            NewValue = newValue,
+            Detail = detail
+        };
+    }
+
+    private static string FormatGlobalItemLog(RtssGlobalItemLog item)
+    {
+        var reason = string.IsNullOrWhiteSpace(item.Reason) ? "" : $" reason={NormalizeStatusCode(item.Reason, "unknown")}";
+        var detail = string.IsNullOrWhiteSpace(item.Detail) ? "" : $" detail={Quote(item.Detail)}";
+        return $"[RTSS] global item status={NormalizeStatusCode(item.Status, "unknown")}{reason} key={Quote(item.Key)} old={Quote(item.OldValue)} new={Quote(item.NewValue)}{detail}";
+    }
+
+    private static string FormatProfileLog(RtssGameProfileApplyOutcome outcome, RtssRestartResult restart)
+    {
+        var reason = string.IsNullOrWhiteSpace(outcome.Reason) ? "" : $" reason={NormalizeStatusCode(outcome.Reason, "unknown")}";
+        var action = string.IsNullOrWhiteSpace(outcome.Action) ? "" : $" action={NormalizeStatusCode(outcome.Action, "none")}";
+        var exe = string.IsNullOrWhiteSpace(outcome.ExeName) ? "" : $" exe={Quote(outcome.ExeName)}";
+        var restartError = string.IsNullOrWhiteSpace(restart.Error) ? "" : $" restart_error={Quote(restart.Error)}";
+        var detail = string.IsNullOrWhiteSpace(outcome.Detail) ? "" : $" detail={Quote(outcome.Detail)}";
+        return $"[RTSS] profile status={NormalizeStatusCode(outcome.Status, "unknown")}{reason}{action}{exe} profile_changed={FormatBool(outcome.ProfileChanged)} restarted={FormatBool(restart.Restarted)}{restartError}{detail}";
+    }
+
+    private static RtssRestartResult RestartRtssSilently(string installPath)
     {
         try
         {
             var rtssExePath = Path.Combine(installPath, "RTSS.exe");
             if (!File.Exists(rtssExePath))
             {
-                return false;
+                return new RtssRestartResult
+                {
+                    Restarted = false,
+                    Error = "rtss_exe_missing"
+                };
             }
 
             foreach (var process in Process.GetProcessesByName("RTSS"))
@@ -234,16 +400,22 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
                 UseShellExecute = false,
                 CreateNoWindow = true
             });
-            return true;
+            return new RtssRestartResult
+            {
+                Restarted = true
+            };
         }
         catch (Exception ex)
         {
-            logs.Add(Warning($"[RTSS] Failed to restart RTSS silently: {ex.Message}"));
-            return false;
+            return new RtssRestartResult
+            {
+                Restarted = false,
+                Error = ex.Message
+            };
         }
     }
 
-    private static void WithTemporaryWriteAccess(string filePath, List<InstallFlowLogEntry> logs, Action action)
+    private static void WithTemporaryWriteAccess(string filePath, Action action)
     {
         var attributes = File.GetAttributes(filePath);
         var wasReadOnly = attributes.HasFlag(FileAttributes.ReadOnly);
@@ -459,6 +631,23 @@ public sealed class RtssProfileApplier : IRtssProfileApplier
     private static string FormatBool(bool value)
     {
         return value.ToString().ToLowerInvariant();
+    }
+
+    private static string NormalizeStatusCode(string? value, string fallback)
+    {
+        var normalized = (value ?? "").Trim();
+        return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+    }
+
+    private static string Quote(string value)
+    {
+        var safeValue = value ?? "";
+        var escaped = safeValue
+            .Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal)
+            .Replace("\r", "\\r", StringComparison.Ordinal)
+            .Replace("\n", "\\n", StringComparison.Ordinal);
+        return $"\"{escaped}\"";
     }
 
     private static InstallFlowLogEntry Info(string message)

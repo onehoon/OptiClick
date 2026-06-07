@@ -7,5 +7,6 @@ public interface IOptiScalerIniBaseApplier
     ConfigProfileApplySummary ApplyBase(
         string targetFolder,
         string fileName,
-        IReadOnlyDictionary<string, string> settings);
+        IReadOnlyDictionary<string, string> settings,
+        string profileName = "optiscaler_ini_base");
 }
