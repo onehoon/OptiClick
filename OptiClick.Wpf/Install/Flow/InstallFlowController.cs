@@ -184,6 +184,7 @@ public sealed class InstallFlowController
             };
         }
 
+        AddComponentStepLogs(logs, installResult, context);
         var applyResult = _installResultApplier.Apply(new InstallResultApplyRequest
         {
             Plan = plan,
@@ -269,6 +270,42 @@ public sealed class InstallFlowController
         return $"{baseMessage} failed_component={NormalizeStatusCode(failedComponent, "none")} code={NormalizeStatusCode(failureCode, "unknown_error")} message={Quote(NormalizeStatusCode(failureMessage, "-"))}";
     }
 
+    private static void AddComponentStepLogs(
+        ICollection<InstallFlowLogEntry> logs,
+        ComponentInstallResult installResult,
+        ComponentInstallContext context)
+    {
+        var loggedStepKeys = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var step in installResult.Steps)
+        {
+            AddComponentStepLog(logs, step, context);
+            loggedStepKeys.Add(BuildComponentStepKey(step));
+        }
+
+        if (installResult.FailedStep is not null
+            && loggedStepKeys.Add(BuildComponentStepKey(installResult.FailedStep)))
+        {
+            AddComponentStepLog(logs, installResult.FailedStep, context);
+        }
+    }
+
+    private static void AddComponentStepLog(
+        ICollection<InstallFlowLogEntry> logs,
+        ComponentInstallStepResult step,
+        ComponentInstallContext context)
+    {
+        var message =
+            $"component status={FormatComponentStatus(step.Status)} component={NormalizeStatusCode(step.Component.ToString(), "unknown")} operations={FormatOperationCounts(step.Operations)} code={NormalizeStatusCode(step.ErrorCode, "none")} message={Quote(NormalizeStatusCode(step.Message, "-"))}";
+
+        if (step.Status == ComponentInstallStatus.Failed)
+        {
+            logs.Add(Error("install", message));
+            return;
+        }
+
+        logs.Add(Info("install", message));
+    }
+
     private static bool IsExtraBundleReady(
         ShellGameCardModel selectedShellGame,
         IReadOnlyDictionary<string, object?> moduleDownloadLinks)
@@ -333,6 +370,49 @@ public sealed class InstallFlowController
     private static string FormatBool(bool value)
     {
         return value.ToString().ToLowerInvariant();
+    }
+
+    private static string FormatComponentStatus(ComponentInstallStatus status)
+    {
+        return status switch
+        {
+            ComponentInstallStatus.Success => "success",
+            ComponentInstallStatus.Skipped => "skipped",
+            ComponentInstallStatus.Failed => "failed",
+            _ => NormalizeStatusCode(status.ToString(), "unknown").ToLowerInvariant()
+        };
+    }
+
+    private static string FormatOperationCounts(IReadOnlyList<ComponentInstallOperation> operations)
+    {
+        if (operations.Count == 0)
+        {
+            return "none";
+        }
+
+        return string.Join(
+            ",",
+            operations
+                .GroupBy(static operation => NormalizeStatusCode(operation.Kind, "unknown"), StringComparer.OrdinalIgnoreCase)
+                .OrderBy(static group => group.Key, StringComparer.OrdinalIgnoreCase)
+                .Select(static group => $"{group.Key}:{group.Count()}"));
+    }
+
+    private static string BuildComponentStepKey(ComponentInstallStepResult step)
+    {
+        return string.Join(
+            "\u001F",
+            step.Component.ToString(),
+            step.Status.ToString(),
+            step.ErrorCode ?? "",
+            step.Message ?? "",
+            string.Join(
+                "\u001E",
+                step.Operations.Select(static operation => string.Join(
+                    "\u001D",
+                    operation.Kind ?? "",
+                    operation.Source ?? "",
+                    operation.Destination ?? ""))));
     }
 
     private static IReadOnlyList<string> ResolveUalDetectedNames(InstallPrecheckSnapshot precheck)
