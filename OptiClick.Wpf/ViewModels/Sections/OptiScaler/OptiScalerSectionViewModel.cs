@@ -35,6 +35,7 @@ public sealed class OptiScalerSectionViewModel : ViewModelBase
     private string _savedDisableSplashMode = OptiScalerCommonIniSettingsMaterializer.AutoValue;
     private string _savedFramerateLimit = OptiScalerCommonIniSettingsMaterializer.AutoValue;
     private string _statusText = "";
+    private bool _isRefreshingOptionText;
 
     public OptiScalerSectionViewModel(OptiScalerSectionViewModelOptions options)
     {
@@ -95,6 +96,11 @@ public sealed class OptiScalerSectionViewModel : ViewModelBase
         get => _selectedShowFpsMode;
         set
         {
+            if (_isRefreshingOptionText)
+            {
+                return;
+            }
+
             if (SetProperty(ref _selectedShowFpsMode, NormalizeShowFpsMode(value)))
             {
                 UpdateDirtyState();
@@ -217,8 +223,18 @@ public sealed class OptiScalerSectionViewModel : ViewModelBase
 
     public void RefreshLocalization()
     {
-        RefreshOptionText();
+        _isRefreshingOptionText = true;
+        try
+        {
+            RefreshOptionText();
+        }
+        finally
+        {
+            _isRefreshingOptionText = false;
+        }
+
         OnPropertyChanged(nameof(Strings));
+        RefreshSelectedOptionBindings();
     }
 
     public void SaveChanges()
@@ -352,10 +368,27 @@ public sealed class OptiScalerSectionViewModel : ViewModelBase
 
     private void SetDraftValue(ref string field, string value)
     {
+        if (_isRefreshingOptionText)
+        {
+            return;
+        }
+
         if (SetProperty(ref field, value))
         {
             UpdateDirtyState();
         }
+    }
+
+    private void RefreshSelectedOptionBindings()
+    {
+        OnPropertyChanged(nameof(SelectedShowFpsMode));
+        OnPropertyChanged(nameof(IsFpsOverlayDetailsVisible));
+        OnPropertyChanged(nameof(SelectedMenuScale));
+        OnPropertyChanged(nameof(SelectedFpsOverlayType));
+        OnPropertyChanged(nameof(SelectedFpsOverlayPos));
+        OnPropertyChanged(nameof(SelectedFpsScale));
+        OnPropertyChanged(nameof(SelectedDisableSplashMode));
+        OnPropertyChanged(nameof(SelectedFramerateLimit));
     }
 
     private void UpdateDirtyState()
