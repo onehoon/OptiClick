@@ -33,7 +33,7 @@ public sealed class GameCardSelectionStateController
         {
             var sameId = games.FirstOrDefault(game =>
                 string.Equals(
-                    game.GameEntry.GameId?.Trim(),
+                    game.ResolvedGameId,
                     normalizedPreviousId,
                     StringComparison.OrdinalIgnoreCase));
             if (sameId is not null)

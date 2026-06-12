@@ -1,3 +1,4 @@
+using OptiClick.Core.Scan;
 using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Logging;
 using OptiClick.Wpf.Shell.Games;
@@ -179,14 +180,14 @@ public sealed class ShellGameScanPipeline : IShellGameScanPipeline
             .ToArray();
     }
 
-    private ShellScanResult ScanFolder(
+    private ExecutableScanResult ScanFolder(
         string folderPath,
         IReadOnlySet<string> allowedExeNames,
         CancellationToken cancellationToken)
     {
         if (allowedExeNames.Count == 0)
         {
-            return new ShellScanResult
+            return new ExecutableScanResult
             {
                 FolderPath = folderPath,
                 Executables = [],
@@ -202,7 +203,7 @@ public sealed class ShellGameScanPipeline : IShellGameScanPipeline
     }
 
     private IReadOnlyList<ShellGameMatchResult> Match(
-        ShellScanResult scanResult,
+        ExecutableScanResult scanResult,
         ShellGameExeMatchIndex matchIndex,
         ShellGameCatalog catalog,
         RuntimeContext runtimeContext)
@@ -215,5 +216,5 @@ public sealed class ShellGameScanPipeline : IShellGameScanPipeline
         return _scanMatcher.Match(scanResult, catalog, runtimeContext);
     }
 
-    private sealed record ScanFolderPipelineResult(string FolderPath, ShellScanResult ScanResult);
+    private sealed record ScanFolderPipelineResult(string FolderPath, ExecutableScanResult ScanResult);
 }

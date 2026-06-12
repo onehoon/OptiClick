@@ -111,14 +111,9 @@ public sealed class RemoteDataContractSmokeRunner : IRemoteDataContractSmokeRunn
             var runtimeData = runtimeDataLoadResult.RuntimeData ?? RemoteRuntimeData.Empty;
             lines.Add($"RuntimeData: success, games={runtimeData.GameMaster.Count}");
 
-            var manifestRequest = new GpuBundleManifestFetchRequest
-            {
-                Vendor = gpuVendor == "unknown" ? "" : gpuVendor,
-                GpuRaw = selectedGpu?.Name ?? "",
-                DeviceManufacturer = runtimeContext.Device?.Manufacturer ?? "",
-                DeviceModel = runtimeContext.Device?.Model ?? "",
-                RequestSource = "app"
-            };
+            var manifestRequest = GpuBundleManifestFetchRequestFactory.Create(
+                runtimeContext,
+                selectedGpu);
 
             var manifestResult = await _manifestClient.FetchAsync(
                 (remote.GpuBundleManifestUrl ?? "").Trim(),
@@ -244,23 +239,8 @@ public sealed class RemoteDataContractSmokeRunner : IRemoteDataContractSmokeRunn
 
     private static string NormalizeVendor(string? vendor, string? gpuName)
     {
-        var candidate = $"{vendor} {gpuName}".Trim().ToLowerInvariant();
-        if (candidate.Contains("nvidia", StringComparison.Ordinal))
-        {
-            return "nvidia";
-        }
-
-        if (candidate.Contains("intel", StringComparison.Ordinal))
-        {
-            return "intel";
-        }
-
-        if (candidate.Contains("amd", StringComparison.Ordinal) || candidate.Contains("radeon", StringComparison.Ordinal))
-        {
-            return "amd";
-        }
-
-        return "unknown";
+        var normalized = GpuBundleManifestFetchRequestFactory.NormalizeVendor(vendor, gpuName);
+        return string.IsNullOrWhiteSpace(normalized) ? "unknown" : normalized;
     }
 
     private static string NormalizeDisplay(string? value)

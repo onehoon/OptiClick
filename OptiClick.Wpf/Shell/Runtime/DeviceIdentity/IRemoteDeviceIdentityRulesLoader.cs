@@ -3,4 +3,5 @@
 public interface IRemoteDeviceIdentityRulesLoader
 {
     Task<RemoteDeviceIdentityRulesLoadResult> LoadAsync(CancellationToken cancellationToken = default);
+    bool TryApplyLocalCache();
 }

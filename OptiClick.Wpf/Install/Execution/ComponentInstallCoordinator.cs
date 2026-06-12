@@ -1,6 +1,7 @@
 using System.IO;
 using OptiClick.Wpf.Logging;
-using OptiClick.Wpf.Shell.Games;
+using CoreComponentInstallExecutionOrderPolicy = OptiClick.Core.Install.Components.ComponentInstallExecutionOrderPolicy;
+
 namespace OptiClick.Wpf.Install.Execution;
 
 public interface IComponentInstallCoordinator
@@ -47,34 +48,27 @@ public sealed class ComponentInstallCoordinator : IComponentInstallCoordinator
         ArgumentNullException.ThrowIfNull(context);
 
         var steps = new List<ComponentInstallStepResult>();
-        var executionContext = PrepareExecutionContext(context);
+        var executionOrder = ResolveExecutionOrder(context);
+        var executionContext = PrepareExecutionContext(context, executionOrder);
 
-        var core = _coreInstaller.Install(executionContext);
-        steps.Add(core);
-        if (core.Status == ComponentInstallStatus.Failed)
+        if (executionOrder.Contains(ComponentInstallName.OptiScalerCore))
         {
-            _logger.Error(
-                "Install",
-                $"execution failed component={ComponentInstallName.OptiScalerCore} code={core.ErrorCode} message={NormalizeStepMessage(core.Message)}");
-            return Failed(steps, core);
+            var core = _coreInstaller.Install(executionContext);
+            steps.Add(core);
+            if (core.Status == ComponentInstallStatus.Failed)
+            {
+                _logger.Error(
+                    "Install",
+                    $"execution failed component={ComponentInstallName.OptiScalerCore} code={core.ErrorCode} message={NormalizeStepMessage(core.Message)}");
+                return Failed(steps, core);
+            }
+
+            executionContext = UpdateFinalDllNameFromCoreStep(executionContext, core);
         }
-        executionContext = UpdateFinalDllNameFromCoreStep(executionContext, core);
 
-        // ExtraBundle runs last so game-specific OptiScaler override payloads win over the base install.
-        var inOrder = new (ComponentInstallName Name, Func<Task<ComponentInstallStepResult>> Run)[]
+        foreach (var component in executionOrder.Where(static component => component != ComponentInstallName.OptiScalerCore))
         {
-            (ComponentInstallName.UltimateAsiLoader, () => _ualInstaller.InstallAsync(executionContext, cancellationToken)),
-            (ComponentInstallName.SpecialK, () => _specialKInstaller.InstallAsync(executionContext, cancellationToken)),
-            (ComponentInstallName.ReFramework, () => _reFrameworkInstaller.InstallAsync(executionContext, cancellationToken)),
-            (ComponentInstallName.OptiPatcher, () => _optiPatcherInstaller.InstallAsync(executionContext, cancellationToken)),
-            (ComponentInstallName.Unreal5, () => _unreal5Installer.InstallAsync(executionContext, cancellationToken)),
-            (ComponentInstallName.Fsr4, () => _fsr4Installer.InstallAsync(executionContext, cancellationToken)),
-            (ComponentInstallName.ExtraBundle, () => _extraBundleInstaller.InstallAsync(executionContext, cancellationToken))
-        };
-
-        foreach (var step in inOrder)
-        {
-            var result = await step.Run();
+            var result = await RunPostCoreComponentAsync(component, executionContext, cancellationToken);
             steps.Add(result);
             if (result.Status == ComponentInstallStatus.Failed)
             {
@@ -92,6 +86,25 @@ public sealed class ComponentInstallCoordinator : IComponentInstallCoordinator
         };
     }
 
+    private Task<ComponentInstallStepResult> RunPostCoreComponentAsync(
+        ComponentInstallName component,
+        ComponentInstallContext executionContext,
+        CancellationToken cancellationToken)
+    {
+        return component switch
+        {
+            ComponentInstallName.UltimateAsiLoader => _ualInstaller.InstallAsync(executionContext, cancellationToken),
+            ComponentInstallName.SpecialK => _specialKInstaller.InstallAsync(executionContext, cancellationToken),
+            ComponentInstallName.ReFramework => _reFrameworkInstaller.InstallAsync(executionContext, cancellationToken),
+            ComponentInstallName.OptiPatcher => _optiPatcherInstaller.InstallAsync(executionContext, cancellationToken),
+            ComponentInstallName.Unreal5 => _unreal5Installer.InstallAsync(executionContext, cancellationToken),
+            ComponentInstallName.Fsr4 => _fsr4Installer.InstallAsync(executionContext, cancellationToken),
+            ComponentInstallName.ExtraBundle => _extraBundleInstaller.InstallAsync(executionContext, cancellationToken),
+            _ => throw new InvalidOperationException(
+                "Infrastructure component execution supports only post-core components. OptiScalerCore is handled separately via IOptiScalerCoreInstaller.")
+        };
+    }
+
     private static ComponentInstallResult Failed(IReadOnlyList<ComponentInstallStepResult> steps, ComponentInstallStepResult failedStep)
     {
         return new ComponentInstallResult
@@ -102,11 +115,27 @@ public sealed class ComponentInstallCoordinator : IComponentInstallCoordinator
         };
     }
 
-    private ComponentInstallContext PrepareExecutionContext(ComponentInstallContext context)
+    private static IReadOnlyList<ComponentInstallName> ResolveExecutionOrder(ComponentInstallContext context)
     {
-        var preferredProxyName = ResolvePreferredProxyName(context);
+        var fullOrder = CoreComponentInstallExecutionOrderPolicy.GetCoreThenMiddleThenExtraOrder();
+
+        if (!context.HasPlannedComponentInstallers)
+        {
+            return fullOrder;
+        }
+
+        var planned = context.PlannedComponentInstallers.ToHashSet();
+        return fullOrder.Where(planned.Contains).ToArray();
+    }
+
+    private ComponentInstallContext PrepareExecutionContext(
+        ComponentInstallContext context,
+        IReadOnlyList<ComponentInstallName> executionOrder)
+    {
+        var preferredProxyName = ResolvePreparationProxyName(context);
         var normalizedContext = context;
-        if (!string.IsNullOrWhiteSpace(preferredProxyName)
+        if (!context.HasPlannedComponentInstallers
+            && !string.IsNullOrWhiteSpace(preferredProxyName)
             && !string.Equals(preferredProxyName, context.FinalDllName, StringComparison.OrdinalIgnoreCase))
         {
             normalizedContext = context with
@@ -115,27 +144,38 @@ public sealed class ComponentInstallCoordinator : IComponentInstallCoordinator
             };
         }
 
-        if (normalizedContext.UseUltimateAsiLoader || normalizedContext.UalDetectedNames.Count > 0)
+        if (!executionOrder.Contains(ComponentInstallName.SpecialK))
+        {
+            return normalizedContext;
+        }
+
+        if (normalizedContext.ShouldInstallUltimateAsiLoader || normalizedContext.UalDetectedNames.Count > 0)
         {
             return normalizedContext;
         }
 
         _specialKInstaller.CleanupRootSpecialKBeforeProxyResolution(
             normalizedContext.TargetPath,
-            ShellGameInstallMetadataResolver.GetSpecialK(normalizedContext.Game),
+            normalizedContext.SpecialKValue,
             preferredProxyName);
         return normalizedContext;
     }
 
-    private static string ResolvePreferredProxyName(ComponentInstallContext context)
+    private static string ResolvePreparationProxyName(ComponentInstallContext context)
     {
-        var preferred = ShellGameInstallMetadataResolver.GetOptiScalerDllName(context.Game);
+        var plannedFinal = (context.FinalDllName ?? "").Trim();
+        if (context.HasPlannedComponentInstallers)
+        {
+            return plannedFinal;
+        }
+
+        var preferred = (context.ExecutionDescriptor.PreferredProxyDllName ?? "").Trim();
         if (!string.IsNullOrWhiteSpace(preferred))
         {
             return preferred;
         }
 
-        return (context.FinalDllName ?? "").Trim();
+        return plannedFinal;
     }
 
     private static ComponentInstallContext UpdateFinalDllNameFromCoreStep(

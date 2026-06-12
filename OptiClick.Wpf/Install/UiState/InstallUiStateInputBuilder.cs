@@ -23,7 +23,7 @@ public sealed class InstallUiStateInputBuilder : IInstallUiStateInputBuilder
 
         var optiReady = input.ArchiveReadiness.OptiScalerState == ArchiveReadinessState.Ready;
         var optiDownloading = input.ArchiveReadiness.OptiScalerState == ArchiveReadinessState.Downloading;
-        var fsr4Ready = !input.Fsr4Required || input.ArchiveReadiness.Fsr4State == ArchiveReadinessState.Ready;
+        var fsr4Ready = !input.ShouldInstallFsr4 || input.ArchiveReadiness.Fsr4State == ArchiveReadinessState.Ready;
         var allArchivesReady = input.ArchiveReadiness.AreAllStartupArchivesReady();
 
         return new InstallButtonStateInputs

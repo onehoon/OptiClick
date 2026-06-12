@@ -1,5 +1,6 @@
 ﻿using OptiClick.Core.Abstractions;
 using System.Net.Http;
+using OptiClick.Core.Scan;
 using OptiClick.Wpf.Configuration;
 using OptiClick.Wpf.Diagnostics;
 using OptiClick.Wpf.Install.Planning;
@@ -20,12 +21,14 @@ using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Logging;
 using OptiClick.Wpf.Shell.Games;
 using OptiClick.Wpf.Shell.Games.Actions;
+using OptiClick.Wpf.Shell.Games.Support;
 using OptiClick.Wpf.Shell.Flow;
 using OptiClick.Wpf.Shell.Runtime;
 using OptiClick.Wpf.Shell.Scan;
 using OptiClick.Wpf.Shell.Selection;
 using OptiClick.Wpf.Services;
 using OptiClick.Wpf.ViewModels;
+using OptiClick.Infrastructure.Scan;
 using OptiClickShell;
 
 namespace OptiClick.Wpf.Composition;
@@ -52,9 +55,15 @@ public sealed partial class AppCompositionRoot
         return new ShellGameExeMatchIndexBuilder();
     }
 
-    public IShellGameScanMatcher CreateShellGameScanMatcher(IAppLogger? logger = null)
+    public IShellGameScanMatcher CreateShellGameScanMatcher(
+        IAppLogger? logger = null,
+        IScanFileSystemProbe? scanFileSystemProbe = null)
     {
-        return new ShellGameScanMatcher(logger);
+        return new ShellGameScanMatcher(
+            new GameSupportPolicy(),
+            new ShellGameExeMatchIndexBuilder(),
+            logger,
+            scanFileSystemProbe);
     }
 
     public IShellGameScanPipeline CreateShellGameScanPipeline(
@@ -361,9 +370,16 @@ public sealed partial class AppCompositionRoot
         return new WritePermissionProbe();
     }
 
+    public IInstallTargetPathValidator CreateInstallTargetPathValidator()
+    {
+        return new InstallTargetPathValidator();
+    }
+
     public IInstallStartGateResolver CreateInstallStartGateResolver()
     {
-        return new InstallStartGateResolver(CreateWritePermissionProbe());
+        return new InstallStartGateResolver(
+            CreateWritePermissionProbe(),
+            targetPathValidator: CreateInstallTargetPathValidator());
     }
 
     public IInstallRejectionPresentationResolver CreateInstallRejectionPresentationResolver()
@@ -401,9 +417,9 @@ public sealed partial class AppCompositionRoot
         return new OptiClickUninstallExecutor(fileSystem, signatureDetectors, versionInfoReader, logger);
     }
 
-    public IInstallSummaryStringsResolver CreateInstallSummaryStringsResolver()
+    public IInstallSummaryStringsResolver CreateInstallSummaryStringsResolver(IAppStringsProvider stringsProvider)
     {
-        return new DefaultInstallSummaryStringsResolver(new AppStringsProvider());
+        return new DefaultInstallSummaryStringsResolver(stringsProvider);
     }
 
     public IInstallSummaryViewModelBuilder CreateInstallSummaryViewModelBuilder(IInstallSummaryStringsResolver stringsResolver)
@@ -421,7 +437,7 @@ public sealed partial class AppCompositionRoot
         return new InstallUiStateInputBuilder();
     }
 
-    public IShellInstallSelectionBridge CreateShellInstallSelectionBridge(IAppStringsProvider? stringsProvider = null)
+    public IShellInstallSelectionBridge CreateShellInstallSelectionBridge(IAppStringsProvider stringsProvider)
     {
         var fileSystem = CreateInstallFileSystem();
         var fileSignatures = CreateFileSignatureDetectors(fileSystem);
@@ -437,7 +453,7 @@ public sealed partial class AppCompositionRoot
             legacyFindingService,
             proxyResolver);
 
-        var summaryBuilder = CreateInstallSummaryViewModelBuilder(CreateInstallSummaryStringsResolver());
+        var summaryBuilder = CreateInstallSummaryViewModelBuilder(CreateInstallSummaryStringsResolver(stringsProvider));
         return new ShellInstallSelectionBridge(
             CreateInstallPrecheckHandlerRegistry(precheckHandler),
             CreateInstallSelectionPrecheckFlow(),
@@ -447,7 +463,7 @@ public sealed partial class AppCompositionRoot
             CreateInstallButtonStateResolver(),
             CreateInstallButtonPresentationResolver(),
             summaryBuilder,
-            stringsProvider ?? new AppStringsProvider());
+            stringsProvider);
     }
 }
 

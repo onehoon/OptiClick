@@ -15,7 +15,7 @@ public sealed class AppUpdateCoordinator
     public AppUpdateCoordinatorResult BeginCheck(AppUpdateCoordinatorRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(request.Strings);
+        ArgumentNullException.ThrowIfNull(request.Text);
 
         if (request.IsAppUpdateInProgress)
         {
@@ -23,7 +23,7 @@ public sealed class AppUpdateCoordinator
             {
                 ShouldContinue = false,
                 StatusText = request.Trigger == AppUpdateTrigger.Manual
-                    ? request.Strings.UpdateAlreadyInProgress
+                    ? request.Text.UpdateAlreadyInProgress
                     : ""
             };
         }
@@ -33,7 +33,7 @@ public sealed class AppUpdateCoordinator
             {
                 LatestRuntimeData = request.LatestRuntimeData,
                 CurrentVersion = request.CurrentVersion,
-                Strings = request.Strings
+                Text = request.Text.FlowText
             });
 
         return new AppUpdateCoordinatorResult

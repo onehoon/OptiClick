@@ -1,4 +1,5 @@
 using System.IO;
+using OptiClick.Wpf.Install.Flow;
 
 namespace OptiClick.Wpf.Install.Archives;
 
@@ -12,6 +13,22 @@ public sealed record RemoteArchiveEntry
 
 public static class ArchiveEntryNormalizer
 {
+    public static RemoteArchiveEntry Normalize(ModuleDownloadLinkEntry? entry)
+    {
+        var safeEntry = entry ?? ModuleDownloadLinkEntry.Empty;
+        var url = safeEntry.Url;
+        var filename = ResolveArchiveFilename(safeEntry, url);
+        var version = safeEntry.ReadFirstString("version");
+        var sha256 = safeEntry.Sha256;
+        return new RemoteArchiveEntry
+        {
+            Url = url,
+            Filename = filename,
+            Version = version,
+            Sha256 = sha256
+        };
+    }
+
     public static RemoteArchiveEntry Normalize(object? rawEntry)
     {
         if (rawEntry is not IReadOnlyDictionary<string, object?> dictionary)
@@ -96,6 +113,34 @@ public static class ArchiveEntryNormalizer
             if (!string.IsNullOrWhiteSpace(value))
             {
                 return value;
+            }
+        }
+
+        return "";
+    }
+
+    public static string ResolveArchiveFilename(ModuleDownloadLinkEntry entry, string normalizedUrl = "")
+    {
+        var safeEntry = entry ?? ModuleDownloadLinkEntry.Empty;
+        var filename = SanitizeFilename(safeEntry.Filename);
+        if (!string.IsNullOrWhiteSpace(filename))
+        {
+            return filename;
+        }
+
+        var version = SanitizeFilename(safeEntry.ReadFirstString("version"));
+        if (!string.IsNullOrWhiteSpace(version))
+        {
+            return version;
+        }
+
+        var url = string.IsNullOrWhiteSpace(normalizedUrl) ? safeEntry.Url : normalizedUrl;
+        if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            var name = SanitizeFilename(Path.GetFileName(Uri.UnescapeDataString(uri.AbsolutePath)));
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                return name;
             }
         }
 

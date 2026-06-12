@@ -2,7 +2,7 @@ using OptiClick.Wpf.ViewModels;
 
 namespace OptiClick.Wpf.Composition;
 
-public sealed record MainViewModelFactoryInput
+public sealed record MainViewModelFallbackFactoryInput
 {
     public required MainViewModelRequiredDependencies Required { get; init; }
     public MainViewModelRuntimeDependencies Runtime { get; init; } = new();
@@ -17,7 +17,18 @@ public sealed record MainViewModelFactoryInput
 
 public sealed class MainViewModelFactory
 {
-    public MainViewModel Create(MainViewModelFactoryInput input)
+    internal MainViewModel Create(MainViewModelResolvedFactoryInput input)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(input.Dependencies);
+
+        return new MainViewModel(
+            input.Dependencies,
+            seedMockGameCards: input.SeedMockGameCards,
+            seedMockScanFolders: input.SeedMockScanFolders);
+    }
+
+    public MainViewModel CreateForFallback(MainViewModelFallbackFactoryInput input)
     {
         ArgumentNullException.ThrowIfNull(input);
         ValidateRequired(input);
@@ -33,7 +44,7 @@ public sealed class MainViewModelFactory
             seedMockScanFolders: input.SeedMockScanFolders);
     }
 
-    private static void ValidateRequired(MainViewModelFactoryInput input)
+    private static void ValidateRequired(MainViewModelFallbackFactoryInput input)
     {
         ArgumentNullException.ThrowIfNull(input.Required);
         ArgumentNullException.ThrowIfNull(input.Required.DialogService);
@@ -41,4 +52,11 @@ public sealed class MainViewModelFactory
         ArgumentNullException.ThrowIfNull(input.Required.LanguageProvider);
         ArgumentNullException.ThrowIfNull(input.Required.MockDataProvider);
     }
+}
+
+internal sealed record MainViewModelResolvedFactoryInput
+{
+    public required MainViewModelCompositionDependencies Dependencies { get; init; }
+    public bool SeedMockGameCards { get; init; }
+    public bool SeedMockScanFolders { get; init; }
 }

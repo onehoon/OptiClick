@@ -8,3 +8,5 @@ global using Windows11OnlyOperatingSystemSupportPolicy = OptiClick.Infrastructur
 global using WindowsDeviceInfoProvider = OptiClick.Infrastructure.Windows.WindowsDeviceInfoProvider;
 global using WindowsGpuInfoProvider = OptiClick.Infrastructure.Windows.WindowsGpuInfoProvider;
 global using WindowsOperatingSystemSupportPolicy = OptiClick.Infrastructure.Windows.WindowsOperatingSystemSupportPolicy;
+global using OptiClick.Infrastructure.Install.Config;
+global using OptiClick.Infrastructure.Install.Gates;

@@ -1,4 +1,6 @@
 ﻿using OptiClick.Core.Abstractions;
+using OptiClick.Core.OptiScaler;
+using OptiClick.Core.Scan;
 using OptiClick.Wpf.Install.Archives;
 using OptiClick.Wpf.Install.Config;
 using OptiClick.Wpf.Install.Execution;
@@ -32,7 +34,6 @@ using OptiClick.Wpf.Shell.Wiki;
 using OptiClick.Wpf.ViewModels.Sections;
 using OptiClick.Wpf.ViewModels.Sections.Scan;
 using OptiClick.Wpf.ViewModels.Shell;
-using OptiClick.Infrastructure.FileSystem;
 
 namespace OptiClick.Wpf.ViewModels;
 
@@ -55,6 +56,7 @@ public sealed record MainViewModelRuntimeDependencies
     public DeviceIdentityRulesFlowController? DeviceIdentityRulesFlowController { get; init; }
     public RuntimeCatalogFlowController? RuntimeCatalogFlowController { get; init; }
     public RuntimeEndpointStatusPresenter? RuntimeEndpointStatusPresenter { get; init; }
+    internal MainRuntimeCatalogUiFlowController? RuntimeCatalogUiFlowController { get; init; }
     public GpuSelectionCoordinator? GpuSelectionCoordinator { get; init; }
     public RuntimeContextCoordinator? RuntimeContextCoordinator { get; init; }
     public RuntimeCatalogCoordinator? RuntimeCatalogCoordinator { get; init; }
@@ -68,6 +70,7 @@ public sealed record MainViewModelScanDependencies
     public IFolderPickerService? FolderPickerService { get; init; }
     public IScanFolderDiscoveryService? ScanFolderDiscoveryService { get; init; }
     public IScanFolderManifestStore? ScanFolderManifestStore { get; init; }
+    public IScanFileSystemProbe? ScanFileSystemProbe { get; init; }
     public IShellGameScanPipeline? ScanPipeline { get; init; }
     public ScanFlowController? ScanFlowController { get; init; }
     public ScanFolderListController? ScanFolderListController { get; init; }
@@ -103,6 +106,35 @@ public sealed record MainViewModelInstallDependencies
     public IOptiClickUninstallExecutor? OptiClickUninstallExecutor { get; init; }
 }
 
+public sealed record MainViewModelShellUiDependencies
+{
+    public ShellNavigationState? NavigationState { get; init; }
+    public ShellChromeViewModels? ShellChrome { get; init; }
+    public UserSettingsController? UserSettingsController { get; init; }
+    public ISupportedGamesWikiMarkdownLoader? SupportedGamesWikiMarkdownLoader { get; init; }
+    public LocalizationStateController? LocalizationStateController { get; init; }
+    public MainViewModelBusyStateApplier? BusyStateApplier { get; init; }
+    public FlowLogDispatcher? FlowLogDispatcher { get; init; }
+    public MainViewModelFlowRequestFactory? FlowRequestFactory { get; init; }
+    public MainViewModelResultApplier? ResultApplier { get; init; }
+    internal MainShellInteractionControllers? ShellInteractionControllers { get; init; }
+}
+
+public sealed record MainViewModelShellDialogDependencies
+{
+    public DialogHostViewModel? DialogHost { get; init; }
+    public DialogPresenter? DialogPresenter { get; init; }
+    public OnceDialogGate? RemoteCatalogDialogGate { get; init; }
+    public InstallManagementDialogHostViewModel? InstallManagementDialogHost { get; init; }
+    public IInstallManagementDialogService? InstallManagementDialogService { get; init; }
+}
+
+public sealed record MainViewModelShellSectionDependencies
+{
+    public ShellSectionsFactory? ShellSectionsFactory { get; init; }
+    public ShellSectionsCompositionFactory? ShellSectionsCompositionFactory { get; init; }
+}
+
 public sealed record MainViewModelAppDependencies
 {
     public IAppVersionProvider? AppVersionProvider { get; init; }
@@ -118,6 +150,10 @@ public sealed record MainViewModelAppDependencies
     public IAppStringsProvider? AppStringsProvider { get; init; }
     public IAppUserSettingsStore? UserSettingsStore { get; init; }
     public IFirstRunStateStore? FirstRunStateStore { get; init; }
+    public IOptiScalerSettingsApplicationService? OptiScalerSettingsApplicationService { get; init; }
+    public MainViewModelShellUiDependencies? ShellUi { get; init; }
+    public MainViewModelShellDialogDependencies? ShellDialogs { get; init; }
+    public MainViewModelShellSectionDependencies? ShellSections { get; init; }
     public DialogHostViewModel? DialogHost { get; init; }
     public InstallManagementDialogHostViewModel? InstallManagementDialogHost { get; init; }
     public IInstallManagementDialogService? InstallManagementDialogService { get; init; }
@@ -142,6 +178,7 @@ public sealed record MainViewModelAppDependencies
     public FlowLogDispatcher? FlowLogDispatcher { get; init; }
     public MainViewModelFlowRequestFactory? FlowRequestFactory { get; init; }
     public MainViewModelResultApplier? ResultApplier { get; init; }
+    internal MainShellInteractionControllers? ShellInteractionControllers { get; init; }
     public ShellSectionsFactory? ShellSectionsFactory { get; init; }
     public ShellSectionsCompositionFactory? ShellSectionsCompositionFactory { get; init; }
     public GameCardSelectionStateController? GameCardSelectionStateController { get; init; }
@@ -150,5 +187,22 @@ public sealed record MainViewModelAppDependencies
     public StartupBackgroundTaskManager? StartupBackgroundTaskManager { get; init; }
     public ArchiveReadinessRefreshCoordinator? ArchiveReadinessRefreshCoordinator { get; init; }
     public ArchiveReadinessWarmupController? ArchiveReadinessWarmupController { get; init; }
+    public StartupPreparationCoordinator? StartupPreparationCoordinator { get; init; }
     public StartupFlowCoordinator? StartupFlowCoordinator { get; init; }
+    internal InstallExecutionCoordinator? InstallExecutionCoordinator { get; init; }
+    internal UninstallFlowCoordinator? UninstallFlowCoordinator { get; init; }
+    internal MainInstallArchiveReadinessController? MainInstallArchiveReadinessController { get; init; }
+    internal MainInstallPreparationController? MainInstallPreparationController { get; init; }
+    internal MainInstallExecutionBridge? MainInstallExecutionBridge { get; init; }
+    internal MainInstallInteractionController? MainInstallInteractionController { get; init; }
+    internal MainUninstallInteractionController? MainUninstallInteractionController { get; init; }
+    internal MainInstallCompletionController? MainInstallCompletionController { get; init; }
+    internal MainOptiScalerSettingsController? MainOptiScalerSettingsController { get; init; }
+    internal MainSelectionInteractionController? MainSelectionInteractionController { get; init; }
+    internal MainSelectionRecomputeController? MainSelectionRecomputeController { get; init; }
+    internal MainLanguageChangeController? MainLanguageChangeController { get; init; }
+    internal MainVisibleGameCardRefreshController? MainVisibleGameCardRefreshController { get; init; }
+    internal MainStartupRuntimeFacade? MainStartupRuntimeFacade { get; init; }
+    internal MainStartupFlowController? MainStartupFlowController { get; init; }
+    internal MainStartupDialogsController? MainStartupDialogsController { get; init; }
 }

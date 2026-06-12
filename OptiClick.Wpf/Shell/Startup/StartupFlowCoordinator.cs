@@ -35,11 +35,15 @@ public sealed class StartupFlowCoordinator
         request.LogInfo("milestone startup_overlay_ready");
         request.StartStartupDialogsInBackground();
 
+        // Device identity rules are best-effort and cache-oriented for startup.
+        // Apply cached rules immediately, then keep remote sync in the background.
         var startupScanTask = RunStartupAutoScanWithLogsAsync(request, cancellationToken);
-        var deviceRulesTask = RefreshDeviceIdentityRulesWithLogsAsync(request, cancellationToken);
+        var deviceRulesTask = ApplyCachedDeviceIdentityRulesWithLogsAsync(request, cancellationToken);
         await Task.WhenAll(startupScanTask, deviceRulesTask);
 
         request.LogInfo("milestone interactive_ready");
+        request.StartDeviceIdentityRulesRefreshInBackground?.Invoke();
+        request.LogInfo("milestone device_rules_refresh_background_started");
         request.StartSupportedGamesWikiRefreshInBackground();
         request.LogInfo("milestone wiki_background_started");
         request.StartGameMasterCoverPrefetchInBackground();
@@ -60,14 +64,14 @@ public sealed class StartupFlowCoordinator
         request.LogInfo($"startup auto scan duration_ms={startupScanStopwatch.ElapsedMilliseconds}");
     }
 
-    private static async Task RefreshDeviceIdentityRulesWithLogsAsync(
+    private static async Task ApplyCachedDeviceIdentityRulesWithLogsAsync(
         StartupFlowRequest request,
         CancellationToken cancellationToken)
     {
         var deviceRulesStopwatch = Stopwatch.StartNew();
         await request.RefreshDeviceIdentityRulesAsync(cancellationToken);
-        request.LogInfo("milestone device_rules_completed");
-        request.LogInfo("startup device identity rules completed");
+        request.LogInfo("milestone device_rules_cache_completed");
+        request.LogInfo("startup device identity rules cache completed");
         request.LogInfo($"startup device identity rules duration_ms={deviceRulesStopwatch.ElapsedMilliseconds}");
     }
 }

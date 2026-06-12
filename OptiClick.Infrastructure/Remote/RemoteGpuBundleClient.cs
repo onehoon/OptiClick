@@ -1,0 +1,182 @@
+using System.Net.Http;
+using OptiClick.Core.Games.GpuBundle;
+using OptiClick.Infrastructure.Logging;
+
+namespace OptiClick.Infrastructure.Remote;
+
+public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
+{
+    private readonly HttpClient _httpClient;
+    private readonly IGpuBundleRequestUriBuilder _requestUriBuilder;
+    private readonly TimeSpan _timeout;
+    private readonly IAppLogger _logger;
+    private readonly RemoteJsonFetcher _jsonFetcher;
+
+    public RemoteGpuBundleClient(
+        HttpClient httpClient,
+        IGpuBundleRequestUriBuilder requestUriBuilder,
+        IAppLogger? logger = null,
+        TimeSpan? timeout = null,
+        int maxAttempts = RemoteJsonFetcher.DefaultMaxAttempts,
+        TimeSpan? retryDelay = null)
+    {
+        _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        _requestUriBuilder = requestUriBuilder ?? throw new ArgumentNullException(nameof(requestUriBuilder));
+        _logger = logger ?? NullAppLogger.Instance;
+        _timeout = timeout ?? RemoteJsonFetcher.DefaultTimeout;
+        _jsonFetcher = new RemoteJsonFetcher(
+            _httpClient,
+            _logger,
+            timeout,
+            maxAttempts,
+            retryDelay);
+    }
+
+    public async Task<RemoteGpuBundleFetchResult> FetchAsync(
+        string endpoint,
+        GpuBundleFetchRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedEndpoint = (endpoint ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(normalizedEndpoint))
+        {
+            _logger.Warning("remote", "gpu-bundle skipped code=bundle_endpoint_missing");
+            return RemoteGpuBundleFetchResult.Skipped();
+        }
+
+        var requestUri = _requestUriBuilder.Build(normalizedEndpoint, request);
+        if (requestUri is null)
+        {
+            _logger.Error("remote", "gpu-bundle failed code=invalid_bundle_endpoint");
+            return RemoteGpuBundleFetchResult.Failure("invalid_bundle_endpoint");
+        }
+
+        var safeRequest = request ?? new GpuBundleFetchRequest();
+        _logger.Info(
+            "remote",
+            $"gpu-bundle request vendor={NormalizeLogValue(safeRequest.Vendor, "none")} bundle={NormalizeLogValue(safeRequest.BundleKey, "none")} gpu_raw={NormalizeLogValue(safeRequest.GpuRaw, "none")} request_source={NormalizeLogValue(safeRequest.RequestSource, "none")} device_manufacturer={NormalizeLogValue(safeRequest.DeviceManufacturer, "none")} device_model={NormalizeLogValue(safeRequest.DeviceModel, "none")} app_version={NormalizeLogValue(safeRequest.AppVersion, "none")} manifest_version={NormalizeLogValue(safeRequest.ManifestVersion, "none")}");
+
+        var fetchResult = await _jsonFetcher.FetchStringAsync(
+            () => new HttpRequestMessage(HttpMethod.Get, requestUri),
+            new RemoteJsonFetchOptions
+            {
+                LogCategory = "remote",
+                RequestLogMessage = "gpu-bundle fetch start",
+                SuccessLogMessagePrefix = "gpu-bundle success",
+                RetryLogMessagePrefix = "gpu-bundle retry scheduled",
+                FailureLogMessagePrefix = "gpu-bundle failed",
+                HttpErrorPrefix = "bundle_http_",
+                TimeoutErrorCode = "bundle_timeout",
+                RequestFailedErrorCode = "bundle_request_failed",
+                EmptyResponseErrorCode = "empty_bundle_response",
+                UnexpectedErrorCode = "bundle_unexpected_error",
+                CanceledErrorCode = "bundle_canceled"
+            },
+            cancellationToken);
+
+        return fetchResult.IsSuccess
+            ? RemoteGpuBundleFetchResult.Success(fetchResult.Content)
+            : RemoteGpuBundleFetchResult.Failure(fetchResult.ErrorCode);
+    }
+
+    public async Task<RemoteGpuBundleFetchResult> ReportUnsupportedAsync(
+        string endpoint,
+        GpuBundleUnsupportedReportRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var normalizedEndpoint = (endpoint ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(normalizedEndpoint))
+        {
+            _logger.Warning("remote", "gpu-bundle-report skipped code=bundle_endpoint_missing");
+            return RemoteGpuBundleFetchResult.Skipped();
+        }
+
+        if (!Uri.TryCreate(normalizedEndpoint, UriKind.Absolute, out var baseUri))
+        {
+            _logger.Error("remote", "gpu-bundle-report failed code=invalid_bundle_endpoint");
+            return RemoteGpuBundleFetchResult.Failure("invalid_bundle_endpoint");
+        }
+
+        var safeRequest = request ?? new GpuBundleUnsupportedReportRequest();
+        var requestUri = BuildUnsupportedReportUri(baseUri, safeRequest);
+        _logger.Info(
+            "remote",
+            $"gpu-bundle-report request vendor={NormalizeLogValue(safeRequest.Vendor, "none")} bundle=unknown gpu_group=unknown gpu_raw={NormalizeLogValue(safeRequest.GpuRaw, "none")} request_source={NormalizeLogValue(safeRequest.RequestSource, "none")} device_manufacturer={NormalizeLogValue(safeRequest.DeviceManufacturer, "none")} device_model={NormalizeLogValue(safeRequest.DeviceModel, "none")} app_version={NormalizeLogValue(safeRequest.AppVersion, "none")} manifest_version={NormalizeLogValue(safeRequest.ManifestVersion, "none")} report_only=1 reason={NormalizeLogValue(safeRequest.Reason, "manifest_no_match")}");
+
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(_timeout);
+
+        try
+        {
+            using var httpRequest = new HttpRequestMessage(HttpMethod.Get, requestUri);
+            using var response = await _httpClient.SendAsync(
+                httpRequest,
+                HttpCompletionOption.ResponseHeadersRead,
+                timeoutCts.Token);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorCode = $"bundle_report_http_{(int)response.StatusCode}";
+                _logger.Error("remote", $"gpu-bundle-report failed code={errorCode}");
+                return RemoteGpuBundleFetchResult.Failure(errorCode);
+            }
+
+            var content = await response.Content.ReadAsStringAsync(timeoutCts.Token);
+            _logger.Info("remote", $"gpu-bundle-report success status={(int)response.StatusCode}");
+            return RemoteGpuBundleFetchResult.Success(content ?? "");
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            _logger.Warning("remote", "gpu-bundle-report canceled code=bundle_report_canceled");
+            return RemoteGpuBundleFetchResult.Failure("bundle_report_canceled");
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.Error("remote", "gpu-bundle-report failed code=bundle_report_timeout");
+            return RemoteGpuBundleFetchResult.Failure("bundle_report_timeout");
+        }
+        catch (HttpRequestException ex)
+        {
+            var status = ex.StatusCode.HasValue ? ((int)ex.StatusCode.Value).ToString() : "none";
+            _logger.Error("remote", $"gpu-bundle-report failed code=bundle_report_request_failed status={status}", ex);
+            return RemoteGpuBundleFetchResult.Failure("bundle_report_request_failed");
+        }
+        catch (Exception ex)
+        {
+            _logger.Error("remote", "gpu-bundle-report failed code=bundle_report_unexpected_error", ex);
+            return RemoteGpuBundleFetchResult.Failure("bundle_report_unexpected_error");
+        }
+    }
+
+    private static Uri BuildUnsupportedReportUri(Uri baseUri, GpuBundleUnsupportedReportRequest request)
+    {
+        var reason = (request.Reason ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            reason = "manifest_no_match";
+        }
+
+        var queryPairs = new List<(string Key, string Value)>
+        {
+            ("vendor", (request.Vendor ?? "").Trim()),
+            ("bundle", "unknown"),
+            ("gpu_group", "unknown"),
+            ("gpu_raw", (request.GpuRaw ?? "").Trim()),
+            ("request_source", (request.RequestSource ?? "").Trim()),
+            ("device_manufacturer", (request.DeviceManufacturer ?? "").Trim()),
+            ("device_model", (request.DeviceModel ?? "").Trim()),
+            ("app_version", (request.AppVersion ?? "").Trim()),
+            ("manifest_version", (request.ManifestVersion ?? "").Trim()),
+            ("report_only", "1"),
+            ("reason", reason)
+        };
+
+        return RemoteRequestUriQueryBuilder.Build(baseUri, queryPairs);
+    }
+
+    private static string NormalizeLogValue(string? value, string fallback)
+    {
+        var normalized = (value ?? "").Trim();
+        return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+    }
+}

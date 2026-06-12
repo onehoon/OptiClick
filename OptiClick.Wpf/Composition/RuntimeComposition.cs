@@ -61,7 +61,7 @@ public sealed class RuntimeComposition
             gpuBundleRuntimeLoader,
             _root.CreateGpuBundleGameDatabaseMerger());
         var gpuBundleManifestRuleResolver = _root.CreateGpuBundleManifestRuleResolver();
-        var runtimeDataCardFactory = new ShellGameCardViewModelFactory(
+        var runtimeDataCardFactory = _root.CreateShellGameCardViewModelFactory(
             _root.CreateShellGameCardStateResolver(),
             app.StringsProvider);
         var deviceIdentityRulesOptionsLoader = new DeviceIdentityRulesOptionsLoader(AppContext.BaseDirectory);
@@ -79,7 +79,6 @@ public sealed class RuntimeComposition
             app.AppLogger);
         var moduleDownloadLinkMapBuilder = new ModuleDownloadLinkMapBuilder();
         var runtimeCatalogDialogPresenter = new RuntimeCatalogDialogPresenter();
-        var remoteServiceHealthProbe = new RemoteServiceHealthProbe(sharedRemoteHttpClient);
         var runtimeOverrideFactory = new RuntimeTestEnvironmentOverrideProviderFactory();
         var gpuProvider = runtimeOverrideFactory.ResolveGpuProvider(new WindowsGpuInfoProvider(app.AppLogger));
         var deviceProvider = runtimeOverrideFactory.ResolveDeviceProvider(new WindowsDeviceInfoProvider());
@@ -94,8 +93,7 @@ public sealed class RuntimeComposition
         var runtimeCatalogFlowController = new RuntimeCatalogFlowController(
             remoteCatalogPipeline,
             moduleDownloadLinkMapBuilder,
-            runtimeCatalogDialogPresenter,
-            remoteServiceHealthProbe);
+            runtimeCatalogDialogPresenter);
 
         return new RuntimeCompositionServices
         {

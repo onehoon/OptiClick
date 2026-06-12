@@ -62,6 +62,58 @@ public sealed class DeviceIdentityRulesFlowController
         }
     }
 
+    // Cache-only startup path: apply available local identity rules quickly and proceed.
+    // A missing/invalid cache is not considered fatal because this dataset is optional UI data.
+    public DeviceIdentityRulesFlowResult ApplyLocalCache()
+    {
+        if (_loader is null)
+        {
+            return new DeviceIdentityRulesFlowResult
+            {
+                DidRun = false,
+                IsSuccess = false,
+                ErrorCode = "loader_missing",
+                Logs = []
+            };
+        }
+
+        var logs = new List<RuntimeFlowLogEntry>();
+        try
+        {
+            var cacheApplied = _loader.TryApplyLocalCache();
+            if (!cacheApplied)
+            {
+                return new DeviceIdentityRulesFlowResult
+                {
+                    DidRun = true,
+                    IsSuccess = false,
+                    ErrorCode = "device_identity_rules_cache_not_available",
+                    Logs = logs
+                };
+            }
+
+            logs.Add(Info("device-rules", "device identity rules cache applied"));
+            return new DeviceIdentityRulesFlowResult
+            {
+                DidRun = true,
+                IsSuccess = true,
+                ErrorCode = "",
+                Logs = logs
+            };
+        }
+        catch (Exception ex)
+        {
+            logs.Add(Error("device-rules", "device identity rules cache apply failed", ex));
+            return new DeviceIdentityRulesFlowResult
+            {
+                DidRun = true,
+                IsSuccess = false,
+                ErrorCode = "unknown",
+                Logs = logs
+            };
+        }
+    }
+
     private static RuntimeFlowLogEntry Info(string category, string message)
     {
         return new RuntimeFlowLogEntry

@@ -1,4 +1,5 @@
 using System.IO;
+using OptiClick.Core.Install;
 
 namespace OptiClick.Infrastructure.Install.Components;
 
@@ -33,8 +34,9 @@ public sealed class ExtraBundleInstaller : IExtraBundleInstaller
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var alias = InstallerExecutionHelpers.NormalizeAlias(context.ExtraBundleAlias);
-        if (string.IsNullOrWhiteSpace(alias))
+        var displayAlias = NormalizeDisplayAlias(context.ExtraBundleAlias);
+        var lookupAlias = InstallerExecutionHelpers.NormalizeAlias(context.ExtraBundleAlias);
+        if (string.IsNullOrWhiteSpace(lookupAlias))
         {
             return ComponentInstallStepResult.Skipped(ComponentInstallName.ExtraBundle, "not_requested");
         }
@@ -47,26 +49,22 @@ public sealed class ExtraBundleInstaller : IExtraBundleInstaller
                 $"target={context.TargetPath}");
         }
 
-        if (!TryResolveDownloadEntry(context.ModuleDownloadLinks, alias, out var entry, out var resolvedAlias))
+        if (!TryResolveDownloadEntry(context.ModuleDownloadLinks, lookupAlias, out var entry, out var resolvedAlias))
         {
             var availableKeys = string.Join(
                 ",",
-                context.ModuleDownloadLinks.Keys
-                    .Select(InstallerExecutionHelpers.NormalizeAlias)
+                context.ModuleDownloadLinks.Aliases
+                    .Select(NormalizeDisplayAlias)
                     .Where(static key => !string.IsNullOrWhiteSpace(key))
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .OrderBy(static key => key, StringComparer.OrdinalIgnoreCase));
             return ComponentInstallStepResult.Failed(
                 ComponentInstallName.ExtraBundle,
                 ComponentInstallErrorCodes.SourceMissing,
-                $"alias={alias};available={availableKeys}");
+                $"alias={displayAlias};available={availableKeys}");
         }
 
-        var url = InstallerExecutionHelpers.ReadString(entry, "url");
-        if (string.IsNullOrWhiteSpace(url))
-        {
-            url = InstallerExecutionHelpers.ReadFirstString(entry, "download_url", "source_url");
-        }
+        var url = entry.Url;
 
         if (string.IsNullOrWhiteSpace(url))
         {
@@ -78,8 +76,8 @@ public sealed class ExtraBundleInstaller : IExtraBundleInstaller
 
         var fileName = InstallerExecutionHelpers.ResolveDownloadFileName(
             url,
-            InstallerExecutionHelpers.ReadString(entry, "filename"),
-            $"{alias}.7z");
+            entry.Filename,
+            $"{displayAlias}.7z");
         if (!InstallerExecutionHelpers.IsAllowedArchiveExtension(fileName))
         {
             return ComponentInstallStepResult.Failed(
@@ -94,7 +92,7 @@ public sealed class ExtraBundleInstaller : IExtraBundleInstaller
             Guid.NewGuid().ToString("N"));
         var downloadPath = Path.Combine(tempRoot, fileName);
         var extractPath = Path.Combine(tempRoot, "payload");
-        var sha256 = InstallerExecutionHelpers.ReadFirstString(entry, "sha256", "SHA256");
+        var sha256 = entry.Sha256;
 
         try
         {
@@ -191,39 +189,26 @@ public sealed class ExtraBundleInstaller : IExtraBundleInstaller
     }
 
     private static bool TryResolveDownloadEntry(
-        IReadOnlyDictionary<string, object?> moduleDownloadLinks,
+        ModuleDownloadLinkCatalog moduleDownloadLinks,
         string alias,
-        out IReadOnlyDictionary<string, object?> entry,
+        out ModuleDownloadLinkCatalogEntry entry,
         out string resolvedAlias)
     {
         resolvedAlias = alias;
-        if (moduleDownloadLinks.TryGetValue(alias, out var directEntry)
-            && directEntry is IReadOnlyDictionary<string, object?> direct)
+        if (moduleDownloadLinks.TryResolveLink(alias, out var link))
         {
-            entry = direct;
+            resolvedAlias = string.IsNullOrWhiteSpace(link.Alias) ? alias : link.Alias;
+            entry = link;
             return true;
         }
 
-        foreach (var pair in moduleDownloadLinks)
-        {
-            var keyAlias = InstallerExecutionHelpers.NormalizeAlias(pair.Key);
-            if (!string.Equals(keyAlias, alias, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            if (pair.Value is not IReadOnlyDictionary<string, object?> normalizedEntry)
-            {
-                continue;
-            }
-
-            resolvedAlias = pair.Key;
-            entry = normalizedEntry;
-            return true;
-        }
-
-        entry = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        entry = ModuleDownloadLinkCatalogEntry.Empty;
         return false;
+    }
+
+    private static string NormalizeDisplayAlias(string value)
+    {
+        return (value ?? "").Trim().ToLowerInvariant();
     }
 
     private IEnumerable<string> EnumeratePayloadEntries(string payloadPath)

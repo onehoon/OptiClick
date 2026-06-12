@@ -2,9 +2,11 @@ using System.Windows.Media;
 using OptiClick.Core.Models;
 using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Install.FileSystem;
+using OptiClick.Core.Install;
 using OptiClick.Wpf.Install.Precheck;
 using OptiClick.Wpf.Install.UiState;
 using OptiClick.Wpf.Localization;
+using OptiClick.Wpf.Shell.Selection;
 using OptiClick.Wpf.ViewModels;
 
 namespace OptiClick.Wpf.Shell.Games;
@@ -21,30 +23,24 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
     private readonly IInstallStatusResolver _installStatusResolver;
     private readonly IAppStringsProvider _stringsProvider;
 
-    public ShellGameCardViewModelFactory()
-        : this(
-            new ShellGameCardStateResolver(),
-            new AppStringsProvider(),
-            new InstallStatusResolver(new InstallFileSystem(), new WindowsFileVersionInfoReader()))
-    {
-    }
-
     public ShellGameCardViewModelFactory(
         IShellGameCardStateResolver stateResolver,
-        IAppStringsProvider? stringsProvider = null,
+        IAppStringsProvider stringsProvider,
         IInstallStatusResolver? installStatusResolver = null)
     {
+        ArgumentNullException.ThrowIfNull(stateResolver);
+        ArgumentNullException.ThrowIfNull(stringsProvider);
         _stateResolver = stateResolver;
         _installStatusResolver = installStatusResolver
             ?? new InstallStatusResolver(new InstallFileSystem(), new WindowsFileVersionInfoReader());
-        _stringsProvider = stringsProvider ?? new AppStringsProvider();
+        _stringsProvider = stringsProvider;
     }
 
     public IReadOnlyList<GameCardViewModel> CreateCards(
         IReadOnlyList<ShellGameCardModel> games,
         RuntimeContext? runtimeContext,
         IReadOnlyDictionary<string, string>? targetPathByGameId = null,
-        IReadOnlyDictionary<string, object?>? moduleDownloadLinks = null)
+        ModuleDownloadLinkContext? moduleDownloadLinks = null)
     {
         if (games is null || games.Count == 0)
         {
@@ -58,7 +54,7 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
         var safeTargetPathByGameId = targetPathByGameId
             ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var safeModuleDownloadLinks = moduleDownloadLinks
-            ?? new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            ?? ModuleDownloadLinkContext.Empty;
         var (currentVersion, currentDisplayVersion) = ResolveCurrentOptiScalerVersionPair(safeModuleDownloadLinks);
         var installStatusCache = new Dictionary<string, InstallStatusSnapshot>(StringComparer.OrdinalIgnoreCase);
 
@@ -71,6 +67,7 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
 
             var gameId = (game.GameId ?? "").Trim();
             var matchExe = (game.MatchExe ?? "").Trim();
+            var descriptorInput = ShellInstallDescriptorInputFactory.FromShellGame(game);
             if (string.IsNullOrWhiteSpace(gameId) && string.IsNullOrWhiteSpace(matchExe))
             {
                 continue;
@@ -87,14 +84,14 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
                 SupportAmd = game.SupportAmd,
                 SupportNvidia = game.SupportNvidia,
                 SupportedGpu = (game.SupportedGpu ?? "").Trim(),
-                OptiScalerDllName = ShellGameInstallMetadataResolver.GetOptiScalerDllName(game),
-                ReframeworkUrl = ShellGameInstallMetadataResolver.GetReFrameworkUrl(game),
-                SpecialK = ShellGameInstallMetadataResolver.GetSpecialK(game),
-                UltimateAsiLoader = ShellGameInstallMetadataResolver.GetUltimateAsiLoader(game),
-                OptiPatcher = ShellGameInstallMetadataResolver.GetOptiPatcher(game),
-                Unreal5 = ShellGameInstallMetadataResolver.GetUnreal5(game),
-                RtssOverlay = ShellGameInstallMetadataResolver.GetRtssOverlay(game),
-                ExtraBundle = ShellGameInstallMetadataResolver.GetExtraBundle(game)
+                OptiScalerDllName = descriptorInput.OptiScalerDllName,
+                ReframeworkUrl = descriptorInput.ReFrameworkUrl,
+                SpecialK = descriptorInput.SpecialK,
+                UltimateAsiLoader = descriptorInput.RequiresUltimateAsiLoader,
+                OptiPatcher = descriptorInput.RequiresOptiPatcher,
+                Unreal5 = descriptorInput.RequiresUnreal5,
+                RtssOverlay = descriptorInput.RequiresRtssProfile,
+                ExtraBundle = descriptorInput.ExtraBundle
             };
 
             var stateDecision = _stateResolver.Resolve(game, runtimeContext);
@@ -256,36 +253,16 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
     }
 
     private static (string CurrentVersion, string CurrentDisplayVersion) ResolveCurrentOptiScalerVersionPair(
-        IReadOnlyDictionary<string, object?> moduleDownloadLinks)
+        ModuleDownloadLinkContext moduleDownloadLinks)
     {
-        if (!moduleDownloadLinks.TryGetValue("optiscaler", out var rawEntry)
-            || rawEntry is not IReadOnlyDictionary<string, object?> entry)
+        if (!moduleDownloadLinks.TryResolveLink("optiscaler", out var entry))
         {
             return ("", "");
         }
 
-        var currentVersion = ReadFirstNonEmpty(entry, "version", "current_version");
-        var currentDisplayVersion = ReadFirstNonEmpty(entry, "display_version", "current_display_version", "version_label");
+        var currentVersion = entry.ReadFirstString("version", "current_version");
+        var currentDisplayVersion = entry.ReadFirstString("display_version", "current_display_version", "version_label");
         return (currentVersion, currentDisplayVersion);
-    }
-
-    private static string ReadFirstNonEmpty(IReadOnlyDictionary<string, object?> entry, params string[] keys)
-    {
-        foreach (var key in keys)
-        {
-            if (!entry.TryGetValue(key, out var value) || value is null)
-            {
-                continue;
-            }
-
-            var normalized = value.ToString()?.Trim() ?? "";
-            if (!string.IsNullOrWhiteSpace(normalized))
-            {
-                return normalized;
-            }
-        }
-
-        return "";
     }
 
     private static Brush CreateCoverBrush(string color)

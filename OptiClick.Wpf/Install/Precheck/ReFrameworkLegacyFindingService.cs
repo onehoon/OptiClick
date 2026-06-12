@@ -1,5 +1,5 @@
 using System.IO;
-using OptiClick.Wpf.Shell.Games;
+using OptiClick.Core.Install;
 
 namespace OptiClick.Wpf.Install.Precheck;
 
@@ -8,7 +8,7 @@ public sealed class ReFrameworkLegacyFindingService
     public IReadOnlyList<ModConflictFinding> AppendLegacyFinding(
         IEnumerable<ModConflictFinding> findings,
         string targetPath,
-        ShellGameCardModel? game)
+        InstallGameDescriptor? descriptor)
     {
         var normalized = findings?.ToList() ?? new List<ModConflictFinding>();
         if (normalized.Any(finding => string.Equals((finding.Kind ?? "").Trim(), ModConflictKinds.ReFrameworkLegacy, StringComparison.OrdinalIgnoreCase)))
@@ -16,7 +16,7 @@ public sealed class ReFrameworkLegacyFindingService
             return normalized;
         }
 
-        var legacy = DetectLegacyFinding(targetPath, game);
+        var legacy = DetectLegacyFinding(targetPath, descriptor);
         if (legacy is null)
         {
             return normalized;
@@ -26,9 +26,9 @@ public sealed class ReFrameworkLegacyFindingService
         return normalized;
     }
 
-    public ModConflictFinding? DetectLegacyFinding(string targetPath, ShellGameCardModel? game)
+    public ModConflictFinding? DetectLegacyFinding(string targetPath, InstallGameDescriptor? descriptor)
     {
-        var destinationRelPath = ShellGameInstallMetadataResolver.GetReFrameworkUrl(game);
+        var destinationRelPath = (descriptor?.ReFrameworkUrl ?? "").Trim();
         if (string.IsNullOrWhiteSpace(destinationRelPath))
         {
             return null;

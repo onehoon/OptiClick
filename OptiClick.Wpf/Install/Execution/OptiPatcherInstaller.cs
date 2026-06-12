@@ -21,9 +21,9 @@ public sealed class OptiPatcherInstaller : IOptiPatcherInstaller
     public async Task<ComponentInstallStepResult> InstallAsync(ComponentInstallContext context, CancellationToken cancellationToken = default)
     {
         var result = await _inner.InstallAsync(
-            InfrastructureComponentInstallerAdapters.ToOptiPatcherContext(context),
+            InfrastructureComponentContextMapper.ToOptiPatcherContext(context),
             cancellationToken);
 
-        return InfrastructureComponentInstallerAdapters.ToWpfStepResult(result);
+        return InfrastructureComponentResultMapper.ToWpfStepResult(result);
     }
 }

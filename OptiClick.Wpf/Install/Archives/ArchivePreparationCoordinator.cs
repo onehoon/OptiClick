@@ -1,15 +1,16 @@
 using System.Diagnostics;
+using OptiClick.Wpf.Install.Flow;
 
 namespace OptiClick.Wpf.Install.Archives;
 
 public interface IArchivePreparationCoordinator
 {
     Task<ArchivePreparationSnapshot> PrepareOptiScalerAsync(
-        IReadOnlyDictionary<string, object?> moduleDownloadLinks,
+        ModuleDownloadLinkContext moduleDownloadLinks,
         CancellationToken cancellationToken = default);
 
     Task<ArchivePreparationSnapshot> PrepareStartupArchivesAsync(
-        IReadOnlyDictionary<string, object?> moduleDownloadLinks,
+        ModuleDownloadLinkContext moduleDownloadLinks,
         CancellationToken cancellationToken = default);
 }
 
@@ -36,11 +37,12 @@ public sealed class ArchivePreparationCoordinator : IArchivePreparationCoordinat
     }
 
     public async Task<ArchivePreparationSnapshot> PrepareOptiScalerAsync(
-        IReadOnlyDictionary<string, object?> moduleDownloadLinks,
+        ModuleDownloadLinkContext moduleDownloadLinks,
         CancellationToken cancellationToken = default)
     {
         _cachePaths.EnsureDirectories();
-        var entry = ArchiveEntryNormalizer.Normalize(GetEntry(moduleDownloadLinks, ArchiveAssetRuntimeDataKeys.OptiScaler));
+        var linkContext = moduleDownloadLinks ?? ModuleDownloadLinkContext.Empty;
+        var entry = ArchiveEntryNormalizer.Normalize(GetEntry(linkContext, ArchiveAssetRuntimeDataKeys.OptiScaler));
         var stopwatch = Stopwatch.StartNew();
         var payloadResult = await _optiScalerPayloadCacheService.PrepareAsync(entry, _cachePaths.OptiScalerPayloadCacheRoot, cancellationToken);
         return new ArchivePreparationSnapshot
@@ -61,15 +63,16 @@ public sealed class ArchivePreparationCoordinator : IArchivePreparationCoordinat
     }
 
     public async Task<ArchivePreparationSnapshot> PrepareStartupArchivesAsync(
-        IReadOnlyDictionary<string, object?> moduleDownloadLinks,
+        ModuleDownloadLinkContext moduleDownloadLinks,
         CancellationToken cancellationToken = default)
     {
         _cachePaths.EnsureDirectories();
+        var linkContext = moduleDownloadLinks ?? ModuleDownloadLinkContext.Empty;
         var states = new Dictionary<ArchiveAssetKey, ArchivePreparationState>();
 
         foreach (var key in ArchivePreparationSequence.DefaultStartupOrder)
         {
-            var entry = ArchiveEntryNormalizer.Normalize(GetEntry(moduleDownloadLinks, ArchiveAssetRuntimeDataKeys.ToRuntimeDataEntryKey(key)));
+            var entry = ArchiveEntryNormalizer.Normalize(GetEntry(linkContext, ArchiveAssetRuntimeDataKeys.ToRuntimeDataEntryKey(key)));
             var stopwatch = Stopwatch.StartNew();
             ArchivePreparationState state = key switch
             {
@@ -91,9 +94,9 @@ public sealed class ArchivePreparationCoordinator : IArchivePreparationCoordinat
         };
     }
 
-    private static object? GetEntry(IReadOnlyDictionary<string, object?> moduleDownloadLinks, string key)
+    private static ModuleDownloadLinkEntry? GetEntry(ModuleDownloadLinkContext moduleDownloadLinks, string key)
     {
-        return moduleDownloadLinks.TryGetValue(key, out var entry) ? entry : null;
+        return moduleDownloadLinks.TryResolveLink(key, out var entry) ? entry : null;
     }
 
     private static string ToAssetLabel(ArchiveAssetKey key)

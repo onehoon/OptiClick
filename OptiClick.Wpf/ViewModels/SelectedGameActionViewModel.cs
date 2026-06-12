@@ -7,6 +7,7 @@ namespace OptiClick.Wpf.ViewModels;
 
 public sealed class SelectedGameActionViewModel : ViewModelBase
 {
+    private readonly Func<AppStrings> _stringsAccessor;
     private string _selectedGameTitle = "";
     private string _selectedGameStatusText = "";
     private string _optiScalerSummaryText = "";
@@ -27,7 +28,12 @@ public sealed class SelectedGameActionViewModel : ViewModelBase
     private int _pendingPopupRequestCount;
     private string _currentPopupRequestKind = "";
     private string _currentPopupRequestBody = "";
-    private AppStrings _strings = new AppStringsProvider().Get(AppLanguage.English);
+    private AppStrings _strings = new AppStrings();
+
+    public SelectedGameActionViewModel(Func<AppStrings>? stringsAccessor = null)
+    {
+        _stringsAccessor = stringsAccessor ?? (() => new AppStrings());
+    }
 
     public string SelectedGameTitle
     {

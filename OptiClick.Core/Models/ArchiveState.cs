@@ -5,7 +5,7 @@ public sealed record ArchiveState
     public string OptiScalerArchive { get; init; } = "";
     public bool OptiScalerReady { get; init; } = true;
     public bool OptiScalerDownloading { get; init; }
-    public bool Fsr4Required { get; init; }
+    public bool ShouldInstallFsr4 { get; init; }
     public bool Fsr4Ready { get; init; } = true;
     public bool Fsr4Downloading { get; init; }
     public bool ExtraBundleReady { get; init; } = true;

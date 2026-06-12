@@ -2,6 +2,7 @@
 using System.Net.Http;
 using OptiClick.Wpf.Configuration;
 using OptiClick.Infrastructure.Downloads;
+using OptiClick.Infrastructure.Remote;
 using OptiClick.Wpf.Diagnostics;
 using OptiClick.Wpf.Install.Planning;
 using OptiClick.Wpf.Install.Config;
@@ -233,9 +234,11 @@ public sealed partial class AppCompositionRoot
         return new ShellGameCardStateResolver();
     }
 
-    public IShellGameCardViewModelFactory CreateShellGameCardViewModelFactory(IShellGameCardStateResolver stateResolver)
+    public IShellGameCardViewModelFactory CreateShellGameCardViewModelFactory(
+        IShellGameCardStateResolver stateResolver,
+        IAppStringsProvider stringsProvider)
     {
-        return new ShellGameCardViewModelFactory(stateResolver, new AppStringsProvider());
+        return new ShellGameCardViewModelFactory(stateResolver, stringsProvider);
     }
 }
 

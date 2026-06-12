@@ -25,9 +25,9 @@ public sealed class Fsr4Installer : IFsr4Installer
     public async Task<ComponentInstallStepResult> InstallAsync(ComponentInstallContext context, CancellationToken cancellationToken = default)
     {
         var result = await _inner.InstallAsync(
-            InfrastructureComponentInstallerAdapters.ToFsr4Context(context),
+            InfrastructureComponentContextMapper.ToFsr4Context(context),
             cancellationToken);
 
-        return InfrastructureComponentInstallerAdapters.ToWpfStepResult(result);
+        return InfrastructureComponentResultMapper.ToWpfStepResult(result);
     }
 }

@@ -30,7 +30,7 @@ public sealed class HomeSectionViewModel : ViewModelBase
         _showInstallAsync = options.ShowInstallAsync ?? throw new ArgumentNullException(nameof(options.ShowInstallAsync));
         _selectGameAsync = options.SelectGameAsync ?? throw new ArgumentNullException(nameof(options.SelectGameAsync));
         Games = options.Games ?? throw new ArgumentNullException(nameof(options.Games));
-        SelectedGameAction = options.SelectedGameAction ?? new SelectedGameActionViewModel();
+        SelectedGameAction = options.SelectedGameAction ?? new SelectedGameActionViewModel(_stringsAccessor);
 
         SelectGameCommand = new AsyncRelayCommand(
             async (parameter, cancellationToken) =>

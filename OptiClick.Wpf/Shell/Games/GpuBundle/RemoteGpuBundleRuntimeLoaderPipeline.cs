@@ -17,12 +17,14 @@ public sealed class RemoteGpuBundleRuntimeLoadResult
     public string BundleKey { get; init; } = "";
     public string GpuGroup { get; init; } = "";
     public string Vendor { get; init; } = "";
+    public Fsr4ManifestPolicy Fsr4 { get; init; } = Fsr4ManifestPolicy.Disabled;
 
     public static RemoteGpuBundleRuntimeLoadResult Success(
         RemoteGpuBundle bundle,
         string bundleKey,
         string gpuGroup,
-        string vendor)
+        string vendor,
+        Fsr4ManifestPolicy? fsr4Policy = null)
     {
         return new RemoteGpuBundleRuntimeLoadResult
         {
@@ -30,7 +32,8 @@ public sealed class RemoteGpuBundleRuntimeLoadResult
             Bundle = bundle ?? new RemoteGpuBundle(),
             BundleKey = (bundleKey ?? "").Trim(),
             GpuGroup = (gpuGroup ?? "").Trim().ToLowerInvariant(),
-            Vendor = (vendor ?? "").Trim().ToLowerInvariant()
+            Vendor = (vendor ?? "").Trim().ToLowerInvariant(),
+            Fsr4 = fsr4Policy ?? Fsr4ManifestPolicy.Disabled
         };
     }
 
@@ -120,15 +123,10 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
             }
 
             var appVersion = (_appVersionProvider.GetCurrentVersion() ?? "").Trim();
-            var manifestRequest = new GpuBundleManifestFetchRequest
-            {
-                Vendor = NormalizeVendorForManifest(selectedGpu.Vendor, selectedGpu.Name),
-                GpuRaw = NormalizeSpaceForManifest(selectedGpu.Name),
-                DeviceManufacturer = (safeRuntimeContext.Device?.Manufacturer ?? "").Trim(),
-                DeviceModel = (safeRuntimeContext.Device?.Model ?? "").Trim(),
-                RequestSource = "app",
-                AppVersion = appVersion
-            };
+            var manifestRequest = GpuBundleManifestFetchRequestFactory.Create(
+                safeRuntimeContext,
+                selectedGpu,
+                appVersion);
 
             var manifestResult = await _manifestClient.FetchAsync(manifestEndpoint, manifestRequest, cancellationToken);
             if (manifestResult.IsSkipped)
@@ -149,12 +147,14 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
                 _logger.Warning(
                     "remote",
                     $"gpu-bundle-runtime unsupported stage=rule_match code={NormalizeLogValue(match.ErrorCode, "bundle_rule_not_matched")} vendor={NormalizeLogValue(match.Vendor, "none")} gpu_raw={NormalizeLogValue(match.GpuRaw, "none")}");
-                await ReportUnsupportedGpuAsync(
+
+                // Device capability mismatch is reported as optional telemetry and must not block support evaluation.
+                _ = ReportUnsupportedGpuAsync(
                     bundleEndpoint,
                     safeRuntimeContext,
                     manifestResult.Manifest.ManifestVersion,
                     NormalizeLogValue(match.Vendor, ""),
-                    NormalizeLogValue(match.GpuRaw, NormalizeSpaceForManifest(selectedGpu.Name)),
+                    NormalizeLogValue(match.GpuRaw, GpuBundleManifestFetchRequestFactory.NormalizeWhitespace(selectedGpu.Name)),
                     appVersion,
                     cancellationToken);
                 return RemoteGpuBundleRuntimeLoadResult.Unsupported(match.ErrorCode);
@@ -166,12 +166,14 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
                 _logger.Error(
                     "remote",
                     $"gpu-bundle-runtime failed stage=rule_match code={NormalizeLogValue(matchError, "gpu_bundle_rule_not_matched")} vendor={NormalizeLogValue(match.Vendor, "none")} gpu_raw={NormalizeLogValue(match.GpuRaw, "none")}");
-                await ReportUnsupportedGpuAsync(
+
+                // Report-only call is intentionally fire-and-forget to keep unsupported decision latency unchanged.
+                _ = ReportUnsupportedGpuAsync(
                     bundleEndpoint,
                     safeRuntimeContext,
                     manifestResult.Manifest.ManifestVersion,
                     NormalizeLogValue(match.Vendor, ""),
-                    NormalizeLogValue(match.GpuRaw, NormalizeSpaceForManifest(selectedGpu.Name)),
+                    NormalizeLogValue(match.GpuRaw, GpuBundleManifestFetchRequestFactory.NormalizeWhitespace(selectedGpu.Name)),
                     appVersion,
                     cancellationToken);
                 return RemoteGpuBundleRuntimeLoadResult.Failure(
@@ -180,7 +182,7 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
 
             _logger.Info(
                 "remote",
-                $"gpu-bundle-runtime rule-matched vendor={NormalizeLogValue(match.Vendor, "none")} bundle={NormalizeLogValue(match.BundleKey, "none")} gpu_group={NormalizeLogValue(match.GpuGroup, "none")} manifest_version={NormalizeLogValue(manifestResult.Manifest.ManifestVersion, "none")}");
+                $"gpu-bundle-runtime rule-matched vendor={NormalizeLogValue(match.Vendor, "none")} bundle={NormalizeLogValue(match.BundleKey, "none")} gpu_group={NormalizeLogValue(match.GpuGroup, "none")} fsr4={FormatFsr4Policy(match.Fsr4)} manifest_version={NormalizeLogValue(manifestResult.Manifest.ManifestVersion, "none")}");
 
             var request = new GpuBundleFetchRequest
             {
@@ -212,7 +214,8 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
                 selectedGpuGroup: match.GpuGroup,
                 requestVendor: match.Vendor,
                 bundleKey: match.BundleKey,
-                manifestVersion: manifestResult.Manifest.ManifestVersion);
+                manifestVersion: manifestResult.Manifest.ManifestVersion,
+                fsr4Policy: match.Fsr4);
             if (!parseResult.IsSuccess)
             {
                 _logger.Error("remote", $"gpu-bundle-runtime failed stage=bundle_parse code={NormalizeLogValue(parseResult.ErrorCode, "bundle_parse_failed")}");
@@ -227,7 +230,8 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
                 parseResult.Bundle,
                 match.BundleKey,
                 match.GpuGroup,
-                match.Vendor);
+                match.Vendor,
+                match.Fsr4);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -268,13 +272,13 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var gpu in gpus)
         {
-            var name = NormalizeSpaceForManifest(gpu.Name);
+            var name = GpuBundleManifestFetchRequestFactory.NormalizeWhitespace(gpu.Name);
             if (string.IsNullOrWhiteSpace(name))
             {
                 continue;
             }
 
-            var vendor = NormalizeSpaceForManifest(gpu.Vendor);
+            var vendor = GpuBundleManifestFetchRequestFactory.NormalizeWhitespace(gpu.Vendor);
             var key = $"{vendor}|{name}";
             if (seen.Add(key))
             {
@@ -284,33 +288,6 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
 
         return list;
     }
-
-    private static string NormalizeVendorForManifest(string? vendor, string? gpuName)
-    {
-        var candidate = $"{vendor} {gpuName}".Trim().ToLowerInvariant();
-        if (candidate.Contains("nvidia", StringComparison.Ordinal))
-        {
-            return "nvidia";
-        }
-
-        if (candidate.Contains("intel", StringComparison.Ordinal))
-        {
-            return "intel";
-        }
-
-        if (candidate.Contains("amd", StringComparison.Ordinal) || candidate.Contains("radeon", StringComparison.Ordinal))
-        {
-            return "amd";
-        }
-
-        return "";
-    }
-
-    private static string NormalizeSpaceForManifest(string? value)
-    {
-        return string.Join(" ", (value ?? "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)).Trim();
-    }
-
     private async Task ReportUnsupportedGpuAsync(
         string bundleEndpoint,
         RuntimeContext runtimeContext,
@@ -352,5 +329,15 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
     {
         var normalized = (value ?? "").Trim();
         return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+    }
+
+    private static string FormatFsr4Policy(Fsr4ManifestPolicy? policy)
+    {
+        if (policy?.Enabled != true)
+        {
+            return "false";
+        }
+
+        return NormalizeLogValue(policy.Variant, "unknown");
     }
 }

@@ -1,8 +1,8 @@
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Windows.Media;
+using OptiClick.Core.Scan;
+using OptiClick.Infrastructure.Scan;
 using OptiClick.Wpf.Localization;
-using OptiClick.Wpf.Services;
 using OptiClick.Wpf.ViewModels;
 
 namespace OptiClick.Wpf.Shell.Scan;
@@ -10,10 +10,14 @@ namespace OptiClick.Wpf.Shell.Scan;
 public sealed class ScanFolderListController
 {
     private readonly IScanFolderManifestStore? _scanFolderManifestStore;
+    private readonly IScanFileSystemProbe _fileSystemProbe;
 
-    public ScanFolderListController(IScanFolderManifestStore? scanFolderManifestStore = null)
+    public ScanFolderListController(
+        IScanFolderManifestStore? scanFolderManifestStore = null,
+        IScanFileSystemProbe? fileSystemProbe = null)
     {
         _scanFolderManifestStore = scanFolderManifestStore;
+        _fileSystemProbe = fileSystemProbe ?? new ScanFileSystemProbe();
     }
 
     public IReadOnlyList<ScanFolderRowViewModel> LoadAddedFoldersFromManifest(
@@ -66,7 +70,7 @@ public sealed class ScanFolderListController
             }
 
             seen.Add(normalizedPath);
-            var exists = Directory.Exists(normalizedPath);
+            var exists = _fileSystemProbe.DirectoryExists(normalizedPath);
             rows.Add(new ScanFolderRowViewModel(
                 strings.ScanCustomFolderLabel,
                 normalizedPath,
@@ -97,7 +101,7 @@ public sealed class ScanFolderListController
             };
         }
 
-        if (!Directory.Exists(trimmedPath))
+        if (!_fileSystemProbe.DirectoryExists(trimmedPath))
         {
             return new ScanFolderAddResult
             {
@@ -175,7 +179,7 @@ public sealed class ScanFolderListController
     {
         foreach (var folder in addedFolders)
         {
-            var exists = Directory.Exists(folder.Path);
+            var exists = _fileSystemProbe.DirectoryExists(folder.Path);
             folder.ApplyLocalization(
                 strings.ScanCustomFolderLabel,
                 exists ? strings.ScanAddedStatusLabel : strings.ScanMissingStatusLabel,
@@ -185,7 +189,7 @@ public sealed class ScanFolderListController
 
         foreach (var folder in defaultFolders)
         {
-            var exists = Directory.Exists(folder.Path);
+            var exists = _fileSystemProbe.DirectoryExists(folder.Path);
             folder.ApplyLocalization(
                 name: null,
                 status: exists ? strings.ScanDetectedStatusLabel : strings.ScanMissingStatusLabel,
@@ -204,7 +208,7 @@ public sealed class ScanFolderListController
             .Select(static folder => NormalizePathOrEmpty(folder.Path))
             .Where(static path => !string.IsNullOrWhiteSpace(path))
             .Where(static path => ScanFolderPathPolicy.IsAllowedScanFolderPath(path))
-            .Where(Directory.Exists)
+            .Where(_fileSystemProbe.DirectoryExists)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
     }
@@ -282,23 +286,5 @@ public sealed class ScanFolderListController
         }
     }
 
-    public static string NormalizePathOrEmpty(string? path)
-    {
-        var trimmed = (path ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(trimmed))
-        {
-            return "";
-        }
-
-        try
-        {
-            return Path
-                .GetFullPath(trimmed)
-                .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        }
-        catch
-        {
-            return trimmed;
-        }
-    }
+    public static string NormalizePathOrEmpty(string? path) => ScanFolderPathPolicy.NormalizePathOrEmpty(path);
 }

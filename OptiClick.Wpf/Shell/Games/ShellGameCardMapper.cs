@@ -1,21 +1,22 @@
 using OptiClick.Core.Models;
-using OptiClick.Infrastructure.Install.Components;
 using OptiClick.Wpf.ViewModels;
 
 namespace OptiClick.Wpf.Shell.Games;
 
 public static class ShellGameCardMapper
 {
-    private static readonly IFsr4InstallEligibilityResolver Fsr4EligibilityResolver = new Fsr4InstallEligibilityResolver();
-
-    public static ShellGameCardModel Map(GameCardViewModel card)
+    public static ShellGameCardModel Map(GameCardViewModel? card)
     {
+        ArgumentNullException.ThrowIfNull(card);
+
         if (card.SourceModel is not null)
         {
             return card.SourceModel;
         }
 
         var entry = card.GameEntry;
+        // Keep InstallMetadata populated for descriptor pipeline canonicalization,
+        // while card-level install fields remain for compatibility and display consumers.
         return new ShellGameCardModel
         {
             GameId = (entry.GameId ?? "").Trim(),
@@ -48,22 +49,5 @@ public static class ShellGameCardMapper
                 RtssOverlay = entry.RtssOverlay
             }
         };
-    }
-
-    public static bool ResolveFsr4Required(ShellGameCardModel? selectedGame)
-    {
-        if (selectedGame is null)
-        {
-            return false;
-        }
-
-        var eligibility = Fsr4EligibilityResolver.Resolve(new Fsr4InstallEligibilityContext
-        {
-            // FSR4 is enabled for every game unless the current GPU is excluded.
-            UseFsr4 = true,
-            GpuGroup = ShellGameInstallMetadataResolver.GetGpuGroup(selectedGame),
-            GpuBundleKey = ShellGameInstallMetadataResolver.GetGpuBundleKey(selectedGame)
-        });
-        return eligibility.CanInstall;
     }
 }

@@ -1,5 +1,4 @@
 using OptiClick.Core.Runtime;
-using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Services;
 
 namespace OptiClick.Wpf.Shell.Runtime;
@@ -17,8 +16,10 @@ public sealed class RuntimeSummaryStateController
         _runtimeHeaderPresenter = runtimeHeaderPresenter ?? throw new ArgumentNullException(nameof(runtimeHeaderPresenter));
     }
 
-    public RuntimeSummaryStateUpdate Build(RuntimeContext? context, AppStrings strings)
+    public RuntimeSummaryStateUpdate Build(RuntimeContext? context, RuntimeSummaryStateText text)
     {
+        ArgumentNullException.ThrowIfNull(text);
+
         var runtimeContext = context ?? new RuntimeContext();
         var resolvedDevice = _deviceIdentityResolver.Resolve(runtimeContext.Device);
         var selectedGpu = runtimeContext.SelectedGpu;
@@ -26,7 +27,7 @@ public sealed class RuntimeSummaryStateController
             resolvedDevice,
             selectedGpu,
             runtimeContext.Gpus,
-            strings);
+            text);
 
         return new RuntimeSummaryStateUpdate
         {

@@ -1,5 +1,6 @@
-using System.Globalization;
 using OptiClick.Core.Runtime;
+using OptiClick.Core.Scan;
+using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Shell.Games;
 using OptiClick.Wpf.ViewModels;
@@ -40,10 +41,10 @@ public sealed class ScanFlowController
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(request.Strings);
+        ArgumentNullException.ThrowIfNull(request.Text);
 
         var logs = new List<ScanFlowLogEntry>();
-        var strings = request.Strings;
+        var text = request.Text;
         var safeCatalog = request.LatestRemoteCatalog ?? ShellGameCatalog.Empty;
         var safeRuntimeContext = request.LatestRuntimeContext ?? new RuntimeContext();
         var scanFolders = (request.ScanFolders ?? [])
@@ -53,7 +54,7 @@ public sealed class ScanFlowController
         var currentMatchByGameId = CloneMatchByGameId(request.CurrentMatchByGameId);
         var currentTargetPathByGameId = CloneTargetPathByGameId(request.CurrentTargetPathByGameId);
         var currentModuleDownloadLinks = request.ModuleDownloadLinks
-            ?? new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+            ?? ModuleDownloadLinkContext.Empty;
 
         if (_scanPipeline is null)
         {
@@ -68,18 +69,18 @@ public sealed class ScanFlowController
                 currentMatchByGameId,
                 currentTargetPathByGameId,
                 logs,
-                statusText: strings.ScanServiceMissing,
-                dialogRequest: BuildScanWarningDialog(strings.NavScan, strings.ScanServiceMissing));
+                statusText: text.ScanServiceMissing,
+                dialogRequest: BuildScanWarningDialog(text.NavScan, text.ScanServiceMissing));
         }
 
         if (isStartupScan && safeCatalog.Games.Count == 0)
         {
             logs.Add(Warning("scan", "startup auto scan skipped reason=remote_catalog_not_ready"));
             return CreateSkippedResult(
-                currentMatchByGameId,
-                currentTargetPathByGameId,
-                logs,
-                statusText: strings.ScanStartupSkippedCatalogNotReady);
+                    currentMatchByGameId,
+                    currentTargetPathByGameId,
+                    logs,
+                    statusText: text.ScanStartupSkippedCatalogNotReady);
         }
 
         if (scanFolders.Length == 0)
@@ -91,7 +92,7 @@ public sealed class ScanFlowController
                     currentMatchByGameId,
                     currentTargetPathByGameId,
                     logs,
-                    statusText: strings.ScanStartupNoFolders);
+                    statusText: text.ScanStartupNoFolders);
             }
 
             logs.Add(Warning("scan", "scan skipped no folder selected"));
@@ -101,10 +102,10 @@ public sealed class ScanFlowController
                 clearedMatchByGameId,
                 clearedTargetPathByGameId,
                 logs,
-                statusText: strings.ScanNoFolderSelected,
+                statusText: text.ScanNoFolderSelected,
                 shouldRecomputeSelection: true,
                 visibleGames: [],
-                dialogRequest: BuildScanWarningDialog(strings.NavScan, strings.ScanNoFolderSelected));
+                dialogRequest: BuildScanWarningDialog(text.NavScan, text.ScanNoFolderSelected));
         }
 
         if (!isStartupScan && safeCatalog.Games.Count == 0)
@@ -122,12 +123,12 @@ public sealed class ScanFlowController
                 currentMatchByGameId,
                 currentTargetPathByGameId,
                 logs,
-                statusText: Format(strings.RuntimeCatalogNotReadyForScan, reason),
+                statusText: LocalizedTextFormatter.Format(text.RuntimeCatalogNotReadyForScan, reason),
                 shouldRecomputeSelection: true,
                 visibleGames: visibleGames,
                 dialogRequest: BuildScanWarningDialog(
-                    strings.RuntimeCatalogPipelineMissingTitle,
-                    strings.RuntimeCatalogNotReadyScanBlocked,
+                    text.RuntimeCatalogPipelineMissingTitle,
+                    text.RuntimeCatalogNotReadyScanBlocked,
                     $"Error code: {reason}"));
         }
 
@@ -158,8 +159,11 @@ public sealed class ScanFlowController
             if (isStartupScan)
             {
                 var statusText = summary.ExecutableCount > 0 && summary.MatchedCount > 0
-                    ? Format(strings.ScanStartupMatchedGamesFromExecutables, summary.MatchedCount, summary.ExecutableCount)
-                    : strings.ScanStartupNoSupportedGames;
+                    ? LocalizedTextFormatter.Format(
+                        text.ScanStartupMatchedGamesFromExecutables,
+                        summary.MatchedCount,
+                        summary.ExecutableCount)
+                    : text.ScanStartupNoSupportedGames;
                 logs.Add(Info(
                     "scan",
                     $"startup auto scan completed executable_count={summary.ExecutableCount} candidate_exe_count={summary.CandidateExecutableCount} matched={summary.MatchedCount} duplicate={summary.DuplicateMatchCount} visible_games={summary.VisibleGameCount}"));
@@ -185,11 +189,11 @@ public sealed class ScanFlowController
                     DidRun = true,
                     ShouldNavigateHome = false,
                     ShouldRecomputeSelection = true,
-                    StatusText = strings.ScanNoExecutableFound,
+                    StatusText = text.ScanNoExecutableFound,
                     VisibleGames = visibleGames,
                     MatchByGameId = matchByGameId,
                     TargetPathByGameId = targetPathByGameId,
-                    DialogRequest = BuildScanWarningDialog(strings.NavScan, strings.ScanNoExecutableFound),
+                    DialogRequest = BuildScanWarningDialog(text.NavScan, text.ScanNoExecutableFound),
                     Summary = summary,
                     Logs = logs
                 };
@@ -197,7 +201,9 @@ public sealed class ScanFlowController
 
             if (summary.MatchedCount == 0)
             {
-                var statusText = Format(strings.ScanNoSupportedGamesMatchedFromExecutables, summary.ExecutableCount);
+                var statusText = LocalizedTextFormatter.Format(
+                    text.ScanNoSupportedGamesMatchedFromExecutables,
+                    summary.ExecutableCount);
                 return new ScanFlowResult
                 {
                     DidRun = true,
@@ -207,7 +213,7 @@ public sealed class ScanFlowController
                     VisibleGames = visibleGames,
                     MatchByGameId = matchByGameId,
                     TargetPathByGameId = targetPathByGameId,
-                    DialogRequest = BuildScanWarningDialog(strings.NavScan, statusText),
+                    DialogRequest = BuildScanWarningDialog(text.NavScan, statusText),
                     Summary = summary,
                     Logs = logs
                 };
@@ -218,7 +224,10 @@ public sealed class ScanFlowController
                 DidRun = true,
                 ShouldNavigateHome = visibleGames.Count > 0,
                 ShouldRecomputeSelection = true,
-                StatusText = Format(strings.ScanLastScanMatchedGamesFromExecutables, summary.MatchedCount, summary.ExecutableCount),
+                StatusText = LocalizedTextFormatter.Format(
+                    text.ScanLastScanMatchedGamesFromExecutables,
+                    summary.MatchedCount,
+                    summary.ExecutableCount),
                 VisibleGames = visibleGames,
                 MatchByGameId = matchByGameId,
                 TargetPathByGameId = targetPathByGameId,
@@ -235,7 +244,7 @@ public sealed class ScanFlowController
                     currentMatchByGameId,
                     currentTargetPathByGameId,
                     logs,
-                    statusText: strings.ScanStartupFailedTryAgain);
+                    statusText: text.ScanStartupFailedTryAgain);
             }
 
             logs.Add(Error("scan", "scan failed", ex));
@@ -243,8 +252,8 @@ public sealed class ScanFlowController
                 currentMatchByGameId,
                 currentTargetPathByGameId,
                 logs,
-                statusText: strings.ScanFailedSeeLog,
-                dialogRequest: BuildScanWarningDialog(strings.NavScan, strings.ScanFailedSeeLog));
+                statusText: text.ScanFailedSeeLog,
+                dialogRequest: BuildScanWarningDialog(text.NavScan, text.ScanFailedSeeLog));
         }
     }
 
@@ -253,7 +262,7 @@ public sealed class ScanFlowController
         RuntimeContext runtimeContext,
         IReadOnlyDictionary<string, ShellGameMatchResult> matchByGameId,
         IReadOnlyDictionary<string, string> targetPathByGameId,
-        IReadOnlyDictionary<string, object?> moduleDownloadLinks,
+        ModuleDownloadLinkContext moduleDownloadLinks,
         ICollection<ScanFlowLogEntry> logs)
     {
         if (_shellGameCardViewModelFactory is null)
@@ -393,11 +402,6 @@ public sealed class ScanFlowController
             Message = message,
             Exception = exception
         };
-    }
-
-    private static string Format(string template, params object[] args)
-    {
-        return string.Format(CultureInfo.CurrentCulture, template ?? "", args ?? []);
     }
 
     private static string NormalizeStatusCode(string? value, string fallback)

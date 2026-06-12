@@ -114,6 +114,19 @@ public sealed class GameCardViewModel : ViewModelBase
     }
     public GameEntry GameEntry { get; }
     public ShellGameCardModel? SourceModel { get; }
+    public string ResolvedGameId
+    {
+        get
+        {
+            var sourceGameId = (SourceModel?.GameId ?? "").Trim();
+            if (!string.IsNullOrWhiteSpace(sourceGameId))
+            {
+                return sourceGameId;
+            }
+
+            return (GameEntry.GameId ?? "").Trim();
+        }
+    }
     public double CardOpacity => IsDimmed ? 0.78 : 1.0;
     public Visibility CardLayoutVisibility => _isCardLayoutReady ? Visibility.Visible : Visibility.Collapsed;
 
@@ -412,13 +425,7 @@ public sealed class GameCardViewModel : ViewModelBase
 
     private string ResolveLogGameId()
     {
-        var sourceGameId = (SourceModel?.GameId ?? "").Trim();
-        if (!string.IsNullOrWhiteSpace(sourceGameId))
-        {
-            return sourceGameId;
-        }
-
-        return (GameEntry.GameId ?? "").Trim();
+        return ResolvedGameId;
     }
 
     private static string BuildCoverLoadKey(string sourceUrl, string steamAppId)

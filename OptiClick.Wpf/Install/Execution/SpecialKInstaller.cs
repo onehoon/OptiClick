@@ -26,10 +26,10 @@ public sealed class SpecialKInstaller : ISpecialKInstaller
     public async Task<ComponentInstallStepResult> InstallAsync(ComponentInstallContext context, CancellationToken cancellationToken = default)
     {
         var result = await _inner.InstallAsync(
-            InfrastructureComponentInstallerAdapters.ToSpecialKContext(context),
+            InfrastructureComponentContextMapper.ToSpecialKContext(context),
             cancellationToken);
 
-        return InfrastructureComponentInstallerAdapters.ToWpfStepResult(result);
+        return InfrastructureComponentResultMapper.ToWpfStepResult(result);
     }
 
     public void CleanupRootSpecialKBeforeProxyResolution(string targetPath, string specialKValue, string preferredProxyDllName)

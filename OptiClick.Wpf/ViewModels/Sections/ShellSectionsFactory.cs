@@ -1,3 +1,4 @@
+using OptiClick.Core.OptiScaler;
 using OptiClick.Wpf.Shell.Navigation;
 using OptiClick.Wpf.Shell.Settings;
 using OptiClick.Wpf.ViewModels.Sections.Home;
@@ -34,7 +35,7 @@ public sealed class ShellSectionsFactory
             {
                 StringsAccessor = input.StringsAccessor,
                 Games = input.Games,
-                SelectedGameAction = new SelectedGameActionViewModel(),
+                SelectedGameAction = new SelectedGameActionViewModel(input.StringsAccessor),
                 SelectGameAsync = input.SelectGameAsync,
                 ShowDetails = input.ShowDetails,
                 ShowInstallAsync = input.ShowInstallAsync,
@@ -103,14 +104,21 @@ public sealed class ShellSectionsFactory
 
     private static OptiScalerSectionViewModel CreateOptiScaler(OptiScalerSectionFactoryInput input)
     {
+        var stateController = new OptiScalerSectionStateController(
+            new CoreOptiScalerSectionSettingsCodec(),
+            input.InitialOptiScalerVariantOption,
+            input.InitialCommonIniSettings);
+        var optionController = new OptiScalerSectionOptionController(
+            OptiScalerSettingOptionProvider.Instance);
+
         return new OptiScalerSectionViewModel(
             new OptiScalerSectionViewModelOptions
             {
                 StringsAccessor = input.StringsAccessor,
                 OptiScalerVariantOptions = input.OptiScalerVariantOptions,
-                InitialOptiScalerVariantOption = input.InitialOptiScalerVariantOption,
-                InitialCommonIniSettings = input.InitialCommonIniSettings,
-                SaveSettings = input.SaveSettings
+                SaveHandler = input.SaveHandler,
+                StateController = stateController,
+                OptionController = optionController
             });
     }
 }

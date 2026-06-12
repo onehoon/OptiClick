@@ -38,9 +38,9 @@ public sealed class ExtraBundleInstaller : IExtraBundleInstaller
     public async Task<ComponentInstallStepResult> InstallAsync(ComponentInstallContext context, CancellationToken cancellationToken = default)
     {
         var result = await _inner.InstallAsync(
-            InfrastructureComponentInstallerAdapters.ToExtraBundleContext(context),
+            InfrastructureComponentContextMapper.ToExtraBundleContext(context),
             cancellationToken);
 
-        return InfrastructureComponentInstallerAdapters.ToWpfStepResult(result);
+        return InfrastructureComponentResultMapper.ToWpfStepResult(result);
     }
 }

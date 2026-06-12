@@ -35,6 +35,7 @@ public sealed class Fsr4Installer : IFsr4Installer
         var eligibility = _eligibilityResolver.Resolve(new Fsr4InstallEligibilityContext
         {
             UseFsr4 = context.UseFsr4,
+            Fsr4Variant = context.Fsr4Variant,
             GpuVendor = context.GpuVendor,
             GpuName = context.GpuName,
             GpuBundleKey = context.GpuBundleKey,

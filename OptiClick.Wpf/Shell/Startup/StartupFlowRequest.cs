@@ -14,6 +14,8 @@ public sealed class StartupFlowRequest
     public required Func<CancellationToken, Task> WaitForStartupDialogsReadyAsync { get; init; }
     public required Func<CancellationToken, Task> RunStartupAutoScanAsync { get; init; }
     public required Func<CancellationToken, Task> RefreshDeviceIdentityRulesAsync { get; init; }
+    // Device identity cache is optional UI data. Startup must continue even when it cannot be loaded.
+    public Action? StartDeviceIdentityRulesRefreshInBackground { get; init; }
 
     public required Action StartStartupDialogsInBackground { get; init; }
     public required Action StartSupportedGamesWikiRefreshInBackground { get; init; }

@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using System.Text;
-using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Logging;
 using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Shell.Dialogs;
@@ -63,7 +62,7 @@ public sealed class SelectionPopupCoordinator
             var signature = BuildSelectionPopupSignature(popup, selectionState, request.SelectedGame);
             LogInfo($"popup show source=selection_precheck kind={popup.Kind} remaining_before={requests.Count} signature={signature}");
             var result = await _dialogPresenter.ShowSafelyAsync(
-                BuildSelectionPopupDialogRequest(popup, request.Strings),
+                BuildSelectionPopupDialogRequest(popup, request.Text),
                 cancellationToken);
             LogInfo($"popup result source=selection_precheck kind={popup.Kind} result={result} signature={signature}");
             if (!ShouldConfirmSelectionPopup(result))
@@ -110,14 +109,16 @@ public sealed class SelectionPopupCoordinator
 
     private static AppDialogRequest BuildSelectionPopupDialogRequest(
         ShellPopupRequest request,
-        AppStrings strings)
+        SelectionPopupText text)
     {
+        ArgumentNullException.ThrowIfNull(text);
+
         var dialogTitle = request.Kind switch
         {
-            ShellPopupRequestKind.PrecheckFailure => strings.SettingsWarning,
-            ShellPopupRequestKind.ModNotice => strings.InstallNoticeDialogTitle,
-            ShellPopupRequestKind.SelectionNotice => strings.InstallNoticeDialogTitle,
-            _ => strings.InstallDialogTitle
+            ShellPopupRequestKind.PrecheckFailure => text.SettingsWarning,
+            ShellPopupRequestKind.ModNotice => text.InstallNoticeDialogTitle,
+            ShellPopupRequestKind.SelectionNotice => text.InstallNoticeDialogTitle,
+            _ => text.InstallDialogTitle
         };
 
         return new AppDialogRequest
@@ -133,7 +134,7 @@ public sealed class SelectionPopupCoordinator
             Summary = (request.Message ?? "").Trim(),
             BulletItems = request.BulletItems ?? Array.Empty<string>(),
             FooterText = (request.FooterText ?? "").Trim(),
-            PrimaryButtonText = strings.DialogButtonOk,
+            PrimaryButtonText = text.DialogButtonOk,
             SecondaryButtonText = ""
         };
     }
@@ -144,7 +145,7 @@ public sealed class SelectionPopupCoordinator
         GameCardViewModel? selectedGame)
     {
         var selectedGameId = NormalizeStatusCode(
-            selectionState.SelectedGameId ?? selectedGame?.GameEntry.GameId,
+            selectionState.SelectedGameId ?? selectedGame?.ResolvedGameId,
             "none");
         var normalizedMessage = NormalizeSelectionPopupMessage(request.Message);
         var normalizedBullets = NormalizeSelectionPopupMessage(string.Join("\n", request.BulletItems ?? Array.Empty<string>()));
@@ -187,7 +188,7 @@ public sealed record SelectionPopupChainRequest
     public required long SelectionVersion { get; init; }
     public required Func<long> ReadCurrentSelectionVersion { get; init; }
     public required Action<ShellInstallSelectionState> ApplySelectionState { get; init; }
-    public required AppStrings Strings { get; init; }
+    public required SelectionPopupText Text { get; init; }
     public GameCardViewModel? SelectedGame { get; init; }
 }
 

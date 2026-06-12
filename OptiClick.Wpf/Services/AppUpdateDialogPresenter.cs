@@ -1,4 +1,3 @@
-using System.Globalization;
 using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Models;
 
@@ -6,71 +5,67 @@ namespace OptiClick.Wpf.Services;
 
 public sealed class AppUpdateDialogPresenter
 {
-    public AppDialogRequest BuildNoUpdateDialog(string currentVersion, AppStrings strings)
+    public AppDialogRequest BuildNoUpdateDialog(string currentVersion, AppUpdateFlowText text)
     {
         _ = currentVersion;
-        var message = strings.UpdateLatestMessage;
+        var message = text.UpdateLatestMessage;
         return new AppDialogRequest
         {
-            Title = strings.UpdateCheckTitle,
+            Title = text.UpdateCheckTitle,
             Summary = message,
             Kind = AppDialogKind.Info,
             Severity = DialogSeverity.Info
         };
     }
 
-    public AppDialogRequest BuildUpdateAvailableDialog(AppUpdateInfo updateInfo, AppStrings strings)
+    public AppDialogRequest BuildUpdateAvailableDialog(AppUpdateInfo updateInfo, AppUpdateFlowText text)
     {
         ArgumentNullException.ThrowIfNull(updateInfo);
 
         return new AppDialogRequest
         {
-            Title = strings.UpdateAvailableTitle,
-            Summary = strings.UpdateAvailableSummary,
+            Title = text.UpdateAvailableTitle,
+            Summary = text.UpdateAvailableSummary,
             Kind = AppDialogKind.Warning,
             Severity = DialogSeverity.Warning,
             BulletItems = [],
-            PrimaryButtonText = strings.UpdateAvailablePrimaryButton,
-            SecondaryButtonText = strings.UpdateAvailableSecondaryButton,
+            PrimaryButtonText = text.UpdateAvailablePrimaryButton,
+            SecondaryButtonText = text.UpdateAvailableSecondaryButton,
             PrimaryResult = AppDialogResult.Continue,
             SecondaryResult = AppDialogResult.Cancel
         };
     }
 
-    public AppDialogRequest BuildPrepareFailedDialog(string errorCode, AppStrings strings)
+    public AppDialogRequest BuildPrepareFailedDialog(string errorCode, AppUpdateFlowText text)
     {
         return new AppDialogRequest
         {
-            Title = strings.UpdateFailedTitle,
-            Summary = strings.UpdatePrepareFailedSummary,
+            Title = text.UpdateFailedTitle,
+            Summary = text.UpdatePrepareFailedSummary,
             Kind = AppDialogKind.Warning,
             Severity = DialogSeverity.Warning,
             BulletItems =
             [
-                Format(strings.UpdateFailedReasonFormat, errorCode ?? ""),
-                strings.UpdateTryAgainLater
+                LocalizedTextFormatter.Format(text.UpdateFailedReasonFormat, errorCode ?? ""),
+                text.UpdateTryAgainLater
             ]
         };
     }
 
-    public AppDialogRequest BuildLaunchFailedDialog(string errorCode, AppStrings strings)
+    public AppDialogRequest BuildLaunchFailedDialog(string errorCode, AppUpdateFlowText text)
     {
         return new AppDialogRequest
         {
-            Title = strings.UpdateFailedTitle,
-            Summary = strings.UpdateLaunchFailedSummary,
+            Title = text.UpdateFailedTitle,
+            Summary = text.UpdateLaunchFailedSummary,
             Kind = AppDialogKind.Warning,
             Severity = DialogSeverity.Warning,
             BulletItems =
             [
-                Format(strings.UpdateFailedReasonFormat, errorCode ?? ""),
-                strings.UpdateRunCopiedInstaller
+                LocalizedTextFormatter.Format(text.UpdateFailedReasonFormat, errorCode ?? ""),
+                text.UpdateRunCopiedInstaller
             ]
         };
     }
 
-    private static string Format(string template, params object[] args)
-    {
-        return string.Format(CultureInfo.CurrentCulture, template ?? "", args ?? []);
-    }
 }

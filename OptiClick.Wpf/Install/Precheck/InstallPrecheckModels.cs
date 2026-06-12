@@ -1,3 +1,4 @@
+using OptiClick.Core.Install;
 using OptiClick.Wpf.Install.Planning;
 
 namespace OptiClick.Wpf.Install.Precheck;
@@ -56,7 +57,7 @@ public sealed record InstallPrecheckRequest
 {
     public string TargetPath { get; init; } = "";
     public string PreferredDllName { get; init; } = "";
-    public Shell.Games.ShellGameCardModel? Game { get; init; }
+    public InstallGameDescriptor? GameDescriptor { get; init; }
 }
 
 public sealed record InstallSelectionUiState

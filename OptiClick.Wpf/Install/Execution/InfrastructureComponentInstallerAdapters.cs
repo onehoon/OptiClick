@@ -1,112 +1,7 @@
 using OptiClick.Wpf.Install.Archives;
 using OptiClick.Wpf.Install.FileSystem;
-using OptiClick.Wpf.Shell.Games;
-using InfrastructureComponents = OptiClick.Infrastructure.Install.Components;
 
 namespace OptiClick.Wpf.Install.Execution;
-
-internal static class InfrastructureComponentInstallerAdapters
-{
-    public static ComponentInstallStepResult ToWpfStepResult(InfrastructureComponents.ComponentInstallStepResult result)
-    {
-        return ComponentInstallStepResult.FromCore(result.ToCore());
-    }
-
-    public static InfrastructureComponents.OptiPatcherInstallContext ToOptiPatcherContext(ComponentInstallContext context)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-
-        return new InfrastructureComponents.OptiPatcherInstallContext
-        {
-            TargetPath = context.TargetPath,
-            UseOptiPatcher = ShellGameInstallMetadataResolver.GetOptiPatcher(context.Game),
-            ModuleDownloadLinks = context.ModuleDownloadLinks,
-            OptiPatcherCachedArchivePath = context.OptiPatcherCachedArchivePath
-        };
-    }
-
-    public static InfrastructureComponents.ReFrameworkInstallContext ToReFrameworkContext(ComponentInstallContext context)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-
-        return new InfrastructureComponents.ReFrameworkInstallContext
-        {
-            TargetPath = context.TargetPath,
-            ReFrameworkDestination = ShellGameInstallMetadataResolver.GetReFrameworkUrl(context.Game) ?? "",
-            ModuleDownloadLinks = context.ModuleDownloadLinks,
-            ReFrameworkCachedArchivePath = context.ReFrameworkCachedArchivePath
-        };
-    }
-
-    public static InfrastructureComponents.SpecialKInstallContext ToSpecialKContext(ComponentInstallContext context)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-
-        return new InfrastructureComponents.SpecialKInstallContext
-        {
-            TargetPath = context.TargetPath,
-            FinalDllName = context.FinalDllName,
-            SpecialKValue = ShellGameInstallMetadataResolver.GetSpecialK(context.Game) ?? "",
-            ModuleDownloadLinks = context.ModuleDownloadLinks,
-            SpecialKCachedArchivePath = context.SpecialKCachedArchivePath
-        };
-    }
-
-    public static InfrastructureComponents.UltimateAsiLoaderInstallContext ToUltimateAsiLoaderContext(ComponentInstallContext context)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-
-        return new InfrastructureComponents.UltimateAsiLoaderInstallContext
-        {
-            TargetPath = context.TargetPath,
-            UseUltimateAsiLoader = context.UseUltimateAsiLoader,
-            UalDetectedNames = context.UalDetectedNames,
-            ModuleDownloadLinks = context.ModuleDownloadLinks,
-            UalCachedArchivePath = context.UalCachedArchivePath
-        };
-    }
-
-    public static InfrastructureComponents.ExtraBundleInstallContext ToExtraBundleContext(ComponentInstallContext context)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-
-        return new InfrastructureComponents.ExtraBundleInstallContext
-        {
-            TargetPath = context.TargetPath,
-            ExtraBundleAlias = ShellGameInstallMetadataResolver.GetExtraBundle(context.Game) ?? "",
-            ModuleDownloadLinks = context.ModuleDownloadLinks
-        };
-    }
-
-    public static InfrastructureComponents.Unreal5InstallContext ToUnreal5Context(ComponentInstallContext context)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-
-        return new InfrastructureComponents.Unreal5InstallContext
-        {
-            TargetPath = context.TargetPath,
-            UseUnreal5 = ShellGameInstallMetadataResolver.GetUnreal5(context.Game),
-            ModuleDownloadLinks = context.ModuleDownloadLinks,
-            Unreal5CachedArchivePath = context.Unreal5CachedArchivePath
-        };
-    }
-
-    public static InfrastructureComponents.Fsr4InstallContext ToFsr4Context(ComponentInstallContext context)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-
-        return new InfrastructureComponents.Fsr4InstallContext
-        {
-            TargetPath = context.TargetPath,
-            UseFsr4 = context.Fsr4Required,
-            Fsr4SourceArchivePath = context.Fsr4SourceArchive,
-            GpuVendor = context.GpuVendor,
-            GpuName = context.GpuName,
-            GpuBundleKey = context.GpuBundleKey,
-            GpuGroup = context.GpuGroup
-        };
-    }
-}
 
 internal sealed class ComponentArchiveSourceReaderAdapter : OptiClick.Infrastructure.Install.Components.IComponentArchiveSourceReader
 {
@@ -160,10 +55,10 @@ internal sealed class DllPayloadInstallerAdapter : OptiClick.Infrastructure.Inst
                 TargetPath = request.TargetPath,
                 DestinationRelativePath = request.DestinationRelativePath,
                 SourceDllName = request.SourceDllName,
-            Url = request.Url,
-            CachedArchivePath = request.CachedArchivePath,
-            DownloadFileName = request.DownloadFileName,
-            Sha256 = request.Sha256
+                Url = request.Url,
+                CachedArchivePath = request.CachedArchivePath,
+                DownloadFileName = request.DownloadFileName,
+                Sha256 = request.Sha256
             },
             cancellationToken);
 
@@ -232,15 +127,15 @@ internal sealed class ComponentArchiveDownloaderAdapter : OptiClick.Infrastructu
         _inner = inner ?? throw new ArgumentNullException(nameof(inner));
     }
 
-        public async Task<OptiClick.Infrastructure.Install.Components.ComponentArchiveDownloadResult> DownloadAsync(
-            string url,
-            string destinationPath,
-            TimeSpan timeout,
-            CancellationToken cancellationToken = default,
-            string fallbackSha256 = "")
-        {
-            var result = await _inner.DownloadAsync(url, destinationPath, timeout, cancellationToken, fallbackSha256);
-            return new OptiClick.Infrastructure.Install.Components.ComponentArchiveDownloadResult
+    public async Task<OptiClick.Infrastructure.Install.Components.ComponentArchiveDownloadResult> DownloadAsync(
+        string url,
+        string destinationPath,
+        TimeSpan timeout,
+        CancellationToken cancellationToken = default,
+        string fallbackSha256 = "")
+    {
+        var result = await _inner.DownloadAsync(url, destinationPath, timeout, cancellationToken, fallbackSha256);
+        return new OptiClick.Infrastructure.Install.Components.ComponentArchiveDownloadResult
         {
             IsSuccess = result.IsSuccess,
             DestinationPath = result.DestinationPath,

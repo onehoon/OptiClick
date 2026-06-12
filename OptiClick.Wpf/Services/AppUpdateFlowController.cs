@@ -22,13 +22,13 @@ public sealed class AppUpdateFlowController
     public AppUpdateCheckResult CheckForUpdate(AppUpdateFlowRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(request.Strings);
+        ArgumentNullException.ThrowIfNull(request.Text);
 
         var logs = new List<AppUpdateFlowLogEntry>();
         if (!_appUpdateService.TryResolveUpdate(request.LatestRuntimeData, request.CurrentVersion, out var updateInfo)
             || updateInfo is null)
         {
-            var noUpdateDialog = _dialogPresenter.BuildNoUpdateDialog(request.CurrentVersion, request.Strings);
+            var noUpdateDialog = _dialogPresenter.BuildNoUpdateDialog(request.CurrentVersion, request.Text);
             logs.Add(Info($"no update available current={request.CurrentVersion}"));
             return new AppUpdateCheckResult
             {
@@ -44,7 +44,7 @@ public sealed class AppUpdateFlowController
         {
             IsUpdateAvailable = true,
             UpdateInfo = updateInfo,
-            DialogRequest = _dialogPresenter.BuildUpdateAvailableDialog(updateInfo, request.Strings),
+            DialogRequest = _dialogPresenter.BuildUpdateAvailableDialog(updateInfo, request.Text),
             Logs = logs
         };
     }
@@ -54,7 +54,7 @@ public sealed class AppUpdateFlowController
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(request.Strings);
+        ArgumentNullException.ThrowIfNull(request.Text);
         ArgumentNullException.ThrowIfNull(request.UpdateInfo);
 
         var logs = new List<AppUpdateFlowLogEntry>();
@@ -68,8 +68,8 @@ public sealed class AppUpdateFlowController
             {
                 IsSuccess = false,
                 ShouldShutdown = false,
-                StatusText = request.Strings.UpdateFailed,
-                DialogRequest = _dialogPresenter.BuildPrepareFailedDialog(dialogCode, request.Strings),
+                StatusText = request.Text.UpdateFailed,
+                DialogRequest = _dialogPresenter.BuildPrepareFailedDialog(dialogCode, request.Text),
                 Logs = logs
             };
         }
@@ -90,8 +90,8 @@ public sealed class AppUpdateFlowController
             {
                 IsSuccess = false,
                 ShouldShutdown = false,
-                StatusText = request.Strings.UpdateFailed,
-                DialogRequest = _dialogPresenter.BuildLaunchFailedDialog(dialogCode, request.Strings),
+                StatusText = request.Text.UpdateFailed,
+                DialogRequest = _dialogPresenter.BuildLaunchFailedDialog(dialogCode, request.Text),
                 Logs = logs
             };
         }
@@ -101,7 +101,7 @@ public sealed class AppUpdateFlowController
         {
             IsSuccess = true,
             ShouldShutdown = true,
-            StatusText = request.Strings.UpdateLaunchedClosing,
+            StatusText = request.Text.UpdateLaunchedClosing,
             Logs = logs
         };
     }

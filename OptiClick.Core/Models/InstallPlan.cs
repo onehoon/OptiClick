@@ -13,7 +13,7 @@ public sealed record InstallPlan
     public string FinalDllName { get; init; } = "";
     public bool UseUal { get; init; }
     public UalMode UalMode { get; init; } = UalMode.None;
-    public bool Fsr4Required { get; init; }
+    public bool ShouldInstallFsr4 { get; init; }
     public IReadOnlyList<string> ComponentOrder { get; init; } = Array.Empty<string>();
     public IReadOnlyList<ComponentPlan> Components { get; init; } = Array.Empty<ComponentPlan>();
     public IReadOnlyList<string> BackupCandidates { get; init; } = Array.Empty<string>();

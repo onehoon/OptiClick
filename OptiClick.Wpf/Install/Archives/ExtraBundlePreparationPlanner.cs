@@ -1,4 +1,6 @@
 using System.IO;
+using OptiClick.Core.Install;
+using OptiClick.Wpf.Install.Flow;
 
 namespace OptiClick.Wpf.Install.Archives;
 
@@ -16,10 +18,11 @@ public sealed class ExtraBundlePreparationPlanner
 {
     public ExtraBundlePreparationPlan CreatePlan(
         string extraBundleAlias,
-        IReadOnlyDictionary<string, object?> moduleDownloadLinks)
+        ModuleDownloadLinkContext moduleDownloadLinks)
     {
-        var alias = NormalizeAlias(extraBundleAlias);
-        if (string.IsNullOrWhiteSpace(alias))
+        var displayAlias = NormalizeDisplayAlias(extraBundleAlias);
+        var lookupAlias = ModuleDownloadLinkAliasPolicy.Normalize(extraBundleAlias);
+        if (string.IsNullOrWhiteSpace(lookupAlias))
         {
             return new ExtraBundlePreparationPlan
             {
@@ -27,33 +30,33 @@ public sealed class ExtraBundlePreparationPlanner
             };
         }
 
-        if (!moduleDownloadLinks.TryGetValue(alias, out var rawEntry)
-            || rawEntry is not IReadOnlyDictionary<string, object?> entry)
+        moduleDownloadLinks ??= ModuleDownloadLinkContext.Empty;
+        if (!moduleDownloadLinks.TryResolveLink(lookupAlias, out var entry))
         {
             return new ExtraBundlePreparationPlan
             {
-                Alias = alias,
+                Alias = displayAlias,
                 ErrorCode = "missing_resource_entry"
             };
         }
 
-        var url = ReadText(entry, "url");
+        var url = entry.Url;
         if (string.IsNullOrWhiteSpace(url))
         {
             return new ExtraBundlePreparationPlan
             {
-                Alias = alias,
+                Alias = displayAlias,
                 ErrorCode = "missing_url"
             };
         }
 
-        var filename = ResolveFilename(entry, url, alias);
+        var filename = ResolveFilename(entry, url, displayAlias);
         var extension = Path.GetExtension(filename).ToLowerInvariant();
         if (extension is not ".zip" and not ".7z")
         {
             return new ExtraBundlePreparationPlan
             {
-                Alias = alias,
+                Alias = displayAlias,
                 Url = url,
                 Filename = filename,
                 ErrorCode = "unsupported_extension"
@@ -63,20 +66,20 @@ public sealed class ExtraBundlePreparationPlanner
         return new ExtraBundlePreparationPlan
         {
             IsSuccess = true,
-            Alias = alias,
+            Alias = displayAlias,
             Url = url,
             Filename = filename
         };
     }
 
-    private static string NormalizeAlias(string value)
+    private static string NormalizeDisplayAlias(string value)
     {
         return (value ?? "").Trim().ToLowerInvariant();
     }
 
-    private static string ResolveFilename(IReadOnlyDictionary<string, object?> entry, string url, string alias)
+    private static string ResolveFilename(ModuleDownloadLinkEntry entry, string url, string alias)
     {
-        var filename = Path.GetFileName(ReadText(entry, "filename"));
+        var filename = Path.GetFileName(entry.Filename);
         if (!string.IsNullOrWhiteSpace(filename))
         {
             return filename;
@@ -92,19 +95,5 @@ public sealed class ExtraBundlePreparationPlanner
         }
 
         return $"{alias}.7z";
-    }
-
-    private static string ReadText(IReadOnlyDictionary<string, object?> values, string key)
-    {
-        if (!values.TryGetValue(key, out var value) || value is null)
-        {
-            return "";
-        }
-
-        return value switch
-        {
-            string text => text.Trim(),
-            _ => value.ToString()?.Trim() ?? ""
-        };
     }
 }

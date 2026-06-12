@@ -1,10 +1,10 @@
 using System.IO;
+using OptiClick.Core.Install;
 using OptiClick.Wpf.Install.Config;
 using OptiClick.Wpf.Install.Execution;
 using OptiClick.Wpf.Install.FileSystem;
 using OptiClick.Wpf.Install.Precheck;
 using OptiClick.Wpf.Logging;
-using OptiClick.Wpf.Shell.Games;
 using OptiClick.Wpf.Shell.RuntimeData;
 using InfrastructureUninstall = OptiClick.Infrastructure.Install.Uninstall;
 
@@ -26,9 +26,10 @@ public interface IOptiClickUninstallExecutor
 public sealed record OptiClickUninstallPlanBuildRequest
 {
     public string TargetPath { get; init; } = "";
-    public ShellGameCardModel? SelectedGame { get; init; }
+    public InstallGameDescriptor? GameDescriptor { get; init; }
     public string FinalProxyDllName { get; init; } = "";
     public IReadOnlyList<string> UalDetectedNames { get; init; } = [];
+    public IReadOnlyList<RuntimeDataRawRow> EngineIniProfileRows { get; init; } = [];
 }
 
 public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuilder
@@ -67,17 +68,17 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
     private static IReadOnlyList<InfrastructureUninstall.UninstallComponentTarget> BuildComponentTargets(
         OptiClickUninstallPlanBuildRequest request)
     {
-        var game = request.SelectedGame;
-        if (game is null)
+        var descriptor = request.GameDescriptor;
+        if (descriptor is null)
         {
             return Array.Empty<InfrastructureUninstall.UninstallComponentTarget>();
         }
 
         var targets = new List<InfrastructureUninstall.UninstallComponentTarget>();
         AddOptiScalerConfigTarget(targets);
-        AddReFrameworkTarget(targets, ShellGameInstallMetadataResolver.GetReFrameworkUrl(game));
-        AddSpecialKTarget(targets, ShellGameInstallMetadataResolver.GetSpecialK(game), ResolveFinalProxyDllName(request, game));
-        AddUltimateAsiLoaderTargets(targets, ShellGameInstallMetadataResolver.GetUltimateAsiLoader(game), request.UalDetectedNames);
+        AddReFrameworkTarget(targets, descriptor.ReFrameworkUrl);
+        AddSpecialKTarget(targets, descriptor.SpecialK, ResolveFinalProxyDllName(request, descriptor));
+        AddUltimateAsiLoaderTargets(targets, descriptor.RequiresUltimateAsiLoader, request.UalDetectedNames);
         return targets
             .DistinctBy(static target => $"{target.Kind}:{NormalizeTargetKey(target.RelativePath)}")
             .ToArray();
@@ -98,8 +99,8 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
         OptiClickUninstallPlanBuildRequest request,
         IProfilePathResolver profilePathResolver)
     {
-        var rows = request.SelectedGame?.InstallMetadata?.EngineIniProfileRows;
-        if (rows is null || rows.Count == 0)
+        var rows = request.EngineIniProfileRows ?? [];
+        if (rows.Count == 0)
         {
             return Array.Empty<InfrastructureUninstall.UninstallEngineIniCleanupTarget>();
         }
@@ -225,7 +226,7 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
 
     private static string ResolveFinalProxyDllName(
         OptiClickUninstallPlanBuildRequest request,
-        ShellGameCardModel game)
+        InstallGameDescriptor descriptor)
     {
         var requested = Path.GetFileName((request.FinalProxyDllName ?? "").Trim());
         if (!string.IsNullOrWhiteSpace(requested)
@@ -234,7 +235,7 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
             return requested;
         }
 
-        var preferred = Path.GetFileName(ShellGameInstallMetadataResolver.GetOptiScalerDllName(game));
+        var preferred = Path.GetFileName((descriptor.OptiScalerDllName ?? "").Trim());
         if (!string.IsNullOrWhiteSpace(preferred)
             && preferred.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
         {

@@ -9,5 +9,5 @@ public interface IShellGameCardViewModelFactory
         IReadOnlyList<ShellGameCardModel> games,
         RuntimeContext? runtimeContext,
         IReadOnlyDictionary<string, string>? targetPathByGameId = null,
-        IReadOnlyDictionary<string, object?>? moduleDownloadLinks = null);
+        ModuleDownloadLinkContext? moduleDownloadLinks = null);
 }

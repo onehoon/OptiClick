@@ -1,5 +1,4 @@
 using OptiClick.Core.Runtime;
-using OptiClick.Wpf.Localization;
 
 namespace OptiClick.Wpf.Shell.Runtime;
 
@@ -9,16 +8,17 @@ public sealed class RuntimeHeaderPresenter
         DeviceInfo? resolvedDevice,
         GpuInfo? selectedGpu,
         IReadOnlyList<GpuInfo>? gpus,
-        AppStrings strings)
+        RuntimeSummaryStateText text)
     {
+        ArgumentNullException.ThrowIfNull(text);
         return new RuntimeHeaderPresentation
         {
-            DeviceText = BuildLocalizedDeviceSummary(resolvedDevice, strings),
-            GpuText = BuildLocalizedGpuSummary(selectedGpu, gpus, strings)
+            DeviceText = BuildLocalizedDeviceSummary(resolvedDevice, text),
+            GpuText = BuildLocalizedGpuSummary(selectedGpu, gpus, text)
         };
     }
 
-    private static string BuildLocalizedDeviceSummary(DeviceInfo? device, AppStrings strings)
+    private static string BuildLocalizedDeviceSummary(DeviceInfo? device, RuntimeSummaryStateText text)
     {
         var manufacturer = (device?.Manufacturer ?? "").Trim();
         var model = (device?.Model ?? "").Trim();
@@ -39,27 +39,27 @@ public sealed class RuntimeHeaderPresenter
             return model;
         }
 
-        return strings.RuntimeUnknownDevice;
+        return text.RuntimeUnknownDevice;
     }
 
     private static string BuildLocalizedGpuSummary(
         GpuInfo? selectedGpu,
         IReadOnlyList<GpuInfo>? gpus,
-        AppStrings strings)
+        RuntimeSummaryStateText text)
     {
         if (selectedGpu is not null)
         {
-            return LocalizeGpuName(selectedGpu.Name, strings);
+            return LocalizeGpuName(selectedGpu.Name, text);
         }
 
         if (gpus is null || gpus.Count == 0)
         {
-            return strings.RuntimeUnknownGpu;
+            return text.RuntimeUnknownGpu;
         }
 
         var primary = gpus.FirstOrDefault(static gpu => gpu.IsPrimary);
         var primaryGpu = primary ?? gpus[0];
-        var primaryName = LocalizeGpuName(primaryGpu.Name, strings);
+        var primaryName = LocalizeGpuName(primaryGpu.Name, text);
         if (gpus.Count == 1)
         {
             return primaryName;
@@ -68,18 +68,18 @@ public sealed class RuntimeHeaderPresenter
         var secondary = gpus.FirstOrDefault(gpu => !ReferenceEquals(gpu, primaryGpu));
         if (secondary is null)
         {
-            return $"{primaryName} {string.Format(System.Globalization.CultureInfo.CurrentCulture, strings.RuntimeGpuSummaryMoreSuffix, gpus.Count - 1)}";
+            return $"{primaryName} {string.Format(System.Globalization.CultureInfo.CurrentCulture, text.RuntimeGpuSummaryMoreSuffix, gpus.Count - 1)}";
         }
 
-        return $"{primaryName} + {LocalizeGpuName(secondary.Name, strings)}";
+        return $"{primaryName} + {LocalizeGpuName(secondary.Name, text)}";
     }
 
-    private static string LocalizeGpuName(string? rawName, AppStrings strings)
+    private static string LocalizeGpuName(string? rawName, RuntimeSummaryStateText text)
     {
         var normalized = (rawName ?? "").Trim();
         if (string.IsNullOrWhiteSpace(normalized) || string.Equals(normalized, "Unknown GPU", StringComparison.OrdinalIgnoreCase))
         {
-            return strings.RuntimeUnknownGpu;
+            return text.RuntimeUnknownGpu;
         }
 
         return normalized;

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using OptiClick.Core.Abstractions;
 using OptiClick.Core.Models;
+using OptiClick.Core.OptiScaler;
 using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Install.Archives;
 using OptiClick.Wpf.Install.Flow;
@@ -15,19 +16,16 @@ using OptiClick.Wpf.Install.Uninstall;
 using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Logging;
 using OptiClick.Wpf.Models;
-using OptiClick.Wpf.Shell.Runtime.DeviceIdentity;
-using OptiClick.Wpf.Shell.RuntimeData;
 using OptiClick.Wpf.Services;
 using OptiClick.Wpf.Shell.Actions;
 using OptiClick.Wpf.Shell.Dialogs;
 using OptiClick.Wpf.Shell.Flow;
 using OptiClick.Wpf.Shell.Games;
 using OptiClick.Wpf.Shell.Gpu;
-using OptiClick.Wpf.Shell.Games.GpuBundle;
 using OptiClick.Wpf.Shell.Localization;
 using OptiClick.Wpf.Shell.Navigation;
-using OptiClick.Wpf.Shell.OptiScaler;
 using OptiClick.Wpf.Shell.Runtime;
+using OptiClick.Wpf.Shell.RuntimeData;
 using OptiClick.Wpf.Shell.Scan;
 using OptiClick.Wpf.Shell.Selection;
 using OptiClick.Wpf.Shell.Settings;
@@ -42,83 +40,30 @@ using OptiClick.Wpf.ViewModels.Sections.Scan;
 using OptiClick.Wpf.ViewModels.Sections.Settings;
 using OptiClick.Wpf.ViewModels.Sections.SupportedGames;
 using OptiClick.Wpf.ViewModels.Shell;
-using OptiClick.Infrastructure.FileSystem;
-using OperatingSystemSupportState = OptiClick.Infrastructure.Windows.OperatingSystemSupportState;
 
 namespace OptiClick.Wpf.ViewModels;
 
-public sealed partial class MainViewModel : ViewModelBase
+public sealed partial class MainViewModel : ViewModelBase, IDisposable
 {
-    private const string LanguagePreferenceAuto = "auto";
-    private const string LanguagePreferenceKorean = "ko";
-    private const string LanguagePreferenceEnglish = "en";
+    private const string LanguagePreferenceAuto = AppLanguagePreference.Auto;
+    private const string LanguagePreferenceKorean = AppLanguagePreference.Korean;
+    private const string LanguagePreferenceEnglish = AppLanguagePreference.English;
     private const string LanguageOptionAuto = "Auto";
     private const string LanguageOptionKorean = "\uD55C\uAD6D\uC5B4";
     private const string LanguageOptionEnglish = "English";
-    private const string GpuManifestRestartRequiredErrorCode = "gpu_bundle_manifest_restart_required";
 
     // Core services
     private readonly IWritableAppLanguageProvider _languageProvider;
     private readonly IShellMockDataProvider _mockDataProvider;
 
-    // Runtime/catalog services
-    private readonly IOperatingSystemSupportPolicy _operatingSystemSupportPolicy;
-    private readonly IShellGameCardViewModelFactory? _shellGameCardViewModelFactory;
-    private readonly DeviceIdentityRulesFlowController _deviceIdentityRulesFlowController;
-    private readonly RuntimeContextCoordinator _runtimeContextCoordinator;
-    private readonly RuntimeCatalogCoordinator _runtimeCatalogCoordinator;
-    private readonly IRemoteGpuBundleManifestClient _gpuBundleManifestClient;
-    private readonly IGpuBundleManifestRuleResolver _gpuBundleManifestRuleResolver;
-
     // Install services
-    private readonly GameSelectionFlowController _gameSelectionFlowController;
-    private readonly ArchiveReadinessFlowController _archiveReadinessFlowController;
-    private readonly InstallExecutionCoordinator _installExecutionCoordinator;
-    private readonly UninstallFlowCoordinator _uninstallFlowCoordinator;
+    private readonly MainShellFeatureFacades _features;
+    private readonly MainViewModelStateApplier _mainStateApplier;
 
-    // App/update/support services
-    private readonly IAppVersionProvider _appVersionProvider;
-    private readonly AppUpdateFlowController _appUpdateFlowController;
-    private readonly GameDetailsDialogPresenter _gameDetailsDialogPresenter;
-    private readonly IAppLogger _appLogger;
-    private readonly IAppLocalDataPathProvider _localDataPathProvider;
+    // Shell services
     private readonly IAppStringsProvider _appStringsProvider;
-    private readonly IFirstRunStateStore _firstRunStateStore;
     private readonly ShellNavigationState _navigationState;
-    private readonly DialogPresenter _dialogPresenter;
-    private readonly IInstallManagementDialogService _installManagementDialogService;
-    private readonly OnceDialogGate _remoteCatalogDialogGate;
-    private readonly UserSettingsController _userSettingsController;
-    private readonly IOptiScalerCommonIniSettingsStore _optiScalerCommonIniSettingsStore;
-    private readonly ScanVisibleGameResolver _scanVisibleGameResolver;
-    private readonly StartupNoticePresenter _startupNoticePresenter;
-    private readonly StartupAnnouncementFlowController _startupAnnouncementFlowController;
-    private readonly ShellCommandActionController _shellCommandActionController;
-    private readonly LocalizationStateController _localizationStateController;
-    private readonly RuntimeSummaryStateController _runtimeSummaryStateController;
-    private readonly MainViewModelBusyStateApplier _busyStateApplier;
-    private readonly InstallPopupPresenter _installPopupPresenter;
-    private readonly FlowLogDispatcher _flowLogDispatcher;
-    private readonly MainViewModelFlowRequestFactory _flowRequestFactory;
-    private readonly AppUpdateCoordinator _appUpdateCoordinator;
-    private readonly MainViewModelResultApplier _resultApplier;
-    private readonly GameCardSelectionStateController _gameCardSelectionStateController;
-    private readonly GameMasterCoverPrefetchCoordinator _gameMasterCoverPrefetchCoordinator;
-    private readonly ICoverCacheBootstrapService _coverCacheBootstrapService;
-    private readonly StartupBackgroundTaskManager _startupBackgroundTaskManager;
-    private readonly ArchiveReadinessRefreshCoordinator _archiveReadinessRefreshCoordinator;
-    private readonly ArchiveReadinessWarmupController _archiveReadinessWarmupController;
-    private readonly StartupFlowCoordinator _startupFlowCoordinator;
-    private readonly SelectionPopupCoordinator _selectionPopupCoordinator;
-    private readonly GpuSelectionCoordinator _gpuSelectionCoordinator;
-    private readonly object _startupPreparationStateGate = new();
-    private readonly object _startupDialogsReadyGate = new();
-    private Task _startupDialogsReadyTask = Task.CompletedTask;
-
-    // Locks
-    private readonly SemaphoreSlim _deviceRulesRefreshLock = new(1, 1);
-    private readonly SemaphoreSlim _scanLock = new(1, 1);
-    private readonly SemaphoreSlim _installExecutionLock = new(1, 1);
+    private readonly MainShellOperationLocks _operationLocks = new();
     // UI state
     private readonly AppLanguage _systemPreferredLanguage = AppLanguage.English;
     private AppLanguage _selectedLanguage = AppLanguage.English;
@@ -133,13 +78,10 @@ public sealed partial class MainViewModel : ViewModelBase
     // Install/update state
     private bool _isInstallExecutionInProgress;
     private bool _isAppUpdateInProgress;
-    private bool _gpuManifestRestartRequired;
-    private bool _gpuManifestRestartDialogShown;
     private bool _suppressHomeNavigationForAutoSelection;
-    private bool _pendingAdministratorRelaunchCancelledNotice;
     private ShellInstallSelectionState _selectionState = new();
     private long _selectionRequestVersion;
-    private AppStrings _strings = new AppStringsProvider().Get(AppLanguage.English);
+    private AppStrings _strings = null!;
 
     public MainViewModel(
         MainViewModelRequiredDependencies requiredDependencies,
@@ -150,178 +92,17 @@ public sealed partial class MainViewModel : ViewModelBase
         bool allowDependencyFallbacks = true,
         bool seedMockGameCards = true,
         bool seedMockScanFolders = true)
+        : this(
+            MainViewModelFallbackDependencyResolver.Resolve(
+                requiredDependencies,
+                runtime,
+                scan,
+                install,
+                app,
+                allowFallbackResolution: allowDependencyFallbacks),
+            seedMockGameCards,
+            seedMockScanFolders)
     {
-        var resolved = MainViewModelDependencyResolver.Resolve(
-            requiredDependencies,
-            runtime,
-            scan,
-            install,
-            app,
-            allowFallbackResolution: allowDependencyFallbacks);
-
-        _languageProvider = resolved.LanguageProvider;
-        _systemPreferredLanguage = _languageProvider.CurrentLanguage;
-        _mockDataProvider = resolved.MockDataProvider;
-        _operatingSystemSupportPolicy = resolved.OperatingSystemSupportPolicy;
-        _shellGameCardViewModelFactory = resolved.ShellGameCardViewModelFactory;
-        _deviceIdentityRulesFlowController = resolved.DeviceIdentityRulesFlowController;
-        _gpuBundleManifestClient = resolved.GpuBundleManifestClient;
-        _gpuBundleManifestRuleResolver = resolved.GpuBundleManifestRuleResolver;
-        _gameSelectionFlowController = resolved.GameSelectionFlowController;
-        _appVersionProvider = resolved.AppVersionProvider;
-        _appLogger = resolved.AppLogger;
-        _localDataPathProvider = resolved.LocalDataPathProvider;
-        _appStringsProvider = resolved.AppStringsProvider;
-        _firstRunStateStore = resolved.FirstRunStateStore;
-        _flowLogDispatcher = resolved.FlowLogDispatcher;
-        _flowRequestFactory = resolved.FlowRequestFactory;
-        _navigationState = resolved.NavigationState;
-        _dialogPresenter = resolved.DialogPresenter;
-        _installManagementDialogService = resolved.InstallManagementDialogService;
-        _remoteCatalogDialogGate = resolved.RemoteCatalogDialogGate;
-        _userSettingsController = resolved.UserSettingsController;
-        _optiScalerCommonIniSettingsStore = new OptiScalerCommonIniSettingsStore(_localDataPathProvider, _appLogger);
-        _scanVisibleGameResolver = resolved.ScanVisibleGameResolver;
-        _installPopupPresenter = resolved.InstallPopupPresenter;
-        _archiveReadinessFlowController = resolved.ArchiveReadinessFlowController;
-        _resultApplier = resolved.ResultApplier;
-        _installExecutionCoordinator = new InstallExecutionCoordinator(resolved.InstallFlowController);
-        _uninstallFlowCoordinator = new UninstallFlowCoordinator(
-            resolved.OptiClickUninstallPlanBuilder,
-            resolved.OptiClickUninstallExecutor,
-            _dialogPresenter,
-            _appLogger);
-        _startupNoticePresenter = resolved.StartupNoticePresenter;
-        _startupAnnouncementFlowController = resolved.StartupAnnouncementFlowController;
-        _shellCommandActionController = resolved.ShellCommandActionController;
-        _localizationStateController = resolved.LocalizationStateController;
-        _runtimeSummaryStateController = resolved.RuntimeSummaryStateController;
-        _busyStateApplier = resolved.BusyStateApplier;
-        _appUpdateFlowController = resolved.AppUpdateFlowController;
-        _appUpdateCoordinator = resolved.AppUpdateCoordinator;
-        _gameDetailsDialogPresenter = resolved.GameDetailsDialogPresenter;
-        _gameCardSelectionStateController = resolved.GameCardSelectionStateController;
-        _gameMasterCoverPrefetchCoordinator = resolved.GameMasterCoverPrefetchCoordinator;
-        _coverCacheBootstrapService = resolved.CoverCacheBootstrapService;
-        _startupBackgroundTaskManager = resolved.StartupBackgroundTaskManager;
-        _archiveReadinessRefreshCoordinator = resolved.ArchiveReadinessRefreshCoordinator;
-        _archiveReadinessWarmupController = resolved.ArchiveReadinessWarmupController;
-        _startupFlowCoordinator = resolved.StartupFlowCoordinator;
-        _selectionPopupCoordinator = resolved.SelectionPopupCoordinator;
-        _gpuSelectionCoordinator = resolved.GpuSelectionCoordinator;
-        _runtimeContextCoordinator = resolved.RuntimeContextCoordinator;
-        _runtimeCatalogCoordinator = resolved.RuntimeCatalogCoordinator;
-        DialogHost = resolved.DialogHost;
-        InstallManagementDialogHost = resolved.InstallManagementDialogHost;
-        var settingsLanguageOptions = new ObservableCollection<string> { LanguageOptionAuto, LanguageOptionKorean, LanguageOptionEnglish };
-        var optiScalerVariantOptions = new ObservableCollection<OptiScalerVariantSelectionOption>();
-        Navigation = resolved.ShellChrome.Navigation;
-        RuntimeHeader = resolved.ShellChrome.RuntimeHeader;
-        StartupOverlay = resolved.ShellChrome.StartupOverlay;
-        ShellBusyState = resolved.ShellChrome.ShellBusyState;
-        InitializeCommandSet();
-        var sections = resolved.ShellSectionsCompositionFactory.Create(
-            new ShellSectionsCompositionFactoryInput
-            {
-                ShellSectionsFactory = resolved.ShellSectionsFactory,
-                MockDataProvider = _mockDataProvider,
-                SeedMockGameCards = seedMockGameCards,
-                SeedMockScanFolders = seedMockScanFolders,
-                StringsAccessor = () => Strings,
-                Home = new HomeSectionCompositionInput
-                {
-                    SelectGameAsync = (game, cancellationToken) => SelectGameCardAsync(game, cancellationToken),
-                    ShowDetails = ShowDetailsDialog,
-                    ShowInstallAsync = ShowInstallDialogAsync,
-                    CanSelectGame = () => !_isInstallExecutionInProgress && !_isAppUpdateInProgress,
-                    CanShowDetails = () => SelectedGame is not null,
-                    CanShowInstall = () => SelectedGame is not null
-                                          && !_isInstallExecutionInProgress
-                                          && !_isAppUpdateInProgress
-                                          && !ShouldBlockStartupForUnsupportedOperatingSystem(),
-                    OnSelectGameException = ex => LogError(MainViewModelLogCategories.Command, "select game command failed", ex),
-                    OnShowInstallException = ex => LogError(MainViewModelLogCategories.Command, "install command failed", ex)
-                },
-                Scan = new ScanSectionCompositionInput
-                {
-                    ScanFolderDiscoveryService = resolved.ScanFolderDiscoveryService,
-                    ScanResultCoordinatorFactory = resolved.ScanResultCoordinatorFactory,
-                    ScanOrchestratorFactory = resolved.ScanOrchestratorFactory,
-                    ScanFlowController = resolved.ScanFlowController,
-                    ScanFolderListController = resolved.ScanFolderListController,
-                    ScanFolderActionController = resolved.ScanFolderActionController,
-                    ScanLock = _scanLock,
-                    ScannedGameState = _scannedGameState,
-                    DialogPresenter = _dialogPresenter,
-                    FlowLogDispatcher = _flowLogDispatcher,
-                    CreateScanStateUpdate = _resultApplier.CreateScanStateUpdate,
-                    RemoteCatalogErrorCodeAccessor = () => _runtimeShellState.LatestRemoteCatalogErrorCode,
-                    ReadSuppressHomeNavigationForAutoSelection = () => _suppressHomeNavigationForAutoSelection,
-                    SetSuppressHomeNavigationForAutoSelection = value => _suppressHomeNavigationForAutoSelection = value,
-                    ApplyStateUpdate = ApplyStateUpdate,
-                    SetCurrentView = SetCurrentView,
-                    RecomputeSelectionAfterScanAsync = RecomputeSelectionAfterScanAsync,
-                    IsMultiGpuBlocked = () => _gpuSelectionCoordinator.MultiGpuBlocked,
-                    BuildScanRequest = BuildScanRequest,
-                    ClearVisibleGameCards = () => ReplaceGameCards([]),
-                    LogScanWarning = message => LogWarning(MainViewModelLogCategories.Scan, message),
-                    ApplyInitialScanFolderLoadResult = ApplyInitialScanFolderLoadResult,
-                    ApplyScanFolderActionResult = result => ApplyDeferredStateUpdate(
-                        _resultApplier.CreateScanFolderActionStateUpdate(result)),
-                    ShowHome = () => SetCurrentView(ShellViewKind.Home),
-                    OnScanCommandException = ex => LogError(MainViewModelLogCategories.Command, "save and scan command failed", ex),
-                    ScanLogCategory = MainViewModelLogCategories.Scan
-                },
-                SupportedGames = new SupportedGamesSectionCompositionInput
-                {
-                    SupportedGamesWikiMarkdownLoader = resolved.SupportedGamesWikiMarkdownLoader,
-                    StartupBackgroundTaskManager = _startupBackgroundTaskManager,
-                    AppLogger = _appLogger,
-                    SelectedLanguageAccessor = () => SelectedLanguage,
-                    CurrentViewKindAccessor = () => Navigation.CurrentViewKind,
-                    OpenGameSupportRequestCommandAccessor = () => _openGameSupportRequestCommand,
-                    UpdateStartupPreparationState = UpdateStartupPreparationState
-                },
-                OptiScaler = new OptiScalerSectionCompositionInput
-                {
-                    OptiScalerVariantOptions = optiScalerVariantOptions,
-                    InitialOptiScalerVariantOption = OptiScalerVariantCatalogBuilder.StableVariant,
-                    InitialCommonIniSettings = _optiScalerCommonIniSettingsStore.Load(),
-                    SaveSettings = SaveOptiScalerSettings
-                },
-                Settings = new SettingsSectionCompositionInput
-                {
-                    DialogPresenter = _dialogPresenter,
-                    LocalDataPathProvider = _localDataPathProvider,
-                    AppLogger = _appLogger,
-                    SettingsLanguageOptions = settingsLanguageOptions,
-                    InitialSettingsLanguageOption = LanguageOptionAuto,
-                    IsKoreanUi = () => IsKoreanUi,
-                    ApplySettingsLanguageOption = ApplySettingsLanguageOption,
-                    IsInstallExecutionInProgress = () => _isInstallExecutionInProgress,
-                    OpenLogFolder = OpenLogFolder,
-                    OpenSupportRequest = OpenSupportRequest,
-                    OnRefreshInstallFilesException = ex => LogError(MainViewModelLogCategories.Command, "reset app cache command failed", ex)
-                }
-            });
-
-        Home = sections.Home;
-        SupportedGames = sections.SupportedGames;
-        Scan = sections.Scan;
-        OptiScaler = sections.OptiScaler;
-        Settings = sections.Settings;
-
-        _selectedLanguage = _languageProvider.CurrentLanguage;
-        RefreshLocalizedStrings();
-        SelectedGameAction.ApplyLocalization(Strings);
-        ApplyLocalizationStateUpdate(_localizationStateController.BuildInitialState(
-            SelectedLanguage,
-            Strings,
-            SettingsStatusText,
-            ScanStatusText,
-            RuntimeHeader.DeviceText,
-            RuntimeHeader.GpuText));
-        ApplyUserSettings(_userSettingsController.Load());
     }
 
     private ObservableCollection<GameCardViewModel> Games => Home.Games;
@@ -342,7 +123,7 @@ public sealed partial class MainViewModel : ViewModelBase
     {
         get
         {
-            lock (_startupPreparationStateGate)
+            lock (_operationLocks.StartupPreparationStateGate)
             {
                 return _startupPreparationState;
             }
@@ -376,32 +157,12 @@ public sealed partial class MainViewModel : ViewModelBase
         }
     }
 
-    private async Task ApplyLanguageChangeAsync(AppLanguage language, CancellationToken cancellationToken = default)
+    private Task ApplyLanguageChangeAsync(AppLanguage language, CancellationToken cancellationToken = default)
     {
-        try
-        {
-            _languageProvider.SetLanguage(language);
-            LogInfo(MainViewModelLogCategories.I18n, $"ui_language_changed source=settings value={ToLanguageCode(language)}");
-            RefreshLocalizedStrings();
-            SelectedGameAction.ApplyLocalization(Strings);
-            SupportedGames.RefreshAfterLanguageChange();
-            ApplyLocalizationStateUpdate(_localizationStateController.BuildRefreshState(language, Strings));
-            await RefreshRuntimeContextAsync(cancellationToken);
-            await RefreshRuntimeDataCatalogAsync(cancellationToken);
-            await RecomputeSelectionAfterScanAsync(cancellationToken, navigateHome: false);
-        }
-        catch (Exception ex)
-        {
-            LogWarning(MainViewModelLogCategories.I18n, $"language change refresh failed type={ex.GetType().Name}");
-        }
+        return _features.Selection.ApplyLanguageChangeAsync(language, cancellationToken);
     }
 
     private bool IsKoreanUi => SelectedLanguage == AppLanguage.Korean;
-
-    private static string ToLanguageCode(AppLanguage language)
-    {
-        return language == AppLanguage.Korean ? "ko" : "en";
-    }
 
     private static string NormalizeLanguageOption(string? option)
     {
@@ -414,11 +175,7 @@ public sealed partial class MainViewModel : ViewModelBase
 
     private static string NormalizeLanguagePreference(string? preference)
     {
-        return string.Equals(preference, LanguagePreferenceKorean, StringComparison.OrdinalIgnoreCase)
-            ? LanguagePreferenceKorean
-            : string.Equals(preference, LanguagePreferenceEnglish, StringComparison.OrdinalIgnoreCase)
-                ? LanguagePreferenceEnglish
-                : LanguagePreferenceAuto;
+        return AppLanguagePreference.NormalizeOrDefault(preference);
     }
 
     private static string ResolveLanguageOptionFromState(string preference)
@@ -472,21 +229,6 @@ public sealed partial class MainViewModel : ViewModelBase
         SaveUserSettings();
     }
 
-    private void ApplySettingsOptiScalerVariantOption(string option)
-    {
-        var normalized = NormalizeOptiScalerVariantPreference(option);
-        _optiScalerVariantPreference = normalized;
-        SaveUserSettings();
-    }
-
-    private void SaveOptiScalerSettings(
-        string optiScalerVariantOption,
-        OptiScalerCommonIniSettingsDocument commonIniSettings)
-    {
-        ApplySettingsOptiScalerVariantOption(optiScalerVariantOption);
-        _optiScalerCommonIniSettingsStore.Save(commonIniSettings);
-    }
-
     private AppLanguage ResolveAutoLanguage()
     {
         return _systemPreferredLanguage;
@@ -503,5 +245,4 @@ public sealed partial class MainViewModel : ViewModelBase
         get => Home.SelectedGame;
         set => Home.SelectedGame = value;
     }
-
 }

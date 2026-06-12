@@ -15,6 +15,7 @@ public static class ArchiveAssetRuntimeDataKeys
 {
     public const string OptiScaler = "optiscaler";
     public const string Fsr4 = "fsr4int8";
+    public const string Fsr4Variants = "fsr4_variants";
     public const string OptiPatcher = "optipatcher";
     public const string SpecialK = "specialk";
     public const string ReFramework = "reframework";
@@ -43,5 +44,13 @@ public static class ArchiveAssetRuntimeDataKeys
             ArchiveAssetKey.UltimateAsiLoader => "ual",
             _ => ToRuntimeDataEntryKey(key)
         };
+    }
+
+    public static string ToFsr4VariantKey(string variant)
+    {
+        var normalized = (variant ?? "").Trim().ToLowerInvariant();
+        return string.IsNullOrWhiteSpace(normalized)
+            ? Fsr4Variants
+            : $"{Fsr4Variants}:{normalized}";
     }
 }

@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using OptiClick.Core.Games.Wiki;
 using OptiClick.Infrastructure.FileSystem;
 using OptiClick.Wpf.Logging;
 
