@@ -126,6 +126,13 @@ internal sealed class MainSelectionFeatureFacade
             _contextFactory.CreateVisibleGameCardRefreshContext());
     }
 
+    public Task<bool> RefreshVisibleGamesAfterLanguageChangeAsync(CancellationToken cancellationToken)
+    {
+        return _visibleGameCardRefreshController.RefreshVisibleGamesAfterLanguageChangeAsync(
+            _contextFactory.CreateVisibleGameCardRefreshContext(),
+            cancellationToken);
+    }
+
     public GameCardViewModel? TryRefreshVisibleGameCardsAfterInstall(string selectedGameId)
     {
         return _visibleGameCardRefreshController.TryRefreshVisibleGameCardsAfterInstall(

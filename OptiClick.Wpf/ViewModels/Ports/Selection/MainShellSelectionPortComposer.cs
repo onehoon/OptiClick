@@ -37,6 +37,9 @@ internal static class MainShellSelectionPortComposer
             RecomputeSelectionAfterScanAsync =
                 (cancellationToken, navigateHome) => input.ResolveSelectionFeature()
                     .RecomputeSelectionAfterScanAsync(cancellationToken, navigateHome),
+            RefreshVisibleGamesAfterLanguageChangeAsync =
+                cancellationToken => input.ResolveSelectionFeature()
+                    .RefreshVisibleGamesAfterLanguageChangeAsync(cancellationToken),
             BuildScanRequest = scanFolders => input.ResolveSelectionFeature().BuildScanRequest(scanFolders),
             RefreshVisibleGamesFromScanMatches =
                 () => input.ResolveSelectionFeature().RefreshVisibleGamesFromScanMatches(),

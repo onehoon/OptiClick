@@ -153,6 +153,8 @@ internal static class MainViewModelShellFacadeComposer
                 BuildRefreshState = ports.Localization.BuildRefreshState,
                 RefreshRuntimeContextAsync = ports.Runtime.RefreshRuntimeContextAsync,
                 RecomputeSelectionAfterScanAsync = ports.Selection.RecomputeSelectionAfterScanAsync,
+                RefreshVisibleGamesAfterLanguageChangeAsync =
+                    ports.Selection.RefreshVisibleGamesAfterLanguageChangeAsync,
                 LogLanguageChangeInfo = message =>
                     ports.App.AppLogger.Info(MainViewModelLogCategories.I18n, message),
                 LogLanguageChangeWarning = (message, ex) =>
@@ -328,6 +330,7 @@ internal sealed record MainShellFacadeSelectionPort
     public required Func<long> IncrementSelectionVersion { get; init; }
     public required Func<long> ReadSelectionVersion { get; init; }
     public required Func<CancellationToken, bool, Task> RecomputeSelectionAfterScanAsync { get; init; }
+    public required Func<CancellationToken, Task<bool>> RefreshVisibleGamesAfterLanguageChangeAsync { get; init; }
     public required Func<IReadOnlyList<string>, ScanFlowRequest> BuildScanRequest { get; init; }
     public required Action RefreshVisibleGamesFromScanMatches { get; init; }
     public required Action<IReadOnlyList<GameCardViewModel>, bool> ReplaceGameCards { get; init; }

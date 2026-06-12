@@ -106,7 +106,7 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
             var badgePalette = ToBadgePalette(installStatus.Code);
 
             list.Add(new GameCardViewModel(
-                game.DisplayName,
+                ResolveLocalizedTitle(game, language, gameId, matchExe),
                 string.IsNullOrWhiteSpace(matchExe) ? "Runtime catalog" : matchExe,
                 statusBadge,
                 stateDecision.ReasonCode,
@@ -122,6 +122,38 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
         }
 
         return list;
+    }
+
+    private static string ResolveLocalizedTitle(
+        ShellGameCardModel game,
+        AppLanguage language,
+        string gameId,
+        string matchExe)
+    {
+        var englishName = (game.GameNameEn ?? "").Trim();
+        var koreanName = (game.GameNameKr ?? "").Trim();
+        var displayName = (game.DisplayName ?? "").Trim();
+
+        if (language == AppLanguage.Korean)
+        {
+            return PickFirstNonEmpty(koreanName, englishName, displayName, gameId, matchExe);
+        }
+
+        return PickFirstNonEmpty(englishName, koreanName, displayName, gameId, matchExe);
+    }
+
+    private static string PickFirstNonEmpty(params string[] values)
+    {
+        foreach (var value in values)
+        {
+            var normalized = (value ?? "").Trim();
+            if (!string.IsNullOrWhiteSpace(normalized))
+            {
+                return normalized;
+            }
+        }
+
+        return "";
     }
 
     private InstallStatusSnapshot ResolveInstallStatusCached(

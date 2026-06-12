@@ -49,6 +49,7 @@ internal sealed class MainSelectionScanContextFactory
                 ReadSelectedGameId = () => _input.ReadSelectedGame()?.ResolvedGameId ?? "",
                 SetSelectedGame = _input.SetSelectedGame,
                 IsHomeNavigationSuppressed = _input.ReadSuppressHomeNavigationForAutoSelection,
+                HasScannedMatches = () => _input.ScannedGames.ReadMatchesByGameId().Count > 0,
                 ContainsScannedGameId = gameId => _input.ScannedGames.ContainsGameId(gameId),
                 FindCurrentCardById = gameId => _input.ReadVisibleCards().FirstOrDefault(card => string.Equals(
                     card.ResolvedGameId,
