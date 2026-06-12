@@ -1,15 +1,15 @@
-using WpfInstallPlan = OptiClick.Wpf.Install.Planning.InstallPlan;
+using OptiClick.Core.Install;
+using OptiClick.Core.Install.Planning;
 using OptiClick.Core.Runtime;
-using OptiClick.Wpf.Shell.Games;
-using OptiClick.Wpf.Install.Planning;
 
 namespace OptiClick.Wpf.Install.Execution;
 
 public sealed record ComponentInstallContextBuildInput
 {
-    public WpfInstallPlan Plan { get; init; } = new();
-    public ShellGameCardModel SelectedGame { get; init; } = new();
+    public CoreInstallPlan Plan { get; init; } = new();
+    public InstallExecutionDescriptor ExecutionDescriptor { get; init; } = InstallExecutionDescriptor.Empty;
     public RuntimeContext LatestRuntimeContext { get; init; } = new();
     public ArchiveReadinessSnapshot LatestArchiveReadiness { get; init; } = ArchiveReadinessSnapshot.NotReady;
-    public IReadOnlyDictionary<string, object?> ModuleDownloadLinks { get; init; } = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+    public IReadOnlyList<string> UalDetectedNames { get; init; } = Array.Empty<string>();
+    public ModuleDownloadLinkCatalog ModuleDownloadLinks { get; init; } = ModuleDownloadLinkCatalog.Empty;
 }

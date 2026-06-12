@@ -22,7 +22,11 @@ public sealed class ShellGameCardModel
     public string GpuBundleVendor { get; init; } = "";
     public string GpuBundleKey { get; init; } = "";
     public string GpuGroup { get; init; } = "";
+    public Fsr4ManifestPolicy Fsr4 { get; init; } = Fsr4ManifestPolicy.Disabled;
 
+    // Install policy values are mirrored for backward compatibility with legacy callers.
+    // Runtime resolution should prioritize values from InstallMetadata (via ShellGameInstallMetadataResolver),
+    // then fall back to these fields only when metadata is missing.
     public string OptiScalerDllName { get; init; } = "";
     public string ReframeworkUrl { get; init; } = "";
     public string SpecialK { get; init; } = "";

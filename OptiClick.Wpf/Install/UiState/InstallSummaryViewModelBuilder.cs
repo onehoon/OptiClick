@@ -1,13 +1,13 @@
+using OptiClick.Core.Install;
 using OptiClick.Core.Install.Summary;
 using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Localization;
-using OptiClick.Wpf.Shell.Games;
 
 namespace OptiClick.Wpf.Install.UiState;
 
 public sealed record InstallSummaryBuildInput
 {
-    public ShellGameCardModel? Game { get; init; }
+    public InstallGameDescriptor? GameDescriptor { get; init; }
     public InstallStatusSnapshot InstallStatus { get; init; } = new();
     public string InstallSummaryNote { get; init; } = "";
     public string Language { get; init; } = "en";
@@ -29,14 +29,10 @@ public sealed class DefaultInstallSummaryStringsResolver : IInstallSummaryString
 {
     private readonly IAppStringsProvider _stringsProvider;
 
-    public DefaultInstallSummaryStringsResolver()
-        : this(new AppStringsProvider())
-    {
-    }
-
     public DefaultInstallSummaryStringsResolver(IAppStringsProvider stringsProvider)
     {
-        _stringsProvider = stringsProvider ?? new AppStringsProvider();
+        ArgumentNullException.ThrowIfNull(stringsProvider);
+        _stringsProvider = stringsProvider;
     }
 
     public InstallSummaryStrings Resolve(string language)
@@ -77,19 +73,19 @@ public sealed class InstallSummaryViewModelBuilder : IInstallSummaryViewModelBui
 
     public InstallSummaryPresentation Build(InstallSummaryBuildInput input)
     {
-        var game = input.Game ?? new ShellGameCardModel();
+        var descriptor = input.GameDescriptor ?? InstallGameDescriptor.Empty;
         var summaryInput = new InstallSummaryInput
         {
             InstallStatusCode = input.InstallStatus.Code,
             InstalledVersion = input.InstallStatus.InstalledVersion,
             CurrentVersion = input.InstallStatus.CurrentVersion,
             CurrentDisplayVersion = input.InstallStatus.CurrentDisplayVersion,
-            OptiPatcher = ShellGameInstallMetadataResolver.GetOptiPatcher(game),
-            Unreal5 = ShellGameInstallMetadataResolver.GetUnreal5(game),
-            ReframeworkUrl = ShellGameInstallMetadataResolver.GetReFrameworkUrl(game),
-            UltimateAsiLoader = ShellGameInstallMetadataResolver.GetUltimateAsiLoader(game),
-            SpecialK = ShellGameInstallMetadataResolver.GetSpecialK(game),
-            RtssOverlay = ShellGameInstallMetadataResolver.GetRtssOverlay(game),
+            OptiPatcher = descriptor.RequiresOptiPatcher,
+            Unreal5 = descriptor.RequiresUnreal5,
+            ReframeworkUrl = descriptor.ReFrameworkUrl,
+            UltimateAsiLoader = descriptor.RequiresUltimateAsiLoader,
+            SpecialK = descriptor.SpecialK,
+            RtssOverlay = descriptor.RequiresRtssProfile,
             InstallSummaryNote = input.InstallSummaryNote
         };
 

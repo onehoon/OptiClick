@@ -1,22 +1,12 @@
-﻿using OptiClick.Core.Install;
-using OptiClick.Wpf.Install.Planning;
+using OptiClick.Core.Install;
+using OptiClick.Core.Install.Planning;
+using OptiClick.Core.RuntimeData;
+using CoreComponentInstallExecutionOrderPolicy = OptiClick.Core.Install.Components.ComponentInstallExecutionOrderPolicy;
 
 namespace OptiClick.Wpf.Install.Execution;
 
 public sealed class ComponentInstallParityReviewBuilder : IComponentInstallParityReviewBuilder
 {
-    private static readonly ComponentInstallName[] ExpectedExecutionOrder =
-    [
-        ComponentInstallName.OptiScalerCore,
-        ComponentInstallName.UltimateAsiLoader,
-        ComponentInstallName.SpecialK,
-        ComponentInstallName.ReFramework,
-        ComponentInstallName.OptiPatcher,
-        ComponentInstallName.Unreal5,
-        ComponentInstallName.Fsr4,
-        ComponentInstallName.ExtraBundle
-    ];
-
     public ComponentInstallParityReviewResult Build(ComponentInstallParityReviewInput input)
     {
         if (input is null)
@@ -28,9 +18,9 @@ public sealed class ComponentInstallParityReviewBuilder : IComponentInstallParit
             };
         }
 
-        var plan = input.Plan ?? new InstallPlan();
+        var plan = input.Plan ?? new CoreInstallPlan();
         var finalProxy = (plan.FinalProxyDllName ?? "").Trim();
-        var chain = ProxyDllNameResolver.BuildCandidateChainForPreferred(finalProxy);
+        var chain = ProxyDllNamePolicy.BuildCandidateChainForPreferred(finalProxy);
         var events = new List<ComponentInstallParityEvent>
         {
             new()
@@ -38,7 +28,8 @@ public sealed class ComponentInstallParityReviewBuilder : IComponentInstallParit
                 Code = ComponentInstallParityReviewCodes.ComponentOrder,
                 Detail = string.Join(
                     " -> ",
-                    ExpectedExecutionOrder.Select(static name => name.ToString()))
+                    CoreComponentInstallExecutionOrderPolicy.GetCoreThenMiddleThenExtraOrder()
+                        .Select(static name => name.ToString()))
             }
         };
 
@@ -60,7 +51,7 @@ public sealed class ComponentInstallParityReviewBuilder : IComponentInstallParit
             });
         }
 
-        var profileRows = plan.ProfileRows;
+        var profileRows = input.ProfileRows ?? AttachedRuntimeProfileRows.Empty;
         return new ComponentInstallParityReviewResult
         {
             IsSuccess = true,
@@ -69,13 +60,13 @@ public sealed class ComponentInstallParityReviewBuilder : IComponentInstallParit
             ProxyCandidateChain = chain,
             ManagedBackupCandidates = OptiScalerManagedBackupPolicy.TargetFileNames.ToArray(),
             LegacyCleanupTargets = OptiScalerLegacyCleanupPolicy.TargetFileNames.ToArray(),
-            OptiPatcher = IsEnabled(plan, InstallPlanComponentType.OptiPatcher),
-            ReFramework = IsEnabled(plan, InstallPlanComponentType.REFramework),
-            SpecialK = IsEnabled(plan, InstallPlanComponentType.SpecialK),
-            UltimateAsiLoader = IsEnabled(plan, InstallPlanComponentType.UltimateAsiLoader),
-            Unreal5 = IsEnabled(plan, InstallPlanComponentType.Unreal5),
-            ExtraBundle = IsEnabled(plan, InstallPlanComponentType.ExtraBundle),
-            RtssOverlay = IsEnabled(plan, InstallPlanComponentType.RtssProfile),
+            OptiPatcher = IsEnabled(plan, CoreInstallPlanComponentType.OptiPatcher),
+            ReFramework = IsEnabled(plan, CoreInstallPlanComponentType.REFramework),
+            SpecialK = IsEnabled(plan, CoreInstallPlanComponentType.SpecialK),
+            UltimateAsiLoader = IsEnabled(plan, CoreInstallPlanComponentType.UltimateAsiLoader),
+            Unreal5 = IsEnabled(plan, CoreInstallPlanComponentType.Unreal5),
+            ExtraBundle = IsEnabled(plan, CoreInstallPlanComponentType.ExtraBundle),
+            RtssOverlay = IsEnabled(plan, CoreInstallPlanComponentType.RtssProfile),
             ExcludeListPatterns = plan.ExcludeListPatterns ?? Array.Empty<string>(),
             GameIniProfileRowCount = profileRows.GameIniProfileRows.Count,
             GameUnrealIniProfileRowCount = profileRows.GameUnrealIniProfileRows.Count,
@@ -86,9 +77,8 @@ public sealed class ComponentInstallParityReviewBuilder : IComponentInstallParit
         };
     }
 
-    private static bool IsEnabled(InstallPlan plan, InstallPlanComponentType type)
+    private static bool IsEnabled(CoreInstallPlan plan, CoreInstallPlanComponentType type)
     {
         return plan.Components.Any(component => component.Type == type && component.Enabled);
     }
-
 }

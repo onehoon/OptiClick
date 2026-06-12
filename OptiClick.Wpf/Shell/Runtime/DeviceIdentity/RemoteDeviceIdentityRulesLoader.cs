@@ -79,7 +79,9 @@ public sealed class RemoteDeviceIdentityRulesLoader : IRemoteDeviceIdentityRules
         }
     }
 
-    private bool TryApplyLocalCache()
+    // Keep cache handling separate so startup can apply best-effort identity rules fast
+    // and proceed without waiting for network round trips.
+    public bool TryApplyLocalCache()
     {
         if (_cacheStore is null)
         {

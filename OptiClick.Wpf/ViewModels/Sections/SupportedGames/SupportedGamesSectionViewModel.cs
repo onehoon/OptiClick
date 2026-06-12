@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using OptiClick.Core.Games.Wiki;
 using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Logging;

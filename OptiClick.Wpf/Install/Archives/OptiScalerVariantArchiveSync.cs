@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using OptiClick.Infrastructure.FileSystem;
+using OptiClick.Wpf.Install.Flow;
 using OptiClick.Wpf.Logging;
 using OptiClick.Wpf.Shell.RuntimeData;
 
@@ -215,7 +216,7 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
                 && !_validator.IsValid(existing.PayloadDirectory, out _))
             {
                 forceRebuild = true;
-                logs.Add(Warning("archive", $"optiscaler variant cache invalid variant={option.Variant}"));
+                logs.Add(InstallFlowLogEntryFactory.Warning("archive", $"optiscaler variant cache invalid variant={option.Variant}"));
             }
 
             var result = await _payloadCacheService.PrepareAsync(
@@ -229,7 +230,7 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
             nextEntries[option.Variant] = entry;
             if (!entry.Ready)
             {
-                logs.Add(Warning(
+                logs.Add(InstallFlowLogEntryFactory.Warning(
                     "archive",
                     $"optiscaler variant sync failed variant={option.Variant} version={Normalize(option.Version, "-")} state={entry.State} cache_entry={Normalize(entry.CacheEntry, "-")} error={Normalize(entry.ErrorCode, "-")} force_rebuild={forceRebuild.ToString().ToLowerInvariant()}"));
             }
@@ -238,7 +239,7 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
         foreach (var removed in previousManifest.Variants.Values
                      .Where(entry => !runtimeByVariant.ContainsKey(entry.Variant)))
         {
-            logs.Add(Info("archive", $"optiscaler variant removed variant={Normalize(removed.Variant, "-")} cache_entry={Normalize(removed.CacheEntry, "-")}"));
+            logs.Add(InstallFlowLogEntryFactory.Info("archive", $"optiscaler variant removed variant={Normalize(removed.Variant, "-")} cache_entry={Normalize(removed.CacheEntry, "-")}"));
         }
 
         CleanupPayloadDirectories(allowedCacheEntries, logs);
@@ -380,12 +381,12 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
             try
             {
                 Directory.Delete(directory, recursive: true);
-                logs.Add(Info("archive", $"optiscaler variant cache removed cache_entry={name}"));
+                logs.Add(InstallFlowLogEntryFactory.Info("archive", $"optiscaler variant cache removed cache_entry={name}"));
             }
             catch (Exception ex)
             {
                 _logger.Warning("Archives", $"optiscaler variant cache remove failed cache_entry={name} type={ex.GetType().Name}");
-                logs.Add(Warning("archive", $"optiscaler variant cache remove failed cache_entry={name} type={ex.GetType().Name}"));
+                logs.Add(InstallFlowLogEntryFactory.Warning("archive", $"optiscaler variant cache remove failed cache_entry={name} type={ex.GetType().Name}"));
             }
         }
     }
@@ -402,7 +403,7 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
             return (null, new ArchivePreparationState());
         }
 
-        logs.Add(Warning("archive", "optiscaler variants stable missing; trying canonical optiscaler fallback"));
+        logs.Add(InstallFlowLogEntryFactory.Warning("archive", "optiscaler variants stable missing; trying canonical optiscaler fallback"));
         var result = await _payloadCacheService.PrepareAsync(
             catalog.CanonicalFallback.ToRemoteArchiveEntry(),
             _cachePaths.OptiScalerPayloadCacheRoot,
@@ -502,23 +503,4 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
         return string.IsNullOrWhiteSpace(value) ? fallback : value.Trim();
     }
 
-    private static Install.Flow.InstallFlowLogEntry Info(string category, string message)
-    {
-        return new Install.Flow.InstallFlowLogEntry
-        {
-            Level = "info",
-            Category = category,
-            Message = message
-        };
-    }
-
-    private static Install.Flow.InstallFlowLogEntry Warning(string category, string message)
-    {
-        return new Install.Flow.InstallFlowLogEntry
-        {
-            Level = "warning",
-            Category = category,
-            Message = message
-        };
-    }
 }

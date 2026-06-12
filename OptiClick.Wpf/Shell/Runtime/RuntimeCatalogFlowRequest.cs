@@ -7,5 +7,5 @@ public sealed record RuntimeCatalogFlowRequest
 {
     public required RuntimeContext LatestRuntimeContext { get; init; }
     public required AppLanguage SelectedLanguage { get; init; }
-    public required AppStrings Strings { get; init; }
+    public required RuntimeCatalogFlowText Text { get; init; }
 }

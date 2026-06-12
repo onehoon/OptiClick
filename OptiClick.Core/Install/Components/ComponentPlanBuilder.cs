@@ -83,7 +83,7 @@ public sealed class ComponentPlanBuilder
             });
         }
 
-        if (archiveState.Fsr4Required)
+        if (archiveState.ShouldInstallFsr4)
         {
             plans.Add(new ComponentPlan
             {

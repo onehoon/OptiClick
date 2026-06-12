@@ -3,7 +3,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Media;
+using OptiClick.Core.OptiScaler;
 using OptiClick.Core.Runtime;
+using OptiClick.Core.Scan;
 using OptiClick.Wpf.Collections;
 using OptiClick.Wpf.Install.Archives;
 using OptiClick.Wpf.Localization;
@@ -12,17 +14,18 @@ using OptiClick.Wpf.Services;
 using OptiClick.Wpf.Shell.Dialogs;
 using OptiClick.Wpf.Shell.Flow;
 using OptiClick.Wpf.Shell.Navigation;
-using OptiClick.Wpf.Shell.OptiScaler;
 using OptiClick.Wpf.Shell.Scan;
 using OptiClick.Wpf.Shell.Startup;
 using OptiClick.Wpf.Shell.Wiki;
 using OptiClick.Wpf.ViewModels;
+using OptiClick.Wpf.ViewModels.Sections.OptiScaler;
 using OptiClick.Wpf.ViewModels.Sections.Scan;
 
 namespace OptiClick.Wpf.ViewModels.Sections;
 
 public sealed class ShellSectionsCompositionFactory
 {
+    private static readonly Brush AutoDetectedFolderStatusBrush = new SolidColorBrush(Color.FromRgb(179, 227, 186));
     private static readonly Brush AddedFolderStatusBrush = new SolidColorBrush(Color.FromRgb(185, 226, 250));
     private static readonly Brush MissingFolderStatusBrush = new SolidColorBrush(Color.FromRgb(212, 180, 142));
 
@@ -41,8 +44,7 @@ public sealed class ShellSectionsCompositionFactory
             : new BatchedObservableCollection<GameCardViewModel>();
         var defaultFolders = input.SeedMockScanFolders
             ? new ObservableCollection<ScanFolderRowViewModel>(input.MockDataProvider.CreateDefaultFolders())
-            : new ObservableCollection<ScanFolderRowViewModel>(
-                scan.ScanFolderDiscoveryService?.DiscoverDefaultFolders() ?? []);
+            : new ObservableCollection<ScanFolderRowViewModel>(CreateDefaultFolderRows(scan));
         var addedFolders = input.SeedMockScanFolders
             ? new ObservableCollection<ScanFolderRowViewModel>(input.MockDataProvider.CreateAddedFolders())
             : new ObservableCollection<ScanFolderRowViewModel>(LoadAddedScanFoldersFromManifest(input, defaultFolders));
@@ -131,7 +133,7 @@ public sealed class ShellSectionsCompositionFactory
                     OptiScalerVariantOptions = optiScaler.OptiScalerVariantOptions,
                     InitialOptiScalerVariantOption = optiScaler.InitialOptiScalerVariantOption,
                     InitialCommonIniSettings = optiScaler.InitialCommonIniSettings,
-                    SaveSettings = optiScaler.SaveSettings
+                    SaveHandler = optiScaler.SaveHandler
                 },
                 Settings = new SettingsSectionFactoryInput
                 {
@@ -162,6 +164,21 @@ public sealed class ShellSectionsCompositionFactory
             MissingFolderStatusBrush);
 
         return input.Scan.ApplyInitialScanFolderLoadResult(result);
+    }
+
+    private static IReadOnlyList<ScanFolderRowViewModel> CreateDefaultFolderRows(ScanSectionCompositionInput scan)
+    {
+        var entries = scan.ScanFolderDiscoveryService?.DiscoverDefaultFolders() ?? [];
+        return entries
+            .Select(static entry => new ScanFolderRowViewModel(
+                entry.Name,
+                entry.Path,
+                "",
+                entry.IsChecked,
+                true,
+                false,
+                AutoDetectedFolderStatusBrush))
+            .ToArray();
     }
 }
 
@@ -252,5 +269,5 @@ public sealed record OptiScalerSectionCompositionInput
     public required ObservableCollection<OptiScalerVariantSelectionOption> OptiScalerVariantOptions { get; init; }
     public required string InitialOptiScalerVariantOption { get; init; }
     public required OptiScalerCommonIniSettingsDocument InitialCommonIniSettings { get; init; }
-    public required Action<string, OptiScalerCommonIniSettingsDocument> SaveSettings { get; init; }
+    public required IOptiScalerSectionSaveHandler SaveHandler { get; init; }
 }

@@ -7,13 +7,16 @@ public sealed class ArchiveReadinessFlowController
 {
     private readonly IArchivePreparationCoordinator? _archivePreparationCoordinator;
     private readonly IOptiScalerVariantArchiveSyncService? _optiScalerVariantArchiveSyncService;
+    private readonly IFsr4VariantArchiveSyncService? _fsr4VariantArchiveSyncService;
 
     public ArchiveReadinessFlowController(
         IArchivePreparationCoordinator? archivePreparationCoordinator,
-        IOptiScalerVariantArchiveSyncService? optiScalerVariantArchiveSyncService = null)
+        IOptiScalerVariantArchiveSyncService? optiScalerVariantArchiveSyncService = null,
+        IFsr4VariantArchiveSyncService? fsr4VariantArchiveSyncService = null)
     {
         _archivePreparationCoordinator = archivePreparationCoordinator;
         _optiScalerVariantArchiveSyncService = optiScalerVariantArchiveSyncService;
+        _fsr4VariantArchiveSyncService = fsr4VariantArchiveSyncService;
     }
 
     public async Task<ArchiveReadinessFlowResult> RefreshAsync(
@@ -63,6 +66,18 @@ public sealed class ArchiveReadinessFlowController
             var startupSnapshot = await _archivePreparationCoordinator.PrepareStartupArchivesAsync(
                 request.ModuleDownloadLinks,
                 cancellationToken);
+            Fsr4VariantSyncResult? fsr4VariantSync = null;
+            if (_fsr4VariantArchiveSyncService is not null)
+            {
+                fsr4VariantSync = await _fsr4VariantArchiveSyncService.SyncAsync(
+                    request.Fsr4VariantCatalog,
+                    cancellationToken);
+                logs.AddRange(fsr4VariantSync.Logs);
+                startupSnapshot = ArchivePreparationSnapshotMerger.Merge(
+                    startupSnapshot,
+                    ToFsr4VariantSnapshot(fsr4VariantSync));
+            }
+
             var merged = ArchivePreparationSnapshotMerger.Merge(optiScalerSnapshot, startupSnapshot);
             var readiness = ApplyOptiScalerVariantReadiness(
                 ArchivePreparationSnapshotMapper.ToInstallPlanSnapshot(merged),
@@ -73,11 +88,11 @@ public sealed class ArchiveReadinessFlowController
                 var state = merged.Get(key);
                 if (ShouldLogArchiveDetail(state))
                 {
-                    logs.Add(Info("archive", FormatArchivePreparationLog(key, state)));
+                    logs.Add(InstallFlowLogEntryFactory.Info("archive", FormatArchivePreparationLog(key, state)));
                 }
             }
 
-            logs.Add(Info(
+            logs.Add(InstallFlowLogEntryFactory.Info(
                 "archive",
                 $"refresh completed all_ready={FormatBool(IsAllReady(readiness))} optiscaler={readiness.OptiScalerState} fsr4={readiness.Fsr4State} optipatcher={readiness.OptiPatcherState} specialk={readiness.SpecialKState} reframework={readiness.ReframeworkState} ual={readiness.UalState} unreal5={readiness.Unreal5State}"));
 
@@ -87,17 +102,18 @@ public sealed class ArchiveReadinessFlowController
                 IsSuccess = true,
                 Readiness = readiness,
                 OptiScalerVariantSync = variantSync,
+                Fsr4VariantSync = fsr4VariantSync,
                 Logs = logs
             };
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            logs.Add(Info("archive", "refresh canceled"));
+            logs.Add(InstallFlowLogEntryFactory.Info("archive", "refresh canceled"));
             throw;
         }
         catch (Exception ex)
         {
-            logs.Add(Error("archive", "refresh failed", ex));
+            logs.Add(InstallFlowLogEntryFactory.Error("archive", "refresh failed", ex));
             return new ArchiveReadinessFlowResult
             {
                 DidRun = true,
@@ -108,31 +124,23 @@ public sealed class ArchiveReadinessFlowController
         }
     }
 
-    private static InstallFlowLogEntry Info(string category, string message)
-    {
-        return new InstallFlowLogEntry
-        {
-            Level = "info",
-            Category = category,
-            Message = message
-        };
-    }
-
-    private static InstallFlowLogEntry Error(string category, string message, Exception exception)
-    {
-        return new InstallFlowLogEntry
-        {
-            Level = "error",
-            Category = category,
-            Message = message,
-            Exception = exception
-        };
-    }
-
     private static string FormatArchivePreparationLog(ArchiveAssetKey key, ArchivePreparationState state)
     {
         var stage = state.StageStatus ?? ArchivePreparationStageStatus.Unknown;
         return $"asset={FormatAssetKey(key)} state={FormatState(state)} source={Normalize(stage.Source, "unknown")} download={Normalize(stage.Download, "unknown")} sha={Normalize(stage.Sha, "unknown")} folder={Normalize(stage.Folder, "unknown")} json={Normalize(stage.Json, "unknown")} duration_ms={FormatDuration(stage.DurationMs)} filename={Normalize(state.Filename, "-")} error={Normalize(state.ErrorMessage, "-")}";
+    }
+
+    private static ArchivePreparationSnapshot ToFsr4VariantSnapshot(Fsr4VariantSyncResult result)
+    {
+        var safeResult = result ?? new Fsr4VariantSyncResult();
+        return new ArchivePreparationSnapshot
+        {
+            States = new Dictionary<ArchiveAssetKey, ArchivePreparationState>
+            {
+                [ArchiveAssetKey.Fsr4] = safeResult.AggregateState
+            },
+            Fsr4VariantStates = safeResult.StatesByVariant
+        };
     }
 
     private static bool ShouldLogArchiveDetail(ArchivePreparationState state)
@@ -175,7 +183,7 @@ public sealed class ArchiveReadinessFlowController
         return key switch
         {
             ArchiveAssetKey.OptiScaler => ArchiveAssetRuntimeDataKeys.OptiScaler,
-            ArchiveAssetKey.Fsr4 => ArchiveAssetRuntimeDataKeys.Fsr4,
+            ArchiveAssetKey.Fsr4 => ArchiveAssetRuntimeDataKeys.Fsr4Variants,
             ArchiveAssetKey.OptiPatcher => ArchiveAssetRuntimeDataKeys.OptiPatcher,
             ArchiveAssetKey.SpecialK => ArchiveAssetRuntimeDataKeys.SpecialK,
             ArchiveAssetKey.ReFramework => ArchiveAssetRuntimeDataKeys.ReFramework,

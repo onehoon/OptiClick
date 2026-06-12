@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using OptiClick.Core.Games;
 using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Shell.Scan;
 using OptiClick.Wpf.Shell.RuntimeData;
@@ -139,6 +140,7 @@ public sealed class RuntimeDataShellGameMapper : IRuntimeDataShellGameMapper
                 GpuBundleVendor = (mergedMetadata.GpuBundleVendor ?? "").Trim(),
                 GpuBundleKey = (mergedMetadata.GpuBundleKey ?? "").Trim(),
                 GpuGroup = (mergedMetadata.GpuGroup ?? "").Trim(),
+                Fsr4 = mergedMetadata.Fsr4 ?? Fsr4ManifestPolicy.Disabled,
                 OptiScalerDllName = (mergedMetadata.OptiScalerDllName ?? "").Trim(),
                 ReframeworkUrl = (mergedMetadata.ReFrameworkUrl ?? "").Trim(),
                 SpecialK = (mergedMetadata.SpecialK ?? "").Trim(),

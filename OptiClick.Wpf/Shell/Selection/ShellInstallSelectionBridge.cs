@@ -1,4 +1,5 @@
 using System.Threading;
+using OptiClick.Core.Install;
 using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Install.Planning;
 using OptiClick.Wpf.Install.Precheck;
@@ -44,8 +45,9 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
         IInstallButtonStateResolver installButtonStateResolver,
         IInstallButtonPresentationResolver installButtonPresentationResolver,
         IInstallSummaryViewModelBuilder installSummaryViewModelBuilder,
-        IAppStringsProvider? stringsProvider = null)
+        IAppStringsProvider stringsProvider)
     {
+        ArgumentNullException.ThrowIfNull(stringsProvider);
         _precheckHandlerRegistry = precheckHandlerRegistry;
         _precheckFlow = precheckFlow;
         _modConflictNoticeBuilder = modConflictNoticeBuilder;
@@ -54,7 +56,7 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
         _installButtonStateResolver = installButtonStateResolver;
         _installButtonPresentationResolver = installButtonPresentationResolver;
         _installSummaryViewModelBuilder = installSummaryViewModelBuilder;
-        _stringsProvider = stringsProvider ?? new AppStringsProvider();
+        _stringsProvider = stringsProvider;
     }
 
     public async Task<ShellInstallSelectionResult> SelectAsync(
@@ -67,14 +69,16 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
             var selectedGame = ResolveSelectedGame(request.Games, request.SelectedIndex);
             var selectedMatch = ResolveSelectedMatch(selectedGame, request.SelectedMatchResult);
             var actionAvailability = _actionAvailabilityResolver.Resolve(selectedGame, selectedMatch);
+            var selectedInputs = ResolveSelectedInputs(request, selectedGame);
+            var selectedGameDescriptor = selectedInputs.ExecutionDescriptor.GameDescriptor;
             var selectedInstallStatus = request.SelectedInstallStatus ?? new InstallStatusSnapshot
             {
                 Code = request.SelectedInstallStatusCode
             };
-            var summary = BuildSummary(selectedGame, request.Language, selectedInstallStatus);
+            var summary = BuildSummary(selectedGame, selectedGameDescriptor, request.Language, selectedInstallStatus);
             var runningSnapshot = selectedGame is null
                 ? InstallPrecheckSnapshot.NotStarted
-                : InstallPrecheckSnapshot.NotStarted with { State = Install.Planning.InstallPrecheckState.Running };
+                : InstallPrecheckSnapshot.NotStarted with { State = InstallPrecheckState.Running };
 
             var runningState = BuildState(
                 request,
@@ -93,6 +97,7 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
                 popupQueue: new ShellPopupRequestQueue(Array.Empty<ShellPopupRequest>(), confirmedImmediately: false, precheckOk: false),
                 pendingPopupRequests: Array.Empty<ShellPopupRequest>(),
                 precheckSnapshot: runningSnapshot,
+                selectedInputs: selectedInputs,
                 installButtonPresentation: null);
 
             runningState = runningState with
@@ -110,7 +115,8 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
                     {
                         PrecheckRunning = false,
                         PrecheckSnapshot = request.PrecheckSnapshotFallback
-                    })
+                    }),
+                    ShouldInstallFsr4 = selectedInputs.ExecutionDescriptor.ShouldInstallFsr4
                 };
 
                 return new ShellInstallSelectionResult
@@ -138,12 +144,12 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
             {
                 var precheckRequest = new InstallPrecheckRequest
                 {
-                    Game = selectedGame,
+                    GameDescriptor = selectedGameDescriptor,
                     TargetPath = selectedTargetPath,
-                    PreferredDllName = ShellGameInstallMetadataResolver.GetOptiScalerDllName(selectedGame)
+                    PreferredDllName = selectedGameDescriptor.OptiScalerDllName
                 };
 
-                var handler = _precheckHandlerRegistry.Resolve(selectedGame);
+                var handler = _precheckHandlerRegistry.Resolve();
                 try
                 {
                     precheckResult = await Task.Run(
@@ -207,6 +213,7 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
                 popupQueue: popupQueue,
                 pendingPopupRequests: popupQueue.PendingRequests,
                 precheckSnapshot: precheckSnapshot,
+                selectedInputs: selectedInputs,
                 installButtonPresentation: null);
 
             completedState = completedState with
@@ -230,6 +237,15 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
                 State = request.PreviousState ?? new ShellInstallSelectionState()
             };
         }
+    }
+
+    private static ResolvedInstallGameInputs ResolveSelectedInputs(
+        ShellInstallSelectionRequest request,
+        ShellGameCardModel? selectedGame)
+    {
+        return selectedGame is null
+            ? ResolvedInstallGameInputs.Empty
+            : ShellInstallDescriptorInputFactory.ResolveInputs(selectedGame, request.ResolvedInputs);
     }
 
     public ShellInstallSelectionResult ConfirmNextPopup(ShellInstallSelectionState state)
@@ -280,6 +296,7 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
         ShellPopupRequestQueue popupQueue,
         IReadOnlyList<ShellPopupRequest> pendingPopupRequests,
         InstallPrecheckSnapshot precheckSnapshot,
+        ResolvedInstallGameInputs selectedInputs,
         InstallButtonPresentation? installButtonPresentation)
     {
         return new ShellInstallSelectionState
@@ -312,7 +329,8 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
             SheetLoading = request.SheetLoading,
             InstallInProgress = request.InstallInProgress,
             AppUpdateInProgress = request.AppUpdateInProgress,
-            Fsr4Required = request.Fsr4Required,
+            ResolvedInputs = selectedInputs,
+            ShouldInstallFsr4 = selectedInputs.ExecutionDescriptor.ShouldInstallFsr4,
             InstallButtonPresentation = installButtonPresentation ?? new InstallButtonPresentation()
         };
     }
@@ -328,7 +346,7 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
             InstallInProgress = state.InstallInProgress,
             AppUpdateInProgress = state.AppUpdateInProgress,
             PopupConfirmed = state.PopupConfirmed,
-            Fsr4Required = state.Fsr4Required,
+            ShouldInstallFsr4 = state.ShouldInstallFsr4,
             ArchiveReadiness = state.ArchiveReadiness,
             Precheck = state.PrecheckSnapshot,
             ActionAvailabilityReasonCode = state.ActionAvailabilityReasonCode,
@@ -366,7 +384,11 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
         });
     }
 
-    private InstallSummaryPresentation BuildSummary(ShellGameCardModel? game, string language, InstallStatusSnapshot installStatus)
+    private InstallSummaryPresentation BuildSummary(
+        ShellGameCardModel? game,
+        InstallGameDescriptor? gameDescriptor,
+        string language,
+        InstallStatusSnapshot installStatus)
     {
         if (game is null)
         {
@@ -375,7 +397,7 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
 
         return _installSummaryViewModelBuilder.Build(new InstallSummaryBuildInput
         {
-            Game = game,
+            GameDescriptor = gameDescriptor,
             Language = language,
             InstallStatus = installStatus,
             InstallSummaryNote = SelectLocalizedSummaryNote(game, language)

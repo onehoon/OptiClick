@@ -70,12 +70,12 @@ public sealed class InstallEntryGateResolver : IInstallEntryGateResolver
             return Reject(InstallEntryRejectionCodes.InvalidGameSelection);
         }
 
-        if (inputs.Fsr4Required && inputs.Fsr4ArchiveDownloading)
+        if (inputs.ShouldInstallFsr4 && inputs.Fsr4ArchiveDownloading)
         {
             return Reject(InstallEntryRejectionCodes.Fsr4ArchiveDownloading);
         }
 
-        if (inputs.Fsr4Required && (!inputs.Fsr4ArchiveReady || string.IsNullOrWhiteSpace(inputs.Fsr4SourceArchive)))
+        if (inputs.ShouldInstallFsr4 && (!inputs.Fsr4ArchiveReady || string.IsNullOrWhiteSpace(inputs.Fsr4SourceArchive)))
         {
             return Reject(InstallEntryRejectionCodes.Fsr4NotReady, inputs.Fsr4ArchiveError);
         }

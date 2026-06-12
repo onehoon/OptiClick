@@ -1,4 +1,4 @@
-using OptiClick.Wpf.Shell.Games;
+using OptiClick.Core.Install;
 using OptiClick.Wpf.Shell.RuntimeData;
 
 namespace OptiClick.Wpf.Install.Execution;
@@ -12,45 +12,45 @@ public static class ExcludePatternResolver
     ];
 
     public static IReadOnlyList<string> Resolve(
-        ShellGameCardModel? game,
-        IReadOnlyDictionary<string, object?>? moduleDownloadLinks)
+        InstallExecutionDescriptor? descriptor,
+        ModuleDownloadLinkCatalog? moduleDownloadLinks)
     {
-        var gamePatterns = ResolveFromGame(game);
-        if (gamePatterns.Count > 0)
+        var descriptorPatterns = ResolveFromDescriptor(descriptor);
+        if (descriptorPatterns.Count > 0)
         {
-            return gamePatterns;
+            return descriptorPatterns;
         }
 
         return ResolveFromModuleDownloadLinks(moduleDownloadLinks);
     }
 
-    private static IReadOnlyList<string> ResolveFromGame(ShellGameCardModel? game)
+    private static IReadOnlyList<string> ResolveFromDescriptor(InstallExecutionDescriptor? descriptor)
     {
-        if (game?.ExcludeListPatterns?.Count > 0)
+        if (descriptor?.ExcludeListPatterns?.Count > 0)
         {
-            return ExcludeListPatternParser.Normalize(game.ExcludeListPatterns);
+            return InstallExcludeListPatternParser.Normalize(descriptor.ExcludeListPatterns);
         }
 
-        var raw = (game?.ExcludeListRaw ?? "").Trim();
+        var raw = (descriptor?.ExcludeListRaw ?? "").Trim();
         if (string.IsNullOrWhiteSpace(raw))
         {
             return Array.Empty<string>();
         }
 
-        return ExcludeListPatternParser.Parse(raw);
+        return InstallExcludeListPatternParser.Parse(raw);
     }
 
     private static IReadOnlyList<string> ResolveFromModuleDownloadLinks(
-        IReadOnlyDictionary<string, object?>? moduleDownloadLinks)
+        ModuleDownloadLinkCatalog? moduleDownloadLinks)
     {
-        if (moduleDownloadLinks is null || moduleDownloadLinks.Count == 0)
+        if (moduleDownloadLinks is null || !moduleDownloadLinks.HasEntries)
         {
             return Array.Empty<string>();
         }
 
         foreach (var key in ModuleExcludeKeys)
         {
-            if (!moduleDownloadLinks.TryGetValue(key, out var entry))
+            if (!moduleDownloadLinks.TryGetRawEntry(key, out var entry))
             {
                 continue;
             }
@@ -62,22 +62,17 @@ public static class ExcludePatternResolver
             }
         }
 
-        foreach (var pair in moduleDownloadLinks)
+        foreach (var link in moduleDownloadLinks.Links)
         {
-            if (pair.Value is not IReadOnlyDictionary<string, object?> row)
-            {
-                continue;
-            }
-
-            var resourceId = ReadString(row, "resource_id");
-            var resourceGroup = ReadString(row, "resource_group");
+            var resourceId = link.ReadString("resource_id");
+            var resourceGroup = link.ReadString("resource_group");
             if (!string.Equals(resourceId, RuntimeDataGameProfileKeys.ExcludeList, StringComparison.OrdinalIgnoreCase)
                 && !string.Equals(resourceGroup, RuntimeDataGameProfileKeys.ExcludeList, StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
 
-            var patterns = ParseEntry(row);
+            var patterns = ParseDictionaryEntry(link.RawValues);
             if (patterns.Count > 0)
             {
                 return patterns;
@@ -92,12 +87,12 @@ public static class ExcludePatternResolver
         return entry switch
         {
             null => Array.Empty<string>(),
-            string raw => ExcludeListPatternParser.Parse(raw),
+            string raw => InstallExcludeListPatternParser.Parse(raw),
             IReadOnlyDictionary<string, object?> row => ParseDictionaryEntry(row),
             IDictionary<string, object?> mutableRow => ParseDictionaryEntry(ToReadOnlyDictionary(mutableRow)),
-            IEnumerable<string> tokens => ExcludeListPatternParser.Normalize(tokens),
-            IEnumerable<object?> tokens => ExcludeListPatternParser.Normalize(tokens.Select(ToTokenString)),
-            _ => ExcludeListPatternParser.Parse(entry.ToString())
+            IEnumerable<string> tokens => InstallExcludeListPatternParser.Normalize(tokens),
+            IEnumerable<object?> tokens => InstallExcludeListPatternParser.Normalize(tokens.Select(ToTokenString)),
+            _ => InstallExcludeListPatternParser.Parse(entry.ToString())
         };
     }
 
@@ -106,7 +101,7 @@ public static class ExcludePatternResolver
         var excludeRaw = ReadString(row, RuntimeDataGameProfileKeys.ExcludeList);
         if (!string.IsNullOrWhiteSpace(excludeRaw))
         {
-            return ExcludeListPatternParser.Parse(excludeRaw);
+            return InstallExcludeListPatternParser.Parse(excludeRaw);
         }
 
         if (row.TryGetValue("patterns", out var patternsValue))
@@ -121,13 +116,13 @@ public static class ExcludePatternResolver
         var filenameRaw = ReadString(row, "filename");
         if (!string.IsNullOrWhiteSpace(filenameRaw))
         {
-            return ExcludeListPatternParser.Parse(filenameRaw);
+            return InstallExcludeListPatternParser.Parse(filenameRaw);
         }
 
         var valueRaw = ReadString(row, "value");
         if (!string.IsNullOrWhiteSpace(valueRaw))
         {
-            return ExcludeListPatternParser.Parse(valueRaw);
+            return InstallExcludeListPatternParser.Parse(valueRaw);
         }
 
         return Array.Empty<string>();

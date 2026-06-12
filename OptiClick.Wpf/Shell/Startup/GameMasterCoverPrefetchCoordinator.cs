@@ -235,16 +235,10 @@ public sealed class GameMasterCoverPrefetchCoordinator
                 }
             }
 
-            var sourceGameId = (card.SourceModel?.GameId ?? "").Trim();
+            var sourceGameId = card.ResolvedGameId;
             if (!string.IsNullOrWhiteSpace(sourceGameId))
             {
                 keys.Add(BuildHomeCardMatchKey("gameId", sourceGameId));
-            }
-
-            var entryGameId = (card.GameEntry?.GameId ?? "").Trim();
-            if (!string.IsNullOrWhiteSpace(entryGameId))
-            {
-                keys.Add(BuildHomeCardMatchKey("gameId", entryGameId));
             }
 
             var sourceModelSteamAppId = (card.SourceModel?.CoverSteamAppId ?? "").Trim();

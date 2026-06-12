@@ -1,4 +1,6 @@
 ﻿using OptiClick.Wpf.Install.Archives;
+using OptiClick.Core.Install;
+using OptiClick.Infrastructure.Install.Config;
 using OptiClick.Wpf.Install.Config;
 using OptiClick.Wpf.Install.Execution;
 using OptiClick.Wpf.Install.FileSystem;
@@ -8,6 +10,7 @@ using OptiClick.Wpf.Install.Planning;
 using OptiClick.Wpf.Install.Presentation;
 using OptiClick.Wpf.Install.UiState;
 using OptiClick.Wpf.Install.Uninstall;
+using OptiClick.Wpf.Composition.Modules;
 using OptiClick.Wpf.Shell.Selection;
 
 namespace OptiClick.Wpf.Composition;
@@ -47,6 +50,7 @@ public sealed class InstallComposition
         public required IArchiveExtractor ArchiveExtractor { get; init; }
         public required IArchivePreparationCoordinator ArchivePreparationCoordinator { get; init; }
         public required IOptiScalerVariantArchiveSyncService OptiScalerVariantArchiveSyncService { get; init; }
+        public required IFsr4VariantArchiveSyncService Fsr4VariantArchiveSyncService { get; init; }
     }
 
     private sealed record ConfigProfileServices
@@ -100,7 +104,9 @@ public sealed class InstallComposition
 
         // Install flow/presentation services
         var installSelectionBridge = _root.CreateShellInstallSelectionBridge(app.StringsProvider);
-        var installSelectionRequestBuilder = new InstallSelectionRequestBuilder(installStatusResolver);
+        var installSelectionRequestBuilder = new InstallSelectionRequestBuilder(
+            installStatusResolver,
+            new RtssOverlayNoticeResolver(new RtssOverlayNoticeStateProvider()));
         var gameSelectionFlowController = new GameSelectionFlowController(installSelectionBridge, installSelectionRequestBuilder);
         var installPlanBuilder = _root.CreateInstallPlanBuilder();
         var componentInstallParityReviewBuilder = _root.CreateComponentInstallParityReviewBuilder();
@@ -113,27 +119,27 @@ public sealed class InstallComposition
         var installCompletionMessageBuilder = new InstallCompletionMessageBuilder();
         var archiveReadinessFlowController = new ArchiveReadinessFlowController(
             archivePreparation.ArchivePreparationCoordinator,
-            archivePreparation.OptiScalerVariantArchiveSyncService);
-        var optiScalerIniBaseApplier = new OptiScalerIniBaseApplier(configProfileServices.IniProfileEditor);
-        var configApplyFlowController = new ConfigApplyFlowController(
-            configProfileServices.ConfigProfileApplier,
-            optiScalerIniBaseApplier);
-        var rtssProfileApplier = new RtssProfileApplier();
-        var installResultApplier = new InstallResultApplier(
-            configApplyFlowController,
-            rtssProfileApplier,
-            installResultPresentationResolver,
-            installCompletionMessageBuilder);
-        var installFlowController = new InstallFlowController(
-            installPlanBuilder,
-            installStartGateResolver,
-            componentInstallCoordinator,
-            componentInstallParityReviewBuilder,
-            installPlanInputBuilder,
-            componentInstallContextBuilder,
-            installPopupPresenter,
-            installResultApplier,
-            installRejectionPresentationResolver);
+            archivePreparation.OptiScalerVariantArchiveSyncService,
+            archivePreparation.Fsr4VariantArchiveSyncService);
+        var configApplyComposition = ConfigApplyCompositionFactory.Create(new ConfigApplyCompositionRequest
+        {
+            ConfigProfileApplier = configProfileServices.ConfigProfileApplier,
+            IniProfileEditor = configProfileServices.IniProfileEditor,
+            InstallResultPresentationResolver = installResultPresentationResolver,
+            InstallCompletionMessageBuilder = installCompletionMessageBuilder
+        });
+        var installFlowComposition = InstallFlowCompositionFactory.Create(new InstallFlowCompositionRequest
+        {
+            InstallPlanBuilder = installPlanBuilder,
+            ComponentInstallParityReviewBuilder = componentInstallParityReviewBuilder,
+            InstallPlanInputBuilder = installPlanInputBuilder,
+            InstallStartGateResolver = installStartGateResolver,
+            ComponentInstallContextBuilder = componentInstallContextBuilder,
+            ComponentInstallCoordinator = componentInstallCoordinator,
+            InstallResultApplier = configApplyComposition.InstallResultApplier,
+            InstallPopupPresenter = installPopupPresenter,
+            InstallRejectionPresentationResolver = installRejectionPresentationResolver
+        });
 
         return new InstallCompositionServices
         {
@@ -155,9 +161,9 @@ public sealed class InstallComposition
             InstallPopupPresenter = installPopupPresenter,
             InstallCompletionMessageBuilder = installCompletionMessageBuilder,
             ArchiveReadinessFlowController = archiveReadinessFlowController,
-            ConfigApplyFlowController = configApplyFlowController,
-            InstallResultApplier = installResultApplier,
-            InstallFlowController = installFlowController,
+            ConfigApplyFlowController = configApplyComposition.ConfigApplyFlowController,
+            InstallResultApplier = configApplyComposition.InstallResultApplier,
+            InstallFlowController = installFlowComposition.InstallFlowController,
             OptiClickUninstallPlanBuilder = uninstallPlanBuilder,
             OptiClickUninstallExecutor = uninstallExecutor
         };
@@ -174,11 +180,15 @@ public sealed class InstallComposition
             archiveExtractor,
             archiveManifestStore,
             new OptiScalerPayloadValidator());
+        var fsr4ArchivePreparationService = new Fsr4ArchivePreparationService(
+            archiveDownloader,
+            archiveExtractor,
+            archiveManifestStore);
         var archivePreparationCoordinator = new ArchivePreparationCoordinator(
             archiveCachePaths,
             new VersionedArchivePreparationService(archiveDownloader, archiveManifestStore, archiveExtractor),
             new OptiPatcherArchivePreparationService(archiveDownloader, archiveExtractor, archiveManifestStore),
-            new Fsr4ArchivePreparationService(archiveDownloader, archiveExtractor, archiveManifestStore),
+            fsr4ArchivePreparationService,
             optiScalerPayloadCacheService);
         var optiScalerVariantManifestStore = new OptiScalerVariantManifestStore(
             archiveCachePaths.ManifestRoot,
@@ -190,13 +200,18 @@ public sealed class InstallComposition
             archiveManifestStore,
             new OptiScalerPayloadValidator(),
             app.AppLogger);
+        var fsr4VariantArchiveSyncService = new Fsr4VariantArchiveSyncService(
+            archiveCachePaths,
+            fsr4ArchivePreparationService,
+            new Fsr4VariantManifestStore(archiveCachePaths.ManifestRoot, app.AppLogger));
 
         return new ArchivePreparationServices
         {
             ArchiveDownloader = archiveDownloader,
             ArchiveExtractor = archiveExtractor,
             ArchivePreparationCoordinator = archivePreparationCoordinator,
-            OptiScalerVariantArchiveSyncService = optiScalerVariantArchiveSyncService
+            OptiScalerVariantArchiveSyncService = optiScalerVariantArchiveSyncService,
+            Fsr4VariantArchiveSyncService = fsr4VariantArchiveSyncService
         };
     }
 

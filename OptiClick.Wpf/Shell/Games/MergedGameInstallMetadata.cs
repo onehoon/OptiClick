@@ -12,6 +12,7 @@ public sealed class MergedGameInstallMetadata
     public string GpuBundleVendor { get; init; } = "";
     public string GpuBundleKey { get; init; } = "";
     public string GpuGroup { get; init; } = "";
+    public Fsr4ManifestPolicy Fsr4 { get; init; } = Fsr4ManifestPolicy.Disabled;
 
     public string OptiScalerDllName { get; init; } = "";
     public string ReFrameworkUrl { get; init; } = "";
@@ -36,10 +37,52 @@ public sealed class MergedGameInstallMetadata
     public IReadOnlyList<RuntimeDataRawRow> GameJsonProfileRows { get; init; } = [];
 }
 
-public static class ShellGameInstallMetadataResolver
+internal static class ShellGameInstallMetadataResolver
 {
-    public static string GetOptiScalerDllName(ShellGameCardModel? game)
+    // Merged install metadata is the primary source for install policy values.
+    // ShellGameCardModel fields remain for compatibility and are used only when metadata values are absent.
+    // Keep Shell metadata merging at Shell/descriptor boundaries. Install execution should consume descriptors.
+    public static MergedGameInstallMetadata ResolveEffective(ShellGameCardModel? game)
     {
+        if (game is null)
+        {
+            return MergedGameInstallMetadata.Empty;
+        }
+
+        var metadata = game.InstallMetadata;
+        return new MergedGameInstallMetadata
+        {
+            GpuBundleLoaded = metadata?.GpuBundleLoaded ?? game.GpuBundleLoaded,
+            GpuBundleSupported = metadata?.GpuBundleSupported ?? game.GpuBundleSupported,
+            GpuProfileId = PickFirst(metadata?.GpuProfileId, game.GpuProfileId),
+            GpuBundleVendor = PickFirst(metadata?.GpuBundleVendor, game.GpuBundleVendor),
+            GpuBundleKey = GetGpuBundleKey(game),
+            GpuGroup = GetGpuGroup(game),
+            Fsr4 = ResolveFsr4Policy(game),
+            OptiScalerDllName = GetOptiScalerDllName(game),
+            ReFrameworkUrl = GetReFrameworkUrl(game),
+            SpecialK = GetSpecialK(game),
+            ExtraBundle = GetExtraBundle(game),
+            ExcludeListRaw = PickFirst(metadata?.ExcludeListRaw, game.ExcludeListRaw),
+            ExcludeListPatterns = ResolveExcludeListPatterns(game),
+            UltimateAsiLoader = GetUltimateAsiLoader(game),
+            OptiPatcher = GetOptiPatcher(game),
+            Unreal5 = GetUnreal5(game),
+            RtssOverlay = GetRtssOverlay(game),
+            IniSettings = metadata?.IniSettings
+                          ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
+            GameIniProfileRows = metadata?.GameIniProfileRows ?? [],
+            GameUnrealIniProfileRows = metadata?.GameUnrealIniProfileRows ?? [],
+            EngineIniProfileRows = metadata?.EngineIniProfileRows ?? [],
+            GameXmlProfileRows = metadata?.GameXmlProfileRows ?? [],
+            RegistryProfileRows = metadata?.RegistryProfileRows ?? [],
+            GameJsonProfileRows = metadata?.GameJsonProfileRows ?? []
+        };
+    }
+
+    private static string GetOptiScalerDllName(ShellGameCardModel? game)
+    {
+        // InstallMetadata (if present) is treated as source of truth.
         var fromMetadata = (game?.InstallMetadata?.OptiScalerDllName ?? "").Trim();
         if (!string.IsNullOrWhiteSpace(fromMetadata))
         {
@@ -49,7 +92,7 @@ public static class ShellGameInstallMetadataResolver
         return (game?.OptiScalerDllName ?? "").Trim();
     }
 
-    public static string GetReFrameworkUrl(ShellGameCardModel? game)
+    private static string GetReFrameworkUrl(ShellGameCardModel? game)
     {
         var fromMetadata = (game?.InstallMetadata?.ReFrameworkUrl ?? "").Trim();
         if (!string.IsNullOrWhiteSpace(fromMetadata))
@@ -60,7 +103,7 @@ public static class ShellGameInstallMetadataResolver
         return (game?.ReframeworkUrl ?? "").Trim();
     }
 
-    public static string GetSpecialK(ShellGameCardModel? game)
+    private static string GetSpecialK(ShellGameCardModel? game)
     {
         var fromMetadata = (game?.InstallMetadata?.SpecialK ?? "").Trim();
         if (!string.IsNullOrWhiteSpace(fromMetadata))
@@ -71,7 +114,7 @@ public static class ShellGameInstallMetadataResolver
         return (game?.SpecialK ?? "").Trim();
     }
 
-    public static string GetExtraBundle(ShellGameCardModel? game)
+    private static string GetExtraBundle(ShellGameCardModel? game)
     {
         var fromMetadata = (game?.InstallMetadata?.ExtraBundle ?? "").Trim();
         if (!string.IsNullOrWhiteSpace(fromMetadata))
@@ -82,7 +125,7 @@ public static class ShellGameInstallMetadataResolver
         return (game?.ExtraBundle ?? "").Trim();
     }
 
-    public static bool GetUltimateAsiLoader(ShellGameCardModel? game)
+    private static bool GetUltimateAsiLoader(ShellGameCardModel? game)
     {
         if (game is null)
         {
@@ -92,7 +135,7 @@ public static class ShellGameInstallMetadataResolver
         return game.InstallMetadata?.UltimateAsiLoader ?? game.UltimateAsiLoader;
     }
 
-    public static bool GetOptiPatcher(ShellGameCardModel? game)
+    private static bool GetOptiPatcher(ShellGameCardModel? game)
     {
         if (game is null)
         {
@@ -102,7 +145,7 @@ public static class ShellGameInstallMetadataResolver
         return game.InstallMetadata?.OptiPatcher ?? game.OptiPatcher;
     }
 
-    public static bool GetUnreal5(ShellGameCardModel? game)
+    private static bool GetUnreal5(ShellGameCardModel? game)
     {
         if (game is null)
         {
@@ -112,7 +155,7 @@ public static class ShellGameInstallMetadataResolver
         return game.InstallMetadata?.Unreal5 ?? game.Unreal5;
     }
 
-    public static bool GetRtssOverlay(ShellGameCardModel? game)
+    private static bool GetRtssOverlay(ShellGameCardModel? game)
     {
         if (game is null)
         {
@@ -122,7 +165,7 @@ public static class ShellGameInstallMetadataResolver
         return game.InstallMetadata?.RtssOverlay ?? game.RtssOverlay;
     }
 
-    public static string GetGpuBundleKey(ShellGameCardModel? game)
+    private static string GetGpuBundleKey(ShellGameCardModel? game)
     {
         var fromMetadata = (game?.InstallMetadata?.GpuBundleKey ?? "").Trim();
         if (!string.IsNullOrWhiteSpace(fromMetadata))
@@ -133,7 +176,7 @@ public static class ShellGameInstallMetadataResolver
         return (game?.GpuBundleKey ?? "").Trim();
     }
 
-    public static string GetGpuGroup(ShellGameCardModel? game)
+    private static string GetGpuGroup(ShellGameCardModel? game)
     {
         var fromMetadata = (game?.InstallMetadata?.GpuGroup ?? "").Trim();
         if (!string.IsNullOrWhiteSpace(fromMetadata))
@@ -142,5 +185,37 @@ public static class ShellGameInstallMetadataResolver
         }
 
         return (game?.GpuGroup ?? "").Trim();
+    }
+
+    private static Fsr4ManifestPolicy ResolveFsr4Policy(ShellGameCardModel? game)
+    {
+        if (game?.InstallMetadata?.Fsr4 is { } metadataPolicy)
+        {
+            return metadataPolicy;
+        }
+
+        return game?.Fsr4 ?? Fsr4ManifestPolicy.Disabled;
+    }
+
+    private static IReadOnlyList<string> ResolveExcludeListPatterns(ShellGameCardModel game)
+    {
+        var metadataPatterns = game.InstallMetadata?.ExcludeListPatterns;
+        if (metadataPatterns is { Count: > 0 })
+        {
+            return metadataPatterns.ToArray();
+        }
+
+        return game.ExcludeListPatterns?.ToArray() ?? [];
+    }
+
+    private static string PickFirst(string? first, string? second)
+    {
+        var normalizedFirst = (first ?? "").Trim();
+        if (!string.IsNullOrWhiteSpace(normalizedFirst))
+        {
+            return normalizedFirst;
+        }
+
+        return (second ?? "").Trim();
     }
 }

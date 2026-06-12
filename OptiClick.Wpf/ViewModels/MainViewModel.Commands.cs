@@ -1,6 +1,5 @@
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
-using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Shell.Navigation;
 using OptiClick.Wpf.ViewModels.Shell;
 
@@ -46,41 +45,20 @@ public sealed partial class MainViewModel
         ShellViewKind targetView,
         CancellationToken cancellationToken)
     {
-        if (Navigation.CurrentViewKind != ShellViewKind.OptiScaler
-            || targetView == ShellViewKind.OptiScaler
-            || !OptiScaler.HasUnsavedChanges)
-        {
-            return true;
-        }
-
-        var result = await _dialogPresenter.ShowSafelyAsync(
-            new AppDialogRequest
+        return await _features.ShellInteraction.ConfirmOptiScalerDirtyNavigationAsync(
+            Navigation.CurrentViewKind,
+            targetView,
+            OptiScaler.HasUnsavedChanges,
+            new OptiScalerDirtyNavigationGuardText
             {
-                Kind = AppDialogKind.Warning,
-                Severity = DialogSeverity.Warning,
                 Title = Strings.OptiScalerDiscardChangesTitle,
                 Summary = Strings.OptiScalerDiscardChangesSummary,
                 PrimaryButtonText = Strings.OptiScalerDiscardChangesPrimaryButton,
-                SecondaryButtonText = Strings.OptiScalerDiscardChangesSecondaryButton,
-                PrimaryResult = AppDialogResult.Ok,
-                SecondaryResult = AppDialogResult.Continue,
-                CanClose = true
+                SecondaryButtonText = Strings.OptiScalerDiscardChangesSecondaryButton
             },
+            OptiScaler.SaveChanges,
+            OptiScaler.DiscardChanges,
             cancellationToken);
-
-        if (result == AppDialogResult.Ok)
-        {
-            OptiScaler.SaveChanges();
-            return true;
-        }
-
-        if (result == AppDialogResult.Continue)
-        {
-            OptiScaler.DiscardChanges();
-            return true;
-        }
-
-        return false;
     }
 
     private void RefreshNavigationAndScanCommandStates()

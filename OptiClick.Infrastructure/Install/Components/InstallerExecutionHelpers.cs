@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.RegularExpressions;
+using OptiClick.Core.Install;
 
 namespace OptiClick.Infrastructure.Install.Components;
 
@@ -7,26 +8,24 @@ public static class InstallerExecutionHelpers
 {
     private static readonly Regex UnsafeCharsPattern = new("[^A-Za-z0-9._-]+", RegexOptions.Compiled);
 
-    public static string ExtractModuleUrl(IReadOnlyDictionary<string, object?> moduleDownloadLinks, string moduleKey)
+    public static string ExtractModuleUrl(ModuleDownloadLinkCatalog moduleDownloadLinks, string moduleKey)
     {
-        if (!moduleDownloadLinks.TryGetValue(moduleKey, out var rawEntry)
-            || rawEntry is not IReadOnlyDictionary<string, object?> entry)
+        if (!moduleDownloadLinks.TryResolveLink(moduleKey, out var entry))
         {
             return "";
         }
 
-        return ReadFirstString(entry, "url", "download_url", "source_url");
+        return entry.Url;
     }
 
-    public static string ExtractModuleSha256(IReadOnlyDictionary<string, object?> moduleDownloadLinks, string moduleKey)
+    public static string ExtractModuleSha256(ModuleDownloadLinkCatalog moduleDownloadLinks, string moduleKey)
     {
-        if (!moduleDownloadLinks.TryGetValue(moduleKey, out var rawEntry)
-            || rawEntry is not IReadOnlyDictionary<string, object?> entry)
+        if (!moduleDownloadLinks.TryResolveLink(moduleKey, out var entry))
         {
             return "";
         }
 
-        return ReadFirstString(entry, "sha256", "SHA256");
+        return entry.Sha256;
     }
 
     public static string ReadString(IReadOnlyDictionary<string, object?> values, string key)
@@ -113,21 +112,7 @@ public static class InstallerExecutionHelpers
 
     public static string NormalizeAlias(string value)
     {
-        var normalized = (value ?? "").Trim().ToLowerInvariant();
-        if (string.IsNullOrWhiteSpace(normalized))
-        {
-            return "";
-        }
-
-        normalized = normalized
-            .Replace('-', '_')
-            .Replace(' ', '_');
-        while (normalized.Contains("__", StringComparison.Ordinal))
-        {
-            normalized = normalized.Replace("__", "_", StringComparison.Ordinal);
-        }
-
-        return normalized.Trim('_');
+        return ModuleDownloadLinkAliasPolicy.Normalize(value);
     }
 
     public static string ResolveDownloadFileName(string url, string requestedFileName, string fallback)

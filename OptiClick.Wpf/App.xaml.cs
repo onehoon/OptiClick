@@ -16,8 +16,7 @@ public partial class App : Application
     {
         if (MainWindow?.DataContext is MainViewModel viewModel)
         {
-            viewModel.CancelBackgroundWork();
-            viewModel.FlushPendingUserSettingsSave();
+            viewModel.Dispose();
         }
 
         base.OnExit(e);

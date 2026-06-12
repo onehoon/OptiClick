@@ -21,6 +21,7 @@ public sealed class InstallRejectionPresentationResolver : IInstallRejectionPres
             InstallEntryRejectionCodes.MultiGpuBlocked => None(reasonCode),
             InstallEntryRejectionCodes.InstallPrecheckRunning => None(reasonCode),
             InstallEntryRejectionCodes.InstallInProgress => None(reasonCode),
+            InstallEntryRejectionCodes.InstallExecutionUnavailable => None(reasonCode),
 
             InstallEntryRejectionCodes.PredownloadInProgress => Info(reasonCode, "dialogs.preparing_download_title", "dialogs.preparing_download_body"),
             InstallEntryRejectionCodes.NoGameSelected => Warning(reasonCode, "common.warning", "dialogs.select_game_card_body"),

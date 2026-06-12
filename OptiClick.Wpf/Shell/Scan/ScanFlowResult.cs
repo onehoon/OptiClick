@@ -1,3 +1,4 @@
+using OptiClick.Core.Scan;
 using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Shell.Flow;
 using OptiClick.Wpf.ViewModels;

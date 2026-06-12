@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using OptiClick.Core.Install;
 using OptiClick.Wpf.Install.Config;
 using OptiClick.Wpf.Install.Execution;
 using OptiClick.Wpf.Install.Presentation;
@@ -13,116 +13,69 @@ public interface IInstallResultApplier
 
 public sealed class InstallResultApplier : IInstallResultApplier
 {
-    private readonly ConfigApplyFlowController _configApplyFlowController;
-    private readonly IRtssProfileApplier _rtssProfileApplier;
-    private readonly IInstallResultPresentationResolver? _installResultPresentationResolver;
-    private readonly InstallCompletionMessageBuilder _installCompletionMessageBuilder;
+    private readonly InstallPostApplyExecutor _postApplyExecutor;
+    private readonly InstallResultPresentationFactory _presentationFactory;
 
     public InstallResultApplier(
-        ConfigApplyFlowController configApplyFlowController,
-        IRtssProfileApplier rtssProfileApplier,
+        ConfigApplyApplicationService configApplyApplicationService,
+        IInstallRtssProfileApplier rtssProfileApplier,
         IInstallResultPresentationResolver? installResultPresentationResolver,
         InstallCompletionMessageBuilder? installCompletionMessageBuilder = null)
+        : this(
+            new InstallPostApplyExecutor(
+                new InstallPostApplyApplicationService(configApplyApplicationService, rtssProfileApplier),
+                new ConfigApplyInstallLogAdapter()),
+            new InstallResultPresentationFactory(
+                installResultPresentationResolver,
+                installCompletionMessageBuilder))
     {
-        _configApplyFlowController = configApplyFlowController
-                                     ?? throw new ArgumentNullException(nameof(configApplyFlowController));
-        _rtssProfileApplier = rtssProfileApplier
-                              ?? throw new ArgumentNullException(nameof(rtssProfileApplier));
-        _installResultPresentationResolver = installResultPresentationResolver;
-        _installCompletionMessageBuilder = installCompletionMessageBuilder ?? new InstallCompletionMessageBuilder();
+    }
+
+    internal InstallResultApplier(
+        InstallPostApplyExecutor postApplyExecutor,
+        InstallResultPresentationFactory presentationFactory)
+    {
+        _postApplyExecutor = postApplyExecutor ?? throw new ArgumentNullException(nameof(postApplyExecutor));
+        _presentationFactory = presentationFactory ?? throw new ArgumentNullException(nameof(presentationFactory));
     }
 
     public InstallResultApplyResult Apply(InstallResultApplyRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(request.Strings);
+        ArgumentNullException.ThrowIfNull(request.Text);
 
-        var coreSucceeded = IsCoreInstallSuccessful(request.InstallResult);
-        var logs = new List<InstallFlowLogEntry>();
-        var configApplyResult = _configApplyFlowController.Apply(new ConfigApplyFlowRequest
+        var postApplyResult = _postApplyExecutor.Execute(new InstallPostApplyRequest
         {
             Plan = request.Plan,
-            OptiScalerIniSettings = request.SelectedGame.InstallMetadata?.IniSettings
-                                    ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
-            CommonOptiScalerIniSettings = request.CommonOptiScalerIniSettings,
-            Strings = request.Strings,
-            InstallSucceeded = coreSucceeded
-        });
-        logs.AddRange(configApplyResult.Logs);
-
-        if (coreSucceeded)
-        {
-            var rtssApplyResult = _rtssProfileApplier.Apply(request.SelectedGame, request.SelectionState.SelectedMatchResult);
-            logs.AddRange(rtssApplyResult.Logs);
-        }
-
-        var finalSuccess = request.InstallResult.IsSuccess && configApplyResult.IsSuccess;
-        var statusText = finalSuccess
-            ? _installCompletionMessageBuilder.BuildInstallCompletionMessage(
-                request.Plan.FinalProxyDllName,
-                request.Strings.InstallCompleted,
-                request.Strings.InstallCompletedWithName)
-            : !string.IsNullOrWhiteSpace(configApplyResult.FailureMessage)
-                ? configApplyResult.FailureMessage
-                : Format(request.Strings.InstallFailed, request.InstallResult.FailedStep?.ErrorCode ?? "unknown_error");
-        var popupCompletionMessage = finalSuccess
-            ? _installCompletionMessageBuilder.BuildInstallPostCompletionMessage(
-                request.Plan.FinalProxyDllName,
-                request.Strings.InstallPostCompletedWithNameTemplate)
-            : "";
-
-        var presentation = _installResultPresentationResolver?.Resolve(new InstallResultPresentationInput
-        {
-            Success = finalSuccess,
-            Message = statusText
+            InstallResult = request.InstallResult,
+            ConfigApplyRequest = new ConfigApplyApplicationRequest
+            {
+                TargetFolder = request.Plan.TargetFolder,
+                ProfileRows = ConfigApplyProfileRowsMapper.FromAttachedRuntimeProfileRows(request.ProfileRows),
+                OptiScalerIniApplyContext = request.OptiScalerIniApplyContext
+            },
+            ConfigApplyFailureMessage = request.Text.InstallFailedConfigApply
         });
 
-        PopupPresentationRequest? popupRequest = null;
-        if (presentation?.PopupRequest is { Kind: not PopupPresentationKind.None } candidatePopup)
+        var finalSuccess = request.InstallResult.IsSuccess && postApplyResult.ConfigApplyResult.IsSuccess;
+        var presentation = _presentationFactory.Create(new InstallResultPresentationFactoryRequest
         {
-            popupRequest = finalSuccess
-                ? candidatePopup with
-                {
-                    TitleKey = request.Strings.InstallCompleteDialogTitle,
-                    BodyKey = "",
-                    BodyDetail = _installCompletionMessageBuilder.BuildAfterInstallPopupMessage(
-                        string.IsNullOrWhiteSpace(popupCompletionMessage) ? statusText : popupCompletionMessage,
-                        request.SelectionState.InstallPostPopupMessage)
-                }
-                : candidatePopup;
-        }
+            Plan = request.Plan,
+            InstallResult = request.InstallResult,
+            ConfigApplyResult = postApplyResult.ConfigApplyResult,
+            Text = request.Text,
+            InstallPostPopupMessage = request.InstallPostPopupMessage,
+            FinalSuccess = finalSuccess
+        });
 
         return new InstallResultApplyResult
         {
             FinalSuccess = finalSuccess,
-            StatusText = statusText,
-            ConfigErrorCount = configApplyResult.ErrorCount,
-            ConfigFailureCode = configApplyResult.FailureCode,
-            PopupRequest = popupRequest,
-            Logs = logs
+            StatusText = presentation.StatusText,
+            ConfigErrorCount = postApplyResult.ConfigApplyResult.ErrorCount,
+            ConfigFailureCode = postApplyResult.ConfigApplyResult.FailureCode,
+            PopupRequest = presentation.PopupRequest,
+            Logs = postApplyResult.Logs
         };
     }
-
-    private static bool IsCoreInstallSuccessful(ComponentInstallResult installResult)
-    {
-        if (installResult is null)
-        {
-            return false;
-        }
-
-        var coreStep = installResult.Steps.FirstOrDefault(static step =>
-            step.Component == ComponentInstallName.OptiScalerCore);
-        if (coreStep is not null)
-        {
-            return coreStep.Status == ComponentInstallStatus.Success;
-        }
-
-        return installResult.IsSuccess;
-    }
-
-    private static string Format(string template, params object[] args)
-    {
-        return string.Format(CultureInfo.CurrentCulture, template ?? "", args ?? []);
-    }
-
 }

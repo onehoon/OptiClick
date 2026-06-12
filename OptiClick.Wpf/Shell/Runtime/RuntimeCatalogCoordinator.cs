@@ -55,13 +55,13 @@ public sealed class RuntimeCatalogCoordinator
             request.ApplySettingsStatusText(
                 _runtimeEndpointStatusPresenter.BuildStatus(
                     request.LatestRuntimeContext.RemoteData,
-                    request.Strings));
+                    request.Text.EndpointStatusText));
 
             var result = await _runtimeCatalogFlowController.RefreshAsync(
                 request.BuildRuntimeCatalogRequest(
                     request.LatestRuntimeContext,
                     request.SelectedLanguage,
-                    request.Strings),
+                    request.Text.FlowText),
                 cancellationToken);
             await request.ApplyRuntimeCatalogFlowResultAsync(
                 result,
@@ -99,11 +99,11 @@ public sealed record RuntimeCatalogCoordinatorRequest
 
     public required AppLanguage SelectedLanguage { get; init; }
 
-    public required AppStrings Strings { get; init; }
+    public required RuntimeCatalogCoordinatorText Text { get; init; }
 
     public required RuntimeCatalogRefreshMode RefreshMode { get; init; }
 
-    public required Func<RuntimeContext, AppLanguage, AppStrings, RuntimeCatalogFlowRequest> BuildRuntimeCatalogRequest { get; init; }
+    public required Func<RuntimeContext, AppLanguage, RuntimeCatalogFlowText, RuntimeCatalogFlowRequest> BuildRuntimeCatalogRequest { get; init; }
 
     public required Action ApplyMultiGpuBlockedUiState { get; init; }
 

@@ -1,5 +1,6 @@
 ﻿using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Install.Archives;
+using OptiClick.Wpf.Install.Flow;
 using OptiClick.Wpf.Install.Planning;
 using OptiClick.Wpf.Shell.RuntimeData;
 using OptiClick.Wpf.Shell.Games;
@@ -9,6 +10,8 @@ namespace OptiClick.Wpf.Shell.Runtime;
 
 public sealed class RuntimeShellState
 {
+    private readonly object _startupRemoteCatalogSnapshotGate = new();
+
     public OperatingSystemSupportState OperatingSystemState { get; private set; } =
         OperatingSystemSupportState.Supported("unknown");
 
@@ -24,14 +27,23 @@ public sealed class RuntimeShellState
 
     public string LatestRemoteCatalogDetailErrorCode { get; private set; } = "";
 
+    public RuntimeCatalogStartupSnapshot? StartupRemoteCatalogSnapshot { get; private set; }
+
+    public bool IsGpuManifestRestartRequired { get; private set; }
+
+    public bool HasShownGpuManifestRestartDialog { get; private set; }
+
     public ArchiveReadinessSnapshot LatestArchiveReadiness { get; private set; } =
         ArchiveReadinessSnapshot.NotReady;
 
-    public IReadOnlyDictionary<string, object?> ModuleDownloadLinks { get; private set; } =
-        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+    public ModuleDownloadLinkContext ModuleDownloadLinks { get; private set; } =
+        ModuleDownloadLinkContext.Empty;
 
     public OptiScalerVariantCatalog LatestOptiScalerVariantCatalog { get; private set; } =
         OptiScalerVariantCatalog.Empty;
+
+    public Fsr4VariantCatalog LatestFsr4VariantCatalog { get; private set; } =
+        Fsr4VariantCatalog.Empty;
 
     public IReadOnlyList<OptiScalerVariantSelectionOption> LatestOptiScalerVariantSelectionOptions { get; private set; } = [];
 
@@ -46,14 +58,15 @@ public sealed class RuntimeShellState
     public void ApplyRemoteCatalog(
         RemoteRuntimeData? runtimeData,
         ShellGameCatalog? remoteCatalog,
-        IReadOnlyDictionary<string, object?>? moduleDownloadLinks,
-        OptiScalerVariantCatalog? optiScalerVariantCatalog = null)
+        ModuleDownloadLinkContext? moduleDownloadLinks,
+        OptiScalerVariantCatalog? optiScalerVariantCatalog = null,
+        Fsr4VariantCatalog? fsr4VariantCatalog = null)
     {
         LatestRuntimeData = runtimeData ?? RemoteRuntimeData.Empty;
         LatestRemoteCatalog = remoteCatalog ?? ShellGameCatalog.Empty;
-        ModuleDownloadLinks = moduleDownloadLinks
-            ?? new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        ModuleDownloadLinks = moduleDownloadLinks ?? ModuleDownloadLinkContext.Empty;
         LatestOptiScalerVariantCatalog = optiScalerVariantCatalog ?? OptiScalerVariantCatalog.Empty;
+        LatestFsr4VariantCatalog = fsr4VariantCatalog ?? Fsr4VariantCatalog.Empty;
     }
 
     public void ApplyOptiScalerVariantSync(OptiScalerVariantSyncResult? result)
@@ -75,6 +88,54 @@ public sealed class RuntimeShellState
     {
         LatestRemoteCatalogErrorCode = (errorCode ?? "").Trim();
         LatestRemoteCatalogDetailErrorCode = (detailErrorCode ?? "").Trim();
+    }
+
+    public bool TryCaptureStartupRemoteCatalogSnapshot(
+        RuntimeCatalogFlowResult? result,
+        string? normalizedErrorCode)
+    {
+        if (result is null)
+        {
+            return false;
+        }
+
+        lock (_startupRemoteCatalogSnapshotGate)
+        {
+            if (StartupRemoteCatalogSnapshot is not null)
+            {
+                return false;
+            }
+
+            StartupRemoteCatalogSnapshot = new RuntimeCatalogStartupSnapshot(
+                result with { Logs = [] },
+                (normalizedErrorCode ?? "").Trim());
+            return true;
+        }
+    }
+
+    public bool TryGetStartupRemoteCatalogSnapshot(out RuntimeCatalogStartupSnapshot snapshot)
+    {
+        lock (_startupRemoteCatalogSnapshotGate)
+        {
+            if (StartupRemoteCatalogSnapshot is null)
+            {
+                snapshot = null!;
+                return false;
+            }
+
+            snapshot = StartupRemoteCatalogSnapshot;
+            return true;
+        }
+    }
+
+    public void SetGpuManifestRestartRequired(bool value)
+    {
+        IsGpuManifestRestartRequired = value;
+    }
+
+    public void SetGpuManifestRestartDialogShown(bool value)
+    {
+        HasShownGpuManifestRestartDialog = value;
     }
 
     public void SetArchiveReadiness(ArchiveReadinessSnapshot readiness)
@@ -105,3 +166,7 @@ public sealed class RuntimeShellState
         return OperatingSystemState;
     }
 }
+
+public sealed record RuntimeCatalogStartupSnapshot(
+    RuntimeCatalogFlowResult Result,
+    string NormalizedErrorCode);

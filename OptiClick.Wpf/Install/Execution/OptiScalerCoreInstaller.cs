@@ -1,8 +1,9 @@
 using System.IO;
+using OptiClick.Core.Install;
 using OptiClick.Wpf.Install.FileSystem;
 using OptiClick.Wpf.Logging;
 using OptiClick.Wpf.Install.Planning;
-using OptiClick.Wpf.Shell.Games;
+using CoreComponentInstallOperation = OptiClick.Core.Install.Components.ComponentInstallOperation;
 
 namespace OptiClick.Wpf.Install.Execution;
 
@@ -37,8 +38,8 @@ public sealed class OptiScalerCoreInstaller : IOptiScalerCoreInstaller
             TargetPath = normalizedTargetPath,
             OptiScalerPayloadDirectory = context.OptiScalerPayloadDirectory,
             FinalDllName = context.FinalDllName,
-            PreferredProxyDllName = ShellGameInstallMetadataResolver.GetOptiScalerDllName(context.Game),
-            ExcludePatterns = ExcludePatternResolver.Resolve(context.Game, context.ModuleDownloadLinks)
+            PreferredProxyDllName = ResolvePreferredProxyDllName(context),
+            ExcludePatterns = ExcludePatternResolver.Resolve(context.ExecutionDescriptor, context.ModuleDownloadLinks)
         });
 
         if (!result.IsSuccess)
@@ -51,12 +52,22 @@ public sealed class OptiScalerCoreInstaller : IOptiScalerCoreInstaller
 
         return ComponentInstallStepResult.Success(
             ComponentInstallName.OptiScalerCore,
-            result.Operations.Select(static operation => new ComponentInstallOperation
+            result.Operations.Select(static operation => new CoreComponentInstallOperation
             {
                 Kind = operation.Kind,
                 Source = operation.Source,
                 Destination = operation.Destination
             }).ToArray());
+    }
+
+    private static string ResolvePreferredProxyDllName(ComponentInstallContext context)
+    {
+        if (context.HasPlannedComponentInstallers)
+        {
+            return (context.FinalDllName ?? "").Trim();
+        }
+
+        return context.ExecutionDescriptor.PreferredProxyDllName;
     }
 
     private sealed class InstallFileSystemAdapter : OptiClick.Infrastructure.Install.Components.IOptiScalerCoreInstallFileSystem
@@ -137,16 +148,8 @@ public interface IProxyDllNameResolver
 public sealed class ProxyDllNameResolver : IProxyDllNameResolver
 {
     public const string InvalidTargetFolderErrorCode = "invalid_target_folder";
-    public const string InvalidPreferredProxyNameErrorCode = "invalid_preferred_proxy_name";
-    public const string AsiProxyName = "OptiScaler.asi";
-
-    private static readonly string[] NormalProxyChain =
-    [
-        "dxgi.dll",
-        "winmm.dll",
-        "version.dll",
-        "d3d12.dll"
-    ];
+    public const string InvalidPreferredProxyNameErrorCode = ProxyDllNamePolicy.InvalidPreferredProxyNameErrorCode;
+    public const string AsiProxyName = ProxyDllNamePolicy.AsiProxyName;
 
     private readonly IInstallFileSystem _fileSystem;
     private readonly IFileSignatureDetectors _detectors;
@@ -175,7 +178,7 @@ public sealed class ProxyDllNameResolver : IProxyDllNameResolver
             throw new InvalidOperationException(errorCode);
         }
 
-        var candidates = BuildCandidateChain(canonicalPreferred);
+        var candidates = ProxyDllNamePolicy.BuildCandidateChainFromCanonical(canonicalPreferred);
         foreach (var candidate in candidates)
         {
             var path = Path.Combine(normalizedTargetPath, candidate);
@@ -195,60 +198,11 @@ public sealed class ProxyDllNameResolver : IProxyDllNameResolver
 
     public static bool TryResolveProfilePreferredStart(string? preferredName, out string canonicalPreferred, out string errorCode)
     {
-        var normalized = (preferredName ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(normalized))
-        {
-            canonicalPreferred = NormalProxyChain[0];
-            errorCode = "";
-            return true;
-        }
-
-        if (string.Equals(normalized, AsiProxyName, StringComparison.OrdinalIgnoreCase))
-        {
-            canonicalPreferred = AsiProxyName;
-            errorCode = "";
-            return true;
-        }
-
-        var match = NormalProxyChain.FirstOrDefault(candidate =>
-            string.Equals(candidate, normalized, StringComparison.OrdinalIgnoreCase));
-        if (!string.IsNullOrWhiteSpace(match))
-        {
-            canonicalPreferred = match;
-            errorCode = "";
-            return true;
-        }
-
-        canonicalPreferred = "";
-        errorCode = InvalidPreferredProxyNameErrorCode;
-        return false;
+        return ProxyDllNamePolicy.TryResolvePreferredStart(preferredName, out canonicalPreferred, out errorCode);
     }
 
     public static IReadOnlyList<string> BuildCandidateChainForPreferred(string? preferredName)
     {
-        if (!TryResolveProfilePreferredStart(preferredName, out var canonicalPreferred, out _))
-        {
-            return [];
-        }
-
-        return BuildCandidateChain(canonicalPreferred);
-    }
-
-    private static IReadOnlyList<string> BuildCandidateChain(string canonicalPreferred)
-    {
-        if (string.Equals(canonicalPreferred, AsiProxyName, StringComparison.Ordinal))
-        {
-            return [AsiProxyName];
-        }
-
-        var startIndex = Array.FindIndex(
-            NormalProxyChain,
-            candidate => string.Equals(candidate, canonicalPreferred, StringComparison.Ordinal));
-        if (startIndex < 0)
-        {
-            return [];
-        }
-
-        return NormalProxyChain.Skip(startIndex).ToArray();
+        return ProxyDllNamePolicy.BuildCandidateChainForPreferred(preferredName);
     }
 }

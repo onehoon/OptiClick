@@ -1,10 +1,12 @@
-﻿using OptiClick.Wpf.Install.Planning;
+using OptiClick.Core.Install.Planning;
+using OptiClick.Core.RuntimeData;
 
 namespace OptiClick.Wpf.Install.Execution;
 
 public sealed record ComponentInstallParityReviewInput
 {
-    public InstallPlan Plan { get; init; } = new();
+    public CoreInstallPlan Plan { get; init; } = new();
+    public AttachedRuntimeProfileRows ProfileRows { get; init; } = AttachedRuntimeProfileRows.Empty;
     public ArchiveReadinessSnapshot ArchiveReadiness { get; init; } = ArchiveReadinessSnapshot.NotReady;
     public InstallPrecheckSnapshot Precheck { get; init; } = InstallPrecheckSnapshot.NotStarted;
 }

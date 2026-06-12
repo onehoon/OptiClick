@@ -25,9 +25,9 @@ public sealed class UltimateAsiLoaderInstaller : IUltimateAsiLoaderInstaller
     public async Task<ComponentInstallStepResult> InstallAsync(ComponentInstallContext context, CancellationToken cancellationToken = default)
     {
         var result = await _inner.InstallAsync(
-            InfrastructureComponentInstallerAdapters.ToUltimateAsiLoaderContext(context),
+            InfrastructureComponentContextMapper.ToUltimateAsiLoaderContext(context),
             cancellationToken);
 
-        return InfrastructureComponentInstallerAdapters.ToWpfStepResult(result);
+        return InfrastructureComponentResultMapper.ToWpfStepResult(result);
     }
 }

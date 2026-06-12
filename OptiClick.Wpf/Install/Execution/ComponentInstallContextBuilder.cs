@@ -1,4 +1,5 @@
-using OptiClick.Wpf.Shell.Games;
+using OptiClick.Core.Install;
+using OptiClick.Core.Install.Planning;
 using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Install.Planning;
 
@@ -8,13 +9,12 @@ public sealed class ComponentInstallContextBuilder
 {
     public ComponentInstallContext Build(ComponentInstallContextBuildInput input)
     {
-        var fsr4Required = ShellGameCardMapper.ResolveFsr4Required(input.SelectedGame);
+        var descriptor = input.ExecutionDescriptor;
         var selectedGpu = ResolveSelectedGpu(input.LatestRuntimeContext);
-        var bundleKey = ShellGameInstallMetadataResolver.GetGpuBundleKey(input.SelectedGame);
-        var gpuGroup = ShellGameInstallMetadataResolver.GetGpuGroup(input.SelectedGame);
+        var plannedComponentInstallers = PlannedComponentInstallerMapper.ResolveEnabledInstallers(input.Plan.Components);
         return new ComponentInstallContext
         {
-            Game = input.SelectedGame,
+            ExecutionDescriptor = descriptor,
             TargetPath = InstallTargetPathNormalizer.NormalizeTargetDirectory(input.Plan.TargetFolder),
             FinalDllName = input.Plan.FinalProxyDllName,
             OptiScalerPayloadDirectory = input.LatestArchiveReadiness.OptiScalerSourceArchive,
@@ -23,11 +23,38 @@ public sealed class ComponentInstallContextBuilder
             OptiScalerDisplayVersion = input.LatestArchiveReadiness.OptiScalerDisplayVersion,
             GpuVendor = (selectedGpu?.Vendor ?? "").Trim(),
             GpuName = (selectedGpu?.Name ?? "").Trim(),
-            GpuBundleKey = bundleKey,
-            GpuGroup = gpuGroup,
-            Fsr4SourceArchive = input.LatestArchiveReadiness.Fsr4SourceArchive,
-            Fsr4Required = fsr4Required,
-            UseUltimateAsiLoader = ShellGameInstallMetadataResolver.GetUltimateAsiLoader(input.SelectedGame),
+            Fsr4SourceArchive = input.LatestArchiveReadiness.ResolveFsr4VariantSourceArchive(descriptor.Fsr4Variant),
+            Fsr4Variant = descriptor.Fsr4Variant,
+            UalDetectedNames = input.UalDetectedNames,
+            HasPlannedComponentInstallers = input.Plan.Components.Count > 0,
+            PlannedComponentInstallers = plannedComponentInstallers,
+            ShouldInstallOptiPatcher = ResolveShouldInstall(
+                input.Plan.Components,
+                CoreInstallPlanComponentType.OptiPatcher,
+                descriptor.RequiresOptiPatcher),
+            ShouldInstallUltimateAsiLoader = ResolveShouldInstall(
+                input.Plan.Components,
+                CoreInstallPlanComponentType.UltimateAsiLoader,
+                descriptor.RequiresUltimateAsiLoader),
+            ShouldInstallUnreal5 = ResolveShouldInstall(
+                input.Plan.Components,
+                CoreInstallPlanComponentType.Unreal5,
+                descriptor.RequiresUnreal5),
+            ShouldInstallFsr4 = ResolveShouldInstall(
+                input.Plan.Components,
+                CoreInstallPlanComponentType.Fsr4,
+                descriptor.ShouldInstallFsr4),
+            GpuBundleKey = descriptor.GpuBundleKey,
+            GpuGroup = descriptor.GpuGroup,
+            ReFrameworkDestination = ResolveComponentDestination(
+                input.Plan.Components,
+                CoreInstallPlanComponentType.REFramework,
+                descriptor.ReFrameworkDestination),
+            SpecialKValue = ResolveComponentDestination(
+                input.Plan.Components,
+                CoreInstallPlanComponentType.SpecialK,
+                descriptor.SpecialK),
+            ExtraBundleAlias = ResolveExtraBundleAlias(input.Plan.Components, descriptor),
             UalCachedArchivePath = input.LatestArchiveReadiness.UalSourceArchive,
             OptiPatcherCachedArchivePath = input.LatestArchiveReadiness.OptiPatcherSourceArchive,
             SpecialKCachedArchivePath = input.LatestArchiveReadiness.SpecialKSourceArchive,
@@ -51,5 +78,47 @@ public sealed class ComponentInstallContextBuilder
         }
 
         return gpus.FirstOrDefault(static gpu => gpu.IsPrimary) ?? gpus[0];
+    }
+
+    private static bool ResolveShouldInstall(
+        IReadOnlyList<CoreInstallPlanComponent> components,
+        CoreInstallPlanComponentType type,
+        bool fallback)
+    {
+        var planned = components.FirstOrDefault(component => component.Type == type);
+        return planned is null ? fallback : planned.Enabled;
+    }
+
+    private static string ResolveComponentDestination(
+        IReadOnlyList<CoreInstallPlanComponent> components,
+        CoreInstallPlanComponentType type,
+        string fallback)
+    {
+        var planned = components.FirstOrDefault(component =>
+            component.Enabled
+            && component.Type == type);
+        var destination = (planned?.DestinationHint ?? "").Trim();
+        if (!string.IsNullOrWhiteSpace(destination))
+        {
+            return destination;
+        }
+
+        return fallback;
+    }
+
+    private static string ResolveExtraBundleAlias(
+        IReadOnlyList<CoreInstallPlanComponent> components,
+        InstallExecutionDescriptor descriptor)
+    {
+        var planned = components.FirstOrDefault(static component =>
+            component.Enabled
+            && component.Type == CoreInstallPlanComponentType.ExtraBundle);
+        var alias = (planned?.RequiredArchiveAlias ?? "").Trim();
+        if (!string.IsNullOrWhiteSpace(alias))
+        {
+            return alias;
+        }
+
+        return descriptor.ExtraBundle;
     }
 }

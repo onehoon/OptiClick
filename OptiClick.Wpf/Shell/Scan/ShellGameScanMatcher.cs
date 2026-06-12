@@ -1,5 +1,8 @@
 using System.IO;
+using OptiClick.Core.Games;
 using OptiClick.Core.Runtime;
+using OptiClick.Core.Scan;
+using OptiClick.Infrastructure.Scan;
 using OptiClick.Wpf.Logging;
 using OptiClick.Wpf.Shell.Games;
 using OptiClick.Wpf.Shell.Games.Support;
@@ -12,6 +15,7 @@ public sealed class ShellGameScanMatcher : IShellGameScanMatcher
     private readonly IGameSupportPolicy _supportPolicy;
     private readonly IAppLogger _logger;
     private readonly IShellGameExeMatchIndexBuilder _matchIndexBuilder;
+    private readonly IScanFileSystemProbe _fileSystemProbe;
 
     public ShellGameScanMatcher()
         : this(new GameSupportPolicy(), null)
@@ -31,15 +35,17 @@ public sealed class ShellGameScanMatcher : IShellGameScanMatcher
     public ShellGameScanMatcher(
         IGameSupportPolicy supportPolicy,
         IShellGameExeMatchIndexBuilder matchIndexBuilder,
-        IAppLogger? logger = null)
+        IAppLogger? logger = null,
+        IScanFileSystemProbe? fileSystemProbe = null)
     {
         _supportPolicy = supportPolicy;
         _matchIndexBuilder = matchIndexBuilder;
         _logger = logger ?? NullAppLogger.Instance;
+        _fileSystemProbe = fileSystemProbe ?? new ScanFileSystemProbe();
     }
 
     public IReadOnlyList<ShellGameMatchResult> Match(
-        ShellScanResult scanResult,
+        ExecutableScanResult scanResult,
         ShellGameCatalog catalog,
         RuntimeContext? runtimeContext)
     {
@@ -48,7 +54,7 @@ public sealed class ShellGameScanMatcher : IShellGameScanMatcher
     }
 
     public IReadOnlyList<ShellGameMatchResult> Match(
-        ShellScanResult scanResult,
+        ExecutableScanResult scanResult,
         ShellGameExeMatchIndex matchIndex,
         RuntimeContext? runtimeContext)
     {
@@ -84,7 +90,8 @@ public sealed class ShellGameScanMatcher : IShellGameScanMatcher
                     executableFolder,
                     rule.RequiredFiles,
                     detectedFileNamesByDirectory,
-                    requiredFileCheckCache))
+                    requiredFileCheckCache,
+                    _fileSystemProbe))
                 .Select(static rule => rule.Game)
                 .GroupBy(static game => (game.GameId ?? "").Trim(), StringComparer.OrdinalIgnoreCase)
                 .Select(static group => group.First())
@@ -150,7 +157,7 @@ public sealed class ShellGameScanMatcher : IShellGameScanMatcher
         return results;
     }
 
-    private static string ResolveExecutableName(ShellDetectedExecutable executable)
+    private static string ResolveExecutableName(DetectedExecutable executable)
     {
         var fullPath = (executable.FullPath ?? "").Trim();
         if (!string.IsNullOrWhiteSpace(fullPath))
@@ -170,7 +177,7 @@ public sealed class ShellGameScanMatcher : IShellGameScanMatcher
         return MatchExePatternParser.NormalizeExecutableName(value);
     }
 
-    private static string ResolveExecutableFolder(ShellDetectedExecutable executable, string fallbackFolder)
+    private static string ResolveExecutableFolder(DetectedExecutable executable, string fallbackFolder)
     {
         var fullPath = (executable.FullPath ?? "").Trim();
         if (!string.IsNullOrWhiteSpace(fullPath))
@@ -186,7 +193,7 @@ public sealed class ShellGameScanMatcher : IShellGameScanMatcher
     }
 
     private static IReadOnlyDictionary<string, IReadOnlySet<string>> BuildDetectedFileNamesByDirectory(
-        ShellScanResult scanResult)
+        ExecutableScanResult scanResult)
     {
         var map = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
         var fallbackFolder = NormalizeDirectoryPathForComparison(scanResult.FolderPath);
@@ -224,7 +231,8 @@ public sealed class ShellGameScanMatcher : IShellGameScanMatcher
         string directoryPath,
         IReadOnlyList<string> requiredFiles,
         IReadOnlyDictionary<string, IReadOnlySet<string>> detectedFileNamesByDirectory,
-        IDictionary<string, bool> requiredFileCheckCache)
+        IDictionary<string, bool> requiredFileCheckCache,
+        IScanFileSystemProbe fileSystemProbe)
     {
         if (requiredFiles is null || requiredFiles.Count == 0)
         {
@@ -254,7 +262,7 @@ public sealed class ShellGameScanMatcher : IShellGameScanMatcher
             var candidatePath = Path.Combine(normalizedDirectory, normalizedRequiredFile);
             if (!requiredFileCheckCache.TryGetValue(candidatePath, out var exists))
             {
-                exists = File.Exists(candidatePath);
+                exists = fileSystemProbe.FileExists(candidatePath);
                 requiredFileCheckCache[candidatePath] = exists;
             }
 

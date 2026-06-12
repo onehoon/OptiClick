@@ -1,5 +1,5 @@
+using OptiClick.Core.Install.Planning;
 using OptiClick.Wpf.Install.Execution;
-using OptiClick.Wpf.Install.Planning;
 using OptiClick.Wpf.Install.UiState;
 
 namespace OptiClick.Wpf.Install.Gates;
@@ -23,7 +23,7 @@ public sealed record InstallStartGateInput
     public ArchiveReadinessSnapshot ArchiveReadiness { get; init; } = ArchiveReadinessSnapshot.NotReady;
     public InstallPrecheckSnapshot Precheck { get; init; } = InstallPrecheckSnapshot.NotStarted;
     public bool IsFsr4Ready { get; init; } = true;
-    public bool RequiresFsr4 { get; init; }
+    public bool ShouldInstallFsr4 { get; init; }
     public bool IsExtraBundleReady { get; init; } = true;
 
     public bool IsUnsupportedGpu { get; init; }
@@ -31,7 +31,7 @@ public sealed record InstallStartGateInput
     public bool IsPopupConfirmed { get; init; }
     public bool HasPendingPopupRequests { get; init; }
 
-    public InstallPlan? InstallPlan { get; init; }
+    public CoreInstallPlan? InstallPlan { get; init; }
     public ComponentInstallParityReviewResult? ComponentReview { get; init; }
 
     public bool RequireWritePermissionProbe { get; init; } = true;

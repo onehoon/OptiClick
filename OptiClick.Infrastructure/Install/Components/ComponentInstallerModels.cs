@@ -3,6 +3,7 @@ using CoreComponentInstallName = OptiClick.Core.Install.Components.ComponentInst
 using CoreComponentInstallOperation = OptiClick.Core.Install.Components.ComponentInstallOperation;
 using CoreComponentInstallStatus = OptiClick.Core.Install.Components.ComponentInstallStatus;
 using CoreComponentInstallStepResult = OptiClick.Core.Install.Components.ComponentInstallStepResult;
+using OptiClick.Core.Install;
 
 namespace OptiClick.Infrastructure.Install.Components;
 
@@ -15,6 +16,8 @@ public enum ComponentInstallStatus
 
 public enum ComponentInstallName
 {
+    // Infrastructure component adapters only handle post-core components.
+    // OptiScalerCore is installed by the dedicated core installer path.
     UltimateAsiLoader = (int)CoreComponentInstallName.UltimateAsiLoader,
     SpecialK = (int)CoreComponentInstallName.SpecialK,
     ReFramework = (int)CoreComponentInstallName.ReFramework,
@@ -75,8 +78,8 @@ public sealed record ComponentInstallStepResult
     {
         return new CoreComponentInstallStepResult
         {
-            Component = ConvertEnum<ComponentInstallName, CoreComponentInstallName>(Component),
-            Status = ConvertEnum<ComponentInstallStatus, CoreComponentInstallStatus>(Status),
+            Component = ComponentInstallerModelMapper.ToCore(Component),
+            Status = ComponentInstallerModelMapper.ToCore(Status),
             ErrorCode = ErrorCode,
             Message = Message,
             Operations = Array.Empty<CoreComponentInstallOperation>()
@@ -89,25 +92,58 @@ public sealed record ComponentInstallStepResult
 
         return new ComponentInstallStepResult
         {
-            Component = ConvertEnum<CoreComponentInstallName, ComponentInstallName>(result.Component),
-            Status = ConvertEnum<CoreComponentInstallStatus, ComponentInstallStatus>(result.Status),
+            Component = ComponentInstallerModelMapper.ToInfrastructure(result.Component),
+            Status = ComponentInstallerModelMapper.ToInfrastructure(result.Status),
             ErrorCode = result.ErrorCode,
             Message = result.Message
         };
     }
+}
 
-    private static TTarget ConvertEnum<TSource, TTarget>(TSource value)
-        where TSource : struct, Enum
-        where TTarget : struct, Enum
+internal static class ComponentInstallerModelMapper
+{
+    private const string PostCoreOnlyMessage =
+        "Infrastructure component mapper only supports post-core components. OptiScalerCore is handled separately.";
+
+    public static CoreComponentInstallName ToCore(ComponentInstallName component) => component switch
     {
-        var name = value.ToString();
-        if (Enum.TryParse<TTarget>(name, ignoreCase: false, out var converted))
-        {
-            return converted;
-        }
+        ComponentInstallName.UltimateAsiLoader => CoreComponentInstallName.UltimateAsiLoader,
+        ComponentInstallName.SpecialK => CoreComponentInstallName.SpecialK,
+        ComponentInstallName.ReFramework => CoreComponentInstallName.ReFramework,
+        ComponentInstallName.ExtraBundle => CoreComponentInstallName.ExtraBundle,
+        ComponentInstallName.OptiPatcher => CoreComponentInstallName.OptiPatcher,
+        ComponentInstallName.Unreal5 => CoreComponentInstallName.Unreal5,
+        ComponentInstallName.Fsr4 => CoreComponentInstallName.Fsr4,
+        _ => throw new ArgumentOutOfRangeException(nameof(component), component, PostCoreOnlyMessage)
+    };
 
-        throw new ArgumentOutOfRangeException(nameof(value), value, $"Unsupported enum mapping from {typeof(TSource).Name} to {typeof(TTarget).Name}.");
-    }
+    public static CoreComponentInstallStatus ToCore(ComponentInstallStatus status) => status switch
+    {
+        ComponentInstallStatus.Success => CoreComponentInstallStatus.Success,
+        ComponentInstallStatus.Skipped => CoreComponentInstallStatus.Skipped,
+        ComponentInstallStatus.Failed => CoreComponentInstallStatus.Failed,
+        _ => throw new ArgumentOutOfRangeException(nameof(status), status, $"Unsupported infrastructure status mapping: {status}")
+    };
+
+    public static ComponentInstallName ToInfrastructure(CoreComponentInstallName component) => component switch
+    {
+        CoreComponentInstallName.UltimateAsiLoader => ComponentInstallName.UltimateAsiLoader,
+        CoreComponentInstallName.SpecialK => ComponentInstallName.SpecialK,
+        CoreComponentInstallName.ReFramework => ComponentInstallName.ReFramework,
+        CoreComponentInstallName.ExtraBundle => ComponentInstallName.ExtraBundle,
+        CoreComponentInstallName.OptiPatcher => ComponentInstallName.OptiPatcher,
+        CoreComponentInstallName.Unreal5 => ComponentInstallName.Unreal5,
+        CoreComponentInstallName.Fsr4 => ComponentInstallName.Fsr4,
+        _ => throw new ArgumentOutOfRangeException(nameof(component), component, PostCoreOnlyMessage)
+    };
+
+    public static ComponentInstallStatus ToInfrastructure(CoreComponentInstallStatus status) => status switch
+    {
+        CoreComponentInstallStatus.Success => ComponentInstallStatus.Success,
+        CoreComponentInstallStatus.Skipped => ComponentInstallStatus.Skipped,
+        CoreComponentInstallStatus.Failed => ComponentInstallStatus.Failed,
+        _ => throw new ArgumentOutOfRangeException(nameof(status), status, $"Unsupported core status mapping: {status}")
+    };
 }
 
 public sealed record UltimateAsiLoaderInstallContext
@@ -115,7 +151,7 @@ public sealed record UltimateAsiLoaderInstallContext
     public string TargetPath { get; init; } = "";
     public bool UseUltimateAsiLoader { get; init; }
     public IReadOnlyList<string> UalDetectedNames { get; init; } = Array.Empty<string>();
-    public IReadOnlyDictionary<string, object?> ModuleDownloadLinks { get; init; } = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+    public ModuleDownloadLinkCatalog ModuleDownloadLinks { get; init; } = ModuleDownloadLinkCatalog.Empty;
     public string UalCachedArchivePath { get; init; } = "";
 }
 
@@ -124,7 +160,7 @@ public sealed record SpecialKInstallContext
     public string TargetPath { get; init; } = "";
     public string FinalDllName { get; init; } = "";
     public string SpecialKValue { get; init; } = "";
-    public IReadOnlyDictionary<string, object?> ModuleDownloadLinks { get; init; } = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+    public ModuleDownloadLinkCatalog ModuleDownloadLinks { get; init; } = ModuleDownloadLinkCatalog.Empty;
     public string SpecialKCachedArchivePath { get; init; } = "";
 }
 
@@ -132,7 +168,7 @@ public sealed record ReFrameworkInstallContext
 {
     public string TargetPath { get; init; } = "";
     public string ReFrameworkDestination { get; init; } = "";
-    public IReadOnlyDictionary<string, object?> ModuleDownloadLinks { get; init; } = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+    public ModuleDownloadLinkCatalog ModuleDownloadLinks { get; init; } = ModuleDownloadLinkCatalog.Empty;
     public string ReFrameworkCachedArchivePath { get; init; } = "";
 }
 
@@ -140,14 +176,14 @@ public sealed record ExtraBundleInstallContext
 {
     public string TargetPath { get; init; } = "";
     public string ExtraBundleAlias { get; init; } = "";
-    public IReadOnlyDictionary<string, object?> ModuleDownloadLinks { get; init; } = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+    public ModuleDownloadLinkCatalog ModuleDownloadLinks { get; init; } = ModuleDownloadLinkCatalog.Empty;
 }
 
 public sealed record OptiPatcherInstallContext
 {
     public string TargetPath { get; init; } = "";
     public bool UseOptiPatcher { get; init; }
-    public IReadOnlyDictionary<string, object?> ModuleDownloadLinks { get; init; } = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+    public ModuleDownloadLinkCatalog ModuleDownloadLinks { get; init; } = ModuleDownloadLinkCatalog.Empty;
     public string OptiPatcherCachedArchivePath { get; init; } = "";
 }
 
@@ -155,7 +191,7 @@ public sealed record Unreal5InstallContext
 {
     public string TargetPath { get; init; } = "";
     public bool UseUnreal5 { get; init; }
-    public IReadOnlyDictionary<string, object?> ModuleDownloadLinks { get; init; } = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+    public ModuleDownloadLinkCatalog ModuleDownloadLinks { get; init; } = ModuleDownloadLinkCatalog.Empty;
     public string Unreal5CachedArchivePath { get; init; } = "";
 }
 
@@ -163,6 +199,7 @@ public sealed record Fsr4InstallContext
 {
     public string TargetPath { get; init; } = "";
     public bool UseFsr4 { get; init; }
+    public string Fsr4Variant { get; init; } = "";
     public string Fsr4SourceArchivePath { get; init; } = "";
     public string GpuVendor { get; init; } = "";
     public string GpuName { get; init; } = "";
@@ -173,6 +210,7 @@ public sealed record Fsr4InstallContext
 public sealed record Fsr4InstallEligibilityContext
 {
     public bool UseFsr4 { get; init; }
+    public string Fsr4Variant { get; init; } = "";
     public string GpuVendor { get; init; } = "";
     public string GpuName { get; init; } = "";
     public string GpuBundleKey { get; init; } = "";

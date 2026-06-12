@@ -186,28 +186,6 @@ public sealed class GpuSelectionCoordinator
         return list;
     }
 
-    public static string NormalizeVendorForManifestRequest(string? vendor, string? gpuName)
-    {
-        var candidate = $"{vendor} {gpuName}".Trim().ToLowerInvariant();
-        if (candidate.Contains("nvidia", StringComparison.Ordinal))
-        {
-            return "nvidia";
-        }
-
-        if (candidate.Contains("intel", StringComparison.Ordinal))
-        {
-            return "intel";
-        }
-
-        if (candidate.Contains("amd", StringComparison.Ordinal)
-            || candidate.Contains("radeon", StringComparison.Ordinal))
-        {
-            return "amd";
-        }
-
-        return "";
-    }
-
     public static string BuildGpuSelectionButtonText(GpuInfo gpu, int index)
     {
         var vendorLabel = NormalizeVendorLabel(gpu.Vendor);

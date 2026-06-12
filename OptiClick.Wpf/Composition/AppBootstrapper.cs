@@ -87,21 +87,46 @@ public sealed class AppBootstrapper
 
         if (mainWindow.DataContext is MainViewModel viewModel)
         {
-            _ = mainWindow.Dispatcher.InvokeAsync(() => RunStartupSequenceAsync(viewModel, startupLogger));
+            var startupCancellationTokenSource = new CancellationTokenSource();
+            ExitEventHandler cancelStartupOnExit = (_, _) => startupCancellationTokenSource.Cancel();
+            app.Exit += cancelStartupOnExit;
+
+            _ = mainWindow.Dispatcher.InvokeAsync(async () =>
+            {
+                try
+                {
+                    await RunStartupSequenceAsync(
+                        viewModel,
+                        startupLogger,
+                        startupCancellationTokenSource.Token);
+                }
+                finally
+                {
+                    app.Exit -= cancelStartupOnExit;
+                    startupCancellationTokenSource.Dispose();
+                }
+            });
         }
     }
 
-    private static async Task RunStartupSequenceAsync(MainViewModel viewModel, IAppLogger startupLogger)
+    private static async Task RunStartupSequenceAsync(
+        MainViewModel viewModel,
+        IAppLogger startupLogger,
+        CancellationToken cancellationToken)
     {
         try
         {
-            if (await viewModel.ShowStartupOperatingSystemBlockIfNeededAsync())
+            if (await viewModel.ShowStartupOperatingSystemBlockIfNeededAsync(cancellationToken))
             {
                 Application.Current?.Shutdown();
                 return;
             }
 
-            await viewModel.InitializeAsync();
+            await viewModel.InitializeAsync(cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            startupLogger.Info(MainViewModelLogCategories.App, "startup sequence canceled");
         }
         catch (Exception ex)
         {

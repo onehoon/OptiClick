@@ -26,9 +26,9 @@ public sealed class Unreal5Installer : IUnreal5Installer
     public async Task<ComponentInstallStepResult> InstallAsync(ComponentInstallContext context, CancellationToken cancellationToken = default)
     {
         var result = await _inner.InstallAsync(
-            InfrastructureComponentInstallerAdapters.ToUnreal5Context(context),
+            InfrastructureComponentContextMapper.ToUnreal5Context(context),
             cancellationToken);
 
-        return InfrastructureComponentInstallerAdapters.ToWpfStepResult(result);
+        return InfrastructureComponentResultMapper.ToWpfStepResult(result);
     }
 }

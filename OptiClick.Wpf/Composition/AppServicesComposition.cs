@@ -1,10 +1,11 @@
-﻿using OptiClick.Core.Abstractions;
+using OptiClick.Core.Abstractions;
+using OptiClick.Core.OptiScaler;
 using OptiClick.Wpf.Configuration;
 using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Logging;
 using OptiClick.Wpf.Services;
-using OptiClick.Wpf.Shell.Startup;
 using OptiClick.Infrastructure.FileSystem;
+using OptiClick.Infrastructure.OptiScaler;
 using OptiClick.Wpf.ViewModels;
 
 namespace OptiClick.Wpf.Composition;
@@ -19,6 +20,7 @@ public sealed record AppSharedServices
     public required IExternalUrlLauncher ExternalUrlLauncher { get; init; }
     public required IAppUserSettingsStore UserSettingsStore { get; init; }
     public required IFirstRunStateStore FirstRunStateStore { get; init; }
+    public required IOptiScalerSettingsApplicationService OptiScalerSettingsApplicationService { get; init; }
     public required DialogHostViewModel DialogHost { get; init; }
     public required InstallManagementDialogHostViewModel InstallManagementDialogHost { get; init; }
     public required IDialogService DialogService { get; init; }
@@ -52,6 +54,10 @@ public sealed class AppServicesComposition
         var userSettingsStore = _root.CreateAppUserSettingsStore(localDataPathProvider, appLogger);
         var firstRunStateStore = _root.CreateFirstRunStateStore(localDataPathProvider, appLogger);
         var externalUrlLauncher = _root.CreateExternalUrlLauncher(appLogger);
+        var optiScalerCommonIniSettingsStore = new OptiScalerCommonIniSettingsJsonStore(localDataPathProvider, appLogger);
+        var optiScalerSettingsApplicationService = new OptiScalerSettingsApplicationService(
+            optiScalerCommonIniSettingsStore,
+            new AppUserSettingsOptiScalerPreferenceWriter(userSettingsStore));
 
         return new AppSharedServices
         {
@@ -63,6 +69,7 @@ public sealed class AppServicesComposition
             ExternalUrlLauncher = externalUrlLauncher,
             UserSettingsStore = userSettingsStore,
             FirstRunStateStore = firstRunStateStore,
+            OptiScalerSettingsApplicationService = optiScalerSettingsApplicationService,
             DialogHost = dialogHost,
             DialogService = dialogService,
             InstallManagementDialogHost = installManagementDialogHost,

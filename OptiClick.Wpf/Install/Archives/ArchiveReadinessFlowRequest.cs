@@ -4,9 +4,11 @@ namespace OptiClick.Wpf.Install.Archives;
 
 public sealed record ArchiveReadinessFlowRequest
 {
-    public IReadOnlyDictionary<string, object?> ModuleDownloadLinks { get; init; } =
-        new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+    public ModuleDownloadLinkContext ModuleDownloadLinks { get; init; } =
+        ModuleDownloadLinkContext.Empty;
     public OptiScalerVariantCatalog OptiScalerVariantCatalog { get; init; } =
         OptiScalerVariantCatalog.Empty;
     public string PreferredOptiScalerVariant { get; init; } = OptiScalerVariantCatalogBuilder.StableVariant;
+    public Fsr4VariantCatalog Fsr4VariantCatalog { get; init; } =
+        Fsr4VariantCatalog.Empty;
 }

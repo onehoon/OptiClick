@@ -1,22 +1,19 @@
-using System.IO;
+using OptiClick.Core.Install;
+using OptiClick.Wpf.Install.Execution;
 using OptiClick.Wpf.Install.Planning;
-using OptiClick.Wpf.Install.Precheck;
 using OptiClick.Wpf.Install.Uninstall;
-using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Logging;
 using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Shell.Dialogs;
-using OptiClick.Wpf.Shell.Games;
-using OptiClick.Wpf.Shell.Selection;
+using OptiClick.Wpf.Shell.RuntimeData;
 using OptiClick.Wpf.ViewModels;
-using InfrastructureUninstall = OptiClick.Infrastructure.Install.Uninstall;
 
 namespace OptiClick.Wpf.Install.Flow;
 
 public sealed class UninstallFlowCoordinator
 {
-    private readonly IOptiClickUninstallPlanBuilder _planBuilder;
-    private readonly IOptiClickUninstallExecutor _executor;
+    private readonly UninstallFlowExecutionUseCase _executionUseCase;
+    private readonly UninstallFlowDialogRequestFactory _dialogRequestFactory;
     private readonly DialogPresenter _dialogPresenter;
     private readonly IAppLogger _appLogger;
 
@@ -25,9 +22,24 @@ public sealed class UninstallFlowCoordinator
         IOptiClickUninstallExecutor executor,
         DialogPresenter dialogPresenter,
         IAppLogger appLogger)
+        : this(
+            new UninstallFlowExecutionUseCase(
+                planBuilder,
+                executor),
+            new UninstallFlowDialogRequestFactory(),
+            dialogPresenter,
+            appLogger)
     {
-        _planBuilder = planBuilder ?? throw new ArgumentNullException(nameof(planBuilder));
-        _executor = executor ?? throw new ArgumentNullException(nameof(executor));
+    }
+
+    internal UninstallFlowCoordinator(
+        UninstallFlowExecutionUseCase executionUseCase,
+        UninstallFlowDialogRequestFactory dialogRequestFactory,
+        DialogPresenter dialogPresenter,
+        IAppLogger appLogger)
+    {
+        _executionUseCase = executionUseCase ?? throw new ArgumentNullException(nameof(executionUseCase));
+        _dialogRequestFactory = dialogRequestFactory ?? throw new ArgumentNullException(nameof(dialogRequestFactory));
         _dialogPresenter = dialogPresenter ?? throw new ArgumentNullException(nameof(dialogPresenter));
         _appLogger = appLogger ?? throw new ArgumentNullException(nameof(appLogger));
     }
@@ -37,308 +49,123 @@ public sealed class UninstallFlowCoordinator
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(request.SelectedGame);
-        ArgumentNullException.ThrowIfNull(request.Strings);
+        ArgumentNullException.ThrowIfNull(request.Text);
+        ArgumentNullException.ThrowIfNull(request.UiActions);
 
-        var targetPath = InstallTargetPathNormalizer.NormalizeTargetDirectory(request.TargetPath);
-        LogInfo(
-            MainViewModelLogCategories.UninstallFlow,
-            $"uninstall plan build start game_id={NormalizeStatusCode(request.SelectedGameId, "none")} target={NormalizeStatusCode(targetPath, "none")}");
-        var plan = _planBuilder.BuildPlan(new OptiClickUninstallPlanBuildRequest
+        var executionRequest = new UninstallFlowExecutionRequest
         {
-            TargetPath = targetPath,
-            SelectedGame = ShellGameCardMapper.Map(request.SelectedGame),
-            FinalProxyDllName = ResolveFinalProxyDllName(request.SelectionStateBeforeExecution),
-            UalDetectedNames = ResolveUalDetectedNames(request.SelectionStateBeforeExecution.PrecheckSnapshot)
-        });
-        LogInfo(
-            MainViewModelLogCategories.UninstallFlow,
-            $"uninstall plan build result status={plan.Status} candidates={plan.Candidates.Count} engine_ini_cleanup={plan.EngineIniCleanupTargets.Count} skipped={plan.SkippedFiles.Count} error={NormalizeStatusCode(plan.ErrorCode, "none")}");
-
-        switch (plan.Status)
-        {
-            case InfrastructureUninstall.UninstallPlanStatus.Ready:
-                if (plan.Candidates.Count == 0 && plan.EngineIniCleanupTargets.Count == 0)
-                {
-                    await ShowUninstallNoRemovableItemsDialogAsync(request.Strings, cancellationToken);
-                    return;
-                }
-
-                var confirmationDialog = BuildUninstallConfirmationDialogRequest(plan, request.Strings);
-                var confirmationResult = await _dialogPresenter.ShowSafelyAsync(confirmationDialog, cancellationToken);
-                var confirmed = confirmationResult == AppDialogResult.Continue;
-                LogInfo(
-                    MainViewModelLogCategories.UninstallFlow,
-                    $"uninstall confirmation result confirmed={confirmed} dialog_result={confirmationResult}");
-                if (!confirmed)
-                {
-                    return;
-                }
-
-                await ExecuteUninstallAsync(request, plan, cancellationToken);
-                return;
-            case InfrastructureUninstall.UninstallPlanStatus.NothingToRemove:
-                await ShowUninstallNoRemovableItemsDialogAsync(request.Strings, cancellationToken);
-                return;
-            case InfrastructureUninstall.UninstallPlanStatus.InvalidTarget:
-            case InfrastructureUninstall.UninstallPlanStatus.ValidationFailed:
-            default:
-                LogWarning(
-                    MainViewModelLogCategories.UninstallFlow,
-                    $"uninstall plan rejected status={plan.Status} error={NormalizeStatusCode(plan.ErrorCode, "none")}");
-                await ShowUninstallValidationFailedDialogAsync(request.Strings, cancellationToken);
-                return;
-        }
-    }
-
-    private async Task ExecuteUninstallAsync(
-        UninstallFlowCoordinatorRequest request,
-        InfrastructureUninstall.UninstallPlan plan,
-        CancellationToken cancellationToken)
-    {
-        request.ApplyInstallBusyState(true, null, request.Strings.OperationOverlayUninstalling);
-        request.ApplySettingsStatusText(request.Strings.UninstallInProgressStatus);
-        InfrastructureUninstall.UninstallExecutionResult executionResult;
-        try
-        {
-            executionResult = await _executor.ExecuteAsync(plan, cancellationToken);
-        }
-        finally
-        {
-            request.ApplyInstallBusyState(false, request.SelectionStateBeforeExecution, "");
-        }
-
-        LogInfo(
-            MainViewModelLogCategories.UninstallFlow,
-            $"uninstall execute result status={executionResult.Status} deleted={executionResult.DeletedFiles.Count} failed={executionResult.FailedFiles.Count} skipped={executionResult.SkippedFiles.Count} engine_ini_cleaned={executionResult.CleanedEngineIniEntries.Count} engine_ini_failed={executionResult.FailedEngineIniEntries.Count} engine_ini_skipped={executionResult.SkippedEngineIniEntries.Count} error={NormalizeStatusCode(executionResult.ErrorCode, "none")}");
-
-        var completionDialog = BuildUninstallCompletionDialogRequest(executionResult, request.Strings);
-        await _dialogPresenter.ShowSafelyAsync(completionDialog, cancellationToken);
-        await request.RefreshSelectionAfterUninstallAsync(request.SelectedGame, cancellationToken);
-    }
-
-    private Task ShowUninstallNoRemovableItemsDialogAsync(
-        AppStrings strings,
-        CancellationToken cancellationToken)
-    {
-        return _dialogPresenter.ShowSafelyAsync(
-            new AppDialogRequest
-            {
-                Kind = AppDialogKind.Info,
-                Severity = DialogSeverity.Info,
-                Title = strings.InstallManagementUninstallButton,
-                Summary = strings.UninstallNoRemovableItemsSummary,
-                PrimaryButtonText = strings.DialogButtonOk,
-                PrimaryResult = AppDialogResult.Ok
-            },
-            cancellationToken);
-    }
-
-    private Task ShowUninstallValidationFailedDialogAsync(
-        AppStrings strings,
-        CancellationToken cancellationToken)
-    {
-        return _dialogPresenter.ShowSafelyAsync(
-            new AppDialogRequest
-            {
-                Kind = AppDialogKind.Warning,
-                Severity = DialogSeverity.Warning,
-                Title = strings.UninstallValidationFailedTitle,
-                Summary = strings.UninstallValidationFailedSummary,
-                PrimaryButtonText = strings.DialogButtonOk,
-                PrimaryResult = AppDialogResult.Ok
-            },
-            cancellationToken);
-    }
-
-    private static AppDialogRequest BuildUninstallConfirmationDialogRequest(
-        InfrastructureUninstall.UninstallPlan plan,
-        AppStrings strings)
-    {
-        var lines = BuildUninstallCandidateLines(plan);
-        var details = string.Join("\n", lines);
-        var summary = string.IsNullOrWhiteSpace(details)
-            ? strings.UninstallConfirmationSummary
-            : $"{strings.UninstallConfirmationSummary}\n\n{details}";
-
-        return new AppDialogRequest
-        {
-            Kind = AppDialogKind.Warning,
-            Severity = DialogSeverity.Warning,
-            Title = strings.UninstallConfirmationTitle,
-            Summary = summary,
-            PrimaryButtonText = strings.InstallManagementUninstallButton,
-            SecondaryButtonText = strings.DialogButtonCancel,
-            PrimaryButtonRole = DialogButtonRole.Destructive,
-            PrimaryResult = AppDialogResult.Continue,
-            SecondaryResult = AppDialogResult.Cancel
+            ExecutionDescriptor = request.ExecutionDescriptor,
+            SelectedGameId = request.SelectedGameId,
+            TargetPath = request.TargetPath,
+            SelectionSnapshot = request.SelectionSnapshot,
+            EngineIniProfileRows = request.EngineIniProfileRows
         };
-    }
+        var planResult = _executionUseCase.BuildPlan(executionRequest);
+        WriteLogs(planResult.Logs);
 
-    private static IReadOnlyList<string> BuildUninstallCandidateLines(InfrastructureUninstall.UninstallPlan plan)
-    {
-        var lines = new List<string>();
-        AppendCandidateLine(lines, plan.Candidates, InfrastructureUninstall.UninstallCandidateKind.OptiScaler, "OptiScaler");
-        AppendCandidateLine(lines, plan.Candidates, InfrastructureUninstall.UninstallCandidateKind.ReFramework, "REFramework");
-        AppendCandidateLine(lines, plan.Candidates, InfrastructureUninstall.UninstallCandidateKind.UltimateAsiLoader, "Ultimate ASI Loader");
-        AppendCandidateLine(lines, plan.Candidates, InfrastructureUninstall.UninstallCandidateKind.SpecialK, "Special K");
-        return lines;
-    }
+        if (!planResult.CanExecute)
+        {
+            var dialogRequest = CreateDialogRequest(planResult, request.Text);
+            if (dialogRequest is not null)
+            {
+                await _dialogPresenter.ShowSafelyAsync(dialogRequest, cancellationToken);
+            }
 
-    private static void AppendCandidateLine(
-        ICollection<string> target,
-        IReadOnlyList<InfrastructureUninstall.UninstallCandidate> candidates,
-        InfrastructureUninstall.UninstallCandidateKind kind,
-        string displayName)
-    {
-        var fileNames = candidates
-            .Where(candidate => candidate.Kind == kind)
-            .Select(static candidate => ResolveUninstallDisplayFileName(candidate.RelativePath, candidate.FullPath))
-            .Where(static fileName => !string.IsNullOrWhiteSpace(fileName))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-        if (fileNames.Length == 0)
+            return;
+        }
+
+        var confirmationRequest = CreateDialogRequest(planResult, request.Text);
+        var confirmationResult = confirmationRequest is null
+            ? AppDialogResult.None
+            : await _dialogPresenter.ShowSafelyAsync(confirmationRequest, cancellationToken);
+        var confirmed = confirmationResult == AppDialogResult.Continue;
+        _appLogger.Info(
+            MainViewModelLogCategories.UninstallFlow,
+            UninstallFlowLogFormatter.FormatConfirmationResult(confirmed, confirmationResult.ToString()));
+        if (!confirmed)
         {
             return;
         }
 
-        target.Add($"{displayName}: {string.Join(", ", fileNames)}");
-    }
-
-    private static string ResolveUninstallDisplayFileName(string relativePath, string fullPath)
-    {
-        var fromRelative = Path.GetFileName((relativePath ?? "").Trim());
-        if (!string.IsNullOrWhiteSpace(fromRelative))
+        request.UiActions.ApplyInstallBusyState(true, request.Text.OperationOverlayUninstalling);
+        request.UiActions.ApplySettingsStatusText(request.Text.UninstallInProgressStatus);
+        UninstallFlowExecutionResult executionResult;
+        try
         {
-            return fromRelative;
+            executionResult = await _executionUseCase.ExecuteAsync(
+                executionRequest,
+                planResult.Plan,
+                cancellationToken);
+        }
+        finally
+        {
+            request.UiActions.ApplyInstallBusyState(false, "");
         }
 
-        var fromFullPath = Path.GetFileName((fullPath ?? "").Trim());
-        if (!string.IsNullOrWhiteSpace(fromFullPath))
+        WriteLogs(executionResult.Logs);
+        var completionRequest = CreateDialogRequest(executionResult, request.Text);
+        if (completionRequest is not null)
         {
-            return fromFullPath;
+            await _dialogPresenter.ShowSafelyAsync(completionRequest, cancellationToken);
         }
 
-        return (relativePath ?? fullPath ?? "").Trim();
-    }
-
-    private static string ResolveFinalProxyDllName(ShellInstallSelectionState selectionState)
-    {
-        return PickFileName(
-            selectionState.SelectedInstallStatus?.DetectedFile,
-            selectionState.PrecheckResolvedDllName,
-            selectionState.PrecheckSnapshot.ResolvedDllName);
-    }
-
-    private static IReadOnlyList<string> ResolveUalDetectedNames(InstallPrecheckSnapshot precheck)
-    {
-        if (precheck.Findings.Count == 0)
+        if (executionResult.ShouldRefreshSelection)
         {
-            return Array.Empty<string>();
+            await request.UiActions.RefreshSelectionAfterUninstallAsync(cancellationToken);
         }
-
-        var names = new List<string>();
-        foreach (var finding in precheck.Findings)
-        {
-            if (!string.Equals((finding.Kind ?? "").Trim(), ModConflictKinds.UltimateAsiLoader, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            foreach (var evidence in finding.Evidence)
-            {
-                var fileName = PickFileName(evidence);
-                if (!string.IsNullOrWhiteSpace(fileName))
-                {
-                    names.Add(fileName);
-                }
-            }
-        }
-
-        return names
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
     }
 
-    private static string PickFileName(params string?[] candidates)
+    private AppDialogRequest? CreateDialogRequest(
+        UninstallFlowPlanResult result,
+        UninstallFlowText text)
     {
-        foreach (var candidate in candidates)
+        return result.DialogKind switch
         {
-            var fileName = Path.GetFileName((candidate ?? "").Trim());
-            if (!string.IsNullOrWhiteSpace(fileName))
-            {
-                return fileName;
-            }
-        }
-
-        return "";
-    }
-
-    private static AppDialogRequest BuildUninstallCompletionDialogRequest(
-        InfrastructureUninstall.UninstallExecutionResult result,
-        AppStrings strings)
-    {
-        return result.Status switch
-        {
-            InfrastructureUninstall.UninstallExecutionStatus.Success => new AppDialogRequest
-            {
-                Kind = AppDialogKind.Success,
-                Severity = DialogSeverity.Success,
-                Title = strings.UninstallCompletedTitle,
-                Summary = strings.UninstallCompletedSummary,
-                PrimaryButtonText = strings.DialogButtonOk,
-                PrimaryResult = AppDialogResult.Ok,
-                PrimaryButtonRole = DialogButtonRole.Success
-            },
-            InfrastructureUninstall.UninstallExecutionStatus.PartialSuccess => new AppDialogRequest
-            {
-                Kind = AppDialogKind.Warning,
-                Severity = DialogSeverity.Warning,
-                Title = strings.UninstallPartialFailedTitle,
-                Summary = strings.UninstallPartialFailedSummary,
-                PrimaryButtonText = strings.DialogButtonOk,
-                PrimaryResult = AppDialogResult.Ok
-            },
-            InfrastructureUninstall.UninstallExecutionStatus.Failed => new AppDialogRequest
-            {
-                Kind = AppDialogKind.Warning,
-                Severity = DialogSeverity.Warning,
-                Title = strings.UninstallFailedTitle,
-                Summary = strings.UninstallFailedSummary,
-                PrimaryButtonText = strings.DialogButtonOk,
-                PrimaryResult = AppDialogResult.Ok
-            },
-            _ => new AppDialogRequest
-            {
-                Kind = AppDialogKind.Info,
-                Severity = DialogSeverity.Info,
-                Title = strings.InstallManagementUninstallButton,
-                Summary = strings.UninstallNoRemovableItemsSummary,
-                PrimaryButtonText = strings.DialogButtonOk,
-                PrimaryResult = AppDialogResult.Ok
-            }
+            UninstallFlowDialogKind.NoRemovableItems => _dialogRequestFactory.CreateNoRemovableItems(text),
+            UninstallFlowDialogKind.ValidationFailed => _dialogRequestFactory.CreateValidationFailed(text),
+            UninstallFlowDialogKind.Confirmation => _dialogRequestFactory.CreateConfirmation(result.Plan, text),
+            _ => null
         };
     }
 
-    private void LogInfo(string category, string message) => _appLogger.Info(category, message);
-
-    private void LogWarning(string category, string message) => _appLogger.Warning(category, message);
-
-    private static string NormalizeStatusCode(string? value, string fallback)
+    private AppDialogRequest? CreateDialogRequest(
+        UninstallFlowExecutionResult result,
+        UninstallFlowText text)
     {
-        var normalized = (value ?? "").Trim();
-        return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+        return result.DialogKind == UninstallFlowDialogKind.Completion
+            ? _dialogRequestFactory.CreateCompletion(result.ExecutionResult, text)
+            : null;
+    }
+
+    private void WriteLogs(IEnumerable<UninstallFlowLogEntry> logs)
+    {
+        foreach (var log in logs ?? [])
+        {
+            if (log.Level == UninstallFlowLogLevel.Warning)
+            {
+                _appLogger.Warning(MainViewModelLogCategories.UninstallFlow, log.Message);
+                continue;
+            }
+
+            _appLogger.Info(MainViewModelLogCategories.UninstallFlow, log.Message);
+        }
     }
 }
 
 public sealed record UninstallFlowCoordinatorRequest
 {
-    public required GameCardViewModel SelectedGame { get; init; }
+    public required InstallExecutionDescriptor ExecutionDescriptor { get; init; }
     public required string SelectedGameId { get; init; }
     public required string TargetPath { get; init; }
-    public required AppStrings Strings { get; init; }
-    public required ShellInstallSelectionState SelectionStateBeforeExecution { get; init; }
-    public required Action<bool, ShellInstallSelectionState?, string> ApplyInstallBusyState { get; init; }
+    public required UninstallFlowText Text { get; init; }
+    public required UninstallFlowSelectionSnapshot SelectionSnapshot { get; init; }
+    public required IReadOnlyList<RuntimeDataRawRow> EngineIniProfileRows { get; init; }
+    public required UninstallFlowCoordinatorUiActions UiActions { get; init; }
+}
+
+public sealed record UninstallFlowCoordinatorUiActions
+{
+    public required Action<bool, string> ApplyInstallBusyState { get; init; }
     public required Action<string> ApplySettingsStatusText { get; init; }
-    public required Func<GameCardViewModel, CancellationToken, Task> RefreshSelectionAfterUninstallAsync { get; init; }
+    public required Func<CancellationToken, Task> RefreshSelectionAfterUninstallAsync { get; init; }
 }

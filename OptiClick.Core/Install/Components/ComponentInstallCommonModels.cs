@@ -1,3 +1,5 @@
+using OptiClick.Core.Install;
+
 namespace OptiClick.Core.Install.Components;
 
 public enum ComponentInstallStatus
@@ -79,4 +81,44 @@ public sealed record ComponentInstallStepResult
             ErrorCode = errorCode,
             Message = message
         };
+}
+
+public sealed record ComponentInstallResult
+{
+    public bool IsSuccess { get; init; }
+    public IReadOnlyList<ComponentInstallStepResult> Steps { get; init; } = Array.Empty<ComponentInstallStepResult>();
+    public ComponentInstallStepResult? FailedStep { get; init; }
+}
+
+public sealed record ComponentInstallContext
+{
+    public InstallExecutionDescriptor ExecutionDescriptor { get; init; } = InstallExecutionDescriptor.Empty;
+    public string TargetPath { get; init; } = "";
+    public string FinalDllName { get; init; } = "";
+    public string OptiScalerPayloadDirectory { get; init; } = "";
+    public string OptiScalerVariant { get; init; } = "";
+    public string OptiScalerVersion { get; init; } = "";
+    public string OptiScalerDisplayVersion { get; init; } = "";
+    public string GpuVendor { get; init; } = "";
+    public string GpuName { get; init; } = "";
+    public string Fsr4SourceArchive { get; init; } = "";
+    public string Fsr4Variant { get; init; } = "";
+    public IReadOnlyList<string> UalDetectedNames { get; init; } = Array.Empty<string>();
+    public bool HasPlannedComponentInstallers { get; init; }
+    public IReadOnlyList<ComponentInstallName> PlannedComponentInstallers { get; init; } = Array.Empty<ComponentInstallName>();
+    public ModuleDownloadLinkCatalog ModuleDownloadLinks { get; init; } = ModuleDownloadLinkCatalog.Empty;
+    public bool ShouldInstallOptiPatcher { get; init; }
+    public bool ShouldInstallUltimateAsiLoader { get; init; }
+    public bool ShouldInstallUnreal5 { get; init; }
+    public bool ShouldInstallFsr4 { get; init; }
+    public string GpuBundleKey { get; init; } = "";
+    public string GpuGroup { get; init; } = "";
+    public string ReFrameworkDestination { get; init; } = "";
+    public string SpecialKValue { get; init; } = "";
+    public string ExtraBundleAlias { get; init; } = "";
+    public string UalCachedArchivePath { get; init; } = "";
+    public string OptiPatcherCachedArchivePath { get; init; } = "";
+    public string SpecialKCachedArchivePath { get; init; } = "";
+    public string ReFrameworkCachedArchivePath { get; init; } = "";
+    public string Unreal5CachedArchivePath { get; init; } = "";
 }

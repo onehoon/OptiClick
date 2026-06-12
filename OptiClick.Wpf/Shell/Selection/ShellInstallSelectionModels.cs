@@ -1,4 +1,5 @@
 using OptiClick.Wpf.Install.Precheck;
+using OptiClick.Core.Install;
 using OptiClick.Wpf.Install.UiState;
 using OptiClick.Wpf.Shell.Games;
 using OptiClick.Wpf.Shell.Games.Actions;
@@ -81,10 +82,11 @@ public sealed record ShellInstallSelectionRequest
     public bool SheetLoading { get; init; }
     public bool InstallInProgress { get; init; }
     public bool AppUpdateInProgress { get; init; }
-    public bool Fsr4Required { get; init; }
+    public ResolvedInstallGameInputs ResolvedInputs { get; init; } = ResolvedInstallGameInputs.Empty;
+    public bool ShouldInstallFsr4 => ResolvedInputs.ExecutionDescriptor.ShouldInstallFsr4;
 
-    public Install.Planning.InstallPrecheckSnapshot PrecheckSnapshotFallback { get; init; } = Install.Planning.InstallPrecheckSnapshot.NotStarted;
-    public Install.Planning.ArchiveReadinessSnapshot ArchiveReadiness { get; init; } = Install.Planning.ArchiveReadinessSnapshot.NotReady;
+    public InstallPrecheckSnapshot PrecheckSnapshotFallback { get; init; } = InstallPrecheckSnapshot.NotStarted;
+    public ArchiveReadinessSnapshot ArchiveReadiness { get; init; } = ArchiveReadinessSnapshot.NotReady;
 }
 
 public sealed record ShellInstallSelectionState
@@ -101,8 +103,8 @@ public sealed record ShellInstallSelectionState
     public bool PrecheckOk { get; init; }
     public string PrecheckError { get; init; } = "";
     public string PrecheckResolvedDllName { get; init; } = "";
-    public Install.Planning.InstallPrecheckSnapshot PrecheckSnapshot { get; init; } = Install.Planning.InstallPrecheckSnapshot.NotStarted;
-    public Install.Planning.ArchiveReadinessSnapshot ArchiveReadiness { get; init; } = Install.Planning.ArchiveReadinessSnapshot.NotReady;
+    public InstallPrecheckSnapshot PrecheckSnapshot { get; init; } = InstallPrecheckSnapshot.NotStarted;
+    public ArchiveReadinessSnapshot ArchiveReadiness { get; init; } = ArchiveReadinessSnapshot.NotReady;
     public string ActionAvailabilityReasonCode { get; init; } = "";
     public string SelectedInstallStatusCode { get; init; } = InstallStatusCodes.Installable;
     public string Language { get; init; } = "en";
@@ -114,7 +116,8 @@ public sealed record ShellInstallSelectionState
     public bool SheetLoading { get; init; }
     public bool InstallInProgress { get; init; }
     public bool AppUpdateInProgress { get; init; }
-    public bool Fsr4Required { get; init; }
+    public ResolvedInstallGameInputs ResolvedInputs { get; init; } = ResolvedInstallGameInputs.Empty;
+    public bool ShouldInstallFsr4 { get; init; }
 
     public ShellPopupRequestQueue PopupQueue { get; init; } = new(Array.Empty<ShellPopupRequest>(), confirmedImmediately: false, precheckOk: false);
     public IReadOnlyList<ShellPopupRequest> PendingPopupRequests { get; init; } = Array.Empty<ShellPopupRequest>();

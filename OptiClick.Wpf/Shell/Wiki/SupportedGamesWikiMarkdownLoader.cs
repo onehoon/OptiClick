@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http;
 using System.Globalization;
+using OptiClick.Core.Games.Wiki;
 using OptiClick.Wpf.Configuration;
 using OptiClick.Wpf.Logging;
 

@@ -1,6 +1,5 @@
 using OptiClick.Wpf.Install.Planning;
 using OptiClick.Wpf.Install.UiState;
-using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Shell.Selection;
 using System.Diagnostics;
 
@@ -33,12 +32,12 @@ public sealed class InstallExecutionCoordinator
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(request.FlowRequest);
-        ArgumentNullException.ThrowIfNull(request.Strings);
+        ArgumentNullException.ThrowIfNull(request.Text);
 
         var operationOverlayMessage = ResolveInstallOperationOverlayMessage(
-            request.SelectionStateBeforeExecution,
-            request.Strings);
-        request.ApplyInstallBusyState(true, null, operationOverlayMessage);
+            request.OverlaySnapshot,
+            request.Text);
+        request.ApplyInstallBusyState(true, operationOverlayMessage);
         var overlayTimer = Stopwatch.StartNew();
         InstallFlowResult? result = null;
         try
@@ -61,7 +60,7 @@ public sealed class InstallExecutionCoordinator
             }
             finally
             {
-                request.ApplyInstallBusyState(false, request.SelectionStateBeforeExecution, "");
+                request.ApplyInstallBusyState(false, "");
             }
         }
     }
@@ -87,21 +86,21 @@ public sealed class InstallExecutionCoordinator
     }
 
     private static string ResolveInstallOperationOverlayMessage(
-        ShellInstallSelectionState selectionState,
-        AppStrings strings)
+        InstallExecutionOverlaySnapshot overlaySnapshot,
+        InstallExecutionCoordinatorText text)
     {
-        var statusCode = NormalizeStatusCode(selectionState.SelectedInstallStatusCode, InstallStatusCodes.Installable);
+        var statusCode = NormalizeStatusCode(overlaySnapshot.SelectedInstallStatusCode, InstallStatusCodes.Installable);
         if (string.Equals(statusCode, InstallStatusCodes.UpdateAvailable, StringComparison.OrdinalIgnoreCase))
         {
-            return strings.OperationOverlayUpdating;
+            return text.OperationOverlayUpdating;
         }
 
         if (string.Equals(statusCode, InstallStatusCodes.Latest, StringComparison.OrdinalIgnoreCase))
         {
-            return strings.OperationOverlayReinstalling;
+            return text.OperationOverlayReinstalling;
         }
 
-        return strings.OperationOverlayInstalling;
+        return text.OperationOverlayInstalling;
     }
 
     private static string NormalizeStatusCode(string? value, string fallback)
@@ -119,9 +118,22 @@ public sealed record InstallExecutionCoordinatorResult
 public sealed record InstallExecutionCoordinatorRequest
 {
     public required InstallFlowRequest FlowRequest { get; init; }
-    public required ShellInstallSelectionState SelectionStateBeforeExecution { get; init; }
-    public required AppStrings Strings { get; init; }
-    public required Action<bool, ShellInstallSelectionState?, string> ApplyInstallBusyState { get; init; }
+    public required InstallExecutionOverlaySnapshot OverlaySnapshot { get; init; }
+    public required InstallExecutionCoordinatorText Text { get; init; }
+    public required Action<bool, string> ApplyInstallBusyState { get; init; }
     public TimeSpan MinimumOperationOverlayDuration { get; init; } = TimeSpan.FromSeconds(1);
     public Func<TimeSpan, CancellationToken, Task> DelayAsync { get; init; } = Task.Delay;
+}
+
+public sealed record InstallExecutionOverlaySnapshot
+{
+    public string SelectedInstallStatusCode { get; init; } = InstallStatusCodes.Installable;
+
+    public static InstallExecutionOverlaySnapshot FromSelectionState(ShellInstallSelectionState? selectionState)
+    {
+        return new InstallExecutionOverlaySnapshot
+        {
+            SelectedInstallStatusCode = selectionState?.SelectedInstallStatusCode ?? InstallStatusCodes.Installable
+        };
+    }
 }

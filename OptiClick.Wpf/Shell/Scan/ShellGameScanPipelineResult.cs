@@ -1,3 +1,5 @@
+using OptiClick.Core.Scan;
+
 namespace OptiClick.Wpf.Shell.Scan;
 
 public sealed class ShellGameScanPipelineResult

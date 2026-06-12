@@ -1,5 +1,4 @@
 using OptiClick.Core.Runtime;
-using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Shell.Flow;
 using OptiClick.Wpf.Shell.Gpu;
 using OptiClick.Wpf.Shell.Selection;
@@ -43,7 +42,7 @@ public sealed class RuntimeContextCoordinator
             }
 
             var resolvedContext = await request.ResolveRuntimeContextForGpuSelectionAsync(result.Context, cancellationToken);
-            request.ApplyRuntimeSummaryStateUpdate(_runtimeSummaryStateController.Build(resolvedContext, request.Strings));
+            request.ApplyRuntimeSummaryStateUpdate(_runtimeSummaryStateController.Build(resolvedContext, request.Text.SummaryText));
             request.ApplySelectionState(request.SelectionState with
             {
                 MultiGpuBlocked = _gpuSelectionCoordinator.MultiGpuBlocked,
@@ -59,7 +58,7 @@ public sealed class RuntimeContextCoordinator
 
 public sealed record RuntimeContextCoordinatorRequest
 {
-    public required AppStrings Strings { get; init; }
+    public required RuntimeContextCoordinatorText Text { get; init; }
 
     public required ShellInstallSelectionState SelectionState { get; init; }
 

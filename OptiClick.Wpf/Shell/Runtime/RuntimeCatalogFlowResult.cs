@@ -1,4 +1,4 @@
-﻿using OptiClick.Wpf.Models;
+using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Shell.RuntimeData;
 using OptiClick.Wpf.Shell.Games;
 
@@ -12,9 +12,10 @@ public sealed record RuntimeCatalogFlowResult
     public string ErrorCode { get; init; } = "";
     public RemoteRuntimeData RuntimeData { get; init; } = RemoteRuntimeData.Empty;
     public ShellGameCatalog Catalog { get; init; } = ShellGameCatalog.Empty;
-    public IReadOnlyDictionary<string, object?> ModuleDownloadLinks { get; init; }
-        = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+    public ModuleDownloadLinkContext ModuleDownloadLinks { get; init; } =
+        ModuleDownloadLinkContext.Empty;
     public OptiScalerVariantCatalog OptiScalerVariantCatalog { get; init; } = OptiScalerVariantCatalog.Empty;
+    public Fsr4VariantCatalog Fsr4VariantCatalog { get; init; } = Fsr4VariantCatalog.Empty;
     public string SettingsStatusText { get; init; } = "";
     public string ScanStatusText { get; init; } = "";
     public AppDialogRequest? DialogRequest { get; init; }

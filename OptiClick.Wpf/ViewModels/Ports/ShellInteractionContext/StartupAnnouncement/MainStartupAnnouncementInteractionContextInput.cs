@@ -1,0 +1,15 @@
+using OptiClick.Core.Runtime;
+using OptiClick.Wpf.Models;
+using OptiClick.Wpf.Shell.Flow;
+using OptiClick.Wpf.Shell.RuntimeData;
+
+namespace OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.StartupAnnouncement;
+
+internal sealed record MainStartupAnnouncementInteractionContextInput
+{
+    public required Func<RemoteRuntimeData> ReadLatestRuntimeData { get; init; }
+    public required Func<AppLanguage> ReadSelectedLanguage { get; init; }
+    public required Func<string> ReadSelectedGpuVendor { get; init; }
+    public required Action<IEnumerable<IFlowLogEntry>, string> DispatchFlowLogs { get; init; }
+    public required Func<AppDialogRequest, CancellationToken, Task<AppDialogResult>> ShowDialogAsync { get; init; }
+}

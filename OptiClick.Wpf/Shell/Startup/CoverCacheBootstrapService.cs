@@ -1,11 +1,11 @@
 using System.IO;
 using System.Text.Json;
+using OptiClick.Core.Install;
 using OptiClick.Infrastructure.FileSystem;
 using OptiClick.Wpf.Install.Execution;
 using OptiClick.Wpf.Install.FileSystem;
 using OptiClick.Wpf.Logging;
 using OptiClick.Wpf.Services;
-using OptiClick.Wpf.Shell.Games;
 
 namespace OptiClick.Wpf.Shell.Startup;
 
@@ -165,18 +165,23 @@ public sealed class CoverCacheBootstrapService : ICoverCacheBootstrapService
         return new ComponentInstallContext
         {
             TargetPath = coverCacheDirectory,
-            Game = new ShellGameCardModel
+            ExecutionDescriptor = new InstallExecutionDescriptor
             {
-                ExtraBundle = CoverCacheBundleAlias
-            },
-            ModuleDownloadLinks = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
-            {
-                [CoverCacheBundleAlias] = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+                GameDescriptor = new InstallGameDescriptor
                 {
-                    ["url"] = CoverCacheBundleUrl,
-                    ["filename"] = CoverCacheBundleFileName
+                    ExtraBundle = CoverCacheBundleAlias
                 }
-            }
+            },
+            ExtraBundleAlias = CoverCacheBundleAlias,
+            ModuleDownloadLinks = ModuleDownloadLinkCatalog.FromRaw(
+                new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+                {
+                    [CoverCacheBundleAlias] = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+                    {
+                        ["url"] = CoverCacheBundleUrl,
+                        ["filename"] = CoverCacheBundleFileName
+                    }
+                })
         };
     }
 

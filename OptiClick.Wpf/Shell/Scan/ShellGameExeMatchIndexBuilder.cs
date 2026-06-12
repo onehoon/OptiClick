@@ -1,3 +1,4 @@
+using OptiClick.Core.Games;
 using OptiClick.Wpf.Shell.Games;
 
 namespace OptiClick.Wpf.Shell.Scan;

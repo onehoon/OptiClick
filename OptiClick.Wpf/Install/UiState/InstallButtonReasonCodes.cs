@@ -1,53 +1,55 @@
+using OptiClick.Wpf.Install.Gates;
+
 namespace OptiClick.Wpf.Install.UiState;
 
 public static class InstallButtonReasonCodes
 {
-    public const string UnsupportedOs = "unsupported_os";
-    public const string MultiGpuBlocked = "multi_gpu_blocked";
-    public const string GpuSelectionPending = "gpu_selection_pending";
-    public const string SheetLoading = "sheet_loading";
-    public const string SheetNotReady = "sheet_not_ready";
-    public const string InstallInProgress = "install_in_progress";
-    public const string AppUpdateInProgress = "app_update_in_progress";
-    public const string NoGameSelected = "no_game_selected";
-    public const string InstallPrecheckRunning = "install_precheck_running";
-    public const string PrecheckIncomplete = "precheck_incomplete";
-    public const string OptiScalerArchiveDownloading = "optiscaler_archive_downloading";
-    public const string OptiScalerArchiveNotReady = "optiscaler_archive_not_ready";
-    public const string Fsr4NotReady = "fsr4_not_ready";
+    public const string UnsupportedOs = InstallStartGateReasonCodes.UnsupportedOs;
+    public const string MultiGpuBlocked = InstallStartGateReasonCodes.MultiGpuBlocked;
+    public const string GpuSelectionPending = InstallStartGateReasonCodes.GpuSelectionPending;
+    public const string SheetLoading = InstallStartGateReasonCodes.SheetLoading;
+    public const string SheetNotReady = InstallStartGateReasonCodes.SheetNotReady;
+    public const string InstallInProgress = InstallStartGateReasonCodes.InstallInProgress;
+    public const string AppUpdateInProgress = InstallStartGateReasonCodes.AppUpdateInProgress;
+    public const string NoGameSelected = InstallStartGateReasonCodes.NoGameSelected;
+    public const string InstallPrecheckRunning = InstallStartGateReasonCodes.InstallPrecheckRunning;
+    public const string PrecheckIncomplete = InstallStartGateReasonCodes.PrecheckIncomplete;
+    public const string OptiScalerArchiveDownloading = InstallStartGateReasonCodes.OptiScalerArchiveDownloading;
+    public const string OptiScalerArchiveNotReady = InstallStartGateReasonCodes.OptiScalerArchiveNotReady;
+    public const string Fsr4NotReady = InstallStartGateReasonCodes.Fsr4NotReady;
     public const string AllArchivesNotReady = "all_archives_not_ready";
-    public const string UnsupportedGpu = "unsupported_gpu";
-    public const string DisabledGame = "disabled_game";
-    public const string FinalProxyMissing = "final_proxy_missing";
-    public const string ProxyChainUnresolved = "proxy_chain_unresolved";
-    public const string InvalidInstallPlan = "invalid_install_plan";
+    public const string UnsupportedGpu = InstallStartGateReasonCodes.UnsupportedGpu;
+    public const string DisabledGame = InstallStartGateReasonCodes.DisabledGame;
+    public const string FinalProxyMissing = InstallStartGateReasonCodes.FinalProxyMissing;
+    public const string ProxyChainUnresolved = InstallStartGateReasonCodes.ProxyChainUnresolved;
+    public const string InvalidInstallPlan = InstallStartGateReasonCodes.InvalidInstallPlan;
     public const string WritePermissionDenied = "write_permission_denied";
-    public const string ConfirmPopupRequired = "confirm_popup_required";
+    public const string ConfirmPopupRequired = InstallStartGateReasonCodes.ConfirmPopupRequired;
 }
 
 public static class InstallEntryRejectionCodes
 {
-    public const string UnsupportedOs = "unsupported_os";
-    public const string MultiGpuBlocked = "multi_gpu_blocked";
-    public const string InstallInProgress = "install_in_progress";
-    public const string PredownloadInProgress = "predownload_in_progress";
-    public const string NoGameSelected = "no_game_selected";
-    public const string InvalidMatch = "invalid_match";
-    public const string InvalidTargetFolder = "invalid_target_folder";
-    public const string OptiScalerArchiveDownloading = "optiscaler_archive_downloading";
-    public const string InstallPrecheckRunning = "install_precheck_running";
-    public const string PrecheckIncomplete = "precheck_incomplete";
-    public const string OptiScalerArchiveNotReady = "optiscaler_archive_not_ready";
+    public const string UnsupportedOs = InstallStartGateReasonCodes.UnsupportedOs;
+    public const string MultiGpuBlocked = InstallStartGateReasonCodes.MultiGpuBlocked;
+    public const string InstallInProgress = InstallStartGateReasonCodes.InstallInProgress;
+    public const string PredownloadInProgress = InstallStartGateReasonCodes.PredownloadInProgress;
+    public const string NoGameSelected = InstallStartGateReasonCodes.NoGameSelected;
+    public const string InvalidMatch = InstallStartGateReasonCodes.InvalidMatch;
+    public const string InvalidTargetFolder = InstallStartGateReasonCodes.InvalidTargetFolder;
+    public const string OptiScalerArchiveDownloading = InstallStartGateReasonCodes.OptiScalerArchiveDownloading;
+    public const string InstallPrecheckRunning = InstallStartGateReasonCodes.InstallPrecheckRunning;
+    public const string PrecheckIncomplete = InstallStartGateReasonCodes.PrecheckIncomplete;
+    public const string OptiScalerArchiveNotReady = InstallStartGateReasonCodes.OptiScalerArchiveNotReady;
     public const string InvalidGameSelection = "invalid_game_selection";
     public const string Fsr4ArchiveDownloading = "fsr4_archive_downloading";
-    public const string Fsr4NotReady = "fsr4_not_ready";
-    public const string DisabledGame = "disabled_game";
-    public const string FinalProxyMissing = "final_proxy_missing";
-    public const string ProxyChainUnresolved = "proxy_chain_unresolved";
-    public const string InvalidInstallPlan = "invalid_install_plan";
+    public const string Fsr4NotReady = InstallStartGateReasonCodes.Fsr4NotReady;
+    public const string DisabledGame = InstallStartGateReasonCodes.DisabledGame;
+    public const string FinalProxyMissing = InstallStartGateReasonCodes.FinalProxyMissing;
+    public const string ProxyChainUnresolved = InstallStartGateReasonCodes.ProxyChainUnresolved;
+    public const string InvalidInstallPlan = InstallStartGateReasonCodes.InvalidInstallPlan;
     public const string WritePermissionDenied = "write_permission_denied";
-    public const string ConfirmPopupRequired = "confirm_popup_required";
-    public const string WriteProbeFailed = "write_probe_failed";
+    public const string ConfirmPopupRequired = InstallStartGateReasonCodes.ConfirmPopupRequired;
+    public const string InstallExecutionUnavailable = "install_execution_unavailable";
 }
 
 public static class InstallStatusCodes

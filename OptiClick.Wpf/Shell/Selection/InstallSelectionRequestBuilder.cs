@@ -1,10 +1,10 @@
-﻿using OptiClick.Core.Runtime;
+using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Install.Archives;
+using OptiClick.Core.Install;
 using OptiClick.Wpf.Install.UiState;
 using OptiClick.Wpf.Install.Planning;
 using OptiClick.Wpf.Shell.RuntimeData;
 using OptiClick.Wpf.Shell.Games;
-using OptiClick.Wpf.ViewModels;
 
 namespace OptiClick.Wpf.Shell.Selection;
 
@@ -24,10 +24,8 @@ public sealed class InstallSelectionRequestBuilder
     public ShellInstallSelectionRequest Build(InstallSelectionRequestBuildInput input)
     {
         var hasRemoteCatalogError = !string.IsNullOrWhiteSpace((input.LatestRemoteCatalogErrorCode ?? "").Trim());
-        var games = (input.Cards ?? Array.Empty<GameCardViewModel>())
-            .Select(ShellGameCardMapper.Map)
-            .ToArray();
-        var selectedShellGame = ShellGameCardMapper.Map(input.SelectedCard);
+        var games = (input.Cards ?? Array.Empty<ShellGameCardModel>()).ToArray();
+        var selectedShellGame = input.SelectedCard;
         var targetPaths = games
             .Where(static game => !string.IsNullOrWhiteSpace(game.GameId))
             .ToDictionary(
@@ -47,7 +45,7 @@ public sealed class InstallSelectionRequestBuilder
             input.ModuleDownloadLinks,
             input.LatestArchiveReadiness,
             input.SelectedLanguage);
-        var fsr4Required = ShellGameCardMapper.ResolveFsr4Required(selectedShellGame);
+        var selectedInputs = ShellInstallDescriptorInputFactory.ResolveInputs(selectedShellGame);
         var selectionPopupMessage = BuildSelectionPopupMessage(selectedShellGame, input.SelectedLanguage);
         var installPostPopupMessage = ResolveLocalizedInstallPostMessage(selectedShellGame, input.SelectedLanguage);
 
@@ -70,7 +68,7 @@ public sealed class InstallSelectionRequestBuilder
             SheetLoading = false,
             InstallInProgress = input.IsInstallExecutionInProgress,
             AppUpdateInProgress = input.IsAppUpdateInProgress,
-            Fsr4Required = fsr4Required,
+            ResolvedInputs = selectedInputs,
             PrecheckSnapshotFallback = input.PreviousState.PrecheckSnapshot,
             ArchiveReadiness = input.LatestArchiveReadiness
         };
@@ -79,7 +77,7 @@ public sealed class InstallSelectionRequestBuilder
     private InstallStatusSnapshot ResolveInstallStatusForSelection(
         ShellGameCardModel selectedGame,
         string targetPath,
-        IReadOnlyDictionary<string, object?> moduleDownloadLinks,
+        ModuleDownloadLinkContext moduleDownloadLinks,
         ArchiveReadinessSnapshot archiveReadiness,
         AppLanguage selectedLanguage)
     {
@@ -102,7 +100,7 @@ public sealed class InstallSelectionRequestBuilder
     }
 
     private static (string CurrentVersion, string CurrentDisplayVersion) ResolveCurrentOptiScalerVersionPair(
-        IReadOnlyDictionary<string, object?> moduleDownloadLinks,
+        ModuleDownloadLinkContext moduleDownloadLinks,
         ArchiveReadinessSnapshot archiveReadiness)
     {
         if (!string.IsNullOrWhiteSpace(archiveReadiness.OptiScalerVersion)
@@ -111,14 +109,13 @@ public sealed class InstallSelectionRequestBuilder
             return (archiveReadiness.OptiScalerVersion, archiveReadiness.OptiScalerDisplayVersion);
         }
 
-        if (!moduleDownloadLinks.TryGetValue(ArchiveAssetRuntimeDataKeys.OptiScaler, out var rawEntry)
-            || rawEntry is not IReadOnlyDictionary<string, object?> entry)
+        if (!moduleDownloadLinks.TryResolveLink(ArchiveAssetRuntimeDataKeys.OptiScaler, out var entry))
         {
             return ("", "");
         }
 
-        var currentVersion = ReadFirstNonEmpty(entry, "version", "current_version");
-        var currentDisplayVersion = ReadFirstNonEmpty(entry, "display_version", "current_display_version", "version_label");
+        var currentVersion = entry.ReadFirstString("version", "current_version");
+        var currentDisplayVersion = entry.ReadFirstString("display_version", "current_display_version", "version_label");
         return (currentVersion, currentDisplayVersion);
     }
 
@@ -173,22 +170,4 @@ public sealed class InstallSelectionRequestBuilder
         return "";
     }
 
-    private static string ReadFirstNonEmpty(IReadOnlyDictionary<string, object?> entry, params string[] keys)
-    {
-        foreach (var key in keys)
-        {
-            if (!entry.TryGetValue(key, out var value) || value is null)
-            {
-                continue;
-            }
-
-            var normalized = value.ToString()?.Trim() ?? "";
-            if (!string.IsNullOrWhiteSpace(normalized))
-            {
-                return normalized;
-            }
-        }
-
-        return "";
-    }
 }

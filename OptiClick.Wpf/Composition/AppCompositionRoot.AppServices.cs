@@ -1,5 +1,6 @@
 ﻿using OptiClick.Core.Abstractions;
 using System.Net.Http;
+using OptiClick.Core.Scan;
 using OptiClick.Wpf.Configuration;
 using OptiClick.Wpf.Diagnostics;
 using OptiClick.Wpf.Install.Planning;
@@ -24,9 +25,10 @@ using OptiClick.Wpf.Shell.Runtime;
 using OptiClick.Wpf.Shell.Scan;
 using OptiClick.Wpf.Shell.Selection;
 using OptiClick.Wpf.Services;
-using OptiClick.Wpf.Shell.Startup;
+using OptiClick.Infrastructure.Storage;
 using OptiClick.Infrastructure.Windows;
 using OptiClick.Infrastructure.FileSystem;
+using OptiClick.Infrastructure.Scan;
 using OptiClick.Wpf.ViewModels;
 using OptiClickShell;
 
@@ -80,6 +82,11 @@ public sealed partial class AppCompositionRoot
     public IScanFolderDiscoveryService CreateScanFolderDiscoveryService()
     {
         return new WindowsScanFolderDiscoveryService();
+    }
+
+    public IScanFileSystemProbe CreateScanFileSystemProbe()
+    {
+        return new ScanFileSystemProbe();
     }
 
     public IScanFolderManifestStore CreateScanFolderManifestStore(

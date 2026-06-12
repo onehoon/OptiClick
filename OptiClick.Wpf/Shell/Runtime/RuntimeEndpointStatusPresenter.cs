@@ -1,15 +1,14 @@
-﻿using System.Globalization;
+using System.Globalization;
 using OptiClick.Core.Runtime;
-using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Shell.RuntimeData;
 
 namespace OptiClick.Wpf.Shell.Runtime;
 
 public sealed class RuntimeEndpointStatusPresenter
 {
-    public string BuildStatus(RemoteDataOptions? remoteData, AppStrings strings)
+    public string BuildStatus(RemoteDataOptions? remoteData, RuntimeEndpointStatusText text)
     {
-        ArgumentNullException.ThrowIfNull(strings);
+        ArgumentNullException.ThrowIfNull(text);
 
         var runtimeDataStatus = !string.IsNullOrWhiteSpace(remoteData?.GetEffectiveRuntimeDataUrl())
             ? "configured"
@@ -22,7 +21,7 @@ public sealed class RuntimeEndpointStatusPresenter
             : "missing";
         return string.Format(
             CultureInfo.CurrentCulture,
-            strings.RuntimeRemoteEndpointsStatusFormat ?? "",
+            text.RuntimeRemoteEndpointsStatusFormat,
             runtimeDataStatus,
             manifestStatus,
             bundleStatus);

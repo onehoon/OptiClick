@@ -1,4 +1,4 @@
-﻿using OptiClick.Wpf.Install.UiState;
+using OptiClick.Wpf.Install.UiState;
 using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Shell.RuntimeData;
 using OptiClick.Wpf.Shell.Flow;
@@ -20,8 +20,9 @@ public sealed record MainViewModelStateUpdate
     public string? RemoteCatalogDetailErrorCode { get; init; }
     public RemoteRuntimeData? RuntimeData { get; init; }
     public ShellGameCatalog? RemoteCatalog { get; init; }
-    public IReadOnlyDictionary<string, object?>? ModuleDownloadLinks { get; init; }
+    public ModuleDownloadLinkContext? ModuleDownloadLinks { get; init; }
     public OptiScalerVariantCatalog? OptiScalerVariantCatalog { get; init; }
+    public Fsr4VariantCatalog? Fsr4VariantCatalog { get; init; }
 
     public bool ShouldResetRemoteCatalogDialogGate { get; init; }
     public bool ShouldRefreshVisibleGames { get; init; }

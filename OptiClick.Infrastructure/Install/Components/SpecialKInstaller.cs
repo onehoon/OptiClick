@@ -1,4 +1,5 @@
 using System.IO;
+using OptiClick.Core.Install;
 
 namespace OptiClick.Infrastructure.Install.Components;
 
@@ -180,14 +181,8 @@ public sealed class SpecialKInstaller : ISpecialKInstaller
             .ToArray();
     }
 
-    private static string ReadEntryFileName(IReadOnlyDictionary<string, object?> links, string key)
+    private static string ReadEntryFileName(ModuleDownloadLinkCatalog links, string key)
     {
-        if (!links.TryGetValue(key, out var rawEntry)
-            || rawEntry is not IReadOnlyDictionary<string, object?> entry)
-        {
-            return "";
-        }
-
-        return InstallerExecutionHelpers.ReadString(entry, "filename");
+        return links.TryResolveLink(key, out var entry) ? entry.Filename : "";
     }
 }

@@ -1,5 +1,5 @@
+using OptiClick.Core.Install;
 using OptiClick.Wpf.Install.Execution;
-using OptiClick.Wpf.Shell.Games;
 
 namespace OptiClick.Wpf.Install.Precheck;
 
@@ -30,20 +30,20 @@ public sealed class BaseInstallPrecheckHandler : IInstallPrecheckHandler
     public InstallPrecheckResult Run(InstallPrecheckRequest request, bool useKorean = false)
     {
         _ = useKorean;
-        var game = request.Game;
+        var descriptor = request.GameDescriptor ?? InstallGameDescriptor.Empty;
         var targetPath = (request.TargetPath ?? "").Trim();
 
         var modState = _modPrecheckScanner.Scan(targetPath);
         var conflictFindings = _findingBuilder.BuildFindings(modState);
-        conflictFindings = _reFrameworkLegacyFindingService.AppendLegacyFinding(conflictFindings, targetPath, game);
+        conflictFindings = _reFrameworkLegacyFindingService.AppendLegacyFinding(conflictFindings, targetPath, descriptor);
 
         var preferredDll = string.IsNullOrWhiteSpace(request.PreferredDllName)
-            ? ShellGameInstallMetadataResolver.GetOptiScalerDllName(game)
+            ? descriptor.OptiScalerDllName
             : request.PreferredDllName.Trim();
         try
         {
             var resolvedDllName = _proxyDllNameResolver.Resolve(targetPath, preferredDll);
-            var noticeFindings = _findingBuilder.BuildNoticeFindings(conflictFindings, game, resolvedDllName);
+            var noticeFindings = _findingBuilder.BuildNoticeFindings(conflictFindings, descriptor, resolvedDllName);
             return new InstallPrecheckResult
             {
                 Ok = true,
@@ -64,7 +64,7 @@ public sealed class BaseInstallPrecheckHandler : IInstallPrecheckHandler
                 errorCode = ProxyDllNameResolver.InvalidPreferredProxyNameErrorCode;
             }
 
-            var noticeFindings = _findingBuilder.BuildNoticeFindings(conflictFindings, game, preferredDll);
+            var noticeFindings = _findingBuilder.BuildNoticeFindings(conflictFindings, descriptor, preferredDll);
             return new InstallPrecheckResult
             {
                 Ok = false,
@@ -86,9 +86,8 @@ public sealed class InstallPrecheckHandlerRegistry
         _baseHandler = baseHandler;
     }
 
-    public IInstallPrecheckHandler Resolve(ShellGameCardModel? game)
+    public IInstallPrecheckHandler Resolve()
     {
-        _ = game;
         // RDR2-specific precheck handler is intentionally excluded in current migration scope.
         return _baseHandler;
     }

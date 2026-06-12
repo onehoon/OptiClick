@@ -1,5 +1,5 @@
 using System.IO;
-using OptiClick.Wpf.Shell.Games;
+using OptiClick.Core.Install;
 
 namespace OptiClick.Wpf.Install.Precheck;
 
@@ -50,28 +50,28 @@ public sealed class ModConflictFindingBuilder
 
     public IReadOnlyList<ModConflictFinding> BuildNoticeFindings(
         IEnumerable<ModConflictFinding> findings,
-        ShellGameCardModel? game,
+        InstallGameDescriptor? descriptor,
         string resolvedDllName)
     {
         return (findings ?? Array.Empty<ModConflictFinding>())
-            .Where(finding => !IsManagedInstallComponentFinding(finding, game, resolvedDllName))
+            .Where(finding => !IsManagedInstallComponentFinding(finding, descriptor, resolvedDllName))
             .ToArray();
     }
 
     private static bool IsManagedInstallComponentFinding(
         ModConflictFinding finding,
-        ShellGameCardModel? game,
+        InstallGameDescriptor? descriptor,
         string resolvedDllName)
     {
         var kind = (finding.Kind ?? "").Trim();
         if (string.Equals(kind, ModConflictKinds.UltimateAsiLoader, StringComparison.OrdinalIgnoreCase))
         {
-            return ShellGameInstallMetadataResolver.GetUltimateAsiLoader(game);
+            return descriptor?.RequiresUltimateAsiLoader ?? false;
         }
 
         if (string.Equals(kind, ModConflictKinds.SpecialK, StringComparison.OrdinalIgnoreCase))
         {
-            return IsSpecialKManagedByInstaller(finding, game, resolvedDllName);
+            return IsSpecialKManagedByInstaller(finding, descriptor, resolvedDllName);
         }
 
         return false;
@@ -79,10 +79,10 @@ public sealed class ModConflictFindingBuilder
 
     private static bool IsSpecialKManagedByInstaller(
         ModConflictFinding finding,
-        ShellGameCardModel? game,
+        InstallGameDescriptor? descriptor,
         string resolvedDllName)
     {
-        var managedTargets = BuildSpecialKManagedTargets(game, resolvedDllName);
+        var managedTargets = BuildSpecialKManagedTargets(descriptor, resolvedDllName);
         if (managedTargets.Count == 0)
         {
             return false;
@@ -93,10 +93,10 @@ public sealed class ModConflictFindingBuilder
             .Any(evidence => managedTargets.Contains(evidence));
     }
 
-    private static HashSet<string> BuildSpecialKManagedTargets(ShellGameCardModel? game, string resolvedDllName)
+    private static HashSet<string> BuildSpecialKManagedTargets(InstallGameDescriptor? descriptor, string resolvedDllName)
     {
         var targets = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var specialKValue = NormalizeRelativePath(ShellGameInstallMetadataResolver.GetSpecialK(game));
+        var specialKValue = NormalizeRelativePath(descriptor?.SpecialK ?? "");
         if (string.IsNullOrWhiteSpace(specialKValue))
         {
             return targets;

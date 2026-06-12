@@ -1,36 +1,39 @@
-using OptiClick.Wpf.Shell.Games;
+using OptiClick.Core.Install;
+using OptiClick.Core.Install.Planning;
 
 namespace OptiClick.Wpf.Install.Planning;
 
 public sealed class InstallPlanInputBuilder
 {
-    public InstallPlanBuildInput Build(InstallPlanInputBuildContext context)
+    public CoreInstallPlanBuildInput Build(InstallPlanInputBuildContext context)
     {
-        var selectedShellGame = ShellGameCardMapper.Map(context.SelectedGame);
-        context.TargetPathByGameId.TryGetValue(selectedShellGame.GameId, out var targetPath);
-        context.MatchByGameId.TryGetValue(selectedShellGame.GameId, out var matchResult);
-        var normalizedTargetPath = InstallTargetPathNormalizer.NormalizeTargetDirectory(targetPath);
-        var fsr4Required = ShellGameCardMapper.ResolveFsr4Required(selectedShellGame);
+        var executionDescriptor = context.ExecutionDescriptor;
+        var normalizedTargetPath = InstallTargetPathNormalizer.NormalizeTargetDirectory(context.TargetFolderHint);
+        var matchedExeHint = string.IsNullOrWhiteSpace(context.MatchedExeHint)
+            ? executionDescriptor.MatchExe
+            : context.MatchedExeHint;
 
-        return new InstallPlanBuildInput
+        return new CoreInstallPlanBuildInput
         {
-            SelectedGame = selectedShellGame,
-            MatchResult = matchResult,
-            RuntimeContext = context.LatestRuntimeContext,
-            ActionAvailability = context.SelectionState.ActionAvailability,
+            GameDescriptor = executionDescriptor.GameDescriptor,
+            MatchSnapshot = context.MatchSnapshot,
+            ActionAvailability = context.ActionAvailabilitySnapshot,
             ArchiveReadiness = context.LatestArchiveReadiness,
-            Precheck = context.SelectionState.PrecheckSnapshot,
+            Precheck = context.Precheck,
             TargetFolderHint = normalizedTargetPath,
-            MatchedExeHint = matchResult?.MatchedExe ?? selectedShellGame.MatchExe,
+            MatchedExeHint = matchedExeHint,
             IsInstallInProgress = context.IsInstallExecutionInProgress,
+            // Predownload is currently represented by archive readiness.
+            // Keep false unless a separate predownload gate is reintroduced.
             IsPredownloadInProgress = false,
-            IsMultiGpuBlocked = context.SelectionState.MultiGpuBlocked,
+            IsMultiGpuBlocked = context.IsMultiGpuBlocked,
             IsAppUpdateInProgress = context.IsAppUpdateInProgress,
-            IsSelectionPopupConfirmed = context.SelectionState.PopupConfirmed,
-            IsGpuSelectionPending = context.SelectionState.GpuSelectionPending,
-            IsSheetLoading = false,
-            IsSheetReady = true,
-            IsFsr4Required = fsr4Required
+            IsSelectionPopupConfirmed = context.IsSelectionPopupConfirmed,
+            IsGpuSelectionPending = context.IsGpuSelectionPending,
+            IsSheetLoading = context.IsSheetLoading,
+            IsSheetReady = context.IsSheetReady,
+            ShouldInstallFsr4 = executionDescriptor.ShouldInstallFsr4,
+            Fsr4Variant = executionDescriptor.Fsr4Variant
         };
     }
 }

@@ -1,10 +1,12 @@
 using OptiClick.Wpf.Install.FileSystem;
 
+using OptiClick.Core.Install;
+
 namespace OptiClick.Wpf.Install.Execution;
 
 public static class InstallExecutionHelpers
 {
-    public static string ExtractModuleUrl(IReadOnlyDictionary<string, object?> moduleDownloadLinks, string moduleKey)
+    public static string ExtractModuleUrl(ModuleDownloadLinkCatalog moduleDownloadLinks, string moduleKey)
     {
         return OptiClick.Infrastructure.Install.Components.InstallerExecutionHelpers.ExtractModuleUrl(moduleDownloadLinks, moduleKey);
     }
@@ -31,7 +33,7 @@ public static class InstallExecutionHelpers
 
     public static string NormalizeAlias(string value)
     {
-        return OptiClick.Infrastructure.Install.Components.InstallerExecutionHelpers.NormalizeAlias(value);
+        return ModuleDownloadLinkAliasPolicy.Normalize(value);
     }
 
     public static string NormalizeCacheEntryName(string input, string fallback)

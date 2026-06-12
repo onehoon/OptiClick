@@ -1,7 +1,9 @@
 using System.IO;
 using OptiClick.Infrastructure.FileSystem;
 using OptiClick.Wpf.Install.Archives;
+using OptiClick.Wpf.Install.Flow;
 using OptiClick.Wpf.Install.Planning;
+using OptiClick.Wpf.Shell.RuntimeData;
 
 namespace OptiClick.Wpf.Shell.Startup;
 
@@ -9,11 +11,25 @@ internal static class StartupArchiveReadinessLocalProbe
 {
     public static bool TryBuildReadySnapshot(
         IAppLocalDataPathProvider pathProvider,
-        IReadOnlyDictionary<string, object?> moduleDownloadLinks,
+        ModuleDownloadLinkContext moduleDownloadLinks,
+        out ArchiveReadinessSnapshot readiness)
+    {
+        return TryBuildReadySnapshot(
+            pathProvider,
+            moduleDownloadLinks,
+            Fsr4VariantCatalog.Empty,
+            out readiness);
+    }
+
+    public static bool TryBuildReadySnapshot(
+        IAppLocalDataPathProvider pathProvider,
+        ModuleDownloadLinkContext moduleDownloadLinks,
+        Fsr4VariantCatalog fsr4VariantCatalog,
         out ArchiveReadinessSnapshot readiness)
     {
         readiness = ArchiveReadinessSnapshot.NotReady;
-        if (pathProvider is null || moduleDownloadLinks.Count == 0)
+        var linkContext = moduleDownloadLinks ?? ModuleDownloadLinkContext.Empty;
+        if (pathProvider is null || !linkContext.Catalog.HasLinks)
         {
             return false;
         }
@@ -29,7 +45,7 @@ internal static class StartupArchiveReadinessLocalProbe
                     cachePaths,
                     manifestStore,
                     validator,
-                    GetEntry(moduleDownloadLinks, ArchiveAssetRuntimeDataKeys.OptiScaler))
+                    GetEntry(linkContext, ArchiveAssetRuntimeDataKeys.OptiScaler))
             };
 
             foreach (var key in ArchivePreparationSequence.DefaultStartupOrder)
@@ -37,14 +53,19 @@ internal static class StartupArchiveReadinessLocalProbe
                 states[key] = ResolvePayloadState(
                     cachePaths,
                     manifestStore,
-                    GetEntry(moduleDownloadLinks, ArchiveAssetRuntimeDataKeys.ToRuntimeDataEntryKey(key)),
+                    GetEntry(linkContext, ArchiveAssetRuntimeDataKeys.ToRuntimeDataEntryKey(key)),
                     key);
             }
 
             var snapshot = new ArchivePreparationSnapshot
             {
-                States = states
+                States = states,
+                Fsr4VariantStates = ResolveFsr4VariantStates(
+                    cachePaths,
+                    manifestStore,
+                    fsr4VariantCatalog)
             };
+            states[ArchiveAssetKey.Fsr4] = BuildFsr4AggregateState(snapshot.Fsr4VariantStates);
             readiness = ArchivePreparationSnapshotMapper.ToInstallPlanSnapshot(snapshot);
             return states.Values.All(static state => state.Ready);
         }
@@ -59,7 +80,7 @@ internal static class StartupArchiveReadinessLocalProbe
         ArchiveCachePaths cachePaths,
         IArchiveDownloadManifestStore manifestStore,
         OptiScalerPayloadValidator validator,
-        object? rawEntry)
+        ModuleDownloadLinkEntry? rawEntry)
     {
         var entry = ArchiveEntryNormalizer.Normalize(rawEntry);
         var candidates = new List<string>();
@@ -91,7 +112,7 @@ internal static class StartupArchiveReadinessLocalProbe
     private static ArchivePreparationState ResolvePayloadState(
         ArchiveCachePaths cachePaths,
         IArchiveDownloadManifestStore manifestStore,
-        object? rawEntry,
+        ModuleDownloadLinkEntry? rawEntry,
         ArchiveAssetKey key)
     {
         var entry = ArchiveEntryNormalizer.Normalize(rawEntry);
@@ -117,6 +138,69 @@ internal static class StartupArchiveReadinessLocalProbe
         }
 
         return MissingState(entry.Filename);
+    }
+
+    private static IReadOnlyDictionary<string, ArchivePreparationState> ResolveFsr4VariantStates(
+        ArchiveCachePaths cachePaths,
+        IArchiveDownloadManifestStore manifestStore,
+        Fsr4VariantCatalog? fsr4VariantCatalog)
+    {
+        var catalog = fsr4VariantCatalog ?? Fsr4VariantCatalog.Empty;
+        var states = new Dictionary<string, ArchivePreparationState>(StringComparer.OrdinalIgnoreCase);
+        foreach (var option in catalog.Options)
+        {
+            states[option.Variant] = ResolveFsr4VariantPayloadState(
+                cachePaths,
+                manifestStore,
+                option,
+                option.Variant);
+        }
+
+        return states;
+    }
+
+    private static ArchivePreparationState ResolveFsr4VariantPayloadState(
+        ArchiveCachePaths cachePaths,
+        IArchiveDownloadManifestStore manifestStore,
+        Fsr4VariantOption? option,
+        string variant)
+    {
+        if (option is null)
+        {
+            return MissingState("");
+        }
+
+        var entry = option.ToRemoteArchiveEntry();
+        var cacheRoot = cachePaths.Fsr4CacheDir;
+        var validator = new SingleExtensionPayloadValidator(".dll");
+        var candidates = new List<string>();
+        var expectedEntryName = ArchivePayloadCacheEntryNames.ResolveVersionedEntryName(entry, $"FSR4-{variant}");
+        var expectedVersion = ResolveExpectedManifestVersion(entry, ArchiveAssetKey.Fsr4, expectedEntryName);
+        var manifestEntry = manifestStore.TryGetEntry(ArchiveAssetRuntimeDataKeys.ToFsr4VariantKey(variant));
+        if (IsCurrentPayloadManifestEntry(manifestEntry, expectedVersion, expectedEntryName))
+        {
+            AddCandidate(candidates, Path.Combine(cacheRoot, manifestEntry!.CacheEntry.Trim()));
+        }
+
+        AddCandidate(candidates, Path.Combine(cacheRoot, expectedEntryName));
+
+        foreach (var candidate in candidates)
+        {
+            if (validator.IsValid(candidate, out _))
+            {
+                return ReadyState(entry.Filename, candidate);
+            }
+        }
+
+        return MissingState(entry.Filename);
+    }
+
+    private static ArchivePreparationState BuildFsr4AggregateState(
+        IReadOnlyDictionary<string, ArchivePreparationState> states)
+    {
+        return states.Count > 0 && states.Values.All(static state => state.Ready)
+            ? ReadyState("fsr4_variants", "")
+            : MissingState("fsr4_variants");
     }
 
     private static string ResolveExpectedEntryName(RemoteArchiveEntry entry, ArchiveAssetKey key)
@@ -166,9 +250,9 @@ internal static class StartupArchiveReadinessLocalProbe
         };
     }
 
-    private static object? GetEntry(IReadOnlyDictionary<string, object?> moduleDownloadLinks, string key)
+    private static ModuleDownloadLinkEntry? GetEntry(ModuleDownloadLinkContext moduleDownloadLinks, string key)
     {
-        return moduleDownloadLinks.TryGetValue(key, out var entry) ? entry : null;
+        return moduleDownloadLinks.TryResolveLink(key, out var entry) ? entry : null;
     }
 
     private static void AddCandidate(ICollection<string> candidates, string path)

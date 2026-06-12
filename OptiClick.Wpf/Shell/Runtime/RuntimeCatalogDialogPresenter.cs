@@ -1,4 +1,3 @@
-using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Models;
 
 namespace OptiClick.Wpf.Shell.Runtime;
@@ -6,140 +5,62 @@ namespace OptiClick.Wpf.Shell.Runtime;
 public sealed class RuntimeCatalogDialogPresenter
 {
     public AppDialogRequest BuildUnexpectedErrorDialog(
-        AppStrings strings,
-        RemoteServiceHealthSnapshot? serviceHealth)
+        RuntimeCatalogFlowText text)
     {
         return BuildWarning(
             "remote_catalog_unexpected_error",
-            strings.RuntimeCatalogUnexpectedErrorTitle,
-            strings.RuntimeCatalogUnexpectedErrorSummary,
-            BuildBullets(
-                strings.RuntimeCatalogUnexpectedErrorBullet1,
-                strings.RuntimeCatalogUnexpectedErrorBullet2,
-                strings,
-                serviceHealth));
-    }
-
-    public AppDialogRequest BuildUnexpectedErrorDialog(AppStrings strings)
-    {
-        return BuildUnexpectedErrorDialog(strings, serviceHealth: null);
+            text.RuntimeCatalogUnexpectedErrorTitle,
+            text.RuntimeCatalogUnexpectedErrorSummary,
+            text.RuntimeCatalogUnexpectedErrorBullet1,
+            text.RuntimeCatalogUnexpectedErrorBullet2,
+            "Error code: remote_catalog_unexpected_error");
     }
 
     public AppDialogRequest BuildSkippedDialog(
         string errorCode,
-        AppStrings strings,
-        RemoteServiceHealthSnapshot? serviceHealth)
+        RuntimeCatalogFlowText text)
     {
         var normalizedCode = NormalizeStatusCode(errorCode, "runtime_data_skipped");
         return BuildWarning(
             normalizedCode,
-            strings.RuntimeCatalogSkippedTitle,
-            strings.RuntimeCatalogSkippedSummary,
-            BuildBullets(
-                strings.RuntimeCatalogSkippedBullet1,
-                strings.RuntimeCatalogSkippedBullet2,
-                $"Error code: {normalizedCode}",
-                strings,
-                serviceHealth));
-    }
-
-    public AppDialogRequest BuildSkippedDialog(string errorCode, AppStrings strings)
-    {
-        return BuildSkippedDialog(errorCode, strings, serviceHealth: null);
+            text.RuntimeCatalogSkippedTitle,
+            text.RuntimeCatalogSkippedSummary,
+            text.RuntimeCatalogSkippedBullet1,
+            text.RuntimeCatalogSkippedBullet2,
+            $"Error code: {normalizedCode}");
     }
 
     public AppDialogRequest BuildFailedDialog(
         string errorCode,
-        AppStrings strings,
-        RemoteServiceHealthSnapshot? serviceHealth)
+        RuntimeCatalogFlowText text)
     {
         var normalizedCode = NormalizeStatusCode(errorCode, "runtime_data_failed");
         return BuildWarning(
             normalizedCode,
-            strings.RuntimeCatalogFailedTitle,
-            strings.RuntimeCatalogFailedSummary,
-            BuildBullets(
-                strings.RuntimeCatalogFailedBullet1,
-                strings.RuntimeCatalogFailedBullet2,
-                $"Error code: {normalizedCode}",
-                strings,
-                serviceHealth));
+            text.RuntimeCatalogFailedTitle,
+            text.RuntimeCatalogFailedSummary,
+            text.RuntimeCatalogFailedBullet1,
+            text.RuntimeCatalogFailedBullet2,
+            $"Error code: {normalizedCode}");
     }
 
-    public AppDialogRequest BuildFailedDialog(string errorCode, AppStrings strings)
-    {
-        return BuildFailedDialog(errorCode, strings, serviceHealth: null);
-    }
-
-    public AppDialogRequest BuildEmptyCatalogDialog(AppStrings strings)
+    public AppDialogRequest BuildEmptyCatalogDialog(RuntimeCatalogFlowText text)
     {
         return BuildWarning(
             "empty_catalog",
-            strings.RuntimeCatalogEmptyTitle,
-            strings.RuntimeCatalogEmptySummary,
-            strings.RuntimeCatalogEmptyBullet1,
-            strings.RuntimeCatalogEmptyBullet2);
+            text.RuntimeCatalogEmptyTitle,
+            text.RuntimeCatalogEmptySummary,
+            text.RuntimeCatalogEmptyBullet1,
+            text.RuntimeCatalogEmptyBullet2);
     }
 
-    public AppDialogRequest BuildPipelineMissingDialog(AppStrings strings)
+    public AppDialogRequest BuildPipelineMissingDialog(RuntimeCatalogFlowText text)
     {
         return BuildWarning(
             "gpu_bundle_pipeline_missing",
-            strings.RuntimeCatalogPipelineMissingTitle,
-            strings.RuntimeCatalogPipelineMissingSummary,
-            strings.RuntimeCatalogPipelineMissingBullet1);
-    }
-
-    private static IReadOnlyList<string> BuildBullets(
-        string primary,
-        string secondary,
-        AppStrings strings,
-        RemoteServiceHealthSnapshot? serviceHealth)
-    {
-        return BuildBullets(primary, secondary, extra: "", strings, serviceHealth);
-    }
-
-    private static IReadOnlyList<string> BuildBullets(
-        string primary,
-        string secondary,
-        string extra,
-        AppStrings strings,
-        RemoteServiceHealthSnapshot? serviceHealth)
-    {
-        var bullets = new List<string>
-        {
-            primary,
-            secondary
-        };
-
-        if (!string.IsNullOrWhiteSpace(extra))
-        {
-            bullets.Add(extra);
-        }
-
-        if (serviceHealth is not null)
-        {
-            bullets.Add(string.Format(
-                strings.RuntimeCatalogCloudflareStatusFormat,
-                FormatServiceStatus(serviceHealth.Cloudflare, strings)));
-            bullets.Add(string.Format(
-                strings.RuntimeCatalogGitHubStatusFormat,
-                FormatServiceStatus(serviceHealth.GitHub, strings)));
-        }
-
-        return bullets;
-    }
-
-    private static string FormatServiceStatus(RemoteServiceHealthStatus status, AppStrings strings)
-    {
-        var indicator = NormalizeStatusCode(status?.Indicator, strings.StatusUnknown);
-        var description = (status?.Description ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(description))
-        {
-            return indicator;
-        }
-
-        return $"{indicator} ({description})";
+            text.RuntimeCatalogPipelineMissingTitle,
+            text.RuntimeCatalogPipelineMissingSummary,
+            text.RuntimeCatalogPipelineMissingBullet1);
     }
 
     private static AppDialogRequest BuildWarning(
