@@ -26,7 +26,11 @@ internal sealed class MainLanguageChangeController
             var localizedStrings = context.Services.ReadStrings();
             context.Callbacks.ApplyLocalizationStateUpdate(context.Services.BuildRefreshState(context.Language, localizedStrings));
             await context.Services.RefreshRuntimeContextAsync(cancellationToken);
-            await context.Services.RecomputeSelectionAfterScanAsync(cancellationToken, false);
+            var refreshedVisibleGames = await context.Services.RefreshVisibleGamesAfterLanguageChangeAsync(cancellationToken);
+            if (!refreshedVisibleGames)
+            {
+                await context.Services.RecomputeSelectionAfterScanAsync(cancellationToken, false);
+            }
         }
         catch (Exception ex)
         {
@@ -53,6 +57,7 @@ internal sealed class MainLanguageChangeContextFactory
             BuildRefreshState = input.BuildRefreshState,
             RefreshRuntimeContextAsync = input.RefreshRuntimeContextAsync,
             RecomputeSelectionAfterScanAsync = input.RecomputeSelectionAfterScanAsync,
+            RefreshVisibleGamesAfterLanguageChangeAsync = input.RefreshVisibleGamesAfterLanguageChangeAsync,
             ToLanguageCode = ToLanguageCode,
             ReadStrings = input.ReadStrings
         };
@@ -89,6 +94,7 @@ internal sealed record MainLanguageChangeContextFactoryInput
     public required Func<AppLanguage, AppStrings, LocalizationStateUpdate> BuildRefreshState { get; init; }
     public required Func<CancellationToken, Task> RefreshRuntimeContextAsync { get; init; }
     public required Func<CancellationToken, bool, Task> RecomputeSelectionAfterScanAsync { get; init; }
+    public required Func<CancellationToken, Task<bool>> RefreshVisibleGamesAfterLanguageChangeAsync { get; init; }
     public required Func<AppStrings> ReadStrings { get; init; }
     public required Action<string> LogInfo { get; init; }
     public required Action<string, Exception> LogWarning { get; init; }
@@ -111,6 +117,7 @@ internal sealed class MainLanguageChangeServices
     public required Func<AppLanguage, AppStrings, LocalizationStateUpdate> BuildRefreshState { get; init; }
     public required Func<CancellationToken, Task> RefreshRuntimeContextAsync { get; init; }
     public required Func<CancellationToken, bool, Task> RecomputeSelectionAfterScanAsync { get; init; }
+    public required Func<CancellationToken, Task<bool>> RefreshVisibleGamesAfterLanguageChangeAsync { get; init; }
     public required Func<AppLanguage, string> ToLanguageCode { get; init; }
     public required Func<AppStrings> ReadStrings { get; init; }
 }

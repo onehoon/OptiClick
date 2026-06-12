@@ -61,11 +61,13 @@ internal sealed class MainVisibleGameCardRefreshController
         }
     }
 
-    public GameCardViewModel? RefreshVisibleGamesFromScanMatches(MainVisibleGameCardRefreshContext context)
+    public GameCardViewModel? RefreshVisibleGamesFromScanMatches(
+        MainVisibleGameCardRefreshContext context,
+        bool observeAutoSelection = true)
     {
         if (context.Services.IsMultiGpuBlocked())
         {
-            return ReplaceGameCards(context, []);
+            return ReplaceGameCards(context, [], observeAutoSelection);
         }
 
         var cards = context.Services.CreateVisibleCardsFromScanMatches();
@@ -74,7 +76,30 @@ internal sealed class MainVisibleGameCardRefreshController
             return null;
         }
 
-        return ReplaceGameCards(context, cards);
+        return ReplaceGameCards(context, cards, observeAutoSelection);
+    }
+
+    public async Task<bool> RefreshVisibleGamesAfterLanguageChangeAsync(
+        MainVisibleGameCardRefreshContext context,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        if (!context.State.HasScannedMatches())
+        {
+            return false;
+        }
+
+        var selected = RefreshVisibleGamesFromScanMatches(context, observeAutoSelection: false);
+        if (selected is not null)
+        {
+            await ObserveAutoSelectionAsync(
+                context,
+                selected,
+                navigateHome: false,
+                cancellationToken);
+        }
+
+        return true;
     }
 
     public GameCardViewModel? TryRefreshVisibleGameCardsAfterInstall(
@@ -133,6 +158,7 @@ internal sealed class MainVisibleGameCardRefreshState
     public required System.Func<string> ReadSelectedGameId { get; init; }
     public required System.Action<GameCardViewModel?> SetSelectedGame { get; init; }
     public required System.Func<bool> IsHomeNavigationSuppressed { get; init; }
+    public required System.Func<bool> HasScannedMatches { get; init; }
     public required System.Func<string, bool> ContainsScannedGameId { get; init; }
     public required System.Func<string, GameCardViewModel?> FindCurrentCardById { get; init; }
 }

@@ -39,6 +39,8 @@ internal sealed record MainSelectionShellFacade
                         BuildRefreshState = input.BuildRefreshState,
                         RefreshRuntimeContextAsync = input.RefreshRuntimeContextAsync,
                         RecomputeSelectionAfterScanAsync = input.RecomputeSelectionAfterScanAsync,
+                        RefreshVisibleGamesAfterLanguageChangeAsync =
+                            input.RefreshVisibleGamesAfterLanguageChangeAsync,
                         ReadStrings = input.ReadStrings,
                         LogInfo = input.LogLanguageChangeInfo,
                         LogWarning = input.LogLanguageChangeWarning,
@@ -110,6 +112,7 @@ internal sealed record MainSelectionShellFacadeInput
     public required Func<AppLanguage, AppStrings, LocalizationStateUpdate> BuildRefreshState { get; init; }
     public required Func<CancellationToken, Task> RefreshRuntimeContextAsync { get; init; }
     public required Func<CancellationToken, bool, Task> RecomputeSelectionAfterScanAsync { get; init; }
+    public required Func<CancellationToken, Task<bool>> RefreshVisibleGamesAfterLanguageChangeAsync { get; init; }
     public required Action<string> LogLanguageChangeInfo { get; init; }
     public required Action<string, Exception> LogLanguageChangeWarning { get; init; }
     public required Action<LocalizationStateUpdate> ApplyLocalizationStateUpdate { get; init; }
