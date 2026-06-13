@@ -1,5 +1,5 @@
 using System.IO;
-using System.Text.RegularExpressions;
+using OptiClick.Core.OptiScaler;
 using OptiClick.Wpf.Install.FileSystem;
 using OptiClick.Wpf.Install.Precheck;
 
@@ -19,8 +19,11 @@ public sealed record InstallStatusSnapshot
 public sealed record InstallStatusResolveInput
 {
     public string TargetPath { get; init; } = "";
+    public string CurrentVariant { get; init; } = "";
     public string CurrentVersion { get; init; } = "";
     public string CurrentDisplayVersion { get; init; } = "";
+    public string CurrentFileVersion { get; init; } = "";
+    public string CurrentProductVersion { get; init; } = "";
     public string Language { get; init; } = "en";
 }
 
@@ -45,7 +48,6 @@ public sealed class InstallStatusResolver : IInstallStatusResolver
     ];
 
     private const string OptiScalerOriginalFileName = "optiscaler.dll";
-    private static readonly Regex VersionTokenRegex = new(@"\d+(?:[\.,]\d+)*", RegexOptions.Compiled);
 
     private readonly IInstallFileSystem _fileSystem;
     private readonly IFileVersionInfoReader _versionInfoReader;
@@ -61,12 +63,19 @@ public sealed class InstallStatusResolver : IInstallStatusResolver
         var targetPath = (input.TargetPath ?? "").Trim();
         var currentVersion = (input.CurrentVersion ?? "").Trim();
         var currentDisplayVersion = (input.CurrentDisplayVersion ?? "").Trim();
+        var currentIdentity = new OptiScalerVersionIdentity
+        {
+            Variant = input.CurrentVariant,
+            FileVersion = PickFirst(input.CurrentFileVersion, currentVersion),
+            ProductVersion = input.CurrentProductVersion,
+            DisplayVersion = currentDisplayVersion
+        };
         if (!_fileSystem.DirectoryExists(targetPath))
         {
             return BuildStatus(InstallStatusCodes.Installable, input.Language, "", currentVersion, currentDisplayVersion);
         }
 
-        var detections = new List<(string CandidateName, string InstalledVersion, int? Comparison)>();
+        var detections = new List<(string CandidateName, OptiScalerVersionUpdateDecision Decision)>();
         foreach (var candidate in ManagedCandidates)
         {
             var candidatePath = Path.Combine(targetPath, candidate);
@@ -81,9 +90,12 @@ public sealed class InstallStatusResolver : IInstallStatusResolver
                 continue;
             }
 
-            var installedVersion = ExtractComparableBinaryVersion(versionInfo);
-            var comparison = CompareVersions(installedVersion, currentVersion);
-            detections.Add((candidate, installedVersion, comparison));
+            var installedIdentity = new OptiScalerVersionIdentity
+            {
+                FileVersion = ReadVersionString(versionInfo, "FileVersion"),
+                ProductVersion = ReadVersionString(versionInfo, "ProductVersion")
+            };
+            detections.Add((candidate, OptiScalerVersionUpdatePolicy.Evaluate(installedIdentity, currentIdentity)));
         }
 
         if (detections.Count == 0)
@@ -93,12 +105,12 @@ public sealed class InstallStatusResolver : IInstallStatusResolver
 
         foreach (var detection in detections)
         {
-            if (detection.Comparison is null || detection.Comparison < 0)
+            if (detection.Decision.Code == OptiScalerVersionUpdateCode.UpdateAvailable)
             {
                 return BuildStatus(
                     InstallStatusCodes.UpdateAvailable,
                     input.Language,
-                    detection.InstalledVersion,
+                    detection.Decision.InstalledDisplayVersion,
                     currentVersion,
                     currentDisplayVersion,
                     detection.CandidateName,
@@ -107,12 +119,12 @@ public sealed class InstallStatusResolver : IInstallStatusResolver
         }
 
         var first = detections[0];
-        if (first.Comparison is not null && first.Comparison > 0)
+        if (first.Decision.Code == OptiScalerVersionUpdateCode.PreRelease)
         {
             return BuildStatus(
                 InstallStatusCodes.PreRelease,
                 input.Language,
-                first.InstalledVersion,
+                first.Decision.InstalledDisplayVersion,
                 currentVersion,
                 currentDisplayVersion,
                 first.CandidateName,
@@ -122,7 +134,7 @@ public sealed class InstallStatusResolver : IInstallStatusResolver
         return BuildStatus(
             InstallStatusCodes.Latest,
             input.Language,
-            first.InstalledVersion,
+            first.Decision.InstalledDisplayVersion,
             currentVersion,
             currentDisplayVersion,
             first.CandidateName,
@@ -140,78 +152,28 @@ public sealed class InstallStatusResolver : IInstallStatusResolver
         return string.Equals(originalFilename, OptiScalerOriginalFileName, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static string ExtractComparableBinaryVersion(IReadOnlyDictionary<string, string> versionInfo)
+    private static string ReadVersionString(IReadOnlyDictionary<string, string> versionInfo, string key)
     {
-        foreach (var key in new[] { "FileVersion", "ProductVersion" })
+        if (!versionInfo.TryGetValue(key, out var value))
         {
-            if (!versionInfo.TryGetValue(key, out var value))
-            {
-                continue;
-            }
+            return "";
+        }
 
-            var text = (value ?? "").Trim();
-            if (string.IsNullOrWhiteSpace(text))
-            {
-                continue;
-            }
+        return (value ?? "").Trim();
+    }
 
-            if (ParseVersionTuple(text).Length > 0)
+    private static string PickFirst(params string[] values)
+    {
+        foreach (var value in values)
+        {
+            var normalized = (value ?? "").Trim();
+            if (!string.IsNullOrWhiteSpace(normalized))
             {
-                return text;
+                return normalized;
             }
         }
 
         return "";
-    }
-
-    private static int? CompareVersions(string left, string right)
-    {
-        var leftParts = ParseVersionTuple(left);
-        var rightParts = ParseVersionTuple(right);
-        if (leftParts.Length == 0 || rightParts.Length == 0)
-        {
-            return null;
-        }
-
-        var size = Math.Max(leftParts.Length, rightParts.Length);
-        for (var i = 0; i < size; i++)
-        {
-            var leftValue = i < leftParts.Length ? leftParts[i] : 0;
-            var rightValue = i < rightParts.Length ? rightParts[i] : 0;
-            if (leftValue < rightValue) return -1;
-            if (leftValue > rightValue) return 1;
-        }
-
-        return 0;
-    }
-
-    private static int[] ParseVersionTuple(string value)
-    {
-        var text = (value ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            return Array.Empty<int>();
-        }
-
-        var match = VersionTokenRegex.Match(text);
-        if (!match.Success)
-        {
-            return Array.Empty<int>();
-        }
-
-        var tokens = match.Value.Split(new[] { '.', ',' }, StringSplitOptions.RemoveEmptyEntries);
-        var parsed = new List<int>(tokens.Length);
-        foreach (var token in tokens)
-        {
-            if (!int.TryParse(token, out var number))
-            {
-                return Array.Empty<int>();
-            }
-
-            parsed.Add(number);
-        }
-
-        return parsed.ToArray();
     }
 
     private static InstallStatusSnapshot BuildStatus(

@@ -164,7 +164,8 @@ internal sealed class MainSelectionScanContextFactory
                     [game],
                     _input.Runtime.ReadRuntimeContext(),
                     _input.ScannedGames.ReadTargetPathsByGameId(),
-                    _input.Runtime.ReadModuleDownloadLinks())
+                    _input.Runtime.ReadModuleDownloadLinks(),
+                    _input.Runtime.ReadArchiveReadiness())
                 .FirstOrDefault();
         }
         catch (Exception ex)
@@ -190,7 +191,8 @@ internal sealed class MainSelectionScanContextFactory
                 matchedGames,
                 _input.Runtime.ReadRuntimeContext(),
                 _input.ScannedGames.ReadTargetPathsByGameId(),
-                _input.Runtime.ReadModuleDownloadLinks());
+                _input.Runtime.ReadModuleDownloadLinks(),
+                _input.Runtime.ReadArchiveReadiness());
         }
         catch (Exception ex)
         {

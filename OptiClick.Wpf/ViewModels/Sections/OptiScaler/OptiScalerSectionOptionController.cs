@@ -82,7 +82,9 @@ internal sealed class OptiScalerSectionOptionController
             if (!string.Equals(left.Variant, right.Variant, StringComparison.Ordinal)
                 || !string.Equals(left.DisplayLabel, right.DisplayLabel, StringComparison.Ordinal)
                 || !string.Equals(left.Version, right.Version, StringComparison.Ordinal)
-                || !string.Equals(left.DisplayVersion, right.DisplayVersion, StringComparison.Ordinal))
+                || !string.Equals(left.DisplayVersion, right.DisplayVersion, StringComparison.Ordinal)
+                || !string.Equals(left.FileVersion, right.FileVersion, StringComparison.Ordinal)
+                || !string.Equals(left.ProductVersion, right.ProductVersion, StringComparison.Ordinal))
             {
                 return false;
             }

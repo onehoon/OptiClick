@@ -174,7 +174,9 @@ public sealed class ArchiveReadinessFlowController
         {
             OptiScalerVariant = variantSync.EffectiveVariant,
             OptiScalerVersion = variantSync.EffectiveVersion,
-            OptiScalerDisplayVersion = variantSync.EffectiveDisplayVersion
+            OptiScalerDisplayVersion = variantSync.EffectiveDisplayVersion,
+            OptiScalerFileVersion = variantSync.EffectiveFileVersion,
+            OptiScalerProductVersion = variantSync.EffectiveProductVersion
         };
     }
 

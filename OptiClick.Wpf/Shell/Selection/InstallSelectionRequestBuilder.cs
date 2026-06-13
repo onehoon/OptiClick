@@ -89,34 +89,17 @@ public sealed class InstallSelectionRequestBuilder
             };
         }
 
-        var (currentVersion, currentDisplayVersion) = ResolveCurrentOptiScalerVersionPair(moduleDownloadLinks, archiveReadiness);
+        var currentVersionInfo = OptiScalerCurrentVersionInfoResolver.Resolve(moduleDownloadLinks, archiveReadiness);
         return _installStatusResolver.Resolve(new InstallStatusResolveInput
         {
             TargetPath = targetPath,
-            CurrentVersion = currentVersion,
-            CurrentDisplayVersion = currentDisplayVersion,
+            CurrentVariant = currentVersionInfo.Variant,
+            CurrentVersion = currentVersionInfo.Version,
+            CurrentDisplayVersion = currentVersionInfo.DisplayVersion,
+            CurrentFileVersion = currentVersionInfo.FileVersion,
+            CurrentProductVersion = currentVersionInfo.ProductVersion,
             Language = selectedLanguage == AppLanguage.Korean ? "ko" : "en"
         });
-    }
-
-    private static (string CurrentVersion, string CurrentDisplayVersion) ResolveCurrentOptiScalerVersionPair(
-        ModuleDownloadLinkContext moduleDownloadLinks,
-        ArchiveReadinessSnapshot archiveReadiness)
-    {
-        if (!string.IsNullOrWhiteSpace(archiveReadiness.OptiScalerVersion)
-            || !string.IsNullOrWhiteSpace(archiveReadiness.OptiScalerDisplayVersion))
-        {
-            return (archiveReadiness.OptiScalerVersion, archiveReadiness.OptiScalerDisplayVersion);
-        }
-
-        if (!moduleDownloadLinks.TryResolveLink(ArchiveAssetRuntimeDataKeys.OptiScaler, out var entry))
-        {
-            return ("", "");
-        }
-
-        var currentVersion = entry.ReadFirstString("version", "current_version");
-        var currentDisplayVersion = entry.ReadFirstString("display_version", "current_display_version", "version_label");
-        return (currentVersion, currentDisplayVersion);
     }
 
     private static string ResolveLocalizedInstallPreMessage(ShellGameCardModel game, AppLanguage language)

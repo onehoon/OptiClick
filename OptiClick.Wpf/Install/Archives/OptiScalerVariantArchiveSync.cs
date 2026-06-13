@@ -20,6 +20,8 @@ public sealed record OptiScalerVariantSelectionOption
     public string DisplayLabel { get; init; } = "";
     public string Version { get; init; } = "";
     public string DisplayVersion { get; init; } = "";
+    public string FileVersion { get; init; } = "";
+    public string ProductVersion { get; init; } = "";
 }
 
 public sealed record OptiScalerVariantManifest
@@ -36,6 +38,8 @@ public sealed record OptiScalerVariantManifestEntry
     public string Variant { get; init; } = "";
     public string Version { get; init; } = "";
     public string DisplayVersion { get; init; } = "";
+    public string FileVersion { get; init; } = "";
+    public string ProductVersion { get; init; } = "";
     public string Filename { get; init; } = "";
     public string Url { get; init; } = "";
     public string Sha256 { get; init; } = "";
@@ -54,6 +58,8 @@ public sealed record OptiScalerVariantSyncResult
     public string EffectiveVariant { get; init; } = OptiScalerVariantCatalogBuilder.StableVariant;
     public string EffectiveVersion { get; init; } = "";
     public string EffectiveDisplayVersion { get; init; } = "";
+    public string EffectiveFileVersion { get; init; } = "";
+    public string EffectiveProductVersion { get; init; } = "";
     public OptiScalerVariantManifestEntry? EffectiveEntry { get; init; }
     public ArchivePreparationState OptiScalerState { get; init; } = new();
     public bool UsedCanonicalFallback { get; init; }
@@ -270,7 +276,9 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
                 Variant = option.Variant,
                 DisplayLabel = option.DisplayLabel,
                 Version = option.Version,
-                DisplayVersion = option.DisplayVersion
+                DisplayVersion = option.DisplayVersion,
+                FileVersion = option.FileVersion,
+                ProductVersion = option.ProductVersion
             })
             .ToArray();
 
@@ -299,6 +307,8 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
             EffectiveVariant = effectiveVariant,
             EffectiveVersion = effectiveEntry?.Version ?? (usedCanonicalFallback ? safeCatalog.CanonicalFallback?.Version ?? "" : ""),
             EffectiveDisplayVersion = effectiveEntry?.DisplayVersion ?? (usedCanonicalFallback ? safeCatalog.CanonicalFallback?.DisplayVersion ?? "" : ""),
+            EffectiveFileVersion = effectiveEntry?.FileVersion ?? (usedCanonicalFallback ? safeCatalog.CanonicalFallback?.FileVersion ?? "" : ""),
+            EffectiveProductVersion = effectiveEntry?.ProductVersion ?? (usedCanonicalFallback ? safeCatalog.CanonicalFallback?.ProductVersion ?? "" : ""),
             EffectiveEntry = effectiveEntry,
             OptiScalerState = optiScalerState,
             UsedCanonicalFallback = usedCanonicalFallback,
@@ -330,6 +340,8 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
         }
 
         return !string.Equals(existing.Version, option.Version, StringComparison.Ordinal)
+               || !string.Equals(existing.FileVersion, option.FileVersion, StringComparison.Ordinal)
+               || !string.Equals(existing.ProductVersion, option.ProductVersion, StringComparison.Ordinal)
                || !string.Equals(existing.Filename, option.Filename, StringComparison.Ordinal)
                || !string.Equals(existing.Url, option.Url, StringComparison.Ordinal)
                || !string.Equals(existing.Sha256, option.Sha256, StringComparison.OrdinalIgnoreCase);
@@ -348,6 +360,8 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
             Variant = option.Variant,
             Version = option.Version,
             DisplayVersion = option.DisplayVersion,
+            FileVersion = option.FileVersion,
+            ProductVersion = option.ProductVersion,
             Filename = option.Filename,
             Url = option.Url,
             Sha256 = option.Sha256,
