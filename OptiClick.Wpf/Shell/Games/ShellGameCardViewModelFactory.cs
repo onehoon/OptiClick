@@ -65,6 +65,25 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
         ArchiveReadinessSnapshot? archiveReadiness,
         OptiScalerVariantCatalog? optiScalerVariantCatalog)
     {
+        return CreateCards(
+            games,
+            runtimeContext,
+            targetPathByGameId,
+            moduleDownloadLinks,
+            archiveReadiness,
+            optiScalerVariantCatalog,
+            "");
+    }
+
+    public IReadOnlyList<GameCardViewModel> CreateCards(
+        IReadOnlyList<ShellGameCardModel> games,
+        RuntimeContext? runtimeContext,
+        IReadOnlyDictionary<string, string>? targetPathByGameId,
+        ModuleDownloadLinkContext? moduleDownloadLinks,
+        ArchiveReadinessSnapshot? archiveReadiness,
+        OptiScalerVariantCatalog? optiScalerVariantCatalog,
+        string preferredOptiScalerVariant)
+    {
         if (games is null || games.Count == 0)
         {
             return [];
@@ -78,6 +97,7 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
             ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var safeModuleDownloadLinks = moduleDownloadLinks
             ?? ModuleDownloadLinkContext.Empty;
+        var safePreferredOptiScalerVariant = (preferredOptiScalerVariant ?? "").Trim();
         var currentVersionTargets = OptiScalerCurrentVersionInfoResolver.ResolveTargets(
             safeModuleDownloadLinks,
             archiveReadiness,
@@ -125,6 +145,7 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
             var installStatus = ResolveInstallStatusCached(
                 targetPath,
                 currentVersionTargets,
+                safePreferredOptiScalerVariant,
                 languageCode,
                 installStatusCache);
             var statusBadge = ToStatusBadge(installStatus, strings);
@@ -184,6 +205,7 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
     private InstallStatusSnapshot ResolveInstallStatusCached(
         string targetPath,
         OptiScalerCurrentVersionTargets currentVersionTargets,
+        string preferredOptiScalerVariant,
         string languageCode,
         Dictionary<string, InstallStatusSnapshot> cache)
     {
@@ -215,6 +237,7 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
             safeCurrentVersionTargets.Preview.DisplayVersion,
             safeCurrentVersionTargets.Preview.FileVersion,
             safeCurrentVersionTargets.Preview.ProductVersion,
+            preferredOptiScalerVariant,
             safeLanguageCode);
 
         if (cache.TryGetValue(cacheKey, out var snapshot))
@@ -222,7 +245,11 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
             return snapshot;
         }
 
-        var resolved = ResolveInstallStatus(targetPath, safeCurrentVersionTargets, safeLanguageCode);
+        var resolved = ResolveInstallStatus(
+            targetPath,
+            safeCurrentVersionTargets,
+            preferredOptiScalerVariant,
+            safeLanguageCode);
         cache[cacheKey] = resolved;
         return resolved;
     }
@@ -230,6 +257,7 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
     private InstallStatusSnapshot ResolveInstallStatus(
         string targetPath,
         OptiScalerCurrentVersionTargets currentVersionTargets,
+        string preferredOptiScalerVariant,
         string languageCode)
     {
         var safeCurrentVersionTargets = currentVersionTargets ?? OptiScalerCurrentVersionTargets.Empty;
@@ -244,6 +272,7 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
                 CurrentDisplayVersion = safeCurrentVersionInfo.DisplayVersion,
                 CurrentFileVersion = safeCurrentVersionInfo.FileVersion,
                 CurrentProductVersion = safeCurrentVersionInfo.ProductVersion,
+                PreferredVariant = preferredOptiScalerVariant,
                 StableTarget = ToVersionIdentity(safeCurrentVersionTargets.Stable),
                 PreviewTarget = ToVersionIdentity(safeCurrentVersionTargets.Preview),
                 Language = languageCode
@@ -327,6 +356,11 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
         }
 
         if (string.Equals(code, InstallStatusCodes.Latest, StringComparison.OrdinalIgnoreCase))
+        {
+            return LatestBadgePalette;
+        }
+
+        if (string.Equals(code, InstallStatusBadgeCodes.StableInstalled, StringComparison.OrdinalIgnoreCase))
         {
             return LatestBadgePalette;
         }

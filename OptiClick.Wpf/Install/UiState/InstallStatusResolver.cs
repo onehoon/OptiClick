@@ -26,6 +26,7 @@ public sealed record InstallStatusResolveInput
     public string CurrentDisplayVersion { get; init; } = "";
     public string CurrentFileVersion { get; init; } = "";
     public string CurrentProductVersion { get; init; } = "";
+    public string PreferredVariant { get; init; } = "";
     public OptiScalerVersionIdentity StableTarget { get; init; } = new();
     public OptiScalerVersionIdentity PreviewTarget { get; init; } = new();
     public string Language { get; init; } = "en";
@@ -78,6 +79,7 @@ public sealed class InstallStatusResolver : IInstallStatusResolver
                                 || OptiScalerVersionTargetPolicy.HasVersionIdentity(input.PreviewTarget);
         var targetSet = new OptiScalerVersionTargetSet
         {
+            PreferredVariant = input.PreferredVariant,
             Selected = currentIdentity,
             Stable = input.StableTarget,
             Preview = input.PreviewTarget
@@ -259,7 +261,8 @@ public sealed class InstallStatusResolver : IInstallStatusResolver
         return decision.Code switch
         {
             OptiScalerInstalledBadgeCode.UpdateAvailable => InstallStatusBadgeCodes.UpdateAvailable,
-            OptiScalerInstalledBadgeCode.LatestStable => InstallStatusBadgeCodes.Latest,
+            OptiScalerInstalledBadgeCode.LatestStable => InstallStatusBadgeCodes.StableInstalled,
+            OptiScalerInstalledBadgeCode.StableInstalled => InstallStatusBadgeCodes.StableInstalled,
             OptiScalerInstalledBadgeCode.PreviewInstalled => InstallStatusBadgeCodes.PreviewInstalled,
             OptiScalerInstalledBadgeCode.InstalledVersion => InstallStatusBadgeCodes.InstalledVersion,
             _ => InstallStatusBadgeCodes.Installable
@@ -277,7 +280,8 @@ public sealed class InstallStatusResolver : IInstallStatusResolver
                 : string.Format(
                     isKorean ? "\uC5C5\uB370\uC774\uD2B8 ({0})" : "Update ({0})",
                     displayVersion),
-            OptiScalerInstalledBadgeCode.LatestStable => isKorean ? "\uCD5C\uC2E0" : "Latest",
+            OptiScalerInstalledBadgeCode.LatestStable => displayVersion,
+            OptiScalerInstalledBadgeCode.StableInstalled => displayVersion,
             OptiScalerInstalledBadgeCode.PreviewInstalled => displayVersion,
             OptiScalerInstalledBadgeCode.InstalledVersion => displayVersion,
             _ => isKorean ? "\uBBF8\uC124\uCE58" : "Not Installed"

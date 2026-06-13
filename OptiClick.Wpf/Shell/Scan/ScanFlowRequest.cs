@@ -21,5 +21,6 @@ public sealed record ScanFlowRequest
         ArchiveReadinessSnapshot.NotReady;
     public OptiScalerVariantCatalog LatestOptiScalerVariantCatalog { get; init; } =
         OptiScalerVariantCatalog.Empty;
+    public string PreferredOptiScalerVariant { get; init; } = "";
     public string LatestRemoteCatalogErrorCode { get; init; } = "";
 }

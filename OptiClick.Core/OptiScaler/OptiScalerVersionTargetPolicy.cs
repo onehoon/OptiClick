@@ -2,6 +2,7 @@ namespace OptiClick.Core.OptiScaler;
 
 public sealed record OptiScalerVersionTargetSet
 {
+    public string PreferredVariant { get; init; } = "";
     public OptiScalerVersionIdentity Selected { get; init; } = new();
     public OptiScalerVersionIdentity Stable { get; init; } = new();
     public OptiScalerVersionIdentity Preview { get; init; } = new();
@@ -18,11 +19,12 @@ public static class OptiScalerVersionTargetPolicy
         var selected = targetSet.Selected ?? new OptiScalerVersionIdentity();
         var stable = targetSet.Stable ?? new OptiScalerVersionIdentity();
         var preview = targetSet.Preview ?? new OptiScalerVersionIdentity();
+        var preferredVariant = ResolvePreferredVariant(targetSet.PreferredVariant, selected);
 
-        return OptiScalerVersionUpdatePolicy.ResolveChannel(installedIdentity) switch
+        return preferredVariant switch
         {
-            OptiScalerVersionChannel.Preview => PickFirstIdentity(preview, stable, selected, installedIdentity),
-            OptiScalerVersionChannel.Stable => PickFirstIdentity(stable, selected, installedIdentity),
+            OptiScalerVariantPreference.PreviewVariant => ResolvePreviewTarget(selected, stable, preview, installedIdentity),
+            OptiScalerVariantPreference.StableVariant => ResolveStableTarget(selected, stable, installedIdentity),
             _ => PickFirstIdentity(selected, stable, preview, installedIdentity)
         };
     }
@@ -37,6 +39,52 @@ public static class OptiScalerVersionTargetPolicy
         return !string.IsNullOrWhiteSpace(identity.FileVersion)
                || !string.IsNullOrWhiteSpace(identity.ProductVersion)
                || !string.IsNullOrWhiteSpace(identity.DisplayVersion);
+    }
+
+    private static OptiScalerVersionIdentity ResolveStableTarget(
+        OptiScalerVersionIdentity selected,
+        OptiScalerVersionIdentity stable,
+        OptiScalerVersionIdentity installed)
+    {
+        if (HasVersionIdentity(stable))
+        {
+            return stable;
+        }
+
+        return OptiScalerVersionUpdatePolicy.ResolveChannel(selected) == OptiScalerVersionChannel.Preview
+            ? installed
+            : PickFirstIdentity(selected, installed);
+    }
+
+    private static OptiScalerVersionIdentity ResolvePreviewTarget(
+        OptiScalerVersionIdentity selected,
+        OptiScalerVersionIdentity stable,
+        OptiScalerVersionIdentity preview,
+        OptiScalerVersionIdentity installed)
+    {
+        if (HasVersionIdentity(preview))
+        {
+            return preview;
+        }
+
+        return PickFirstIdentity(stable, selected, installed);
+    }
+
+    private static string ResolvePreferredVariant(string preferredVariant, OptiScalerVersionIdentity selected)
+    {
+        var normalized = OptiScalerVariantPreference.Normalize(preferredVariant);
+        if (string.Equals(normalized, OptiScalerVariantPreference.StableVariant, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(normalized, OptiScalerVariantPreference.PreviewVariant, StringComparison.OrdinalIgnoreCase))
+        {
+            return normalized;
+        }
+
+        return OptiScalerVersionUpdatePolicy.ResolveChannel(selected) switch
+        {
+            OptiScalerVersionChannel.Preview => OptiScalerVariantPreference.PreviewVariant,
+            OptiScalerVersionChannel.Stable => OptiScalerVariantPreference.StableVariant,
+            _ => ""
+        };
     }
 
     private static OptiScalerVersionIdentity PickFirstIdentity(params OptiScalerVersionIdentity[] identities)
