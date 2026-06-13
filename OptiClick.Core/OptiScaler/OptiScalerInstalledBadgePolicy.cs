@@ -5,6 +5,7 @@ public enum OptiScalerInstalledBadgeCode
     NotInstalled,
     UpdateAvailable,
     LatestStable,
+    StableInstalled,
     PreviewInstalled,
     InstalledVersion
 }
@@ -43,6 +44,7 @@ public static class OptiScalerInstalledBadgePolicy
         }
 
         var installedDisplayVersion = safeUpdateDecision.InstalledDisplayVersion;
+        var stableDisplayVersion = PickFirst(safeUpdateDecision.TargetDisplayVersion, installedDisplayVersion);
         var installedChannel = OptiScalerVersionUpdatePolicy.ResolveChannel(installedIdentity);
         if (installedChannel == OptiScalerVersionChannel.Preview)
         {
@@ -53,12 +55,14 @@ public static class OptiScalerInstalledBadgePolicy
             };
         }
 
-        if (installedChannel == OptiScalerVersionChannel.Stable
-            && safeUpdateDecision.Code == OptiScalerVersionUpdateCode.Latest)
+        if (installedChannel == OptiScalerVersionChannel.Stable)
         {
             return new OptiScalerInstalledBadgeDecision
             {
-                Code = OptiScalerInstalledBadgeCode.LatestStable
+                Code = OptiScalerInstalledBadgeCode.StableInstalled,
+                DisplayVersion = safeUpdateDecision.Code == OptiScalerVersionUpdateCode.Latest
+                    ? stableDisplayVersion
+                    : installedDisplayVersion
             };
         }
 
@@ -74,5 +78,19 @@ public static class OptiScalerInstalledBadgePolicy
         return !string.IsNullOrWhiteSpace(identity.FileVersion)
                || !string.IsNullOrWhiteSpace(identity.ProductVersion)
                || !string.IsNullOrWhiteSpace(identity.DisplayVersion);
+    }
+
+    private static string PickFirst(params string[] values)
+    {
+        foreach (var value in values)
+        {
+            var normalized = (value ?? "").Trim();
+            if (!string.IsNullOrWhiteSpace(normalized))
+            {
+                return normalized;
+            }
+        }
+
+        return "";
     }
 }

@@ -57,6 +57,7 @@ internal sealed record MainSelectionShellFacade
                         ScannedGames = MainSelectionScanPortFactory.CreateScannedGamePort(input.ScannedGameState),
                         ReadStrings = input.ReadStrings,
                         ReadSelectedLanguage = input.ReadSelectedLanguage,
+                        ReadPreferredOptiScalerVariant = input.ReadPreferredOptiScalerVariant,
                         ReadVisibleCards = input.ReadVisibleCards,
                         ReadSelectedGame = input.ReadSelectedGame,
                         SetSelectedGame = input.SetSelectedGame,
@@ -105,6 +106,7 @@ internal sealed record MainSelectionShellFacadeInput
     public required IAppLogger AppLogger { get; init; }
     public required Func<AppStrings> ReadStrings { get; init; }
     public required Func<AppLanguage> ReadSelectedLanguage { get; init; }
+    public required Func<string> ReadPreferredOptiScalerVariant { get; init; }
     public required Action<AppLanguage> SetLanguage { get; init; }
     public required Action RefreshLocalizedStrings { get; init; }
     public required Action ApplySelectedGameLocalization { get; init; }

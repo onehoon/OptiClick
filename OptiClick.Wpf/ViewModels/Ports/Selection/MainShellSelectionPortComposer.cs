@@ -43,6 +43,8 @@ internal static class MainShellSelectionPortComposer
             BuildScanRequest = scanFolders => input.ResolveSelectionFeature().BuildScanRequest(scanFolders),
             RefreshVisibleGamesFromScanMatches =
                 () => input.ResolveSelectionFeature().RefreshVisibleGamesFromScanMatches(),
+            RefreshVisibleGamesFromScanMatchesWithoutAutoSelection =
+                () => input.ResolveSelectionFeature().RefreshVisibleGamesFromScanMatches(observeAutoSelection: false),
             ReplaceGameCards = (cards, observeAutoSelection) =>
                 input.ResolveSelectionFeature().ReplaceGameCards(cards, observeAutoSelection),
             TryRefreshVisibleCard = gameId =>

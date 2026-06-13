@@ -33,4 +33,16 @@ public interface IShellGameCardViewModelFactory
     {
         return CreateCards(games, runtimeContext, targetPathByGameId, moduleDownloadLinks, archiveReadiness);
     }
+
+    IReadOnlyList<GameCardViewModel> CreateCards(
+        IReadOnlyList<ShellGameCardModel> games,
+        RuntimeContext? runtimeContext,
+        IReadOnlyDictionary<string, string>? targetPathByGameId,
+        ModuleDownloadLinkContext? moduleDownloadLinks,
+        ArchiveReadinessSnapshot? archiveReadiness,
+        OptiScalerVariantCatalog? optiScalerVariantCatalog,
+        string preferredOptiScalerVariant)
+    {
+        return CreateCards(games, runtimeContext, targetPathByGameId, moduleDownloadLinks, archiveReadiness, optiScalerVariantCatalog);
+    }
 }

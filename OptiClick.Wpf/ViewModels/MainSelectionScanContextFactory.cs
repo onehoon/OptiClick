@@ -40,7 +40,8 @@ internal sealed class MainSelectionScanContextFactory
             _input.Runtime.ReadRemoteCatalogErrorCode()) with
         {
             LatestArchiveReadiness = _input.Runtime.ReadArchiveReadiness(),
-            LatestOptiScalerVariantCatalog = _input.Runtime.ReadOptiScalerVariantCatalog()
+            LatestOptiScalerVariantCatalog = _input.Runtime.ReadOptiScalerVariantCatalog(),
+            PreferredOptiScalerVariant = _input.ReadPreferredOptiScalerVariant()
         };
     }
 
@@ -171,7 +172,8 @@ internal sealed class MainSelectionScanContextFactory
                     _input.ScannedGames.ReadTargetPathsByGameId(),
                     _input.Runtime.ReadModuleDownloadLinks(),
                     _input.Runtime.ReadArchiveReadiness(),
-                    _input.Runtime.ReadOptiScalerVariantCatalog())
+                    _input.Runtime.ReadOptiScalerVariantCatalog(),
+                    _input.ReadPreferredOptiScalerVariant())
                 .FirstOrDefault();
         }
         catch (Exception ex)
@@ -199,7 +201,8 @@ internal sealed class MainSelectionScanContextFactory
                 _input.ScannedGames.ReadTargetPathsByGameId(),
                 _input.Runtime.ReadModuleDownloadLinks(),
                 _input.Runtime.ReadArchiveReadiness(),
-                _input.Runtime.ReadOptiScalerVariantCatalog());
+                _input.Runtime.ReadOptiScalerVariantCatalog(),
+                _input.ReadPreferredOptiScalerVariant());
         }
         catch (Exception ex)
         {
@@ -263,6 +266,7 @@ internal sealed record MainSelectionScanContextFactoryInput
     public required MainSelectionScanScannedGamePort ScannedGames { get; init; }
     public required Func<AppStrings> ReadStrings { get; init; }
     public required Func<AppLanguage> ReadSelectedLanguage { get; init; }
+    public required Func<string> ReadPreferredOptiScalerVariant { get; init; }
     public required Func<ObservableCollection<GameCardViewModel>> ReadVisibleCards { get; init; }
     public required Func<GameCardViewModel?> ReadSelectedGame { get; init; }
     public required Action<GameCardViewModel?> SetSelectedGame { get; init; }

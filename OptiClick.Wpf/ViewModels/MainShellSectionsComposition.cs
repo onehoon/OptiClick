@@ -44,6 +44,7 @@ internal sealed record MainShellSectionsCompositionInput
     public required MainOptiScalerSettingsController OptiScalerSettingsController { get; init; }
     public required Func<string> ReadLanguagePreference { get; init; }
     public required Action<string> SetOptiScalerVariantPreference { get; init; }
+    public required Action RefreshVisibleGamesAfterOptiScalerPreferenceChange { get; init; }
     public required string InitialSettingsLanguageOption { get; init; }
     public required Func<bool> IsKoreanUi { get; init; }
     public required Action<string> ApplySettingsLanguageOption { get; init; }
@@ -121,7 +122,8 @@ internal static class MainShellSectionsComposition
             SaveHandler = new MainOptiScalerSectionSaveHandler(
                 input.OptiScalerSettingsController,
                 input.ReadLanguagePreference,
-                input.SetOptiScalerVariantPreference)
+                input.SetOptiScalerVariantPreference,
+                input.RefreshVisibleGamesAfterOptiScalerPreferenceChange)
         };
     }
 

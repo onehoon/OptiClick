@@ -120,10 +120,11 @@ internal sealed class MainSelectionFeatureFacade
             navigateHome);
     }
 
-    public GameCardViewModel? RefreshVisibleGamesFromScanMatches()
+    public GameCardViewModel? RefreshVisibleGamesFromScanMatches(bool observeAutoSelection = true)
     {
         return _visibleGameCardRefreshController.RefreshVisibleGamesFromScanMatches(
-            _contextFactory.CreateVisibleGameCardRefreshContext());
+            _contextFactory.CreateVisibleGameCardRefreshContext(),
+            observeAutoSelection);
     }
 
     public Task<bool> RefreshVisibleGamesAfterLanguageChangeAsync(CancellationToken cancellationToken)

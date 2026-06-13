@@ -145,6 +145,7 @@ internal static class MainViewModelShellFacadeComposer
                 AppLogger = ports.App.AppLogger,
                 ReadStrings = ports.App.ReadStrings,
                 ReadSelectedLanguage = ports.Localization.ReadSelectedLanguage,
+                ReadPreferredOptiScalerVariant = ports.Install.ReadPreferredOptiScalerVariant,
                 SetLanguage = ports.Localization.SetLanguage,
                 RefreshLocalizedStrings = ports.Localization.RefreshLocalizedStrings,
                 ApplySelectedGameLocalization = ports.Ui.ApplySelectedGameLocalization,
@@ -333,6 +334,7 @@ internal sealed record MainShellFacadeSelectionPort
     public required Func<CancellationToken, Task<bool>> RefreshVisibleGamesAfterLanguageChangeAsync { get; init; }
     public required Func<IReadOnlyList<string>, ScanFlowRequest> BuildScanRequest { get; init; }
     public required Action RefreshVisibleGamesFromScanMatches { get; init; }
+    public required Action RefreshVisibleGamesFromScanMatchesWithoutAutoSelection { get; init; }
     public required Action<IReadOnlyList<GameCardViewModel>, bool> ReplaceGameCards { get; init; }
     public required Func<string, GameCardViewModel?> TryRefreshVisibleCard { get; init; }
     public required Func<GameCardViewModel?, CancellationToken, bool, bool, Task> SelectGameAsync { get; init; }

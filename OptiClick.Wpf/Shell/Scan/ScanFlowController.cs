@@ -61,6 +61,7 @@ public sealed class ScanFlowController
                                       ?? ArchiveReadinessSnapshot.NotReady;
         var currentOptiScalerVariantCatalog = request.LatestOptiScalerVariantCatalog
                                              ?? OptiScalerVariantCatalog.Empty;
+        var currentPreferredOptiScalerVariant = (request.PreferredOptiScalerVariant ?? "").Trim();
 
         if (_scanPipeline is null)
         {
@@ -126,6 +127,7 @@ public sealed class ScanFlowController
                 currentModuleDownloadLinks,
                 currentArchiveReadiness,
                 currentOptiScalerVariantCatalog,
+                currentPreferredOptiScalerVariant,
                 logs);
             return CreateSkippedResult(
                 currentMatchByGameId,
@@ -163,6 +165,7 @@ public sealed class ScanFlowController
                 currentModuleDownloadLinks,
                 currentArchiveReadiness,
                 currentOptiScalerVariantCatalog,
+                currentPreferredOptiScalerVariant,
                 logs);
             var summary = NormalizeSummary(pipelineResult.Summary, visibleGames.Count);
 
@@ -275,6 +278,7 @@ public sealed class ScanFlowController
         ModuleDownloadLinkContext moduleDownloadLinks,
         ArchiveReadinessSnapshot archiveReadiness,
         OptiScalerVariantCatalog optiScalerVariantCatalog,
+        string preferredOptiScalerVariant,
         ICollection<ScanFlowLogEntry> logs)
     {
         if (_shellGameCardViewModelFactory is null)
@@ -296,7 +300,8 @@ public sealed class ScanFlowController
                 targetPathByGameId,
                 moduleDownloadLinks,
                 archiveReadiness,
-                optiScalerVariantCatalog);
+                optiScalerVariantCatalog,
+                preferredOptiScalerVariant);
         }
         catch (Exception ex)
         {

@@ -78,6 +78,8 @@ internal static class MainViewModelShellSectionsComposer
                 OptiScalerSettingsController = input.OptiScalerSettingsController,
                 ReadLanguagePreference = ports.Localization.ReadLanguagePreference,
                 SetOptiScalerVariantPreference = ports.Install.SetOptiScalerVariantPreference,
+                RefreshVisibleGamesAfterOptiScalerPreferenceChange =
+                    ports.Selection.RefreshVisibleGamesFromScanMatchesWithoutAutoSelection,
                 InitialSettingsLanguageOption = input.InitialSettingsLanguageOption,
                 IsKoreanUi = ports.App.IsKoreanUi,
                 ApplySettingsLanguageOption = ports.Localization.ApplySettingsLanguageOption,

@@ -66,6 +66,7 @@ public static class InstallStatusBadgeCodes
     public const string Installable = InstallStatusCodes.Installable;
     public const string UpdateAvailable = InstallStatusCodes.UpdateAvailable;
     public const string Latest = InstallStatusCodes.Latest;
+    public const string StableInstalled = "stable_installed";
     public const string PreviewInstalled = "preview_installed";
     public const string InstalledVersion = "installed_version";
     public const string NeedsReview = InstallStatusCodes.NeedsReview;
