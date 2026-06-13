@@ -7,6 +7,7 @@ using OptiClick.Wpf.Install.Precheck;
 using OptiClick.Wpf.Install.UiState;
 using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Shell.Selection;
+using OptiClick.Wpf.Shell.RuntimeData;
 using OptiClick.Wpf.ViewModels;
 
 namespace OptiClick.Wpf.Shell.Games;
@@ -42,6 +43,16 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
         IReadOnlyDictionary<string, string>? targetPathByGameId = null,
         ModuleDownloadLinkContext? moduleDownloadLinks = null)
     {
+        return CreateCards(games, runtimeContext, targetPathByGameId, moduleDownloadLinks, null);
+    }
+
+    public IReadOnlyList<GameCardViewModel> CreateCards(
+        IReadOnlyList<ShellGameCardModel> games,
+        RuntimeContext? runtimeContext,
+        IReadOnlyDictionary<string, string>? targetPathByGameId,
+        ModuleDownloadLinkContext? moduleDownloadLinks,
+        ArchiveReadinessSnapshot? archiveReadiness)
+    {
         if (games is null || games.Count == 0)
         {
             return [];
@@ -55,7 +66,7 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
             ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var safeModuleDownloadLinks = moduleDownloadLinks
             ?? ModuleDownloadLinkContext.Empty;
-        var (currentVersion, currentDisplayVersion) = ResolveCurrentOptiScalerVersionPair(safeModuleDownloadLinks);
+        var currentVersionInfo = OptiScalerCurrentVersionInfoResolver.Resolve(safeModuleDownloadLinks, archiveReadiness);
         var installStatusCache = new Dictionary<string, InstallStatusSnapshot>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var game in games)
@@ -98,8 +109,7 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
             var targetPath = ResolveTargetPath(safeTargetPathByGameId, gameId);
             var installStatus = ResolveInstallStatusCached(
                 targetPath,
-                currentVersion,
-                currentDisplayVersion,
+                currentVersionInfo,
                 languageCode,
                 installStatusCache);
             var statusBadge = ToStatusBadge(installStatus, strings);
@@ -158,13 +168,13 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
 
     private InstallStatusSnapshot ResolveInstallStatusCached(
         string targetPath,
-        string currentVersion,
-        string currentDisplayVersion,
+        OptiScalerCurrentVersionInfo currentVersionInfo,
         string languageCode,
         Dictionary<string, InstallStatusSnapshot> cache)
     {
-        var safeCurrentVersion = currentVersion ?? "";
-        var safeCurrentDisplayVersion = currentDisplayVersion ?? "";
+        var safeCurrentVersionInfo = currentVersionInfo ?? OptiScalerCurrentVersionInfo.Empty;
+        var safeCurrentVersion = safeCurrentVersionInfo.Version ?? "";
+        var safeCurrentDisplayVersion = safeCurrentVersionInfo.DisplayVersion ?? "";
         var safeLanguageCode = languageCode ?? "";
         if (string.IsNullOrWhiteSpace(targetPath))
         {
@@ -174,8 +184,11 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
         var cacheKey = string.Join(
             "|",
             targetPath.Trim(),
+            safeCurrentVersionInfo.Variant,
             safeCurrentVersion,
             safeCurrentDisplayVersion,
+            safeCurrentVersionInfo.FileVersion,
+            safeCurrentVersionInfo.ProductVersion,
             safeLanguageCode);
 
         if (cache.TryGetValue(cacheKey, out var snapshot))
@@ -183,30 +196,33 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
             return snapshot;
         }
 
-        var resolved = ResolveInstallStatus(targetPath, safeCurrentVersion, safeCurrentDisplayVersion, safeLanguageCode);
+        var resolved = ResolveInstallStatus(targetPath, safeCurrentVersionInfo, safeLanguageCode);
         cache[cacheKey] = resolved;
         return resolved;
     }
 
     private InstallStatusSnapshot ResolveInstallStatus(
         string targetPath,
-        string currentVersion,
-        string currentDisplayVersion,
+        OptiScalerCurrentVersionInfo currentVersionInfo,
         string languageCode)
     {
+        var safeCurrentVersionInfo = currentVersionInfo ?? OptiScalerCurrentVersionInfo.Empty;
         try
         {
             return _installStatusResolver.Resolve(new InstallStatusResolveInput
             {
                 TargetPath = targetPath,
-                CurrentVersion = currentVersion,
-                CurrentDisplayVersion = currentDisplayVersion,
+                CurrentVariant = safeCurrentVersionInfo.Variant,
+                CurrentVersion = safeCurrentVersionInfo.Version,
+                CurrentDisplayVersion = safeCurrentVersionInfo.DisplayVersion,
+                CurrentFileVersion = safeCurrentVersionInfo.FileVersion,
+                CurrentProductVersion = safeCurrentVersionInfo.ProductVersion,
                 Language = languageCode
             });
         }
         catch
         {
-            return BuildInstallableSnapshot(languageCode, currentVersion, currentDisplayVersion);
+            return BuildInstallableSnapshot(languageCode, safeCurrentVersionInfo.Version, safeCurrentVersionInfo.DisplayVersion);
         }
     }
 
@@ -282,19 +298,6 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
         }
 
         return (targetPath ?? "").Trim();
-    }
-
-    private static (string CurrentVersion, string CurrentDisplayVersion) ResolveCurrentOptiScalerVersionPair(
-        ModuleDownloadLinkContext moduleDownloadLinks)
-    {
-        if (!moduleDownloadLinks.TryResolveLink("optiscaler", out var entry))
-        {
-            return ("", "");
-        }
-
-        var currentVersion = entry.ReadFirstString("version", "current_version");
-        var currentDisplayVersion = entry.ReadFirstString("display_version", "current_display_version", "version_label");
-        return (currentVersion, currentDisplayVersion);
     }
 
     private static Brush CreateCoverBrush(string color)

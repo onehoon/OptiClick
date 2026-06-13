@@ -8,6 +8,8 @@ public sealed record OptiScalerVariantOption
     public string Variant { get; init; } = "";
     public string Version { get; init; } = "";
     public string DisplayVersion { get; init; } = "";
+    public string FileVersion { get; init; } = "";
+    public string ProductVersion { get; init; } = "";
     public string Url { get; init; } = "";
     public string Filename { get; init; } = "";
     public string Sha256 { get; init; } = "";
@@ -155,6 +157,8 @@ public sealed class OptiScalerVariantCatalogBuilder
     {
         var version = RuntimeDataRowReader.GetString(row, "version");
         var displayVersion = RuntimeDataRowReader.GetFirstString(row, "display_version", "current_display_version", "version_label", "version");
+        var fileVersion = RuntimeDataRowReader.GetFirstString(row, "fileversion", "file_version", "FileVersion", "version");
+        var productVersion = RuntimeDataRowReader.GetFirstString(row, "productversion", "product_version", "ProductVersion");
         var url = RuntimeDataRowReader.GetFirstString(row, "url", "download_url", "source_url");
         var filename = RuntimeDataRowReader.GetFirstString(row, "filename", "file_name");
         var sha256 = RuntimeDataRowReader.GetFirstString(row, "sha256", "SHA256");
@@ -165,6 +169,8 @@ public sealed class OptiScalerVariantCatalogBuilder
             Variant = variant,
             Version = version,
             DisplayVersion = displayVersion,
+            FileVersion = fileVersion,
+            ProductVersion = productVersion,
             Url = url,
             Filename = filename,
             Sha256 = sha256,
