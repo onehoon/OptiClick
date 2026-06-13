@@ -1,5 +1,7 @@
+using OptiClick.Core.Install;
 using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Shell.Games;
+using OptiClick.Wpf.Shell.RuntimeData;
 
 namespace OptiClick.Wpf.Shell.Scan;
 
@@ -15,5 +17,9 @@ public sealed record ScanFlowRequest
         = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     public ModuleDownloadLinkContext ModuleDownloadLinks { get; init; } =
         ModuleDownloadLinkContext.Empty;
+    public ArchiveReadinessSnapshot LatestArchiveReadiness { get; init; } =
+        ArchiveReadinessSnapshot.NotReady;
+    public OptiScalerVariantCatalog LatestOptiScalerVariantCatalog { get; init; } =
+        OptiScalerVariantCatalog.Empty;
     public string LatestRemoteCatalogErrorCode { get; init; } = "";
 }

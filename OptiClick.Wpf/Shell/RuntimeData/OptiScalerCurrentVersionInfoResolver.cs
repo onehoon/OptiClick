@@ -14,6 +14,15 @@ internal sealed record OptiScalerCurrentVersionInfo
     public string ProductVersion { get; init; } = "";
 }
 
+internal sealed record OptiScalerCurrentVersionTargets
+{
+    public static readonly OptiScalerCurrentVersionTargets Empty = new();
+
+    public OptiScalerCurrentVersionInfo Selected { get; init; } = OptiScalerCurrentVersionInfo.Empty;
+    public OptiScalerCurrentVersionInfo Stable { get; init; } = OptiScalerCurrentVersionInfo.Empty;
+    public OptiScalerCurrentVersionInfo Preview { get; init; } = OptiScalerCurrentVersionInfo.Empty;
+}
+
 internal static class OptiScalerCurrentVersionInfoResolver
 {
     public static OptiScalerCurrentVersionInfo Resolve(
@@ -35,6 +44,32 @@ internal static class OptiScalerCurrentVersionInfoResolver
         }
 
         return linkInfo;
+    }
+
+    public static OptiScalerCurrentVersionTargets ResolveTargets(
+        ModuleDownloadLinkContext? moduleDownloadLinks,
+        ArchiveReadinessSnapshot? archiveReadiness = null,
+        OptiScalerVariantCatalog? variantCatalog = null)
+    {
+        var selected = Resolve(moduleDownloadLinks, archiveReadiness);
+        var safeCatalog = variantCatalog ?? OptiScalerVariantCatalog.Empty;
+        var stable = ResolveVariantTarget(
+            safeCatalog,
+            OptiScalerVariantCatalogBuilder.StableVariant,
+            selected,
+            ResolveFromModuleLinks(moduleDownloadLinks ?? ModuleDownloadLinkContext.Empty));
+        var preview = ResolveVariantTarget(
+            safeCatalog,
+            OptiScalerVariantCatalogBuilder.PreviewVariant,
+            selected,
+            OptiScalerCurrentVersionInfo.Empty);
+
+        return new OptiScalerCurrentVersionTargets
+        {
+            Selected = selected,
+            Stable = stable,
+            Preview = preview
+        };
     }
 
     private static OptiScalerCurrentVersionInfo ResolveFromModuleLinks(ModuleDownloadLinkContext moduleDownloadLinks)
@@ -62,6 +97,43 @@ internal static class OptiScalerCurrentVersionInfoResolver
                || !string.IsNullOrWhiteSpace(readiness.OptiScalerDisplayVersion)
                || !string.IsNullOrWhiteSpace(readiness.OptiScalerFileVersion)
                || !string.IsNullOrWhiteSpace(readiness.OptiScalerProductVersion);
+    }
+
+    private static OptiScalerCurrentVersionInfo ResolveVariantTarget(
+        OptiScalerVariantCatalog catalog,
+        string variant,
+        OptiScalerCurrentVersionInfo selected,
+        OptiScalerCurrentVersionInfo fallback)
+    {
+        if (catalog.Find(variant) is { } option)
+        {
+            return FromVariantOption(option);
+        }
+
+        if (string.Equals(selected.Variant, variant, StringComparison.OrdinalIgnoreCase))
+        {
+            return selected;
+        }
+
+        if (string.Equals(variant, OptiScalerVariantCatalogBuilder.StableVariant, StringComparison.OrdinalIgnoreCase)
+            && catalog.CanonicalFallback is { } canonicalFallback)
+        {
+            return FromVariantOption(canonicalFallback);
+        }
+
+        return fallback ?? OptiScalerCurrentVersionInfo.Empty;
+    }
+
+    private static OptiScalerCurrentVersionInfo FromVariantOption(OptiScalerVariantOption option)
+    {
+        return new OptiScalerCurrentVersionInfo
+        {
+            Variant = option.Variant,
+            Version = option.Version,
+            DisplayVersion = option.DisplayVersion,
+            FileVersion = PickFirst(option.FileVersion, option.Version),
+            ProductVersion = option.ProductVersion
+        };
     }
 
     private static string PickFirst(params string[] values)
