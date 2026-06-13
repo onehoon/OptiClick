@@ -1,5 +1,6 @@
 using System.Windows.Media;
 using OptiClick.Core.Models;
+using OptiClick.Core.OptiScaler;
 using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Install.FileSystem;
 using OptiClick.Core.Install;
@@ -53,6 +54,17 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
         ModuleDownloadLinkContext? moduleDownloadLinks,
         ArchiveReadinessSnapshot? archiveReadiness)
     {
+        return CreateCards(games, runtimeContext, targetPathByGameId, moduleDownloadLinks, archiveReadiness, null);
+    }
+
+    public IReadOnlyList<GameCardViewModel> CreateCards(
+        IReadOnlyList<ShellGameCardModel> games,
+        RuntimeContext? runtimeContext,
+        IReadOnlyDictionary<string, string>? targetPathByGameId,
+        ModuleDownloadLinkContext? moduleDownloadLinks,
+        ArchiveReadinessSnapshot? archiveReadiness,
+        OptiScalerVariantCatalog? optiScalerVariantCatalog)
+    {
         if (games is null || games.Count == 0)
         {
             return [];
@@ -66,7 +78,10 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
             ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         var safeModuleDownloadLinks = moduleDownloadLinks
             ?? ModuleDownloadLinkContext.Empty;
-        var currentVersionInfo = OptiScalerCurrentVersionInfoResolver.Resolve(safeModuleDownloadLinks, archiveReadiness);
+        var currentVersionTargets = OptiScalerCurrentVersionInfoResolver.ResolveTargets(
+            safeModuleDownloadLinks,
+            archiveReadiness,
+            optiScalerVariantCatalog);
         var installStatusCache = new Dictionary<string, InstallStatusSnapshot>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var game in games)
@@ -109,11 +124,11 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
             var targetPath = ResolveTargetPath(safeTargetPathByGameId, gameId);
             var installStatus = ResolveInstallStatusCached(
                 targetPath,
-                currentVersionInfo,
+                currentVersionTargets,
                 languageCode,
                 installStatusCache);
             var statusBadge = ToStatusBadge(installStatus, strings);
-            var badgePalette = ToBadgePalette(installStatus.Code);
+            var badgePalette = ToBadgePalette(ResolveBadgeCode(installStatus));
 
             list.Add(new GameCardViewModel(
                 ResolveLocalizedTitle(game, language, gameId, matchExe),
@@ -168,11 +183,12 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
 
     private InstallStatusSnapshot ResolveInstallStatusCached(
         string targetPath,
-        OptiScalerCurrentVersionInfo currentVersionInfo,
+        OptiScalerCurrentVersionTargets currentVersionTargets,
         string languageCode,
         Dictionary<string, InstallStatusSnapshot> cache)
     {
-        var safeCurrentVersionInfo = currentVersionInfo ?? OptiScalerCurrentVersionInfo.Empty;
+        var safeCurrentVersionTargets = currentVersionTargets ?? OptiScalerCurrentVersionTargets.Empty;
+        var safeCurrentVersionInfo = safeCurrentVersionTargets.Selected ?? OptiScalerCurrentVersionInfo.Empty;
         var safeCurrentVersion = safeCurrentVersionInfo.Version ?? "";
         var safeCurrentDisplayVersion = safeCurrentVersionInfo.DisplayVersion ?? "";
         var safeLanguageCode = languageCode ?? "";
@@ -189,6 +205,16 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
             safeCurrentDisplayVersion,
             safeCurrentVersionInfo.FileVersion,
             safeCurrentVersionInfo.ProductVersion,
+            safeCurrentVersionTargets.Stable.Variant,
+            safeCurrentVersionTargets.Stable.Version,
+            safeCurrentVersionTargets.Stable.DisplayVersion,
+            safeCurrentVersionTargets.Stable.FileVersion,
+            safeCurrentVersionTargets.Stable.ProductVersion,
+            safeCurrentVersionTargets.Preview.Variant,
+            safeCurrentVersionTargets.Preview.Version,
+            safeCurrentVersionTargets.Preview.DisplayVersion,
+            safeCurrentVersionTargets.Preview.FileVersion,
+            safeCurrentVersionTargets.Preview.ProductVersion,
             safeLanguageCode);
 
         if (cache.TryGetValue(cacheKey, out var snapshot))
@@ -196,17 +222,18 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
             return snapshot;
         }
 
-        var resolved = ResolveInstallStatus(targetPath, safeCurrentVersionInfo, safeLanguageCode);
+        var resolved = ResolveInstallStatus(targetPath, safeCurrentVersionTargets, safeLanguageCode);
         cache[cacheKey] = resolved;
         return resolved;
     }
 
     private InstallStatusSnapshot ResolveInstallStatus(
         string targetPath,
-        OptiScalerCurrentVersionInfo currentVersionInfo,
+        OptiScalerCurrentVersionTargets currentVersionTargets,
         string languageCode)
     {
-        var safeCurrentVersionInfo = currentVersionInfo ?? OptiScalerCurrentVersionInfo.Empty;
+        var safeCurrentVersionTargets = currentVersionTargets ?? OptiScalerCurrentVersionTargets.Empty;
+        var safeCurrentVersionInfo = safeCurrentVersionTargets.Selected ?? OptiScalerCurrentVersionInfo.Empty;
         try
         {
             return _installStatusResolver.Resolve(new InstallStatusResolveInput
@@ -217,6 +244,8 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
                 CurrentDisplayVersion = safeCurrentVersionInfo.DisplayVersion,
                 CurrentFileVersion = safeCurrentVersionInfo.FileVersion,
                 CurrentProductVersion = safeCurrentVersionInfo.ProductVersion,
+                StableTarget = ToVersionIdentity(safeCurrentVersionTargets.Stable),
+                PreviewTarget = ToVersionIdentity(safeCurrentVersionTargets.Preview),
                 Language = languageCode
             });
         }
@@ -224,6 +253,18 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
         {
             return BuildInstallableSnapshot(languageCode, safeCurrentVersionInfo.Version, safeCurrentVersionInfo.DisplayVersion);
         }
+    }
+
+    private static OptiScalerVersionIdentity ToVersionIdentity(OptiScalerCurrentVersionInfo info)
+    {
+        var safeInfo = info ?? OptiScalerCurrentVersionInfo.Empty;
+        return new OptiScalerVersionIdentity
+        {
+            Variant = safeInfo.Variant,
+            FileVersion = safeInfo.FileVersion,
+            ProductVersion = safeInfo.ProductVersion,
+            DisplayVersion = safeInfo.DisplayVersion
+        };
     }
 
     private static InstallStatusSnapshot BuildInstallableSnapshot(
@@ -234,6 +275,10 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
         return new InstallStatusSnapshot
         {
             Code = InstallStatusCodes.Installable,
+            BadgeCode = InstallStatusBadgeCodes.Installable,
+            BadgeLabel = languageCode.StartsWith("ko", StringComparison.OrdinalIgnoreCase)
+                ? "\uBBF8\uC124\uCE58"
+                : "Not Installed",
             Label = languageCode.StartsWith("ko", StringComparison.OrdinalIgnoreCase) ? "미설치" : "Not Installed",
             CurrentVersion = currentVersion,
             CurrentDisplayVersion = currentDisplayVersion
@@ -242,6 +287,12 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
 
     private static string ToStatusBadge(InstallStatusSnapshot installStatus, AppStrings strings)
     {
+        var badgeLabel = (installStatus.BadgeLabel ?? "").Trim();
+        if (!string.IsNullOrWhiteSpace(badgeLabel))
+        {
+            return badgeLabel;
+        }
+
         var label = (installStatus.Label ?? "").Trim();
         if (!string.IsNullOrWhiteSpace(label))
         {
@@ -260,6 +311,14 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
         };
     }
 
+    private static string ResolveBadgeCode(InstallStatusSnapshot installStatus)
+    {
+        var badgeCode = (installStatus.BadgeCode ?? "").Trim();
+        return string.IsNullOrWhiteSpace(badgeCode)
+            ? (installStatus.Code ?? "").Trim()
+            : badgeCode;
+    }
+
     private static BadgePalette ToBadgePalette(string code)
     {
         if (string.Equals(code, InstallStatusCodes.UpdateAvailable, StringComparison.OrdinalIgnoreCase))
@@ -273,6 +332,12 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
         }
 
         if (string.Equals(code, InstallStatusCodes.PreRelease, StringComparison.OrdinalIgnoreCase))
+        {
+            return PreReleaseBadgePalette;
+        }
+
+        if (string.Equals(code, InstallStatusBadgeCodes.PreviewInstalled, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(code, InstallStatusBadgeCodes.InstalledVersion, StringComparison.OrdinalIgnoreCase))
         {
             return PreReleaseBadgePalette;
         }

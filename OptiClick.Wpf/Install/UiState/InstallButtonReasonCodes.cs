@@ -60,3 +60,13 @@ public static class InstallStatusCodes
     public const string PreRelease = "pre_release";
     public const string NeedsReview = "needs_review";
 }
+
+public static class InstallStatusBadgeCodes
+{
+    public const string Installable = InstallStatusCodes.Installable;
+    public const string UpdateAvailable = InstallStatusCodes.UpdateAvailable;
+    public const string Latest = InstallStatusCodes.Latest;
+    public const string PreviewInstalled = "preview_installed";
+    public const string InstalledVersion = "installed_version";
+    public const string NeedsReview = InstallStatusCodes.NeedsReview;
+}

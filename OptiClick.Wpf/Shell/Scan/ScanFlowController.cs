@@ -1,8 +1,10 @@
+using OptiClick.Core.Install;
 using OptiClick.Core.Runtime;
 using OptiClick.Core.Scan;
 using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Shell.Games;
+using OptiClick.Wpf.Shell.RuntimeData;
 using OptiClick.Wpf.ViewModels;
 
 namespace OptiClick.Wpf.Shell.Scan;
@@ -55,6 +57,10 @@ public sealed class ScanFlowController
         var currentTargetPathByGameId = CloneTargetPathByGameId(request.CurrentTargetPathByGameId);
         var currentModuleDownloadLinks = request.ModuleDownloadLinks
             ?? ModuleDownloadLinkContext.Empty;
+        var currentArchiveReadiness = request.LatestArchiveReadiness
+                                      ?? ArchiveReadinessSnapshot.NotReady;
+        var currentOptiScalerVariantCatalog = request.LatestOptiScalerVariantCatalog
+                                             ?? OptiScalerVariantCatalog.Empty;
 
         if (_scanPipeline is null)
         {
@@ -118,6 +124,8 @@ public sealed class ScanFlowController
                 currentMatchByGameId,
                 currentTargetPathByGameId,
                 currentModuleDownloadLinks,
+                currentArchiveReadiness,
+                currentOptiScalerVariantCatalog,
                 logs);
             return CreateSkippedResult(
                 currentMatchByGameId,
@@ -153,6 +161,8 @@ public sealed class ScanFlowController
                 matchByGameId,
                 targetPathByGameId,
                 currentModuleDownloadLinks,
+                currentArchiveReadiness,
+                currentOptiScalerVariantCatalog,
                 logs);
             var summary = NormalizeSummary(pipelineResult.Summary, visibleGames.Count);
 
@@ -263,6 +273,8 @@ public sealed class ScanFlowController
         IReadOnlyDictionary<string, ShellGameMatchResult> matchByGameId,
         IReadOnlyDictionary<string, string> targetPathByGameId,
         ModuleDownloadLinkContext moduleDownloadLinks,
+        ArchiveReadinessSnapshot archiveReadiness,
+        OptiScalerVariantCatalog optiScalerVariantCatalog,
         ICollection<ScanFlowLogEntry> logs)
     {
         if (_shellGameCardViewModelFactory is null)
@@ -282,7 +294,9 @@ public sealed class ScanFlowController
                 matchedGames,
                 runtimeContext,
                 targetPathByGameId,
-                moduleDownloadLinks);
+                moduleDownloadLinks,
+                archiveReadiness,
+                optiScalerVariantCatalog);
         }
         catch (Exception ex)
         {

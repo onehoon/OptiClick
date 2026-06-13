@@ -9,6 +9,8 @@ public sealed record InstallStatusSnapshot
 {
     public string Code { get; init; } = InstallStatusCodes.Installable;
     public string Label { get; init; } = "Not Installed";
+    public string BadgeCode { get; init; } = "";
+    public string BadgeLabel { get; init; } = "";
     public string InstalledVersion { get; init; } = "";
     public string CurrentVersion { get; init; } = "";
     public string CurrentDisplayVersion { get; init; } = "";
@@ -24,6 +26,8 @@ public sealed record InstallStatusResolveInput
     public string CurrentDisplayVersion { get; init; } = "";
     public string CurrentFileVersion { get; init; } = "";
     public string CurrentProductVersion { get; init; } = "";
+    public OptiScalerVersionIdentity StableTarget { get; init; } = new();
+    public OptiScalerVersionIdentity PreviewTarget { get; init; } = new();
     public string Language { get; init; } = "en";
 }
 
@@ -70,12 +74,30 @@ public sealed class InstallStatusResolver : IInstallStatusResolver
             ProductVersion = input.CurrentProductVersion,
             DisplayVersion = currentDisplayVersion
         };
+        var hasChannelTargets = OptiScalerVersionTargetPolicy.HasVersionIdentity(input.StableTarget)
+                                || OptiScalerVersionTargetPolicy.HasVersionIdentity(input.PreviewTarget);
+        var targetSet = new OptiScalerVersionTargetSet
+        {
+            Selected = currentIdentity,
+            Stable = input.StableTarget,
+            Preview = input.PreviewTarget
+        };
         if (!_fileSystem.DirectoryExists(targetPath))
         {
-            return BuildStatus(InstallStatusCodes.Installable, input.Language, "", currentVersion, currentDisplayVersion);
+            return BuildStatus(
+                InstallStatusCodes.Installable,
+                input.Language,
+                "",
+                currentVersion,
+                currentDisplayVersion,
+                badgeDecision: OptiScalerInstalledBadgePolicy.Evaluate(null, currentIdentity, null));
         }
 
-        var detections = new List<(string CandidateName, OptiScalerVersionUpdateDecision Decision)>();
+        var detections = new List<(
+            string CandidateName,
+            OptiScalerVersionIdentity InstalledIdentity,
+            OptiScalerVersionIdentity TargetIdentity,
+            OptiScalerVersionUpdateDecision Decision)>();
         foreach (var candidate in ManagedCandidates)
         {
             var candidatePath = Path.Combine(targetPath, candidate);
@@ -95,12 +117,25 @@ public sealed class InstallStatusResolver : IInstallStatusResolver
                 FileVersion = ReadVersionString(versionInfo, "FileVersion"),
                 ProductVersion = ReadVersionString(versionInfo, "ProductVersion")
             };
-            detections.Add((candidate, OptiScalerVersionUpdatePolicy.Evaluate(installedIdentity, currentIdentity)));
+            var targetIdentity = hasChannelTargets
+                ? OptiScalerVersionTargetPolicy.ResolveTargetForInstalled(installedIdentity, targetSet)
+                : currentIdentity;
+            detections.Add((
+                candidate,
+                installedIdentity,
+                targetIdentity,
+                OptiScalerVersionUpdatePolicy.Evaluate(installedIdentity, targetIdentity)));
         }
 
         if (detections.Count == 0)
         {
-            return BuildStatus(InstallStatusCodes.Installable, input.Language, "", currentVersion, currentDisplayVersion);
+            return BuildStatus(
+                InstallStatusCodes.Installable,
+                input.Language,
+                "",
+                currentVersion,
+                currentDisplayVersion,
+                badgeDecision: OptiScalerInstalledBadgePolicy.Evaluate(null, currentIdentity, null));
         }
 
         foreach (var detection in detections)
@@ -111,10 +146,14 @@ public sealed class InstallStatusResolver : IInstallStatusResolver
                     InstallStatusCodes.UpdateAvailable,
                     input.Language,
                     detection.Decision.InstalledDisplayVersion,
-                    currentVersion,
-                    currentDisplayVersion,
+                    ResolveTargetVersion(detection.TargetIdentity),
+                    detection.Decision.TargetDisplayVersion,
                     detection.CandidateName,
-                    "binary");
+                    "binary",
+                    OptiScalerInstalledBadgePolicy.Evaluate(
+                        detection.InstalledIdentity,
+                        detection.TargetIdentity,
+                        detection.Decision));
             }
         }
 
@@ -125,20 +164,28 @@ public sealed class InstallStatusResolver : IInstallStatusResolver
                 InstallStatusCodes.PreRelease,
                 input.Language,
                 first.Decision.InstalledDisplayVersion,
-                currentVersion,
-                currentDisplayVersion,
+                ResolveTargetVersion(first.TargetIdentity),
+                first.Decision.TargetDisplayVersion,
                 first.CandidateName,
-                "binary");
+                "binary",
+                OptiScalerInstalledBadgePolicy.Evaluate(
+                    first.InstalledIdentity,
+                    first.TargetIdentity,
+                    first.Decision));
         }
 
         return BuildStatus(
             InstallStatusCodes.Latest,
             input.Language,
             first.Decision.InstalledDisplayVersion,
-            currentVersion,
-            currentDisplayVersion,
+            ResolveTargetVersion(first.TargetIdentity),
+            first.Decision.TargetDisplayVersion,
             first.CandidateName,
-            "binary");
+            "binary",
+            OptiScalerInstalledBadgePolicy.Evaluate(
+                first.InstalledIdentity,
+                first.TargetIdentity,
+                first.Decision));
     }
 
     private static bool IsOptiScalerBinary(IReadOnlyDictionary<string, string> versionInfo)
@@ -176,6 +223,11 @@ public sealed class InstallStatusResolver : IInstallStatusResolver
         return "";
     }
 
+    private static string ResolveTargetVersion(OptiScalerVersionIdentity target)
+    {
+        return PickFirst(target.FileVersion, target.ProductVersion, target.DisplayVersion);
+    }
+
     private static InstallStatusSnapshot BuildStatus(
         string code,
         string language,
@@ -183,12 +235,17 @@ public sealed class InstallStatusResolver : IInstallStatusResolver
         string currentVersion,
         string currentDisplayVersion,
         string detectedFile = "",
-        string source = "")
+        string source = "",
+        OptiScalerInstalledBadgeDecision? badgeDecision = null)
     {
+        var safeBadgeDecision = badgeDecision
+                                ?? OptiScalerInstalledBadgePolicy.Evaluate(null, null, null);
         return new InstallStatusSnapshot
         {
             Code = code,
             Label = ResolveStatusLabel(code, language, installedVersion),
+            BadgeCode = ResolveBadgeCode(safeBadgeDecision),
+            BadgeLabel = ResolveBadgeLabel(safeBadgeDecision, language),
             InstalledVersion = installedVersion,
             CurrentVersion = currentVersion,
             CurrentDisplayVersion = currentDisplayVersion,
@@ -197,9 +254,39 @@ public sealed class InstallStatusResolver : IInstallStatusResolver
         };
     }
 
+    private static string ResolveBadgeCode(OptiScalerInstalledBadgeDecision decision)
+    {
+        return decision.Code switch
+        {
+            OptiScalerInstalledBadgeCode.UpdateAvailable => InstallStatusBadgeCodes.UpdateAvailable,
+            OptiScalerInstalledBadgeCode.LatestStable => InstallStatusBadgeCodes.Latest,
+            OptiScalerInstalledBadgeCode.PreviewInstalled => InstallStatusBadgeCodes.PreviewInstalled,
+            OptiScalerInstalledBadgeCode.InstalledVersion => InstallStatusBadgeCodes.InstalledVersion,
+            _ => InstallStatusBadgeCodes.Installable
+        };
+    }
+
+    private static string ResolveBadgeLabel(OptiScalerInstalledBadgeDecision decision, string language)
+    {
+        var isKorean = IsKoreanLanguage(language);
+        var displayVersion = (decision.DisplayVersion ?? "").Trim();
+        return decision.Code switch
+        {
+            OptiScalerInstalledBadgeCode.UpdateAvailable => string.IsNullOrWhiteSpace(displayVersion)
+                ? (isKorean ? "\uC5C5\uB370\uC774\uD2B8" : "Update")
+                : string.Format(
+                    isKorean ? "\uC5C5\uB370\uC774\uD2B8 ({0})" : "Update ({0})",
+                    displayVersion),
+            OptiScalerInstalledBadgeCode.LatestStable => isKorean ? "\uCD5C\uC2E0" : "Latest",
+            OptiScalerInstalledBadgeCode.PreviewInstalled => displayVersion,
+            OptiScalerInstalledBadgeCode.InstalledVersion => displayVersion,
+            _ => isKorean ? "\uBBF8\uC124\uCE58" : "Not Installed"
+        };
+    }
+
     private static string ResolveStatusLabel(string code, string language, string installedVersion)
     {
-        var isKorean = (language ?? "").Trim().StartsWith("ko", StringComparison.OrdinalIgnoreCase);
+        var isKorean = IsKoreanLanguage(language);
         return code switch
         {
             InstallStatusCodes.UpdateAvailable => isKorean ? "업데이트" : "Update",
@@ -210,5 +297,10 @@ public sealed class InstallStatusResolver : IInstallStatusResolver
             InstallStatusCodes.NeedsReview => isKorean ? "확인" : "Check",
             _ => isKorean ? "미설치" : "Not Installed"
         };
+    }
+
+    private static bool IsKoreanLanguage(string language)
+    {
+        return (language ?? "").Trim().StartsWith("ko", StringComparison.OrdinalIgnoreCase);
     }
 }

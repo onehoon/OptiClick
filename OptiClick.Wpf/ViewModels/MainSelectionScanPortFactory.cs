@@ -15,6 +15,7 @@ internal static class MainSelectionScanPortFactory
             ReadRuntimeContext = () => runtimeShellState.LatestRuntimeContext,
             ReadModuleDownloadLinks = () => runtimeShellState.ModuleDownloadLinks,
             ReadArchiveReadiness = () => runtimeShellState.LatestArchiveReadiness,
+            ReadOptiScalerVariantCatalog = () => runtimeShellState.LatestOptiScalerVariantCatalog,
             ReadRemoteCatalogErrorCode = () => runtimeShellState.LatestRemoteCatalogErrorCode
         };
     }

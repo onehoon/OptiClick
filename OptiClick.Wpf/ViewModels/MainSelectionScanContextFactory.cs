@@ -12,6 +12,7 @@ using OptiClick.Wpf.Shell.Games;
 using OptiClick.Wpf.Shell.Gpu;
 using OptiClick.Wpf.Shell.Navigation;
 using OptiClick.Wpf.Shell.Runtime;
+using OptiClick.Wpf.Shell.RuntimeData;
 using OptiClick.Wpf.Shell.Scan;
 using OptiClick.Wpf.Shell.Selection;
 
@@ -36,7 +37,11 @@ internal sealed class MainSelectionScanContextFactory
             _input.ScannedGames.ReadMatchesByGameId(),
             _input.ScannedGames.ReadTargetPathsByGameId(),
             _input.Runtime.ReadModuleDownloadLinks(),
-            _input.Runtime.ReadRemoteCatalogErrorCode());
+            _input.Runtime.ReadRemoteCatalogErrorCode()) with
+        {
+            LatestArchiveReadiness = _input.Runtime.ReadArchiveReadiness(),
+            LatestOptiScalerVariantCatalog = _input.Runtime.ReadOptiScalerVariantCatalog()
+        };
     }
 
     public MainVisibleGameCardRefreshContext CreateVisibleGameCardRefreshContext()
@@ -165,7 +170,8 @@ internal sealed class MainSelectionScanContextFactory
                     _input.Runtime.ReadRuntimeContext(),
                     _input.ScannedGames.ReadTargetPathsByGameId(),
                     _input.Runtime.ReadModuleDownloadLinks(),
-                    _input.Runtime.ReadArchiveReadiness())
+                    _input.Runtime.ReadArchiveReadiness(),
+                    _input.Runtime.ReadOptiScalerVariantCatalog())
                 .FirstOrDefault();
         }
         catch (Exception ex)
@@ -192,7 +198,8 @@ internal sealed class MainSelectionScanContextFactory
                 _input.Runtime.ReadRuntimeContext(),
                 _input.ScannedGames.ReadTargetPathsByGameId(),
                 _input.Runtime.ReadModuleDownloadLinks(),
-                _input.Runtime.ReadArchiveReadiness());
+                _input.Runtime.ReadArchiveReadiness(),
+                _input.Runtime.ReadOptiScalerVariantCatalog());
         }
         catch (Exception ex)
         {
@@ -283,6 +290,7 @@ internal sealed record MainSelectionScanRuntimePort
     public required Func<RuntimeContext> ReadRuntimeContext { get; init; }
     public required Func<ModuleDownloadLinkContext> ReadModuleDownloadLinks { get; init; }
     public required Func<ArchiveReadinessSnapshot> ReadArchiveReadiness { get; init; }
+    public required Func<OptiScalerVariantCatalog> ReadOptiScalerVariantCatalog { get; init; }
     public required Func<string> ReadRemoteCatalogErrorCode { get; init; }
 }
 
