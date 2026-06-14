@@ -195,6 +195,8 @@ public sealed record AppStrings
     public string RuntimeCatalogFailedSummary { get; init; } = "";
     public string RuntimeCatalogFailedBullet1 { get; init; } = "";
     public string RuntimeCatalogFailedBullet2 { get; init; } = "";
+    public string RuntimeCatalogUnsupportedGpuTitle { get; init; } = "";
+    public string RuntimeCatalogUnsupportedGpuSummary { get; init; } = "";
     public string RuntimeCatalogEmptyTitle { get; init; } = "";
     public string RuntimeCatalogEmptySummary { get; init; } = "";
     public string RuntimeCatalogEmptyBullet1 { get; init; } = "";
