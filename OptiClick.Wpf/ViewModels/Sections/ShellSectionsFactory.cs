@@ -37,10 +37,8 @@ public sealed class ShellSectionsFactory
                 Games = input.Games,
                 SelectedGameAction = new SelectedGameActionViewModel(input.StringsAccessor),
                 SelectGameAsync = input.SelectGameAsync,
-                ShowDetails = input.ShowDetails,
                 ShowInstallAsync = input.ShowInstallAsync,
                 CanSelectGame = input.CanSelectGame,
-                CanShowDetails = input.CanShowDetails,
                 CanShowInstall = input.CanShowInstall,
                 OnSelectGameException = input.OnSelectGameException,
                 OnShowInstallException = input.OnShowInstallException

@@ -99,8 +99,6 @@ public static class RuntimeDataGameProfileKeys
     public const string InstallPreEn = "__install_pre_en__";
     public const string InstallPostKr = "__install_post_kr__";
     public const string InstallPostEn = "__install_post_en__";
-    public const string InstallSummaryNoteKr = "__install_summary_note_kr__";
-    public const string InstallSummaryNoteEn = "__install_summary_note_en__";
     public const string GuideUrl = "__guide_url__";
     public const string ExcludeList = "exclude_list";
 }

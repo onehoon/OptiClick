@@ -1,5 +1,4 @@
 using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.AppUpdate;
-using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.Details;
 using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.Language;
 using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.OptiScaler;
 using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.ShellCommand;
@@ -16,5 +15,4 @@ internal sealed record MainShellInteractionContextAccesses
     public required IMainUserSettingsInteractionAccess UserSettings { get; init; }
     public required IMainLanguagePreferenceInteractionAccess Language { get; init; }
     public required IMainOptiScalerSettingsInteractionAccess OptiScaler { get; init; }
-    public required IMainDetailsDialogInteractionAccess Details { get; init; }
 }

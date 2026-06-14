@@ -39,8 +39,6 @@ public sealed class ShellGameCardModel
     public string InstallPreEn { get; init; } = "";
     public string InstallPostKr { get; init; } = "";
     public string InstallPostEn { get; init; } = "";
-    public string InstallSummaryNoteKr { get; init; } = "";
-    public string InstallSummaryNoteEn { get; init; } = "";
     public string GuideUrl { get; init; } = "";
     public string ExcludeListRaw { get; init; } = "";
     public IReadOnlyList<string> ExcludeListPatterns { get; init; } = [];

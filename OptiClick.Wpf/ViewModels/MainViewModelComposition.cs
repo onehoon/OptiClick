@@ -44,8 +44,7 @@ public sealed partial class MainViewModel
                         AppUpdate = shellPortAccess,
                         UserSettings = shellPortAccess,
                         Language = shellPortAccess,
-                        OptiScaler = shellPortAccess,
-                        Details = shellPortAccess
+                        OptiScaler = shellPortAccess
                     }
                 },
                 OptiScalerSettingsController = mainOptiScalerSettingsController

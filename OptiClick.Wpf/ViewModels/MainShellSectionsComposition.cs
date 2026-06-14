@@ -32,7 +32,6 @@ internal sealed record MainShellSectionsCompositionInput
     public required Func<bool> IsAppUpdateInProgress { get; init; }
     public required Func<bool> ShouldBlockStartupForUnsupportedOperatingSystem { get; init; }
     public required Func<GameCardViewModel, CancellationToken, Task> SelectGameAsync { get; init; }
-    public required Action ShowDetails { get; init; }
     public required Func<CancellationToken, Task> ShowInstallAsync { get; init; }
     public required Action<Exception> LogSelectGameException { get; init; }
     public required Action<Exception> LogInstallCommandException { get; init; }
@@ -82,11 +81,9 @@ internal static class MainShellSectionsComposition
         return new HomeSectionCompositionInput
         {
             SelectGameAsync = input.SelectGameAsync,
-            ShowDetails = input.ShowDetails,
             ShowInstallAsync = input.ShowInstallAsync,
             CanSelectGame = () => !input.IsInstallExecutionInProgress()
                                   && !input.IsAppUpdateInProgress(),
-            CanShowDetails = () => input.ResolveSelectedGame() is not null,
             CanShowInstall = () => input.ResolveSelectedGame() is not null
                                   && !input.IsInstallExecutionInProgress()
                                   && !input.IsAppUpdateInProgress()

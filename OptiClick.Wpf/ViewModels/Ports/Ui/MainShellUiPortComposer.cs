@@ -27,7 +27,6 @@ internal static class MainShellUiPortComposer
             RefreshSupportedGamesAfterLanguageChange = access.RefreshSupportedGamesAfterLanguageChange,
             ApplySelectedGameLocalization = access.ApplySelectedGameLocalization,
             StartSupportedGamesWikiRefreshInBackground = access.StartSupportedGamesWikiRefreshInBackground,
-            ShowDetails = () => input.ResolveShellInteractionFeature().ShowDetailsDialog(),
             OpenLogFolder = () => input.ResolveShellInteractionFeature().OpenLogFolder(),
             OpenSupportRequest = () => input.ResolveShellInteractionFeature().OpenSupportRequest()
         };

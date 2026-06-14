@@ -95,7 +95,6 @@ public sealed record InstallResultPresentation
     public bool ClearInstallInProgress { get; init; }
     public bool ShouldUpdateButtonState { get; init; }
     public bool ShouldUpdateCardInstallStatus { get; init; }
-    public bool ShouldUpdateInstallSummary { get; init; }
     public PopupPresentationRequest PopupRequest { get; init; } = new();
 }
 

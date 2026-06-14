@@ -144,7 +144,6 @@ public sealed record MainViewModelAppDependencies
     public AppUpdateDialogPresenter? AppUpdateDialogPresenter { get; init; }
     public AppUpdateFlowController? AppUpdateFlowController { get; init; }
     public AppUpdateCoordinator? AppUpdateCoordinator { get; init; }
-    public GameDetailsDialogPresenter? GameDetailsDialogPresenter { get; init; }
     public IAppLogger? AppLogger { get; init; }
     public IAppLocalDataPathProvider? LocalDataPathProvider { get; init; }
     public IAppStringsProvider? AppStringsProvider { get; init; }

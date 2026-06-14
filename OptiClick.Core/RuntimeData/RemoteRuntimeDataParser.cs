@@ -133,8 +133,6 @@ public sealed class RemoteRuntimeDataParser : IRemoteRuntimeDataParser
                 InstallPreEn = ReadString(element, RuntimeDataGameProfileKeys.InstallPreEn),
                 InstallPostKr = ReadString(element, RuntimeDataGameProfileKeys.InstallPostKr),
                 InstallPostEn = ReadString(element, RuntimeDataGameProfileKeys.InstallPostEn),
-                InstallSummaryNoteKr = ReadString(element, RuntimeDataGameProfileKeys.InstallSummaryNoteKr),
-                InstallSummaryNoteEn = ReadString(element, RuntimeDataGameProfileKeys.InstallSummaryNoteEn),
                 GuideUrl = ReadString(element, RuntimeDataGameProfileKeys.GuideUrl),
                 ExcludeListRaw = ReadExcludeListRaw(element),
                 ExcludeListPatterns = ReadExcludeListPatterns(element),

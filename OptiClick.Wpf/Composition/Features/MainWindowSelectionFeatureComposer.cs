@@ -37,7 +37,6 @@ internal static class MainWindowSelectionFeatureComposer
         return new MainSelectionResolvedDependencies
         {
             GameSelectionFlowController = install.GameSelectionFlowController,
-            GameDetailsDialogPresenter = selectionServices.GameDetailsDialogPresenter,
             SelectionPopupCoordinator = selectionServices.SelectionPopupCoordinator,
             GameCardSelectionStateController = selectionServices.GameCardSelectionStateController,
             MainSelectionInteractionController = selectionServices.MainSelectionInteractionController,

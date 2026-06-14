@@ -16,7 +16,6 @@ public sealed class InstallResultPresentationResolver : IInstallResultPresentati
                 ClearInstallInProgress = true,
                 ShouldUpdateButtonState = true,
                 ShouldUpdateCardInstallStatus = true,
-                ShouldUpdateInstallSummary = true,
                 PopupRequest = new PopupPresentationRequest
                 {
                     Kind = PopupPresentationKind.Info,
@@ -31,7 +30,6 @@ public sealed class InstallResultPresentationResolver : IInstallResultPresentati
             ClearInstallInProgress = true,
             ShouldUpdateButtonState = true,
             ShouldUpdateCardInstallStatus = false,
-            ShouldUpdateInstallSummary = false,
             PopupRequest = new PopupPresentationRequest
             {
                 Kind = PopupPresentationKind.Error,

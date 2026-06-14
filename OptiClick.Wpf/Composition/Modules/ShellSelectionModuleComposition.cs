@@ -16,7 +16,6 @@ internal sealed record ShellSelectionModuleCompositionServices
     public required SelectionPopupCoordinator SelectionPopupCoordinator { get; init; }
     public required GameCardSelectionStateController GameCardSelectionStateController { get; init; }
     public required GameMasterCoverPrefetchCoordinator GameMasterCoverPrefetchCoordinator { get; init; }
-    public required GameDetailsDialogPresenter GameDetailsDialogPresenter { get; init; }
     public required MainSelectionInteractionController MainSelectionInteractionController { get; init; }
     public required MainSelectionRecomputeController MainSelectionRecomputeController { get; init; }
     public required MainLanguageChangeController MainLanguageChangeController { get; init; }
@@ -46,7 +45,6 @@ internal static class ShellSelectionModuleComposition
                                             dialogPresenter,
                                             flowLogDispatcher,
                                             appLogger);
-        var gameDetailsDialogPresenter = appDependencies.GameDetailsDialogPresenter ?? new GameDetailsDialogPresenter();
         var gameCardSelectionStateController = appDependencies.GameCardSelectionStateController
                                                ?? new GameCardSelectionStateController();
         var gameMasterCoverPrefetchService = appDependencies.GameMasterCoverPrefetchService
@@ -68,7 +66,6 @@ internal static class ShellSelectionModuleComposition
             SelectionPopupCoordinator = selectionPopupCoordinator,
             GameCardSelectionStateController = gameCardSelectionStateController,
             GameMasterCoverPrefetchCoordinator = gameMasterCoverPrefetchCoordinator,
-            GameDetailsDialogPresenter = gameDetailsDialogPresenter,
             MainSelectionInteractionController = mainSelectionInteractionController,
             MainSelectionRecomputeController = mainSelectionRecomputeController,
             MainLanguageChangeController = mainLanguageChangeController,
