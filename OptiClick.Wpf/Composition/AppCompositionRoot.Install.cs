@@ -417,16 +417,6 @@ public sealed partial class AppCompositionRoot
         return new OptiClickUninstallExecutor(fileSystem, signatureDetectors, versionInfoReader, logger);
     }
 
-    public IInstallSummaryStringsResolver CreateInstallSummaryStringsResolver(IAppStringsProvider stringsProvider)
-    {
-        return new DefaultInstallSummaryStringsResolver(stringsProvider);
-    }
-
-    public IInstallSummaryViewModelBuilder CreateInstallSummaryViewModelBuilder(IInstallSummaryStringsResolver stringsResolver)
-    {
-        return new InstallSummaryViewModelBuilder(stringsResolver);
-    }
-
     public ICardInstallStatusUpdateResolver CreateCardInstallStatusUpdateResolver()
     {
         return new CardInstallStatusUpdateResolver();
@@ -453,7 +443,6 @@ public sealed partial class AppCompositionRoot
             legacyFindingService,
             proxyResolver);
 
-        var summaryBuilder = CreateInstallSummaryViewModelBuilder(CreateInstallSummaryStringsResolver(stringsProvider));
         return new ShellInstallSelectionBridge(
             CreateInstallPrecheckHandlerRegistry(precheckHandler),
             CreateInstallSelectionPrecheckFlow(),
@@ -462,7 +451,6 @@ public sealed partial class AppCompositionRoot
             CreateInstallUiStateInputBuilder(),
             CreateInstallButtonStateResolver(),
             CreateInstallButtonPresentationResolver(),
-            summaryBuilder,
             stringsProvider);
     }
 }

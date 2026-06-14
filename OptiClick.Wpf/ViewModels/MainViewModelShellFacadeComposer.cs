@@ -371,7 +371,6 @@ internal sealed record MainShellFacadeUiPort
     public required Action RefreshSupportedGamesAfterLanguageChange { get; init; }
     public required Action ApplySelectedGameLocalization { get; init; }
     public required Action StartSupportedGamesWikiRefreshInBackground { get; init; }
-    public required Action ShowDetails { get; init; }
     public required Action OpenLogFolder { get; init; }
     public required Action OpenSupportRequest { get; init; }
 }

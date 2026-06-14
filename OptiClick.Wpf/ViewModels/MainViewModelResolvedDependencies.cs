@@ -184,7 +184,6 @@ internal sealed record MainStartupResolvedDependencies
 internal sealed record MainSelectionResolvedDependencies
 {
     public required GameSelectionFlowController GameSelectionFlowController { get; init; }
-    public required GameDetailsDialogPresenter GameDetailsDialogPresenter { get; init; }
     public required SelectionPopupCoordinator SelectionPopupCoordinator { get; init; }
     public required GameCardSelectionStateController GameCardSelectionStateController { get; init; }
     public required MainSelectionInteractionController MainSelectionInteractionController { get; init; }

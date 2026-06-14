@@ -143,7 +143,6 @@ internal static class MainViewModelFallbackResolvedDependencyComposer
         var selection = new MainSelectionResolvedDependencies
         {
             GameSelectionFlowController = installComposition.GameSelectionFlowController,
-            GameDetailsDialogPresenter = appComposition.ShellSelectionServices.GameDetailsDialogPresenter,
             SelectionPopupCoordinator = appComposition.ShellSelectionServices.SelectionPopupCoordinator,
             GameCardSelectionStateController = appComposition.ShellSelectionServices.GameCardSelectionStateController,
             MainSelectionInteractionController = appComposition.ShellSelectionServices.MainSelectionInteractionController,

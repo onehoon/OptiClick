@@ -14,14 +14,9 @@ public sealed record AppStrings
     public string HeaderTitle { get; init; } = "";
     public string HeaderSubtitle { get; init; } = "";
 
-    public string HomeDetails { get; init; } = "";
     public string HomeNoGameSelected { get; init; } = "";
     public string HomeSelectGameHint { get; init; } = "";
     public string HomeWaiting { get; init; } = "";
-    public string HomeChooseCardHint { get; init; } = "";
-    public string HomeNoInstallSummary { get; init; } = "";
-    public string HomeSelectGameForNotes { get; init; } = "";
-    public string HomeNoAdditionalComponents { get; init; } = "";
     public string SupportedGamesWikiTitle { get; init; } = "";
     public string SupportedGamesWikiSearchPlaceholder { get; init; } = "";
     public string SupportedGamesWikiSearchWatermark { get; init; } = "";
@@ -302,16 +297,6 @@ public sealed record AppStrings
     public string InstallButtonReinstalling { get; init; } = "";
     public string InstallButtonLoading { get; init; } = "";
 
-    public string InstallSummaryActionInstall { get; init; } = "";
-    public string InstallSummaryActionUpdate { get; init; } = "";
-    public string InstallSummaryActionReinstall { get; init; } = "";
-    public string InstallSummaryAutoConfigApplied { get; init; } = "";
-    public string InstallSummaryComponentOptiPatcher { get; init; } = "";
-    public string InstallSummaryComponentUnreal5 { get; init; } = "";
-    public string InstallSummaryComponentReFramework { get; init; } = "";
-    public string InstallSummaryComponentUltimateAsiLoader { get; init; } = "";
-    public string InstallSummaryComponentSpecialK { get; init; } = "";
-    public string InstallSummaryComponentRtssOverlay { get; init; } = "";
 
     public string LanguageEnglish { get; init; } = "";
     public string LanguageKorean { get; init; } = "";

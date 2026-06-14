@@ -111,8 +111,4 @@ public sealed partial class MainViewModel : ViewModelBase
         if (update.ShouldApplySelectedGameActionRunningState) SelectedGameAction.ApplySelectionBridgeState(_selectionState);
     }
 
-    private void ShowDetailsDialog()
-    {
-        _features.ShellInteraction.ShowDetailsDialog();
-    }
 }

@@ -39,7 +39,6 @@ internal static class MainViewModelFeatureFacadeComposer
             input.ShellDependencies.BusyStateApplier,
             input.ShellDependencies.ShellInteractionControllers.OptiScalerDirtyNavigationGuard,
             input.ShellDependencies.ShellInteractionControllers.AppUpdateInteractionController,
-            input.SelectionDependencies.GameDetailsDialogPresenter,
             contextFactory,
             shellCommand,
             userSettings,

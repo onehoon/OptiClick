@@ -1,5 +1,4 @@
 using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.AppUpdate;
-using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.Details;
 using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.ShellCommand;
 using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.StartupAnnouncement;
 using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.UserSettings;
@@ -50,12 +49,6 @@ internal static class MainShellInteractionContextComposer
                     ShellDependencies = input.Dependencies.Shell,
                     UpdateDependencies = input.Dependencies.Features.Update,
                     Access = input.Accesses.AppUpdate
-                }),
-            Details = MainDetailsDialogInteractionContextComposer.Compose(
-                new MainDetailsDialogInteractionContextCompositionInput
-                {
-                    ShellDependencies = input.Dependencies.Shell,
-                    Access = input.Accesses.Details
                 })
         };
     }

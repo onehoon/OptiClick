@@ -64,7 +64,6 @@ internal static class MainViewModelShellSectionsComposer
                     ports.App.ShouldBlockStartupForUnsupportedOperatingSystem,
                 SelectGameAsync = (game, cancellationToken) =>
                     ports.Selection.SelectGameAsync(game, cancellationToken, true, true),
-                ShowDetails = ports.Ui.ShowDetails,
                 ShowInstallAsync = ports.Install.ShowInstallAsync,
                 LogSelectGameException = ex =>
                     ports.App.AppLogger.Error(MainViewModelLogCategories.Command, "select game command failed", ex),

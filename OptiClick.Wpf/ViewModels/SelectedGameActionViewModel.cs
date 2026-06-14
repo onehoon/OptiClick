@@ -9,10 +9,6 @@ public sealed class SelectedGameActionViewModel : ViewModelBase
 {
     private readonly Func<AppStrings> _stringsAccessor;
     private string _selectedGameTitle = "";
-    private string _selectedGameStatusText = "";
-    private string _optiScalerSummaryText = "";
-    private string _componentSummaryText = "";
-    private string _notePreviewText = "";
     private bool _hasSelection;
     private string _installButtonText = "";
     private bool _isInstallButtonEnabled;
@@ -39,30 +35,6 @@ public sealed class SelectedGameActionViewModel : ViewModelBase
     {
         get => _selectedGameTitle;
         private set => SetProperty(ref _selectedGameTitle, value);
-    }
-
-    public string SelectedGameStatusText
-    {
-        get => _selectedGameStatusText;
-        private set => SetProperty(ref _selectedGameStatusText, value);
-    }
-
-    public string OptiScalerSummaryText
-    {
-        get => _optiScalerSummaryText;
-        private set => SetProperty(ref _optiScalerSummaryText, value);
-    }
-
-    public string ComponentSummaryText
-    {
-        get => _componentSummaryText;
-        private set => SetProperty(ref _componentSummaryText, value);
-    }
-
-    public string NotePreviewText
-    {
-        get => _notePreviewText;
-        private set => SetProperty(ref _notePreviewText, value);
     }
 
     public bool HasSelection
@@ -164,10 +136,6 @@ public sealed class SelectedGameActionViewModel : ViewModelBase
         if (!HasSelection)
         {
             SelectedGameTitle = _strings.HomeSelectGameHint;
-            SelectedGameStatusText = _strings.HomeWaiting;
-            OptiScalerSummaryText = _strings.HomeChooseCardHint;
-            ComponentSummaryText = _strings.HomeNoInstallSummary;
-            NotePreviewText = _strings.HomeSelectGameForNotes;
             InstallButtonText = _strings.InstallButtonInstall;
         }
     }
@@ -178,10 +146,6 @@ public sealed class SelectedGameActionViewModel : ViewModelBase
         {
             HasSelection = false;
             SelectedGameTitle = _strings.HomeSelectGameHint;
-            SelectedGameStatusText = _strings.HomeWaiting;
-            OptiScalerSummaryText = _strings.HomeChooseCardHint;
-            ComponentSummaryText = _strings.HomeNoInstallSummary;
-            NotePreviewText = _strings.HomeSelectGameForNotes;
             InstallButtonText = _strings.InstallButtonInstall;
             IsInstallButtonEnabled = false;
             InstallButtonReasonCode = InstallButtonReasonCodes.NoGameSelected;
@@ -203,12 +167,6 @@ public sealed class SelectedGameActionViewModel : ViewModelBase
 
         HasSelection = true;
         SelectedGameTitle = selectedGame.Title;
-        SelectedGameStatusText = selectedGame.StatusBadge;
-        OptiScalerSummaryText = selectedGame.OptiScalerSummary;
-        ComponentSummaryText = string.IsNullOrWhiteSpace(selectedGame.ComponentSummary)
-            ? _strings.HomeNoAdditionalComponents
-            : selectedGame.ComponentSummary;
-        NotePreviewText = selectedGame.NotePreview;
         if (!PrecheckRunning)
         {
             InstallButtonText = _strings.InstallButtonInstall;
@@ -260,21 +218,6 @@ public sealed class SelectedGameActionViewModel : ViewModelBase
         {
             CurrentPopupRequestKind = "";
             CurrentPopupRequestBody = "";
-        }
-
-        if (!string.IsNullOrWhiteSpace(state.InstallSummary.OptiScalerText))
-        {
-            OptiScalerSummaryText = state.InstallSummary.OptiScalerText;
-        }
-
-        if (!string.IsNullOrWhiteSpace(state.InstallSummary.ComponentsText))
-        {
-            ComponentSummaryText = state.InstallSummary.ComponentsText;
-        }
-
-        if (!string.IsNullOrWhiteSpace(state.InstallSummary.NoteText))
-        {
-            NotePreviewText = state.InstallSummary.NoteText;
         }
 
         var presentation = state.InstallButtonPresentation;

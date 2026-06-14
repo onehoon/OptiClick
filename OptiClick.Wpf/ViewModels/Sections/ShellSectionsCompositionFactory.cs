@@ -94,10 +94,8 @@ public sealed class ShellSectionsCompositionFactory
                     StringsAccessor = input.StringsAccessor,
                     Games = games,
                     SelectGameAsync = home.SelectGameAsync,
-                    ShowDetails = home.ShowDetails,
                     ShowInstallAsync = home.ShowInstallAsync,
                     CanSelectGame = home.CanSelectGame,
-                    CanShowDetails = home.CanShowDetails,
                     CanShowInstall = home.CanShowInstall,
                     OnSelectGameException = home.OnSelectGameException,
                     OnShowInstallException = home.OnShowInstallException
@@ -199,10 +197,8 @@ public sealed record ShellSectionsCompositionFactoryInput
 public sealed record HomeSectionCompositionInput
 {
     public required Func<GameCardViewModel, CancellationToken, Task> SelectGameAsync { get; init; }
-    public required Action ShowDetails { get; init; }
     public required Func<CancellationToken, Task> ShowInstallAsync { get; init; }
     public required Func<bool> CanSelectGame { get; init; }
-    public required Func<bool> CanShowDetails { get; init; }
     public required Func<bool> CanShowInstall { get; init; }
     public Action<Exception>? OnSelectGameException { get; init; }
     public Action<Exception>? OnShowInstallException { get; init; }

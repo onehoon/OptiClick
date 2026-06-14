@@ -11,9 +11,7 @@ public sealed class HomeSectionViewModel : ViewModelBase
 {
     private readonly Func<AppStrings> _stringsAccessor;
     private readonly Func<bool> _canSelectGame;
-    private readonly Func<bool> _canShowDetails;
     private readonly Func<bool> _canShowInstall;
-    private readonly Action _showDetails;
     private readonly Func<CancellationToken, Task> _showInstallAsync;
     private readonly Func<GameCardViewModel, CancellationToken, Task> _selectGameAsync;
     private GameCardViewModel? _selectedGame;
@@ -24,9 +22,7 @@ public sealed class HomeSectionViewModel : ViewModelBase
 
         _stringsAccessor = options.StringsAccessor ?? throw new ArgumentNullException(nameof(options.StringsAccessor));
         _canSelectGame = options.CanSelectGame ?? (() => true);
-        _canShowDetails = options.CanShowDetails ?? (() => SelectedGame is not null);
         _canShowInstall = options.CanShowInstall ?? (() => SelectedGame is not null);
-        _showDetails = options.ShowDetails ?? throw new ArgumentNullException(nameof(options.ShowDetails));
         _showInstallAsync = options.ShowInstallAsync ?? throw new ArgumentNullException(nameof(options.ShowInstallAsync));
         _selectGameAsync = options.SelectGameAsync ?? throw new ArgumentNullException(nameof(options.SelectGameAsync));
         Games = options.Games ?? throw new ArgumentNullException(nameof(options.Games));
@@ -43,9 +39,6 @@ public sealed class HomeSectionViewModel : ViewModelBase
             _ => _canSelectGame(),
             onException: options.OnSelectGameException,
             allowConcurrentExecutions: true);
-        ShowDetailsCommand = new RelayCommand(
-            _ => _showDetails(),
-            _ => _canShowDetails());
         ShowInstallCommand = new AsyncRelayCommand(
             (_, cancellationToken) => _showInstallAsync(cancellationToken),
             _ => _canShowInstall(),
@@ -82,8 +75,6 @@ public sealed class HomeSectionViewModel : ViewModelBase
 
     public ICommand SelectGameCommand { get; }
 
-    public ICommand ShowDetailsCommand { get; }
-
     public ICommand ShowInstallCommand { get; }
 
     public void RefreshLocalization()
@@ -97,11 +88,6 @@ public sealed class HomeSectionViewModel : ViewModelBase
         if (SelectGameCommand is AsyncRelayCommand selectGameCommand)
         {
             selectGameCommand.RaiseCanExecuteChanged();
-        }
-
-        if (ShowDetailsCommand is RelayCommand showDetailsCommand)
-        {
-            showDetailsCommand.RaiseCanExecuteChanged();
         }
 
         if (ShowInstallCommand is AsyncRelayCommand showInstallCommand)
@@ -131,13 +117,9 @@ public sealed class HomeSectionViewModelOptions
 
     public required Func<GameCardViewModel, CancellationToken, Task> SelectGameAsync { get; init; }
 
-    public required Action ShowDetails { get; init; }
-
     public required Func<CancellationToken, Task> ShowInstallAsync { get; init; }
 
     public Func<bool>? CanSelectGame { get; init; }
-
-    public Func<bool>? CanShowDetails { get; init; }
 
     public Func<bool>? CanShowInstall { get; init; }
 

@@ -153,8 +153,6 @@ public sealed class RuntimeDataShellGameMapper : IRuntimeDataShellGameMapper
                 InstallPreEn = CoalesceTrimmed(boundInstallPreEn, preferred.InstallPreEn),
                 InstallPostKr = CoalesceTrimmed(boundInstallPostKr, preferred.InstallPostKr),
                 InstallPostEn = CoalesceTrimmed(boundInstallPostEn, preferred.InstallPostEn),
-                InstallSummaryNoteKr = (preferred.InstallSummaryNoteKr ?? "").Trim(),
-                InstallSummaryNoteEn = (preferred.InstallSummaryNoteEn ?? "").Trim(),
                 GuideUrl = (preferred.GuideUrl ?? "").Trim(),
                 ExcludeListRaw = resolvedExcludeRaw,
                 ExcludeListPatterns = resolvedExcludePatterns,

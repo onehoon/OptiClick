@@ -86,18 +86,8 @@
                         </Grid.Style>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
-                            <!-- TODO: Restore ActionButtonGapLength when Details button is re-enabled. -->
-                            <ColumnDefinition Width="0" />
-                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <Button Content="{Binding Strings.HomeDetails}"
-                                Style="{StaticResource SecondaryButtonStyle}"
-                                Command="{Binding ShowDetailsCommand}"
-                                MinWidth="92"
-                                IsEnabled="{Binding SelectedGameAction.HasSelectedGame}"
-                                Visibility="Collapsed" />
-                        <Button Grid.Column="2"
-                                Content="{Binding SelectedGameAction.InstallButtonText}"
+                        <Button Content="{Binding SelectedGameAction.InstallButtonText}"
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 Command="{Binding ShowInstallCommand}"
                                 MinWidth="128"

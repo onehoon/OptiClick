@@ -1,5 +1,4 @@
 using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext;
-using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.Details;
 using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.ShellCommand;
 using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.StartupAnnouncement;
 
@@ -94,15 +93,4 @@ internal sealed class MainShellInteractionContextFactory
         };
     }
 
-    public MainDetailsDialogContext CreateDetailsDialogContext()
-    {
-        var input = _input.Details;
-
-        return new MainDetailsDialogContext
-        {
-            SelectedGame = input.ReadSelectedGame(),
-            Strings = input.ReadStrings(),
-            ShowDeferredDialog = input.ShowDeferredDialog
-        };
-    }
 }

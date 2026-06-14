@@ -70,7 +70,6 @@ internal static class MainViewModelFallbackDependencyValidationComposer
             nameof(MainViewModelAppDependencies.InstallManagementDialogService));
         EnsureExplicitDependency(appDependencies.AppVersionProvider, nameof(MainViewModelAppDependencies.AppVersionProvider));
         EnsureExplicitDependency(appDependencies.AppUpdateFlowController, nameof(MainViewModelAppDependencies.AppUpdateFlowController));
-        EnsureExplicitDependency(appDependencies.GameDetailsDialogPresenter, nameof(MainViewModelAppDependencies.GameDetailsDialogPresenter));
         EnsureExplicitDependency(appDependencies.AppLogger, nameof(MainViewModelAppDependencies.AppLogger));
         EnsureExplicitDependency(appDependencies.LocalDataPathProvider, nameof(MainViewModelAppDependencies.LocalDataPathProvider));
         EnsureExplicitDependency(appDependencies.AppStringsProvider, nameof(MainViewModelAppDependencies.AppStringsProvider));

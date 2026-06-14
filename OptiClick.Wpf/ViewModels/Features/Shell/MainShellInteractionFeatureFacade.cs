@@ -4,7 +4,6 @@ using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Logging;
 using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Services;
-using OptiClick.Wpf.Shell.Games;
 using OptiClick.Wpf.Shell.Localization;
 using OptiClick.Wpf.Shell.Navigation;
 using OptiClick.Wpf.Shell.Selection;
@@ -22,7 +21,6 @@ internal sealed class MainShellInteractionFeatureFacade
     private readonly MainViewModelBusyStateApplier _busyStateApplier;
     private readonly OptiScalerDirtyNavigationGuard _optiScalerDirtyNavigationGuard;
     private readonly MainAppUpdateInteractionController _appUpdateInteractionController;
-    private readonly GameDetailsDialogPresenter _gameDetailsDialogPresenter;
     private readonly MainShellInteractionContextFactory _contextFactory;
     private readonly MainShellCommandInteractionFeature _shellCommand;
     private readonly MainUserSettingsInteractionFeature _userSettings;
@@ -35,7 +33,6 @@ internal sealed class MainShellInteractionFeatureFacade
         MainViewModelBusyStateApplier busyStateApplier,
         OptiScalerDirtyNavigationGuard optiScalerDirtyNavigationGuard,
         MainAppUpdateInteractionController appUpdateInteractionController,
-        GameDetailsDialogPresenter gameDetailsDialogPresenter,
         MainShellInteractionContextFactory contextFactory,
         MainShellCommandInteractionFeature shellCommand,
         MainUserSettingsInteractionFeature userSettings,
@@ -50,8 +47,6 @@ internal sealed class MainShellInteractionFeatureFacade
             optiScalerDirtyNavigationGuard ?? throw new ArgumentNullException(nameof(optiScalerDirtyNavigationGuard));
         _appUpdateInteractionController =
             appUpdateInteractionController ?? throw new ArgumentNullException(nameof(appUpdateInteractionController));
-        _gameDetailsDialogPresenter =
-            gameDetailsDialogPresenter ?? throw new ArgumentNullException(nameof(gameDetailsDialogPresenter));
         _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
         _shellCommand = shellCommand ?? throw new ArgumentNullException(nameof(shellCommand));
         _userSettings = userSettings ?? throw new ArgumentNullException(nameof(userSettings));
@@ -236,20 +231,6 @@ internal sealed class MainShellInteractionFeatureFacade
         return _appUpdateInteractionController.ShowStartupUpdateCheckDialogAsync(
             _contextFactory.CreateAppUpdateInteractionContext(),
             cancellationToken);
-    }
-
-    public void ShowDetailsDialog()
-    {
-        var context = _contextFactory.CreateDetailsDialogContext();
-        if (context.SelectedGame is null)
-        {
-            return;
-        }
-
-        context.ShowDeferredDialog(
-            _gameDetailsDialogPresenter.BuildDetailsDialog(
-                context.SelectedGame,
-                context.Strings));
     }
 
     private static string NormalizeStatusCode(string? value, string fallback)

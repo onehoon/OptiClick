@@ -123,7 +123,6 @@ public sealed record ShellInstallSelectionState
     public IReadOnlyList<ShellPopupRequest> PendingPopupRequests { get; init; } = Array.Empty<ShellPopupRequest>();
 
     public ShellGameActionAvailability ActionAvailability { get; init; } = new();
-    public InstallSummaryPresentation InstallSummary { get; init; } = new();
     public InstallButtonPresentation InstallButtonPresentation { get; init; } = new();
     public InstallButtonPresentation RunningInstallButtonPresentation { get; init; } = new();
 }

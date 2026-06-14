@@ -17,7 +17,6 @@ using OptiClick.Wpf.ViewModels.Ports.Localization;
 using OptiClick.Wpf.ViewModels.Ports.Runtime;
 using OptiClick.Wpf.ViewModels.Ports.Selection;
 using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.AppUpdate;
-using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.Details;
 using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.Language;
 using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.OptiScaler;
 using OptiClick.Wpf.ViewModels.Ports.ShellInteractionContext.ShellCommand;
@@ -44,8 +43,7 @@ public sealed partial class MainViewModel
         IMainAppUpdateInteractionAccess,
         IMainUserSettingsInteractionAccess,
         IMainLanguagePreferenceInteractionAccess,
-        IMainOptiScalerSettingsInteractionAccess,
-        IMainDetailsDialogInteractionAccess
+        IMainOptiScalerSettingsInteractionAccess
     {
         private readonly MainViewModel _owner;
 

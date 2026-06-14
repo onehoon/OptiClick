@@ -119,7 +119,6 @@ internal static class MainWindowShellFeatureComposer
             GameMasterCoverPrefetchCoordinator = new GameMasterCoverPrefetchCoordinator(
                 new GameMasterCoverPrefetchService(),
                 startupComposition.StartupBackgroundTaskManager),
-            GameDetailsDialogPresenter = support.GameDetailsDialogPresenter,
             MainSelectionInteractionController = new MainSelectionInteractionController(),
             MainSelectionRecomputeController = new MainSelectionRecomputeController(),
             MainLanguageChangeController = new MainLanguageChangeController(),

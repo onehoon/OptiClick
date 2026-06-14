@@ -32,7 +32,6 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
     private readonly IInstallUiStateInputBuilder _installUiStateInputBuilder;
     private readonly IInstallButtonStateResolver _installButtonStateResolver;
     private readonly IInstallButtonPresentationResolver _installButtonPresentationResolver;
-    private readonly IInstallSummaryViewModelBuilder _installSummaryViewModelBuilder;
     private readonly IAppStringsProvider _stringsProvider;
     private long _selectionRequestVersion;
 
@@ -44,7 +43,6 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
         IInstallUiStateInputBuilder installUiStateInputBuilder,
         IInstallButtonStateResolver installButtonStateResolver,
         IInstallButtonPresentationResolver installButtonPresentationResolver,
-        IInstallSummaryViewModelBuilder installSummaryViewModelBuilder,
         IAppStringsProvider stringsProvider)
     {
         ArgumentNullException.ThrowIfNull(stringsProvider);
@@ -55,7 +53,6 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
         _installUiStateInputBuilder = installUiStateInputBuilder;
         _installButtonStateResolver = installButtonStateResolver;
         _installButtonPresentationResolver = installButtonPresentationResolver;
-        _installSummaryViewModelBuilder = installSummaryViewModelBuilder;
         _stringsProvider = stringsProvider;
     }
 
@@ -75,7 +72,6 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
             {
                 Code = request.SelectedInstallStatusCode
             };
-            var summary = BuildSummary(selectedGame, selectedGameDescriptor, request.Language, selectedInstallStatus);
             var runningSnapshot = selectedGame is null
                 ? InstallPrecheckSnapshot.NotStarted
                 : InstallPrecheckSnapshot.NotStarted with { State = InstallPrecheckState.Running };
@@ -86,7 +82,6 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
                 selectedGame,
                 selectedMatch,
                 actionAvailability,
-                summary,
                 selectedInstallStatus,
                 popupConfirmed: false,
                 precheckRunning: selectedGame is not null,
@@ -202,7 +197,6 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
                 selectedGame,
                 selectedMatch,
                 actionAvailability,
-                summary,
                 selectedInstallStatus,
                 popupConfirmed: popupQueue.PopupConfirmed,
                 precheckRunning: flowResult.State.PrecheckRunning,
@@ -285,7 +279,6 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
         ShellGameCardModel? selectedGame,
         ShellGameMatchResult? selectedMatch,
         ShellGameActionAvailability availability,
-        InstallSummaryPresentation summary,
         InstallStatusSnapshot selectedInstallStatus,
         bool popupConfirmed,
         bool precheckRunning,
@@ -317,7 +310,6 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
             PendingPopupRequests = pendingPopupRequests,
             ActionAvailability = availability,
             ActionAvailabilityReasonCode = availability.ReasonCode,
-            InstallSummary = summary,
             ArchiveReadiness = request.ArchiveReadiness,
             SelectedInstallStatusCode = NormalizeStatusCode(selectedInstallStatus),
             Language = request.Language,
@@ -382,37 +374,6 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
         {
             InstallInProgress = true
         });
-    }
-
-    private InstallSummaryPresentation BuildSummary(
-        ShellGameCardModel? game,
-        InstallGameDescriptor? gameDescriptor,
-        string language,
-        InstallStatusSnapshot installStatus)
-    {
-        if (game is null)
-        {
-            return new InstallSummaryPresentation();
-        }
-
-        return _installSummaryViewModelBuilder.Build(new InstallSummaryBuildInput
-        {
-            GameDescriptor = gameDescriptor,
-            Language = language,
-            InstallStatus = installStatus,
-            InstallSummaryNote = SelectLocalizedSummaryNote(game, language)
-        });
-    }
-
-    private static string SelectLocalizedSummaryNote(ShellGameCardModel game, string language)
-    {
-        var isKorean = IsKoreanLanguage(language);
-        if (isKorean)
-        {
-            return PickFirstNonEmpty(game.InstallSummaryNoteKr, game.InstallSummaryNoteEn);
-        }
-
-        return PickFirstNonEmpty(game.InstallSummaryNoteEn, game.InstallSummaryNoteKr);
     }
 
     private static string PickFirstNonEmpty(params string[] candidates)

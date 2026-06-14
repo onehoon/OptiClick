@@ -40,9 +40,6 @@ public sealed class GameCardViewModel : ViewModelBase
         string subtitle,
         string statusBadge,
         string supportReasonCode,
-        string optiScalerSummary,
-        string componentSummary,
-        string notePreview,
         Brush coverBrush,
         Brush badgeBrush,
         GameEntry gameEntry,
@@ -54,9 +51,6 @@ public sealed class GameCardViewModel : ViewModelBase
         Subtitle = subtitle;
         _statusBadge = statusBadge ?? "";
         SupportReasonCode = supportReasonCode;
-        OptiScalerSummary = optiScalerSummary;
-        ComponentSummary = componentSummary;
-        NotePreview = notePreview;
         CoverBrush = coverBrush;
         _badgeBrush = badgeBrush;
         _badgeBorderBrush = badgeBorderBrush ?? badgeBrush;
@@ -73,9 +67,6 @@ public sealed class GameCardViewModel : ViewModelBase
         private set => SetProperty(ref _statusBadge, value);
     }
     public string SupportReasonCode { get; }
-    public string OptiScalerSummary { get; }
-    public string ComponentSummary { get; }
-    public string NotePreview { get; }
     public Brush CoverBrush { get; }
     public string CoverImageSource
     {
