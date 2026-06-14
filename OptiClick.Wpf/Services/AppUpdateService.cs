@@ -76,14 +76,7 @@ public sealed class AppUpdateService(IAppUpdateVersionComparer versionComparer) 
     private static bool IsOptiClickInstallerRow(RuntimeDataResourceRow row)
     {
         var name = RuntimeDataRowReader.GetString(row, "name");
-        var platform = RuntimeDataRowReader.GetString(row, "platform");
-        if (!string.Equals(name, "OptiClick", StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        return string.IsNullOrWhiteSpace(platform)
-               || string.Equals(platform, "windows", StringComparison.OrdinalIgnoreCase);
+        return string.Equals(name, "OptiClick", StringComparison.OrdinalIgnoreCase);
     }
 
     private static AppUpdatePackageType ResolvePackageType(string filename, string url)
