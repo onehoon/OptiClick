@@ -19,6 +19,8 @@ public sealed record RuntimeCatalogFlowText
     public required string RuntimeCatalogFailedSummary { get; init; }
     public required string RuntimeCatalogFailedBullet1 { get; init; }
     public required string RuntimeCatalogFailedBullet2 { get; init; }
+    public required string RuntimeCatalogUnsupportedGpuTitle { get; init; }
+    public required string RuntimeCatalogUnsupportedGpuSummary { get; init; }
     public required string RuntimeCatalogEmptyTitle { get; init; }
     public required string RuntimeCatalogEmptySummary { get; init; }
     public required string RuntimeCatalogEmptyBullet1 { get; init; }
@@ -26,6 +28,7 @@ public sealed record RuntimeCatalogFlowText
     public required string RuntimeCatalogPipelineMissingTitle { get; init; }
     public required string RuntimeCatalogPipelineMissingSummary { get; init; }
     public required string RuntimeCatalogPipelineMissingBullet1 { get; init; }
+    public required string DialogButtonOk { get; init; }
     public required string StatusUnknown { get; init; }
 
     public static RuntimeCatalogFlowText FromAppStrings(AppStrings strings)
@@ -48,6 +51,8 @@ public sealed record RuntimeCatalogFlowText
             RuntimeCatalogFailedSummary = strings.RuntimeCatalogFailedSummary,
             RuntimeCatalogFailedBullet1 = strings.RuntimeCatalogFailedBullet1,
             RuntimeCatalogFailedBullet2 = strings.RuntimeCatalogFailedBullet2,
+            RuntimeCatalogUnsupportedGpuTitle = strings.RuntimeCatalogUnsupportedGpuTitle,
+            RuntimeCatalogUnsupportedGpuSummary = strings.RuntimeCatalogUnsupportedGpuSummary,
             RuntimeCatalogEmptyTitle = strings.RuntimeCatalogEmptyTitle,
             RuntimeCatalogEmptySummary = strings.RuntimeCatalogEmptySummary,
             RuntimeCatalogEmptyBullet1 = strings.RuntimeCatalogEmptyBullet1,
@@ -55,6 +60,7 @@ public sealed record RuntimeCatalogFlowText
             RuntimeCatalogPipelineMissingTitle = strings.RuntimeCatalogPipelineMissingTitle,
             RuntimeCatalogPipelineMissingSummary = strings.RuntimeCatalogPipelineMissingSummary,
             RuntimeCatalogPipelineMissingBullet1 = strings.RuntimeCatalogPipelineMissingBullet1,
+            DialogButtonOk = strings.DialogButtonOk,
             StatusUnknown = strings.StatusUnknown
         };
     }

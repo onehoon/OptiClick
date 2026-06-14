@@ -44,6 +44,19 @@ public sealed class RuntimeCatalogDialogPresenter
             $"Error code: {normalizedCode}");
     }
 
+    public AppDialogRequest BuildUnsupportedGpuDialog(RuntimeCatalogFlowText text)
+    {
+        return new AppDialogRequest
+        {
+            Kind = AppDialogKind.Info,
+            Severity = DialogSeverity.Warning,
+            Title = text.RuntimeCatalogUnsupportedGpuTitle,
+            Summary = text.RuntimeCatalogUnsupportedGpuSummary,
+            PrimaryButtonText = text.DialogButtonOk,
+            PrimaryResult = AppDialogResult.Ok
+        };
+    }
+
     public AppDialogRequest BuildEmptyCatalogDialog(RuntimeCatalogFlowText text)
     {
         return BuildWarning(

@@ -109,7 +109,9 @@ public sealed class RuntimeCatalogFlowController
                 ErrorCode = code,
                 RuntimeData = pipelineResult.RuntimeData ?? RemoteRuntimeData.Empty,
                 SettingsStatusText = LocalizedTextFormatter.Format(text.RuntimeRemoteCatalogFailed, code),
-                DialogRequest = _dialogPresenter.BuildFailedDialog(code, text),
+                DialogRequest = IsUnsupportedGpuCatalogError(code)
+                    ? _dialogPresenter.BuildUnsupportedGpuDialog(text)
+                    : _dialogPresenter.BuildFailedDialog(code, text),
                 Logs = logs
             };
         }
@@ -215,5 +217,10 @@ public sealed class RuntimeCatalogFlowController
     {
         var normalized = (value ?? "").Trim();
         return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+    }
+
+    private static bool IsUnsupportedGpuCatalogError(string errorCode)
+    {
+        return string.Equals(errorCode, "bundle_rule_not_matched", StringComparison.OrdinalIgnoreCase);
     }
 }
