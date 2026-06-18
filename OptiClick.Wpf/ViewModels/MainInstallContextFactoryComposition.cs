@@ -104,6 +104,7 @@ internal sealed record MainInstallCompletionCompositionInput
     public required Func<MainViewModelStateUpdate, AppDialogRequest?> BuildCompletionDialog { get; init; }
     public required MainInstallCompletionController InstallCompletionController { get; init; }
     public required Func<AppDialogRequest, CancellationToken, Task<AppDialogResult>> ShowCompletionDialogAsync { get; init; }
+    public required Func<string, bool> OpenExternalUrl { get; init; }
     public required Action ClearSelectedGameContext { get; init; }
     public required Action<string> LogInstallInfo { get; init; }
     public required Action<string> LogInstallWarning { get; init; }
@@ -233,6 +234,7 @@ internal static class MainInstallContextFactoryComposition
                     BuildCompletionDialog = installCompletion.BuildCompletionDialog,
                     InstallCompletionController = installCompletion.InstallCompletionController,
                     ShowCompletionDialogAsync = installCompletion.ShowCompletionDialogAsync,
+                    OpenExternalUrl = installCompletion.OpenExternalUrl,
                     ClearSelectedGameContext = installCompletion.ClearSelectedGameContext,
                     ReadSelectedGame = installCompletion.ResolveSelectedGame,
                     ReadInstallButtonText = installCompletion.SelectionRefreshActions.ReadInstallButtonText,

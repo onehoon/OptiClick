@@ -72,6 +72,7 @@ internal sealed record MainAppResolvedDependencies
     public required IAppLocalDataPathProvider LocalDataPathProvider { get; init; }
     public required IAppStringsProvider AppStringsProvider { get; init; }
     public required IFirstRunStateStore FirstRunStateStore { get; init; }
+    public required IExternalUrlLauncher ExternalUrlLauncher { get; init; }
 }
 
 internal sealed record MainRuntimeResolvedDependencies

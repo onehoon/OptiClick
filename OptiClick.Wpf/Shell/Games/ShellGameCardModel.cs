@@ -40,6 +40,10 @@ public sealed class ShellGameCardModel
     public string InstallPostKr { get; init; } = "";
     public string InstallPostEn { get; init; } = "";
     public string GuideUrl { get; init; } = "";
+    public string ExternalGuidePreUrl { get; init; } = "";
+    public string ExternalGuidePostUrl { get; init; } = "";
+    public string ExternalGuideUrl { get; init; } = "";
+    public string ExternalGuideUrlTrigger { get; init; } = "";
     public string ExcludeListRaw { get; init; } = "";
     public IReadOnlyList<string> ExcludeListPatterns { get; init; } = [];
     public MergedGameInstallMetadata? InstallMetadata { get; init; }

@@ -109,6 +109,20 @@ public sealed class RuntimeDataShellGameMapper : IRuntimeDataShellGameMapper
                 gameId: gameId,
                 gpuVendor: resolvedGpuVendor,
                 lang: "en");
+            var externalGuidePreUrl = ResolveExternalGuideUrl(
+                messageTemplates,
+                messageBindings,
+                stage: "install_pre",
+                gameId: gameId,
+                gpuVendor: resolvedGpuVendor,
+                language: language);
+            var externalGuidePostUrl = ResolveExternalGuideUrl(
+                messageTemplates,
+                messageBindings,
+                stage: "install_post",
+                gameId: gameId,
+                gpuVendor: resolvedGpuVendor,
+                language: language);
             var runtimeExcludeRaw = (preferred.ExcludeListRaw ?? "").Trim();
             var runtimeExcludePatterns = preferred.ExcludeListPatterns ?? Array.Empty<string>();
             var metadataExcludeRaw = (mergedMetadata.ExcludeListRaw ?? "").Trim();
@@ -154,6 +168,14 @@ public sealed class RuntimeDataShellGameMapper : IRuntimeDataShellGameMapper
                 InstallPostKr = CoalesceTrimmed(boundInstallPostKr, preferred.InstallPostKr),
                 InstallPostEn = CoalesceTrimmed(boundInstallPostEn, preferred.InstallPostEn),
                 GuideUrl = (preferred.GuideUrl ?? "").Trim(),
+                ExternalGuidePreUrl = externalGuidePreUrl,
+                ExternalGuidePostUrl = externalGuidePostUrl,
+                ExternalGuideUrl = CoalesceTrimmed(externalGuidePreUrl, externalGuidePostUrl),
+                ExternalGuideUrlTrigger = !string.IsNullOrWhiteSpace(externalGuidePreUrl)
+                    ? "install_pre"
+                    : !string.IsNullOrWhiteSpace(externalGuidePostUrl)
+                        ? "install_post"
+                        : "",
                 ExcludeListRaw = resolvedExcludeRaw,
                 ExcludeListPatterns = resolvedExcludePatterns,
                 InstallMetadata = mergedMetadata,
@@ -336,7 +358,8 @@ public sealed class RuntimeDataShellGameMapper : IRuntimeDataShellGameMapper
             {
                 Category = NormalizeKey(RuntimeDataRowReader.GetString(row, "category"), ""),
                 Korean = RuntimeDataRowReader.GetString(row, "ko"),
-                English = RuntimeDataRowReader.GetString(row, "en")
+                English = RuntimeDataRowReader.GetString(row, "en"),
+                Url = RuntimeDataRowReader.GetString(row, "url")
             };
         }
 
@@ -441,6 +464,65 @@ public sealed class RuntimeDataShellGameMapper : IRuntimeDataShellGameMapper
         return textParts.Count == 0 ? "" : string.Join("[P]", textParts);
     }
 
+    private static string ResolveExternalGuideUrl(
+        IReadOnlyDictionary<string, MessageTemplate> templates,
+        IReadOnlyList<MessageBinding> bindings,
+        string stage,
+        string gameId,
+        string gpuVendor,
+        AppLanguage language)
+    {
+        if (templates.Count == 0 || bindings.Count == 0)
+        {
+            return "";
+        }
+
+        var normalizedGameId = NormalizeKey(gameId, "");
+        var normalizedGpuVendorForMatch = NormalizeKey(gpuVendor, "default");
+        var normalizedGpuVendorForRank = NormalizeKey(gpuVendor, "");
+        var normalizedStage = NormalizeKey(stage, "");
+        var candidates = new List<ExternalGuideUrlCandidate>();
+
+        foreach (var binding in bindings.Where(binding => IsBindingMatch(
+                     binding,
+                     normalizedStage,
+                     normalizedGameId,
+                     normalizedGpuVendorForMatch)))
+        {
+            if (!templates.TryGetValue(binding.MessageId, out var template))
+            {
+                continue;
+            }
+
+            if (!string.Equals(template.Category, "url", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var rawUrl = ResolveLocalizedUrl(template, language);
+            if (!ExternalMessageUrlValidator.TryNormalizeHttpUrl(rawUrl, out var normalizedUrl))
+            {
+                continue;
+            }
+
+            candidates.Add(new ExternalGuideUrlCandidate(
+                normalizedUrl,
+                binding.MessageId,
+                binding.Priority,
+                GameExactRank(binding, normalizedGameId),
+                VendorExactRank(binding, normalizedGpuVendorForRank)));
+        }
+
+        var selected = candidates
+            .OrderBy(static candidate => candidate.Priority)
+            .ThenBy(static candidate => candidate.GameRank)
+            .ThenBy(static candidate => candidate.VendorRank)
+            .ThenBy(static candidate => candidate.MessageId, StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault();
+
+        return selected?.Url ?? "";
+    }
+
     private static bool IsBindingMatch(
         MessageBinding binding,
         string normalizedStage,
@@ -503,11 +585,19 @@ public sealed class RuntimeDataShellGameMapper : IRuntimeDataShellGameMapper
         return "";
     }
 
+    private static string ResolveLocalizedUrl(MessageTemplate template, AppLanguage language)
+    {
+        return language == AppLanguage.Korean
+            ? CoalesceTrimmed(template.Korean, template.English, template.Url)
+            : CoalesceTrimmed(template.English, template.Korean, template.Url);
+    }
+
     private sealed record MessageTemplate
     {
         public string Category { get; init; } = "";
         public string Korean { get; init; } = "";
         public string English { get; init; } = "";
+        public string Url { get; init; } = "";
     }
 
     private sealed record MessageBinding
@@ -518,4 +608,11 @@ public sealed class RuntimeDataShellGameMapper : IRuntimeDataShellGameMapper
         public string MessageId { get; init; } = "";
         public int Priority { get; init; } = 100;
     }
+
+    private sealed record ExternalGuideUrlCandidate(
+        string Url,
+        string MessageId,
+        int Priority,
+        int GameRank,
+        int VendorRank);
 }

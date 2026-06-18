@@ -44,7 +44,8 @@ internal static class MainViewModelFallbackResolvedDependencyComposer
             AppLogger = appLogger,
             LocalDataPathProvider = appComposition.LocalDataPathProvider,
             AppStringsProvider = appComposition.AppStringsProvider,
-            FirstRunStateStore = appComposition.FirstRunStateStore
+            FirstRunStateStore = appComposition.FirstRunStateStore,
+            ExternalUrlLauncher = appComposition.ExternalUrlLauncher
         };
         var runtime = new MainRuntimeResolvedDependencies
         {

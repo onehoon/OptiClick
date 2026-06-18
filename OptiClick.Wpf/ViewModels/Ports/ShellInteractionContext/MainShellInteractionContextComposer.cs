@@ -31,6 +31,7 @@ internal static class MainShellInteractionContextComposer
             StartupAnnouncement = MainStartupAnnouncementInteractionContextComposer.Compose(
                 new MainStartupAnnouncementInteractionContextCompositionInput
                 {
+                    AppDependencies = input.Dependencies.App,
                     ShellDependencies = input.Dependencies.Shell,
                     Access = input.Accesses.StartupAnnouncement
                 }),

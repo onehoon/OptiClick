@@ -51,7 +51,8 @@ internal static class MainWindowShellFeatureComposer
             support,
             dialogPresenter,
             flowLogDispatcher,
-            app.AppLogger);
+            app.AppLogger,
+            app.ExternalUrlLauncher);
         var shellSectionsFactory = new ShellSectionsFactory();
         var shellSectionsCompositionFactory = new ShellSectionsCompositionFactory();
         var shell = new MainShellResolvedDependencies
@@ -106,7 +107,8 @@ internal static class MainWindowShellFeatureComposer
         SupportCompositionServices support,
         DialogPresenter dialogPresenter,
         FlowLogDispatcher flowLogDispatcher,
-        IAppLogger appLogger)
+        IAppLogger appLogger,
+        IExternalUrlLauncher externalUrlLauncher)
     {
         return new ShellSelectionModuleCompositionServices
         {
@@ -114,7 +116,8 @@ internal static class MainWindowShellFeatureComposer
                 install.GameSelectionFlowController,
                 dialogPresenter,
                 flowLogDispatcher,
-                appLogger),
+                appLogger,
+                externalUrlLauncher),
             GameCardSelectionStateController = new GameCardSelectionStateController(),
             GameMasterCoverPrefetchCoordinator = new GameMasterCoverPrefetchCoordinator(
                 new GameMasterCoverPrefetchService(),

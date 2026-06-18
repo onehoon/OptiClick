@@ -42,7 +42,8 @@ internal static class MainWindowAppFeatureComposer
             AppLogger = app.AppLogger,
             LocalDataPathProvider = app.LocalDataPathProvider,
             AppStringsProvider = app.StringsProvider,
-            FirstRunStateStore = app.FirstRunStateStore
+            FirstRunStateStore = app.FirstRunStateStore,
+            ExternalUrlLauncher = app.ExternalUrlLauncher
         };
     }
 }

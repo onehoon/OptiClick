@@ -156,6 +156,7 @@ internal sealed record MainInstallShellFacade
                         input.ReadStrings()),
             InstallCompletionController = input.InstallDependencies.MainInstallCompletionController,
             ShowCompletionDialogAsync = input.DialogPresenter.ShowSafelyAsync,
+            OpenExternalUrl = input.ExternalUrlLauncher.OpenUrl,
             ClearSelectedGameContext = input.ClearSelectedGameContext,
             LogInstallInfo = message => input.AppLogger.Info(MainViewModelLogCategories.Install, message),
             LogInstallWarning = message => input.AppLogger.Warning(MainViewModelLogCategories.Install, message),
@@ -243,6 +244,7 @@ internal sealed record MainInstallShellFacadeInput
     public required StartupNoticePresenter StartupNoticePresenter { get; init; }
     public required IInstallManagementDialogService InstallManagementDialogService { get; init; }
     public required IAppLogger AppLogger { get; init; }
+    public required IExternalUrlLauncher ExternalUrlLauncher { get; init; }
     public required ArchiveReadinessRefreshCoordinator ArchiveReadinessRefreshCoordinator { get; init; }
     public required Func<AppStrings> ReadStrings { get; init; }
     public required Func<bool> ShouldBlockStartupForUnsupportedOperatingSystem { get; init; }
