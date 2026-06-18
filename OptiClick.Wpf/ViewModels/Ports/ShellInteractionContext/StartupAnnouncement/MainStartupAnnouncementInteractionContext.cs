@@ -12,4 +12,6 @@ internal sealed record MainStartupAnnouncementInteractionContext
     public required string SelectedGpuVendor { get; init; }
     public required Action<IEnumerable<IFlowLogEntry>, string> DispatchFlowLogs { get; init; }
     public required Func<AppDialogRequest, CancellationToken, Task<AppDialogResult>> ShowDialogAsync { get; init; }
+    public required Func<string, bool> OpenExternalUrl { get; init; }
+    public required Action<string> LogWarning { get; init; }
 }

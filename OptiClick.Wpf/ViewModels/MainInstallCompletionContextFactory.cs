@@ -29,8 +29,11 @@ internal sealed class MainInstallCompletionContextFactory
                         CreateSelectionRefreshContext(),
                         ct),
                 ShowCompletionDialogAsync = _input.ShowCompletionDialogAsync,
+                ReadSelectedGame = _input.ReadSelectedGame,
+                OpenExternalUrl = _input.OpenExternalUrl,
                 ClearSelectedGameContext = _input.ClearSelectedGameContext,
-                LogInfo = _input.LogInstallInfo
+                LogInfo = _input.LogInstallInfo,
+                LogWarn = _input.LogInstallWarning
             }
         };
     }
@@ -68,6 +71,7 @@ internal sealed record MainInstallCompletionContextFactoryInput
     public required Func<AppDialogRequest, CancellationToken, Task<AppDialogResult>> ShowCompletionDialogAsync { get; init; }
     public required Action ClearSelectedGameContext { get; init; }
     public required Func<GameCardViewModel?> ReadSelectedGame { get; init; }
+    public required Func<string, bool> OpenExternalUrl { get; init; }
     public required Func<string> ReadInstallButtonText { get; init; }
     public required Func<string, GameCardViewModel?> TryRefreshVisibleCard { get; init; }
     public required Func<GameCardViewModel?, CancellationToken, bool, bool, Task> SelectGameAsync { get; init; }

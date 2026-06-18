@@ -37,6 +37,7 @@ internal static class MainShellAppPortComposer
             FlowRequestFactory = shellDependencies.FlowRequestFactory,
             OperationLocks = access.OperationLocks,
             InstallManagementDialogService = shellDependencies.InstallManagementDialogService,
+            ExternalUrlLauncher = appDependencies.ExternalUrlLauncher,
             ReadAppVersion = () => NormalizeAppVersion(appDependencies.AppVersionProvider.GetCurrentVersion()),
             IsKoreanUi = () => access.SelectedLanguage == AppLanguage.Korean,
             SetSettingsStatusText = access.SetSettingsStatusText,

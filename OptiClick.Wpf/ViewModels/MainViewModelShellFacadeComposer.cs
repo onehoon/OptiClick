@@ -214,6 +214,7 @@ internal static class MainViewModelShellFacadeComposer
                 StartupNoticePresenter = input.StartupDependencies.StartupNoticePresenter,
                 InstallManagementDialogService = ports.App.InstallManagementDialogService,
                 AppLogger = ports.App.AppLogger,
+                ExternalUrlLauncher = ports.App.ExternalUrlLauncher,
                 ArchiveReadinessRefreshCoordinator =
                     input.StartupDependencies.ArchiveReadinessRefreshCoordinator,
                 ReadStrings = ports.App.ReadStrings,
@@ -268,6 +269,7 @@ internal sealed record MainShellFacadeAppPort
     public required MainViewModelFlowRequestFactory FlowRequestFactory { get; init; }
     public required MainShellOperationLocks OperationLocks { get; init; }
     public required IInstallManagementDialogService InstallManagementDialogService { get; init; }
+    public required IExternalUrlLauncher ExternalUrlLauncher { get; init; }
     public required Func<string> ReadAppVersion { get; init; }
     public required Func<bool> IsKoreanUi { get; init; }
     public required Action<string> SetSettingsStatusText { get; init; }

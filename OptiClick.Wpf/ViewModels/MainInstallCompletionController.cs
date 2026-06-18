@@ -6,6 +6,8 @@ using OptiClick.Wpf.Install.Planning;
 using OptiClick.Wpf.Install.Presentation;
 using OptiClick.Wpf.Install.UiState;
 using OptiClick.Wpf.Shell.Flow;
+using OptiClick.Wpf.Shell.Games;
+using OptiClick.Wpf.Shell.RuntimeData;
 using OptiClick.Wpf.Models;
 
 namespace OptiClick.Wpf.ViewModels;
@@ -37,6 +39,7 @@ internal sealed class MainInstallCompletionController
         });
 
         await context.Services.RefreshSelectionAfterSuccessfulInstallAsync(cancellationToken);
+        OpenInstallPostUrlIfNeeded(context);
 
         if (completionDialog is null)
         {
@@ -105,6 +108,62 @@ internal sealed class MainInstallCompletionController
         var normalized = (value ?? "").Trim();
         return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
     }
+
+    private static void OpenInstallPostUrlIfNeeded(MainInstallCompletionContext context)
+    {
+        var selectedGame = context.Services.ReadSelectedGame();
+        if (selectedGame is null)
+        {
+            return;
+        }
+
+        var shellGame = ShellGameCardMapper.Map(selectedGame);
+        var rawUrl = CoalesceTrimmed(
+            shellGame.ExternalGuidePostUrl,
+            string.Equals(shellGame.ExternalGuideUrlTrigger, "install_post", StringComparison.OrdinalIgnoreCase)
+                ? shellGame.ExternalGuideUrl
+                : "");
+        if (string.IsNullOrWhiteSpace(rawUrl))
+        {
+            return;
+        }
+
+        if (!ExternalMessageUrlValidator.TryNormalizeHttpUrl(rawUrl, out var normalizedUrl))
+        {
+            context.Services.LogWarn("external guide url open skipped trigger=install_post reason=invalid_url");
+            return;
+        }
+
+        try
+        {
+            if (!context.Services.OpenExternalUrl(normalizedUrl))
+            {
+                context.Services.LogWarn("external guide url open result=failed trigger=install_post");
+            }
+            else
+            {
+                context.Services.LogInfo("external guide url open result=success trigger=install_post");
+            }
+        }
+        catch (Exception ex)
+        {
+            context.Services.LogWarn($"external guide url open result=failed trigger=install_post type={ex.GetType().Name}");
+        }
+    }
+
+    private static string CoalesceTrimmed(params string[] values)
+    {
+        foreach (var value in values)
+        {
+            var normalized = (value ?? "").Trim();
+            if (!string.IsNullOrWhiteSpace(normalized))
+            {
+                return normalized;
+            }
+        }
+
+        return "";
+    }
 }
 
 internal sealed class MainInstallCompletionContext
@@ -121,8 +180,11 @@ internal sealed class MainInstallCompletionServices
     public required Func<MainViewModelStateUpdate, AppDialogRequest?> BuildCompletionDialog { get; init; }
     public required Func<CancellationToken, Task> RefreshSelectionAfterSuccessfulInstallAsync { get; init; }
     public required Func<AppDialogRequest, CancellationToken, Task<AppDialogResult>> ShowCompletionDialogAsync { get; init; }
+    public required Func<GameCardViewModel?> ReadSelectedGame { get; init; }
+    public required Func<string, bool> OpenExternalUrl { get; init; }
     public required Action ClearSelectedGameContext { get; init; }
     public required Action<string> LogInfo { get; init; }
+    public required Action<string> LogWarn { get; init; }
 }
 
 internal sealed class MainInstallCompletionSelectionRefreshContext

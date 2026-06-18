@@ -43,7 +43,9 @@ internal sealed class MainShellInteractionContextFactory
             Language = input.ReadSelectedLanguage(),
             SelectedGpuVendor = input.ReadSelectedGpuVendor(),
             DispatchFlowLogs = input.DispatchFlowLogs,
-            ShowDialogAsync = input.ShowDialogAsync
+            ShowDialogAsync = input.ShowDialogAsync,
+            OpenExternalUrl = input.OpenExternalUrl,
+            LogWarning = input.LogWarning
         };
     }
 

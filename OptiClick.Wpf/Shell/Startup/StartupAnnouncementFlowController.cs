@@ -18,6 +18,7 @@ public sealed record StartupAnnouncementFlowResult
 {
     public bool ShouldShowDialog { get; init; }
     public AppDialogRequest? DialogRequest { get; init; }
+    public string StartupUrl { get; init; } = "";
     public IReadOnlyList<StartupFlowLogEntry> Logs { get; init; } = [];
 }
 
@@ -64,6 +65,12 @@ public sealed class StartupAnnouncementFlowController
             runtimeData.MessageCenter,
             request.Language,
             normalizedVendor);
+        var startupUrl = ResolveStartupUrl(
+            runtimeData.MessageBinding,
+            runtimeData.MessageCenter,
+            request.Language,
+            normalizedVendor,
+            logs);
         var warningLineCount = SplitMarkupText(warningMarkup).Count;
 
         var sections = new List<AppDialogSection>();
@@ -91,10 +98,15 @@ public sealed class StartupAnnouncementFlowController
 
         if (sections.Count == 0)
         {
-            logs.Add(Info("startup", "startup announcement skipped reason=no_notice_content"));
+            logs.Add(Info(
+                "startup",
+                string.IsNullOrWhiteSpace(startupUrl)
+                    ? "startup announcement skipped reason=no_notice_content"
+                    : "startup announcement skipped reason=no_notice_content startup_url=ready"));
             return new StartupAnnouncementFlowResult
             {
                 ShouldShowDialog = false,
+                StartupUrl = startupUrl,
                 Logs = logs
             };
         }
@@ -109,6 +121,7 @@ public sealed class StartupAnnouncementFlowController
         {
             ShouldShowDialog = true,
             DialogRequest = dialog,
+            StartupUrl = startupUrl,
             Logs = logs
         };
     }
@@ -214,6 +227,64 @@ public sealed class StartupAnnouncementFlowController
         return result.Count == 0 ? "" : string.Join("[P]", result);
     }
 
+    private static string ResolveStartupUrl(
+        IReadOnlyList<RuntimeDataMessageRow>? bindingRows,
+        IReadOnlyList<RuntimeDataMessageRow>? templateRows,
+        AppLanguage language,
+        string gpuVendor,
+        List<StartupFlowLogEntry> logs)
+    {
+        if (bindingRows is null || templateRows is null || bindingRows.Count == 0 || templateRows.Count == 0)
+        {
+            return "";
+        }
+
+        var templates = ParseTemplates(templateRows);
+        var matches = ParseBindings(bindingRows)
+            .Where(static binding => string.Equals(binding.Stage, "startup", StringComparison.OrdinalIgnoreCase))
+            .Where(binding => IsBindingMatch(binding, gpuVendor))
+            .OrderBy(static binding => binding.Priority)
+            .ThenBy(binding => BindingVendorRank(binding, gpuVendor))
+            .ThenBy(static binding => binding.MessageId, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var candidates = new List<string>();
+        foreach (var binding in matches)
+        {
+            if (!templates.TryGetValue(binding.MessageId, out var template))
+            {
+                continue;
+            }
+
+            if (!string.Equals(template.Category, "url", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var rawUrl = ResolveLocalizedUrl(template, language);
+            if (!ExternalMessageUrlValidator.TryNormalizeHttpUrl(rawUrl, out var normalizedUrl))
+            {
+                logs.Add(Warning("startup", $"startup_url skipped reason=invalid_url message_id={NormalizeLogValue(binding.MessageId, "unknown")}"));
+                continue;
+            }
+
+            candidates.Add(normalizedUrl);
+        }
+
+        if (candidates.Count == 0)
+        {
+            return "";
+        }
+
+        if (candidates.Count > 1)
+        {
+            logs.Add(Warning("startup", $"startup_url duplicate_count={candidates.Count} action=using_first"));
+        }
+
+        logs.Add(Info("startup", "startup_url ready"));
+        return candidates[0];
+    }
+
     private static Dictionary<string, MessageTemplate> ParseTemplates(IReadOnlyList<RuntimeDataMessageRow> rows)
     {
         var map = new Dictionary<string, MessageTemplate>(StringComparer.OrdinalIgnoreCase);
@@ -230,7 +301,8 @@ public sealed class StartupAnnouncementFlowController
                 MessageId = messageId,
                 Category = RuntimeDataRowReader.GetString(row, "category"),
                 Korean = RuntimeDataRowReader.GetString(row, "ko"),
-                English = RuntimeDataRowReader.GetString(row, "en")
+                English = RuntimeDataRowReader.GetString(row, "en"),
+                Url = RuntimeDataRowReader.GetString(row, "url")
             };
         }
 
@@ -345,6 +417,33 @@ public sealed class StartupAnnouncementFlowController
         return normalized;
     }
 
+    private static string ResolveLocalizedUrl(MessageTemplate template, AppLanguage language)
+    {
+        return language == AppLanguage.Korean
+            ? PickFirstNonEmpty(template.Korean, template.English, template.Url)
+            : PickFirstNonEmpty(template.English, template.Korean, template.Url);
+    }
+
+    private static string PickFirstNonEmpty(params string[] values)
+    {
+        foreach (var value in values)
+        {
+            var normalized = (value ?? "").Trim();
+            if (!string.IsNullOrWhiteSpace(normalized))
+            {
+                return normalized;
+            }
+        }
+
+        return "";
+    }
+
+    private static string NormalizeLogValue(string? value, string fallback)
+    {
+        var normalized = (value ?? "").Trim();
+        return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+    }
+
     private static string GetTitle(AppLanguage language)
     {
         return language == AppLanguage.Korean ? "OptiClick 안내" : "OptiClick Notice";
@@ -360,12 +459,23 @@ public sealed class StartupAnnouncementFlowController
         };
     }
 
+    private static StartupFlowLogEntry Warning(string category, string message)
+    {
+        return new StartupFlowLogEntry
+        {
+            Level = "warning",
+            Category = category,
+            Message = message
+        };
+    }
+
     private sealed record MessageTemplate
     {
         public string MessageId { get; init; } = "";
         public string Category { get; init; } = "";
         public string Korean { get; init; } = "";
         public string English { get; init; } = "";
+        public string Url { get; init; } = "";
     }
 
     private sealed record MessageBinding

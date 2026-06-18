@@ -41,10 +41,11 @@ internal static class ShellSelectionModuleComposition
 
         var selectionPopupCoordinator = appDependencies.SelectionPopupCoordinator
                                         ?? new SelectionPopupCoordinator(
-                                            installComposition.GameSelectionFlowController,
-                                            dialogPresenter,
-                                            flowLogDispatcher,
-                                            appLogger);
+                                             installComposition.GameSelectionFlowController,
+                                             dialogPresenter,
+                                             flowLogDispatcher,
+                                             appLogger,
+                                             appDependencies.ExternalUrlLauncher);
         var gameCardSelectionStateController = appDependencies.GameCardSelectionStateController
                                                ?? new GameCardSelectionStateController();
         var gameMasterCoverPrefetchService = appDependencies.GameMasterCoverPrefetchService

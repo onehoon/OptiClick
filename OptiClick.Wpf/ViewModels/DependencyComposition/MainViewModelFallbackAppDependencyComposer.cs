@@ -98,7 +98,8 @@ internal static class MainViewModelFallbackAppDependencyComposer
             OptiScalerSettingsServices = settingsComposition,
             LocalDataPathProvider = localDataPathProvider,
             AppStringsProvider = appStringsProvider,
-            FirstRunStateStore = firstRunStateStore
+            FirstRunStateStore = firstRunStateStore,
+            ExternalUrlLauncher = resolvedExternalUrlLauncher
         };
     }
 
