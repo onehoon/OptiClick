@@ -48,11 +48,17 @@ public sealed class RuntimeComposition
                 app.AppLogger,
                 app.AppVersionProvider),
             _root.CreateRemoteRuntimeDataParser());
-        var gpuBundleManifestClient = _root.CreateRemoteGpuBundleManifestClient(sharedRemoteHttpClient, app.AppLogger);
+        var gpuBundleManifestClient = _root.CreateRemoteGpuBundleManifestClient(
+            sharedRemoteHttpClient,
+            app.AppLogger,
+            app.AppVersionProvider);
         var gpuBundleRuntimeLoader = new RemoteGpuBundleRuntimeLoader(
             gpuBundleManifestClient,
             _root.CreateGpuBundleManifestRuleResolver(),
-            _root.CreateRemoteGpuBundleClient(sharedRemoteHttpClient, app.AppLogger),
+            _root.CreateRemoteGpuBundleClient(
+                sharedRemoteHttpClient,
+                app.AppLogger,
+                app.AppVersionProvider),
             _root.CreateRemoteGpuBundleParser(),
             app.AppVersionProvider,
             app.AppLogger);

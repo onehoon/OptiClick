@@ -6,10 +6,13 @@ namespace OptiClick.Infrastructure.Remote;
 
 public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
 {
+    private const string UserAgentProduct = "OptiClick";
+
     private readonly HttpClient _httpClient;
     private readonly IGpuBundleRequestUriBuilder _requestUriBuilder;
     private readonly TimeSpan _timeout;
     private readonly IAppLogger _logger;
+    private readonly Func<string?>? _appVersionProvider;
     private readonly RemoteJsonFetcher _jsonFetcher;
 
     public RemoteGpuBundleClient(
@@ -18,11 +21,13 @@ public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
         IAppLogger? logger = null,
         TimeSpan? timeout = null,
         int maxAttempts = RemoteJsonFetcher.DefaultMaxAttempts,
-        TimeSpan? retryDelay = null)
+        TimeSpan? retryDelay = null,
+        Func<string?>? appVersionProvider = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _requestUriBuilder = requestUriBuilder ?? throw new ArgumentNullException(nameof(requestUriBuilder));
         _logger = logger ?? NullAppLogger.Instance;
+        _appVersionProvider = appVersionProvider;
         _timeout = timeout ?? RemoteJsonFetcher.DefaultTimeout;
         _jsonFetcher = new RemoteJsonFetcher(
             _httpClient,
@@ -57,7 +62,7 @@ public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
             $"gpu-bundle request vendor={NormalizeLogValue(safeRequest.Vendor, "none")} bundle={NormalizeLogValue(safeRequest.BundleKey, "none")} gpu_raw={NormalizeLogValue(safeRequest.GpuRaw, "none")} request_source={NormalizeLogValue(safeRequest.RequestSource, "none")} device_manufacturer={NormalizeLogValue(safeRequest.DeviceManufacturer, "none")} device_model={NormalizeLogValue(safeRequest.DeviceModel, "none")} app_version={NormalizeLogValue(safeRequest.AppVersion, "none")} manifest_version={NormalizeLogValue(safeRequest.ManifestVersion, "none")}");
 
         var fetchResult = await _jsonFetcher.FetchStringAsync(
-            () => new HttpRequestMessage(HttpMethod.Get, requestUri),
+            () => CreateJsonRequest(requestUri),
             new RemoteJsonFetchOptions
             {
                 LogCategory = "remote",
@@ -108,7 +113,7 @@ public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
 
         try
         {
-            using var httpRequest = new HttpRequestMessage(HttpMethod.Get, requestUri);
+            using var httpRequest = CreateJsonRequest(requestUri);
             using var response = await _httpClient.SendAsync(
                 httpRequest,
                 HttpCompletionOption.ResponseHeadersRead,
@@ -146,6 +151,25 @@ public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
             _logger.Error("remote", "gpu-bundle-report failed code=bundle_report_unexpected_error", ex);
             return RemoteGpuBundleFetchResult.Failure("bundle_report_unexpected_error");
         }
+    }
+
+    private HttpRequestMessage CreateJsonRequest(Uri requestUri)
+    {
+        var httpRequest = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        httpRequest.Headers.UserAgent.ParseAdd(BuildUserAgentValue());
+        httpRequest.Headers.Accept.ParseAdd("application/json");
+        return httpRequest;
+    }
+
+    private string BuildUserAgentValue()
+    {
+        var normalizedVersion = (_appVersionProvider?.Invoke() ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(normalizedVersion))
+        {
+            normalizedVersion = "0.0.0";
+        }
+
+        return $"{UserAgentProduct}/{normalizedVersion}";
     }
 
     private static Uri BuildUnsupportedReportUri(Uri baseUri, GpuBundleUnsupportedReportRequest request)
