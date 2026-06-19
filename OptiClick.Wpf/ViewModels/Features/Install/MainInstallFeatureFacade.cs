@@ -92,6 +92,14 @@ internal sealed class MainInstallFeatureFacade
             cancellationToken);
     }
 
+    public Task<ArchiveReadinessFlowResult> RefreshArchiveReadinessForInstallAsync(
+        CancellationToken cancellationToken)
+    {
+        return _archiveReadinessController.RefreshAsync(
+            _archiveReadinessContextFactory.Create(refreshVisibleGamesAfterArchiveReadiness: false),
+            cancellationToken);
+    }
+
     public Task<ArchiveReadinessFlowResult> RefreshArchiveReadinessWithoutCoordinatorAsync(
         CancellationToken cancellationToken)
     {

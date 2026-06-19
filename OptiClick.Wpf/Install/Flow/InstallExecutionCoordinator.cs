@@ -50,6 +50,7 @@ public sealed class InstallExecutionCoordinator
         }
         finally
         {
+            var retainBusyState = false;
             try
             {
                 await DelayForMinimumOverlayDurationAsync(
@@ -57,10 +58,14 @@ public sealed class InstallExecutionCoordinator
                     overlayTimer.Elapsed,
                     result,
                     cancellationToken);
+                retainBusyState = result is not null && request.ShouldRetainBusyStateAfterResult(result);
             }
             finally
             {
-                request.ApplyInstallBusyState(false, "");
+                if (!retainBusyState)
+                {
+                    request.ApplyInstallBusyState(false, "");
+                }
             }
         }
     }
@@ -121,6 +126,7 @@ public sealed record InstallExecutionCoordinatorRequest
     public required InstallExecutionOverlaySnapshot OverlaySnapshot { get; init; }
     public required InstallExecutionCoordinatorText Text { get; init; }
     public required Action<bool, string> ApplyInstallBusyState { get; init; }
+    public Func<InstallFlowResult, bool> ShouldRetainBusyStateAfterResult { get; init; } = static _ => false;
     public TimeSpan MinimumOperationOverlayDuration { get; init; } = TimeSpan.FromSeconds(1);
     public Func<TimeSpan, CancellationToken, Task> DelayAsync { get; init; } = Task.Delay;
 }

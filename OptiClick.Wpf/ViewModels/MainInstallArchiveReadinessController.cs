@@ -46,8 +46,16 @@ internal sealed class MainInstallArchiveReadinessController
             return result;
         }
 
+        var previousReadiness = context.State.LatestArchiveReadiness;
         context.Callbacks.SetArchiveReadiness(result.Readiness);
         ApplyOptiScalerVariantSyncResult(context, result.OptiScalerVariantSync);
+        if (result.IsSuccess
+            && context.State.RefreshVisibleGamesAfterArchiveReadiness
+            && HasArchiveReadinessChanged(previousReadiness, result.Readiness))
+        {
+            context.Callbacks.RefreshVisibleGamesAfterArchiveReadiness();
+        }
+
         return result;
     }
 
@@ -69,6 +77,59 @@ internal sealed class MainInstallArchiveReadinessController
         context.Callbacks.PersistEffectiveVariantPreference(effectiveVariant);
         context.Callbacks.SaveUserSettings();
     }
+
+    private static bool HasArchiveReadinessChanged(
+        ArchiveReadinessSnapshot previous,
+        ArchiveReadinessSnapshot current)
+    {
+        previous ??= ArchiveReadinessSnapshot.NotReady;
+        current ??= ArchiveReadinessSnapshot.NotReady;
+
+        return previous.OptiScalerState != current.OptiScalerState
+               || !string.Equals(previous.OptiScalerSourceArchive, current.OptiScalerSourceArchive, StringComparison.Ordinal)
+               || !string.Equals(previous.OptiScalerVariant, current.OptiScalerVariant, StringComparison.OrdinalIgnoreCase)
+               || !string.Equals(previous.OptiScalerVersion, current.OptiScalerVersion, StringComparison.Ordinal)
+               || !string.Equals(previous.OptiScalerDisplayVersion, current.OptiScalerDisplayVersion, StringComparison.Ordinal)
+               || !string.Equals(previous.OptiScalerFileVersion, current.OptiScalerFileVersion, StringComparison.Ordinal)
+               || !string.Equals(previous.OptiScalerProductVersion, current.OptiScalerProductVersion, StringComparison.Ordinal)
+               || previous.Fsr4State != current.Fsr4State
+               || !string.Equals(previous.Fsr4SourceArchive, current.Fsr4SourceArchive, StringComparison.Ordinal)
+               || !AreFsr4VariantsEqual(previous.Fsr4Variants, current.Fsr4Variants)
+               || previous.UalState != current.UalState
+               || !string.Equals(previous.UalSourceArchive, current.UalSourceArchive, StringComparison.Ordinal)
+               || previous.OptiPatcherState != current.OptiPatcherState
+               || !string.Equals(previous.OptiPatcherSourceArchive, current.OptiPatcherSourceArchive, StringComparison.Ordinal)
+               || previous.SpecialKState != current.SpecialKState
+               || !string.Equals(previous.SpecialKSourceArchive, current.SpecialKSourceArchive, StringComparison.Ordinal)
+               || previous.ReframeworkState != current.ReframeworkState
+               || !string.Equals(previous.ReframeworkSourceArchive, current.ReframeworkSourceArchive, StringComparison.Ordinal)
+               || previous.Unreal5State != current.Unreal5State
+               || !string.Equals(previous.Unreal5SourceArchive, current.Unreal5SourceArchive, StringComparison.Ordinal);
+    }
+
+    private static bool AreFsr4VariantsEqual(
+        IReadOnlyDictionary<string, Fsr4VariantReadiness> previous,
+        IReadOnlyDictionary<string, Fsr4VariantReadiness> current)
+    {
+        previous ??= new Dictionary<string, Fsr4VariantReadiness>(StringComparer.OrdinalIgnoreCase);
+        current ??= new Dictionary<string, Fsr4VariantReadiness>(StringComparer.OrdinalIgnoreCase);
+
+        if (previous.Count != current.Count)
+        {
+            return false;
+        }
+
+        foreach (var (key, previousValue) in previous)
+        {
+            if (!current.TryGetValue(key, out var currentValue)
+                || previousValue != currentValue)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
 
 internal sealed class MainInstallArchiveReadinessContext
@@ -84,6 +145,8 @@ internal sealed class MainInstallArchiveReadinessState
     public required OptiScalerVariantCatalog LatestOptiScalerVariantCatalog { get; init; }
     public required string PreferredOptiScalerVariant { get; init; }
     public required Fsr4VariantCatalog LatestFsr4VariantCatalog { get; init; }
+    public required ArchiveReadinessSnapshot LatestArchiveReadiness { get; init; }
+    public required bool RefreshVisibleGamesAfterArchiveReadiness { get; init; }
 }
 
 internal sealed class MainInstallArchiveReadinessServices
@@ -98,6 +161,7 @@ internal sealed class MainInstallArchiveReadinessCallbacks
     public required Action<ArchiveReadinessSnapshot> SetArchiveReadiness { get; init; }
     public required Action<OptiScalerVariantSyncResult?> ApplyOptiScalerVariantSyncToRuntimeState { get; init; }
     public required Action ApplyOptiScalerVariantOptions { get; init; }
+    public required Action RefreshVisibleGamesAfterArchiveReadiness { get; init; }
     public required Action<string> PersistEffectiveVariantPreference { get; init; }
     public required Action SaveUserSettings { get; init; }
 }

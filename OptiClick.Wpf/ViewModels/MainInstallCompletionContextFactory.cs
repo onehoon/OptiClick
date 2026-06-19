@@ -1,6 +1,7 @@
 using OptiClick.Wpf.Install.Flow;
 using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Shell.Flow;
+using OptiClick.Wpf.Shell.Selection;
 
 namespace OptiClick.Wpf.ViewModels;
 
@@ -13,7 +14,7 @@ internal sealed class MainInstallCompletionContextFactory
         _input = input ?? throw new ArgumentNullException(nameof(input));
     }
 
-    public MainInstallCompletionContext Create()
+    public MainInstallCompletionContext Create(ShellInstallSelectionState? retainedBusyRestoreSelectionState = null)
     {
         return new MainInstallCompletionContext
         {
@@ -29,6 +30,12 @@ internal sealed class MainInstallCompletionContextFactory
                         CreateSelectionRefreshContext(),
                         ct),
                 ShowCompletionDialogAsync = _input.ShowCompletionDialogAsync,
+                ClearRetainedInstallBusyState = retainedBusyRestoreSelectionState is null
+                    ? static () => { }
+                    : () => _input.ApplyInstallBusyState(
+                        false,
+                        "",
+                        retainedBusyRestoreSelectionState),
                 ReadSelectedGame = _input.ReadSelectedGame,
                 OpenExternalUrl = _input.OpenExternalUrl,
                 ClearSelectedGameContext = _input.ClearSelectedGameContext,
@@ -69,6 +76,7 @@ internal sealed record MainInstallCompletionContextFactoryInput
     public required Func<MainViewModelStateUpdate, AppDialogRequest?> BuildCompletionDialog { get; init; }
     public required MainInstallCompletionController InstallCompletionController { get; init; }
     public required Func<AppDialogRequest, CancellationToken, Task<AppDialogResult>> ShowCompletionDialogAsync { get; init; }
+    public required Action<bool, string, ShellInstallSelectionState?> ApplyInstallBusyState { get; init; }
     public required Action ClearSelectedGameContext { get; init; }
     public required Func<GameCardViewModel?> ReadSelectedGame { get; init; }
     public required Func<string, bool> OpenExternalUrl { get; init; }

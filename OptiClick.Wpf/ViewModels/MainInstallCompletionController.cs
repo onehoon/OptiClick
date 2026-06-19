@@ -26,6 +26,7 @@ internal sealed class MainInstallCompletionController
         if (!result.DidStart || result.WasBlocked || !finalSuccess)
         {
             context.Services.ApplyDeferredStateUpdate(update);
+            context.Services.ClearRetainedInstallBusyState();
             context.Services.LogInfo("badge refresh result=skipped reason=install_not_completed");
             return;
         }
@@ -38,16 +39,29 @@ internal sealed class MainInstallCompletionController
             PopupRequest = null
         });
 
+        Task<AppDialogResult>? completionDialogTask = null;
+        try
+        {
+            if (completionDialog is not null)
+            {
+                context.Services.LogInfo("popup show source=install_post");
+                completionDialogTask = context.Services.ShowCompletionDialogAsync(completionDialog, cancellationToken);
+            }
+        }
+        finally
+        {
+            context.Services.ClearRetainedInstallBusyState();
+        }
+
         await context.Services.RefreshSelectionAfterSuccessfulInstallAsync(cancellationToken);
         OpenInstallPostUrlIfNeeded(context);
 
-        if (completionDialog is null)
+        if (completionDialogTask is null)
         {
             return;
         }
 
-        context.Services.LogInfo("popup show source=install_post");
-        var dialogResult = await context.Services.ShowCompletionDialogAsync(completionDialog, cancellationToken);
+        var dialogResult = await completionDialogTask;
         context.Services.LogInfo($"popup result source=install_post result={dialogResult}");
         if (dialogResult == AppDialogResult.Ok)
         {
@@ -180,6 +194,7 @@ internal sealed class MainInstallCompletionServices
     public required Func<MainViewModelStateUpdate, AppDialogRequest?> BuildCompletionDialog { get; init; }
     public required Func<CancellationToken, Task> RefreshSelectionAfterSuccessfulInstallAsync { get; init; }
     public required Func<AppDialogRequest, CancellationToken, Task<AppDialogResult>> ShowCompletionDialogAsync { get; init; }
+    public required Action ClearRetainedInstallBusyState { get; init; }
     public required Func<GameCardViewModel?> ReadSelectedGame { get; init; }
     public required Func<string, bool> OpenExternalUrl { get; init; }
     public required Action ClearSelectedGameContext { get; init; }

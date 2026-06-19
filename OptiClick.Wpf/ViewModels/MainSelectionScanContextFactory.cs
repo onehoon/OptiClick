@@ -230,7 +230,9 @@ internal sealed class MainSelectionScanContextFactory
             _input.IsAppUpdateInProgress(),
             _input.Dependencies.GpuSelectionCoordinator.MultiGpuBlocked,
             _input.Dependencies.GpuSelectionCoordinator.GpuSelectionPending,
-            _input.Runtime.ReadRemoteCatalogErrorCode());
+            _input.Runtime.ReadRemoteCatalogErrorCode(),
+            _input.Runtime.ReadOptiScalerVariantCatalog(),
+            _input.ReadPreferredOptiScalerVariant());
     }
 
     private Task<SelectionPopupChainResult> ShowPendingSelectionPopupRequestsAsync(

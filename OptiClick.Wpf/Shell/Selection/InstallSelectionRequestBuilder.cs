@@ -1,4 +1,5 @@
 using OptiClick.Core.Runtime;
+using OptiClick.Core.OptiScaler;
 using OptiClick.Wpf.Install.Archives;
 using OptiClick.Core.Install;
 using OptiClick.Wpf.Install.UiState;
@@ -44,6 +45,8 @@ public sealed class InstallSelectionRequestBuilder
             selectedTargetPath,
             input.ModuleDownloadLinks,
             input.LatestArchiveReadiness,
+            input.LatestOptiScalerVariantCatalog,
+            input.PreferredOptiScalerVariant,
             input.SelectedLanguage);
         var selectedInputs = ShellInstallDescriptorInputFactory.ResolveInputs(selectedShellGame);
         var selectionPopupMessage = BuildSelectionPopupMessage(selectedShellGame, input.SelectedLanguage);
@@ -79,6 +82,8 @@ public sealed class InstallSelectionRequestBuilder
         string targetPath,
         ModuleDownloadLinkContext moduleDownloadLinks,
         ArchiveReadinessSnapshot archiveReadiness,
+        OptiScalerVariantCatalog variantCatalog,
+        string preferredOptiScalerVariant,
         AppLanguage selectedLanguage)
     {
         if (_installStatusResolver is null || string.IsNullOrWhiteSpace(targetPath))
@@ -89,7 +94,11 @@ public sealed class InstallSelectionRequestBuilder
             };
         }
 
-        var currentVersionInfo = OptiScalerCurrentVersionInfoResolver.Resolve(moduleDownloadLinks, archiveReadiness);
+        var currentVersionTargets = OptiScalerCurrentVersionInfoResolver.ResolveTargets(
+            moduleDownloadLinks,
+            archiveReadiness,
+            variantCatalog);
+        var currentVersionInfo = currentVersionTargets.Selected ?? OptiScalerCurrentVersionInfo.Empty;
         return _installStatusResolver.Resolve(new InstallStatusResolveInput
         {
             TargetPath = targetPath,
@@ -98,8 +107,23 @@ public sealed class InstallSelectionRequestBuilder
             CurrentDisplayVersion = currentVersionInfo.DisplayVersion,
             CurrentFileVersion = currentVersionInfo.FileVersion,
             CurrentProductVersion = currentVersionInfo.ProductVersion,
+            PreferredVariant = (preferredOptiScalerVariant ?? "").Trim(),
+            StableTarget = ToVersionIdentity(currentVersionTargets.Stable),
+            PreviewTarget = ToVersionIdentity(currentVersionTargets.Preview),
             Language = selectedLanguage == AppLanguage.Korean ? "ko" : "en"
         });
+    }
+
+    private static OptiScalerVersionIdentity ToVersionIdentity(OptiScalerCurrentVersionInfo info)
+    {
+        var safeInfo = info ?? OptiScalerCurrentVersionInfo.Empty;
+        return new OptiScalerVersionIdentity
+        {
+            Variant = safeInfo.Variant,
+            FileVersion = safeInfo.FileVersion,
+            ProductVersion = safeInfo.ProductVersion,
+            DisplayVersion = safeInfo.DisplayVersion
+        };
     }
 
     private static string ResolveLocalizedInstallPreMessage(ShellGameCardModel game, AppLanguage language)

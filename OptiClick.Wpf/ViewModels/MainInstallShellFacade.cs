@@ -53,10 +53,10 @@ internal sealed record MainInstallShellFacade
                 InstallExecutionBridge = CreateInstallExecutionBridgeInput(
                     input,
                     shared,
-                    () => (contextFactories ?? throw new InvalidOperationException(
+                    restoreSelectionState => (contextFactories ?? throw new InvalidOperationException(
                         "Install context factories are not initialized."))
                         .InstallCompletion
-                        .Create())
+                        .Create(restoreSelectionState))
             });
 
         var dependencies = input.InstallDependencies;
@@ -144,6 +144,7 @@ internal sealed record MainInstallShellFacade
         {
             ResolveSelectedGame = input.ResolveSelectedGame,
             SelectionRefreshActions = shared.SelectionRefreshActions,
+            BusyActions = shared.BusyActions,
             FlowLogActions = shared.FlowLogActions,
             CreateInstallStateUpdate = input.ResultApplier.CreateInstallStateUpdate,
             ApplyStateUpdate = input.ApplyStateUpdate,
@@ -178,12 +179,16 @@ internal sealed record MainInstallShellFacade
             ReadPreferredOptiScalerVariant = input.ReadPreferredOptiScalerVariant,
             ReadLatestFsr4VariantCatalog =
                 () => input.RuntimeShellState.LatestFsr4VariantCatalog,
+            ReadLatestArchiveReadiness =
+                () => input.RuntimeShellState.LatestArchiveReadiness,
             ArchiveReadinessRefreshCoordinator = input.ArchiveReadinessRefreshCoordinator,
             ArchiveReadinessFlowController = input.InstallDependencies.ArchiveReadinessFlowController,
             SetArchiveReadiness = input.RuntimeShellState.SetArchiveReadiness,
             ApplyOptiScalerVariantSyncToRuntimeState =
                 input.RuntimeShellState.ApplyOptiScalerVariantSync,
             ApplyOptiScalerVariantOptions = input.ApplyOptiScalerVariantOptions,
+            RefreshVisibleGamesAfterArchiveReadiness =
+                input.RefreshVisibleGamesAfterArchiveReadiness,
             PersistEffectiveVariantPreference = input.PersistEffectiveVariantPreference,
             SaveUserSettings = input.SaveUserSettings
         };
@@ -208,7 +213,7 @@ internal sealed record MainInstallShellFacade
             ReadInstallFlowText = () => InstallFlowText.FromAppStrings(input.ReadStrings()),
             ReadLatestRemoteCatalogErrorCode =
                 () => input.RuntimeShellState.LatestRemoteCatalogErrorCode,
-            RefreshArchiveReadinessAsync = input.RefreshArchiveReadinessAsync,
+            RefreshArchiveReadinessAsync = input.RefreshArchiveReadinessForInstallAsync,
             RefreshSelectionForInstallAsync = input.RefreshSelectionForInstallAsync,
             CreateOptiScalerIniApplyContext =
                 input.InstallDependencies.MainOptiScalerSettingsController.CreateIniApplyContext
@@ -218,7 +223,7 @@ internal sealed record MainInstallShellFacade
     private static MainInstallExecutionBridgeCompositionInput CreateInstallExecutionBridgeInput(
         MainInstallShellFacadeInput input,
         MainInstallContextFactorySharedCompositionServices shared,
-        Func<MainInstallCompletionContext> createInstallCompletionContext)
+        Func<ShellInstallSelectionState?, MainInstallCompletionContext> createInstallCompletionContext)
     {
         return new MainInstallExecutionBridgeCompositionInput
         {
@@ -265,9 +270,11 @@ internal sealed record MainInstallShellFacadeInput
     public required Action ClearSelectedGameContext { get; init; }
     public required Func<string> ReadPreferredOptiScalerVariant { get; init; }
     public required Action ApplyOptiScalerVariantOptions { get; init; }
+    public required Action RefreshVisibleGamesAfterArchiveReadiness { get; init; }
     public required Action<string> PersistEffectiveVariantPreference { get; init; }
     public required Action SaveUserSettings { get; init; }
     public required Func<bool> IsOperatingSystemSupported { get; init; }
     public required Func<CancellationToken, Task<ArchiveReadinessFlowResult>> RefreshArchiveReadinessAsync { get; init; }
+    public required Func<CancellationToken, Task<ArchiveReadinessFlowResult>> RefreshArchiveReadinessForInstallAsync { get; init; }
     public required Func<GameCardViewModel, int> ResolveSelectedIndex { get; init; }
 }

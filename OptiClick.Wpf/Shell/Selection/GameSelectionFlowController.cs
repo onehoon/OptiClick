@@ -43,6 +43,8 @@ public sealed class GameSelectionFlowController
             PreviousState = request.PreviousSelectionState,
             ModuleDownloadLinks = request.ModuleDownloadLinks,
             LatestArchiveReadiness = request.LatestArchiveReadiness,
+            LatestOptiScalerVariantCatalog = request.LatestOptiScalerVariantCatalog,
+            PreferredOptiScalerVariant = request.PreferredOptiScalerVariant,
             SelectedLanguage = request.SelectedLanguage,
             IsInstallExecutionInProgress = request.IsInstallExecutionInProgress,
             IsAppUpdateInProgress = request.IsAppUpdateInProgress,

@@ -37,6 +37,6 @@ internal sealed record MainInstallExecutionBridgeContextFactoryInput
     public required InstallExecutionCoordinator InstallExecutionCoordinator { get; init; }
     public required MainInstallCompletionController MainInstallCompletionController { get; init; }
     public required Action<bool, string, ShellInstallSelectionState?> ApplyInstallBusyState { get; init; }
-    public required Func<MainInstallCompletionContext> CreateInstallCompletionContext { get; init; }
+    public required Func<ShellInstallSelectionState?, MainInstallCompletionContext> CreateInstallCompletionContext { get; init; }
     public required Func<InstallExecutionCoordinatorText> ReadInstallExecutionText { get; init; }
 }
