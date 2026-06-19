@@ -6,10 +6,13 @@ namespace OptiClick.Infrastructure.Remote;
 
 public sealed class RemoteGpuBundleManifestClient : IRemoteGpuBundleManifestClient
 {
+    private const string UserAgentProduct = "OptiClick";
+
     private readonly HttpClient _httpClient;
     private readonly IGpuBundleManifestRequestUriBuilder _requestUriBuilder;
     private readonly IRemoteGpuBundleManifestParser _parser;
     private readonly IAppLogger _logger;
+    private readonly Func<string?>? _appVersionProvider;
     private readonly RemoteJsonFetcher _jsonFetcher;
 
     public RemoteGpuBundleManifestClient(
@@ -19,12 +22,14 @@ public sealed class RemoteGpuBundleManifestClient : IRemoteGpuBundleManifestClie
         IAppLogger? logger = null,
         TimeSpan? timeout = null,
         int maxAttempts = RemoteJsonFetcher.DefaultMaxAttempts,
-        TimeSpan? retryDelay = null)
+        TimeSpan? retryDelay = null,
+        Func<string?>? appVersionProvider = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _requestUriBuilder = requestUriBuilder ?? throw new ArgumentNullException(nameof(requestUriBuilder));
         _parser = parser ?? throw new ArgumentNullException(nameof(parser));
         _logger = logger ?? NullAppLogger.Instance;
+        _appVersionProvider = appVersionProvider;
         _jsonFetcher = new RemoteJsonFetcher(
             _httpClient,
             _logger,
@@ -53,7 +58,7 @@ public sealed class RemoteGpuBundleManifestClient : IRemoteGpuBundleManifestClie
         }
 
         var fetchResult = await _jsonFetcher.FetchStringAsync(
-            () => new HttpRequestMessage(HttpMethod.Get, requestUri),
+            () => CreateJsonRequest(requestUri),
             new RemoteJsonFetchOptions
             {
                 LogCategory = "remote",
@@ -84,6 +89,25 @@ public sealed class RemoteGpuBundleManifestClient : IRemoteGpuBundleManifestClie
 
         _logger.Info("remote", $"gpu-bundle-manifest parsed rules={parsed.Manifest.Rules.Count} manifest_version={NormalizeLogValue(parsed.Manifest.ManifestVersion, "none")}");
         return RemoteGpuBundleManifestFetchResult.Success(parsed.Manifest);
+    }
+
+    private HttpRequestMessage CreateJsonRequest(Uri requestUri)
+    {
+        var httpRequest = new HttpRequestMessage(HttpMethod.Get, requestUri);
+        httpRequest.Headers.UserAgent.ParseAdd(BuildUserAgentValue());
+        httpRequest.Headers.Accept.ParseAdd("application/json");
+        return httpRequest;
+    }
+
+    private string BuildUserAgentValue()
+    {
+        var normalizedVersion = (_appVersionProvider?.Invoke() ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(normalizedVersion))
+        {
+            normalizedVersion = "0.0.0";
+        }
+
+        return $"{UserAgentProduct}/{normalizedVersion}";
     }
 
     private static string NormalizeLogValue(string? value, string fallback)

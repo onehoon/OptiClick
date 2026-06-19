@@ -60,12 +60,14 @@ internal static class RuntimeModuleComposition
             runtimeCatalogDialogPresenter);
         var runtimeEndpointStatusPresenter = new RuntimeEndpointStatusPresenter();
         var fallbackGpuManifestRequestUriBuilder = new GpuBundleManifestRequestUriBuilder();
+        var fallbackAppVersionProvider = new AssemblyAppVersionProvider();
         var gpuBundleManifestClient = new CachedRemoteGpuBundleManifestClient(
             new RemoteGpuBundleManifestClient(
                 new HttpClient(),
                 fallbackGpuManifestRequestUriBuilder,
                 new RemoteGpuBundleManifestParser(),
-                appLogger),
+                appLogger,
+                appVersionProvider: () => fallbackAppVersionProvider.GetCurrentVersion()),
             fallbackGpuManifestRequestUriBuilder);
 
         return new RuntimeDependencyFallbackServices

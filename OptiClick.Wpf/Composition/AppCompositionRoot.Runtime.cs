@@ -84,14 +84,18 @@ public sealed partial class AppCompositionRoot
         return new RemoteGpuBundleManifestParser();
     }
 
-    public IRemoteGpuBundleManifestClient CreateRemoteGpuBundleManifestClient(HttpClient? httpClient = null, IAppLogger? logger = null)
+    public IRemoteGpuBundleManifestClient CreateRemoteGpuBundleManifestClient(
+        HttpClient? httpClient = null,
+        IAppLogger? logger = null,
+        IAppVersionProvider? appVersionProvider = null)
     {
         var requestUriBuilder = CreateGpuBundleManifestRequestUriBuilder();
         var inner = new RemoteGpuBundleManifestClient(
             httpClient ?? new HttpClient(),
             requestUriBuilder,
             CreateRemoteGpuBundleManifestParser(),
-            logger);
+            logger,
+            appVersionProvider: appVersionProvider is null ? null : (() => appVersionProvider.GetCurrentVersion()));
         return new CachedRemoteGpuBundleManifestClient(inner, requestUriBuilder);
     }
 
@@ -110,12 +114,16 @@ public sealed partial class AppCompositionRoot
         return new GpuBundleRequestUriBuilder();
     }
 
-    public IRemoteGpuBundleClient CreateRemoteGpuBundleClient(HttpClient? httpClient = null, IAppLogger? logger = null)
+    public IRemoteGpuBundleClient CreateRemoteGpuBundleClient(
+        HttpClient? httpClient = null,
+        IAppLogger? logger = null,
+        IAppVersionProvider? appVersionProvider = null)
     {
         return new RemoteGpuBundleClient(
             httpClient ?? new HttpClient(),
             CreateGpuBundleRequestUriBuilder(),
-            logger);
+            logger,
+            appVersionProvider: appVersionProvider is null ? null : (() => appVersionProvider.GetCurrentVersion()));
     }
 
     public IRemoteGpuBundleRuntimeLoader CreateRemoteGpuBundleRuntimeLoader(IAppLogger? logger = null)
@@ -132,12 +140,13 @@ public sealed partial class AppCompositionRoot
         HttpClient? httpClient)
     {
         var sharedHttpClient = httpClient ?? new HttpClient();
+        var effectiveAppVersionProvider = appVersionProvider ?? CreateAppVersionProvider();
         return new RemoteGpuBundleRuntimeLoader(
-            CreateRemoteGpuBundleManifestClient(sharedHttpClient, logger),
+            CreateRemoteGpuBundleManifestClient(sharedHttpClient, logger, effectiveAppVersionProvider),
             CreateGpuBundleManifestRuleResolver(),
-            CreateRemoteGpuBundleClient(sharedHttpClient, logger),
+            CreateRemoteGpuBundleClient(sharedHttpClient, logger, effectiveAppVersionProvider),
             CreateRemoteGpuBundleParser(),
-            appVersionProvider ?? CreateAppVersionProvider(),
+            effectiveAppVersionProvider,
             logger);
     }
 
