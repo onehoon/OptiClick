@@ -68,7 +68,9 @@ public sealed class MainViewModelFlowRequestFactory
         bool isAppUpdateInProgress,
         bool multiGpuBlocked,
         bool gpuSelectionPending,
-        string latestRemoteCatalogErrorCode = "")
+        string latestRemoteCatalogErrorCode = "",
+        OptiScalerVariantCatalog? latestOptiScalerVariantCatalog = null,
+        string preferredOptiScalerVariant = "")
     {
         return _selection.BuildGameSelectionRequest(
             selectedCard,
@@ -84,7 +86,9 @@ public sealed class MainViewModelFlowRequestFactory
             isAppUpdateInProgress,
             multiGpuBlocked,
             gpuSelectionPending,
-            latestRemoteCatalogErrorCode);
+            latestRemoteCatalogErrorCode,
+            latestOptiScalerVariantCatalog,
+            preferredOptiScalerVariant);
     }
 
     public InstallFlowRequest BuildInstallRequest(

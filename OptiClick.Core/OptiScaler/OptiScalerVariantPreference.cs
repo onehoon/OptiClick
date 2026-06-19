@@ -13,11 +13,6 @@ public static class OptiScalerVariantPreference
     public static string NormalizeOrDefault(string? value)
     {
         var normalized = Normalize(value);
-        return normalized switch
-        {
-            StableVariant => StableVariant,
-            PreviewVariant => PreviewVariant,
-            _ => StableVariant
-        };
+        return string.IsNullOrWhiteSpace(normalized) ? StableVariant : normalized;
     }
 }

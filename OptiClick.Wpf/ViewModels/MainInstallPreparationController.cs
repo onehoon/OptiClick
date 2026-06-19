@@ -41,6 +41,18 @@ internal sealed class MainInstallPreparationController
         }
 
         await context.Services.RefreshArchiveReadinessAsync(cancellationToken);
+        selectedGame = context.State.ResolveSelectedGame();
+        if (selectedGame is null)
+        {
+            return null;
+        }
+
+        selectedIndex = context.State.ResolveSelectedIndex(selectedGame);
+        if (selectedIndex < 0)
+        {
+            return null;
+        }
+
         // This pre-install refresh reuses the current selection without showing already-reviewed popups.
         // If future precheck logic can create new blocking warnings here, those must be shown to the user.
         await context.Services.RefreshSelectionForInstallAsync(selectedGame, cancellationToken, false, false);

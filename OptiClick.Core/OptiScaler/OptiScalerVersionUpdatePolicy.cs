@@ -64,10 +64,11 @@ public static class OptiScalerVersionUpdatePolicy
         if (installedChannel == OptiScalerVersionChannel.Preview
             && targetChannel == OptiScalerVersionChannel.Stable)
         {
+            var releaseBaseComparison = CompareReleaseBaseVersions(installedIdentity, targetIdentity);
             return Decision(
-                comparison is not null && comparison > 0
-                    ? OptiScalerVersionUpdateCode.PreRelease
-                    : OptiScalerVersionUpdateCode.UpdateAvailable,
+                releaseBaseComparison is not null
+                    ? ResolvePreviewToStableCode(releaseBaseComparison)
+                    : ResolvePreviewToStableCode(comparison),
                 installedDisplayVersion,
                 targetDisplayVersion);
         }
@@ -193,6 +194,39 @@ public static class OptiScalerVersionUpdatePolicy
         }
 
         return Normalize(identity.ProductVersion);
+    }
+
+    private static int? CompareReleaseBaseVersions(
+        OptiScalerVersionIdentity left,
+        OptiScalerVersionIdentity right)
+    {
+        return CompareVersionTuples(
+            ResolveReleaseBaseVersionCandidate(left),
+            ResolveReleaseBaseVersionCandidate(right));
+    }
+
+    private static string ResolveReleaseBaseVersionCandidate(OptiScalerVersionIdentity identity)
+    {
+        var productVersion = Normalize(identity.ProductVersion);
+        if (!string.IsNullOrWhiteSpace(productVersion))
+        {
+            return productVersion;
+        }
+
+        var displayVersion = Normalize(identity.DisplayVersion);
+        if (!string.IsNullOrWhiteSpace(displayVersion))
+        {
+            return displayVersion;
+        }
+
+        return Normalize(identity.FileVersion);
+    }
+
+    private static OptiScalerVersionUpdateCode ResolvePreviewToStableCode(int? comparison)
+    {
+        return comparison is not null && comparison > 0
+            ? OptiScalerVersionUpdateCode.PreRelease
+            : OptiScalerVersionUpdateCode.UpdateAvailable;
     }
 
     private static bool HasProductIdentity(OptiScalerVersionIdentity identity)

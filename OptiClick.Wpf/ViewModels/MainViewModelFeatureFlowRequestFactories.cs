@@ -71,7 +71,9 @@ internal sealed class MainGameSelectionFlowRequestFactory
         bool isAppUpdateInProgress,
         bool multiGpuBlocked,
         bool gpuSelectionPending,
-        string latestRemoteCatalogErrorCode = "")
+        string latestRemoteCatalogErrorCode = "",
+        OptiScalerVariantCatalog? latestOptiScalerVariantCatalog = null,
+        string preferredOptiScalerVariant = "")
     {
         return new GameSelectionFlowRequest
         {
@@ -83,6 +85,8 @@ internal sealed class MainGameSelectionFlowRequestFactory
             TargetPathByGameId = targetPathByGameId,
             ModuleDownloadLinks = moduleDownloadLinks,
             LatestArchiveReadiness = latestArchiveReadiness,
+            LatestOptiScalerVariantCatalog = latestOptiScalerVariantCatalog ?? OptiScalerVariantCatalog.Empty,
+            PreferredOptiScalerVariant = (preferredOptiScalerVariant ?? "").Trim(),
             SelectedLanguage = selectedLanguage,
             IsInstallExecutionInProgress = isInstallExecutionInProgress,
             IsAppUpdateInProgress = isAppUpdateInProgress,

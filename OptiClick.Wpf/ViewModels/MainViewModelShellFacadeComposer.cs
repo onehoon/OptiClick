@@ -237,10 +237,14 @@ internal static class MainViewModelShellFacadeComposer
                 ClearSelectedGameContext = ports.Install.ClearSelectedGameContext,
                 ReadPreferredOptiScalerVariant = ports.Install.ReadPreferredOptiScalerVariant,
                 ApplyOptiScalerVariantOptions = ports.Install.ApplyOptiScalerVariantOptions,
+                RefreshVisibleGamesAfterArchiveReadiness =
+                    ports.Selection.RefreshVisibleGamesFromScanMatchesWithoutAutoSelection,
                 PersistEffectiveVariantPreference = ports.Install.PersistEffectiveVariantPreference,
                 SaveUserSettings = ports.Install.SaveUserSettings,
                 IsOperatingSystemSupported = ports.Install.IsOperatingSystemSupported,
                 RefreshArchiveReadinessAsync = ports.Install.RefreshArchiveReadinessAsync,
+                RefreshArchiveReadinessForInstallAsync =
+                    ports.Install.RefreshArchiveReadinessForInstallAsync,
                 ResolveSelectedIndex = ports.Selection.ResolveSelectedIndex
             });
     }
@@ -359,6 +363,7 @@ internal sealed record MainShellFacadeInstallPort
     public required Action SaveUserSettings { get; init; }
     public required Func<bool> IsOperatingSystemSupported { get; init; }
     public required Func<CancellationToken, Task<ArchiveReadinessFlowResult>> RefreshArchiveReadinessAsync { get; init; }
+    public required Func<CancellationToken, Task<ArchiveReadinessFlowResult>> RefreshArchiveReadinessForInstallAsync { get; init; }
     public required Func<CancellationToken, Task<ArchiveReadinessFlowResult>> RefreshArchiveReadinessWithoutCoordinatorAsync { get; init; }
 }
 

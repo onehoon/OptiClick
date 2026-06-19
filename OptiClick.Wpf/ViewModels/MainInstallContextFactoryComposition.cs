@@ -97,6 +97,7 @@ internal sealed record MainInstallCompletionCompositionInput
 {
     public required Func<GameCardViewModel?> ResolveSelectedGame { get; init; }
     public required MainInstallSelectionRefreshActions SelectionRefreshActions { get; init; }
+    public required MainInstallBusyActions BusyActions { get; init; }
     public required MainInstallFlowLogActions FlowLogActions { get; init; }
     public required Func<InstallFlowResult, MainViewModelStateUpdate> CreateInstallStateUpdate { get; init; }
     public required Action<MainViewModelStateUpdate> ApplyStateUpdate { get; init; }
@@ -118,11 +119,13 @@ internal sealed record MainInstallArchiveReadinessCompositionInput
     public required Func<OptiScalerVariantCatalog> ReadLatestOptiScalerVariantCatalog { get; init; }
     public required Func<string> ReadPreferredOptiScalerVariant { get; init; }
     public required Func<Fsr4VariantCatalog> ReadLatestFsr4VariantCatalog { get; init; }
+    public required Func<ArchiveReadinessSnapshot> ReadLatestArchiveReadiness { get; init; }
     public required ArchiveReadinessRefreshCoordinator ArchiveReadinessRefreshCoordinator { get; init; }
     public required ArchiveReadinessFlowController ArchiveReadinessFlowController { get; init; }
     public required Action<ArchiveReadinessSnapshot> SetArchiveReadiness { get; init; }
     public required Action<OptiScalerVariantSyncResult?> ApplyOptiScalerVariantSyncToRuntimeState { get; init; }
     public required Action ApplyOptiScalerVariantOptions { get; init; }
+    public required Action RefreshVisibleGamesAfterArchiveReadiness { get; init; }
     public required Action<string> PersistEffectiveVariantPreference { get; init; }
     public required Action SaveUserSettings { get; init; }
 }
@@ -151,7 +154,7 @@ internal sealed record MainInstallExecutionBridgeCompositionInput
     public required InstallExecutionCoordinator InstallExecutionCoordinator { get; init; }
     public required MainInstallCompletionController MainInstallCompletionController { get; init; }
     public required MainInstallBusyActions BusyActions { get; init; }
-    public required Func<MainInstallCompletionContext> CreateInstallCompletionContext { get; init; }
+    public required Func<ShellInstallSelectionState?, MainInstallCompletionContext> CreateInstallCompletionContext { get; init; }
     public required Func<InstallExecutionCoordinatorText> ReadInstallExecutionText { get; init; }
 }
 
@@ -178,6 +181,7 @@ internal static class MainInstallContextFactoryComposition
         ArgumentNullException.ThrowIfNull(uninstallInteraction.BusyActions);
         ArgumentNullException.ThrowIfNull(uninstallInteraction.SelectionRefreshActions);
         ArgumentNullException.ThrowIfNull(installCompletion.SelectionRefreshActions);
+        ArgumentNullException.ThrowIfNull(installCompletion.BusyActions);
         ArgumentNullException.ThrowIfNull(installCompletion.FlowLogActions);
         ArgumentNullException.ThrowIfNull(installArchiveReadiness.FlowLogActions);
         ArgumentNullException.ThrowIfNull(installArchiveReadiness.RuntimeSnapshotReaders);
@@ -234,6 +238,7 @@ internal static class MainInstallContextFactoryComposition
                     BuildCompletionDialog = installCompletion.BuildCompletionDialog,
                     InstallCompletionController = installCompletion.InstallCompletionController,
                     ShowCompletionDialogAsync = installCompletion.ShowCompletionDialogAsync,
+                    ApplyInstallBusyState = installCompletion.BusyActions.ApplyInstallBusyState,
                     OpenExternalUrl = installCompletion.OpenExternalUrl,
                     ClearSelectedGameContext = installCompletion.ClearSelectedGameContext,
                     ReadSelectedGame = installCompletion.ResolveSelectedGame,
@@ -251,6 +256,7 @@ internal static class MainInstallContextFactoryComposition
                     ReadLatestOptiScalerVariantCatalog = installArchiveReadiness.ReadLatestOptiScalerVariantCatalog,
                     ReadPreferredOptiScalerVariant = installArchiveReadiness.ReadPreferredOptiScalerVariant,
                     ReadLatestFsr4VariantCatalog = installArchiveReadiness.ReadLatestFsr4VariantCatalog,
+                    ReadLatestArchiveReadiness = installArchiveReadiness.ReadLatestArchiveReadiness,
                     ArchiveReadinessRefreshCoordinator = installArchiveReadiness.ArchiveReadinessRefreshCoordinator,
                     ArchiveReadinessFlowController = installArchiveReadiness.ArchiveReadinessFlowController,
                     DispatchFlowLogs = installArchiveReadiness.FlowLogActions.DispatchFlowLogs,
@@ -258,6 +264,8 @@ internal static class MainInstallContextFactoryComposition
                     ApplyOptiScalerVariantSyncToRuntimeState =
                         installArchiveReadiness.ApplyOptiScalerVariantSyncToRuntimeState,
                     ApplyOptiScalerVariantOptions = installArchiveReadiness.ApplyOptiScalerVariantOptions,
+                    RefreshVisibleGamesAfterArchiveReadiness =
+                        installArchiveReadiness.RefreshVisibleGamesAfterArchiveReadiness,
                     PersistEffectiveVariantPreference = installArchiveReadiness.PersistEffectiveVariantPreference,
                     SaveUserSettings = installArchiveReadiness.SaveUserSettings
                 }),

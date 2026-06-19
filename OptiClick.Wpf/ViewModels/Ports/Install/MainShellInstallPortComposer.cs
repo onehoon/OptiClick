@@ -49,6 +49,8 @@ internal static class MainShellInstallPortComposer
             IsOperatingSystemSupported = () => input.ResolveRuntimeFeature().IsOperatingSystemPolicySupported(),
             RefreshArchiveReadinessAsync =
                 cancellationToken => input.ResolveInstallFeature().RefreshArchiveReadinessAsync(cancellationToken),
+            RefreshArchiveReadinessForInstallAsync =
+                cancellationToken => input.ResolveInstallFeature().RefreshArchiveReadinessForInstallAsync(cancellationToken),
             RefreshArchiveReadinessWithoutCoordinatorAsync =
                 cancellationToken => input.ResolveInstallFeature()
                     .RefreshArchiveReadinessWithoutCoordinatorAsync(cancellationToken)

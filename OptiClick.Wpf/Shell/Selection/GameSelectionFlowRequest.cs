@@ -2,6 +2,7 @@ using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Install.Planning;
 using OptiClick.Wpf.Shell.Scan;
 using OptiClick.Wpf.Shell.Games;
+using OptiClick.Wpf.Shell.RuntimeData;
 
 namespace OptiClick.Wpf.Shell.Selection;
 
@@ -15,6 +16,9 @@ public sealed record GameSelectionFlowRequest
     public required IReadOnlyDictionary<string, string> TargetPathByGameId { get; init; }
     public required ModuleDownloadLinkContext ModuleDownloadLinks { get; init; }
     public required ArchiveReadinessSnapshot LatestArchiveReadiness { get; init; }
+    public OptiScalerVariantCatalog LatestOptiScalerVariantCatalog { get; init; } =
+        OptiScalerVariantCatalog.Empty;
+    public string PreferredOptiScalerVariant { get; init; } = "";
     public required AppLanguage SelectedLanguage { get; init; }
     public required bool IsInstallExecutionInProgress { get; init; }
     public required bool IsAppUpdateInProgress { get; init; }
