@@ -1,6 +1,6 @@
-namespace OptiClick.Wpf.Shell.RuntimeData;
+namespace OptiClick.Core.RuntimeData;
 
-internal static class ExternalMessageUrlValidator
+public static class ExternalMessageUrlValidator
 {
     public static bool TryNormalizeHttpUrl(string? value, out string normalized)
     {

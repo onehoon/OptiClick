@@ -17,6 +17,7 @@ public sealed class SelectionPopupCoordinator
     private readonly IAppLogger _appLogger;
     private readonly IExternalUrlLauncher? _externalUrlLauncher;
     private readonly HashSet<string> _reviewedSelectionPopupSignatures = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _openedExternalGuideUrlSignatures = new(StringComparer.OrdinalIgnoreCase);
 
     public SelectionPopupCoordinator(
         GameSelectionFlowController gameSelectionFlowController,
@@ -56,7 +57,7 @@ public sealed class SelectionPopupCoordinator
 
         if (request.SelectionVersion == request.ReadCurrentSelectionVersion())
         {
-            OpenInstallPreUrlIfNeeded(selectionState);
+            OpenInstallPreUrlIfNeeded(selectionState, request.SelectionVersion);
         }
 
         while (request.SelectionVersion == request.ReadCurrentSelectionVersion())
@@ -189,7 +190,7 @@ public sealed class SelectionPopupCoordinator
         _appLogger.Warning(MainViewModelLogCategories.Selection, message);
     }
 
-    private void OpenInstallPreUrlIfNeeded(ShellInstallSelectionState selectionState)
+    private void OpenInstallPreUrlIfNeeded(ShellInstallSelectionState selectionState, long selectionVersion)
     {
         var selectedGame = selectionState.SelectedGame;
         if (selectedGame is null)
@@ -219,10 +220,26 @@ public sealed class SelectionPopupCoordinator
             return;
         }
 
+        var selectedGameId = NormalizeStatusCode(
+            CoalesceTrimmed(selectionState.SelectedGameId, selectedGame.GameId),
+            "none");
+        var signature = BuildExternalGuideUrlSignature(
+            selectionState.RequestId,
+            selectionVersion,
+            selectedGameId,
+            "install_pre",
+            normalizedUrl);
+        if (!_openedExternalGuideUrlSignatures.Add(signature))
+        {
+            LogInfo("external guide url open skipped trigger=install_pre reason=already_opened");
+            return;
+        }
+
         try
         {
             if (!_externalUrlLauncher.OpenUrl(normalizedUrl))
             {
+                _openedExternalGuideUrlSignatures.Remove(signature);
                 LogWarning("external guide url open result=failed trigger=install_pre");
             }
             else
@@ -232,8 +249,24 @@ public sealed class SelectionPopupCoordinator
         }
         catch (Exception ex)
         {
+            _openedExternalGuideUrlSignatures.Remove(signature);
             LogWarning($"external guide url open result=failed trigger=install_pre type={ex.GetType().Name}");
         }
+    }
+
+    private static string BuildExternalGuideUrlSignature(
+        long requestId,
+        long selectionVersion,
+        string gameId,
+        string trigger,
+        string normalizedUrl)
+    {
+        var selectionKey = requestId > 0
+            ? $"request:{requestId}"
+            : selectionVersion > 0
+                ? $"version:{selectionVersion}"
+                : "selection:none";
+        return $"{selectionKey}|{NormalizeStatusCode(gameId, "none")}|{NormalizeStatusCode(trigger, "none")}|{normalizedUrl}";
     }
 
     private static string NormalizeStatusCode(string? value, string fallback)
