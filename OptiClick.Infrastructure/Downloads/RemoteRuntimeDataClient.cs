@@ -2,6 +2,7 @@
 using OptiClick.Core.Abstractions;
 using OptiClick.Infrastructure.Logging;
 using OptiClick.Infrastructure.Remote;
+using OptiClick.Infrastructure.Security;
 
 namespace OptiClick.Infrastructure.Downloads;
 
@@ -12,6 +13,7 @@ public sealed class RemoteRuntimeDataClient : IRemoteRuntimeDataClient
     private readonly HttpClient _httpClient;
     private readonly IAppLogger _logger;
     private readonly Func<string?>? _appVersionProvider;
+    private readonly IOptiClickApiRequestAuthenticator? _authenticator;
     private readonly RemoteJsonFetcher _jsonFetcher;
 
     public RemoteRuntimeDataClient(
@@ -19,6 +21,7 @@ public sealed class RemoteRuntimeDataClient : IRemoteRuntimeDataClient
         HttpClient httpClient,
         IAppLogger? logger = null,
         Func<string?>? appVersionProvider = null,
+        IOptiClickApiRequestAuthenticator? authenticator = null,
         TimeSpan? timeout = null,
         int maxAttempts = RemoteJsonFetcher.DefaultMaxAttempts,
         TimeSpan? retryDelay = null)
@@ -27,6 +30,7 @@ public sealed class RemoteRuntimeDataClient : IRemoteRuntimeDataClient
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _logger = logger ?? NullAppLogger.Instance;
         _appVersionProvider = appVersionProvider;
+        _authenticator = authenticator;
         _jsonFetcher = new RemoteJsonFetcher(
             _httpClient,
             _logger,
@@ -52,11 +56,22 @@ public sealed class RemoteRuntimeDataClient : IRemoteRuntimeDataClient
         }
 
         var fetchResult = await _jsonFetcher.FetchStringAsync(
-            () =>
+            async requestCancellationToken =>
             {
                 var request = new HttpRequestMessage(HttpMethod.Get, uri);
                 request.Headers.UserAgent.ParseAdd(BuildUserAgentValue());
                 request.Headers.Accept.ParseAdd("application/json");
+                if (_authenticator is not null)
+                {
+                    await _authenticator.ApplyAsync(
+                        request,
+                        new OptiClickApiRequestContext
+                        {
+                            AppVersion = ResolveAppVersion()
+                        },
+                        requestCancellationToken).ConfigureAwait(false);
+                }
+
                 return request;
             },
             new RemoteJsonFetchOptions
@@ -82,13 +97,17 @@ public sealed class RemoteRuntimeDataClient : IRemoteRuntimeDataClient
 
     private string BuildUserAgentValue()
     {
-        var rawVersion = _appVersionProvider?.Invoke();
-        var normalizedVersion = (rawVersion ?? "").Trim();
+        var normalizedVersion = ResolveAppVersion();
         if (string.IsNullOrWhiteSpace(normalizedVersion))
         {
             normalizedVersion = "0.0.0";
         }
 
         return $"{UserAgentProduct}/{normalizedVersion}";
+    }
+
+    private string ResolveAppVersion()
+    {
+        return (_appVersionProvider?.Invoke() ?? "").Trim();
     }
 }

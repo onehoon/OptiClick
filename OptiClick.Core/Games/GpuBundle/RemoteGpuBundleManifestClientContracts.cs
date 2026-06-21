@@ -6,13 +6,20 @@ public sealed class RemoteGpuBundleManifestFetchResult
     public bool IsSkipped { get; init; }
     public string ErrorCode { get; init; } = "";
     public RemoteGpuBundleManifest Manifest { get; init; } = new();
+    public string BundleTicket { get; init; } = "";
+    public string PolicyRevision { get; init; } = "";
 
-    public static RemoteGpuBundleManifestFetchResult Success(RemoteGpuBundleManifest manifest)
+    public static RemoteGpuBundleManifestFetchResult Success(
+        RemoteGpuBundleManifest manifest,
+        string? bundleTicket = null,
+        string? policyRevision = null)
     {
         return new RemoteGpuBundleManifestFetchResult
         {
             IsSuccess = true,
-            Manifest = manifest ?? new RemoteGpuBundleManifest()
+            Manifest = manifest ?? new RemoteGpuBundleManifest(),
+            BundleTicket = (bundleTicket ?? "").Trim(),
+            PolicyRevision = (policyRevision ?? "").Trim()
         };
     }
 
