@@ -172,7 +172,8 @@ public sealed class InstallComposition
     private ArchivePreparationServices CreateArchivePreparation(AppSharedServices app)
     {
         var archiveCachePaths = ArchiveCachePaths.CreateDefault(app.LocalDataPathProvider);
-        var archiveDownloader = _root.CreateArchiveDownloader();
+        var archiveDownloader = _root.CreateArchiveDownloader(
+            requestPreparer: app.SecurityServices.ArchiveDownloadRequestPreparer);
         var archiveExtractor = _root.CreateArchiveExtractor();
         var archiveManifestStore = _root.CreateArchiveDownloadManifestStore(archiveCachePaths.ManifestRoot);
         var optiScalerPayloadCacheService = new OptiScalerPayloadCacheService(

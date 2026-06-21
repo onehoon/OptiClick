@@ -1,6 +1,7 @@
 using System.Net.Http;
 using OptiClick.Core.Games.GpuBundle;
 using OptiClick.Infrastructure.Logging;
+using OptiClick.Infrastructure.Security;
 
 namespace OptiClick.Infrastructure.Remote;
 
@@ -13,6 +14,8 @@ public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
     private readonly TimeSpan _timeout;
     private readonly IAppLogger _logger;
     private readonly Func<string?>? _appVersionProvider;
+    private readonly IOptiClickApiRequestAuthenticator? _authenticator;
+    private readonly IOptiClickApiTicketStore? _ticketStore;
     private readonly RemoteJsonFetcher _jsonFetcher;
 
     public RemoteGpuBundleClient(
@@ -22,12 +25,16 @@ public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
         TimeSpan? timeout = null,
         int maxAttempts = RemoteJsonFetcher.DefaultMaxAttempts,
         TimeSpan? retryDelay = null,
-        Func<string?>? appVersionProvider = null)
+        Func<string?>? appVersionProvider = null,
+        IOptiClickApiRequestAuthenticator? authenticator = null,
+        IOptiClickApiTicketStore? ticketStore = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _requestUriBuilder = requestUriBuilder ?? throw new ArgumentNullException(nameof(requestUriBuilder));
         _logger = logger ?? NullAppLogger.Instance;
         _appVersionProvider = appVersionProvider;
+        _authenticator = authenticator;
+        _ticketStore = ticketStore;
         _timeout = timeout ?? RemoteJsonFetcher.DefaultTimeout;
         _jsonFetcher = new RemoteJsonFetcher(
             _httpClient,
@@ -60,9 +67,17 @@ public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
         _logger.Info(
             "remote",
             $"gpu-bundle request vendor={NormalizeLogValue(safeRequest.Vendor, "none")} bundle={NormalizeLogValue(safeRequest.BundleKey, "none")} gpu_raw={NormalizeLogValue(safeRequest.GpuRaw, "none")} request_source={NormalizeLogValue(safeRequest.RequestSource, "none")} device_manufacturer={NormalizeLogValue(safeRequest.DeviceManufacturer, "none")} device_model={NormalizeLogValue(safeRequest.DeviceModel, "none")} app_version={NormalizeLogValue(safeRequest.AppVersion, "none")} manifest_version={NormalizeLogValue(safeRequest.ManifestVersion, "none")}");
+        _logger.Debug(
+            "Security",
+            $"gpu-bundle security context authenticator_configured={FormatBool(_authenticator is not null)} bundle_ticket_present={FormatBool(!string.IsNullOrWhiteSpace(_ticketStore?.BundleTicket))} app_version={NormalizeLogValue(safeRequest.AppVersion, "none")} manifest_version_present={FormatBool(!string.IsNullOrWhiteSpace(safeRequest.ManifestVersion))}");
 
         var fetchResult = await _jsonFetcher.FetchStringAsync(
-            () => CreateJsonRequest(requestUri),
+            cancellationToken => CreateJsonRequestAsync(
+                requestUri,
+                safeRequest.AppVersion,
+                safeRequest.ManifestVersion,
+                _ticketStore?.BundleTicket ?? "",
+                cancellationToken),
             new RemoteJsonFetchOptions
             {
                 LogCategory = "remote",
@@ -107,13 +122,21 @@ public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
         _logger.Info(
             "remote",
             $"gpu-bundle-report request vendor={NormalizeLogValue(safeRequest.Vendor, "none")} bundle=unknown gpu_group=unknown gpu_raw={NormalizeLogValue(safeRequest.GpuRaw, "none")} request_source={NormalizeLogValue(safeRequest.RequestSource, "none")} device_manufacturer={NormalizeLogValue(safeRequest.DeviceManufacturer, "none")} device_model={NormalizeLogValue(safeRequest.DeviceModel, "none")} app_version={NormalizeLogValue(safeRequest.AppVersion, "none")} manifest_version={NormalizeLogValue(safeRequest.ManifestVersion, "none")} report_only=1 reason={NormalizeLogValue(safeRequest.Reason, "manifest_no_match")}");
+        _logger.Debug(
+            "Security",
+            $"gpu-bundle-report security context authenticator_configured={FormatBool(_authenticator is not null)} bundle_ticket_present={FormatBool(!string.IsNullOrWhiteSpace(_ticketStore?.BundleTicket))} app_version={NormalizeLogValue(safeRequest.AppVersion, "none")} manifest_version_present={FormatBool(!string.IsNullOrWhiteSpace(safeRequest.ManifestVersion))}");
 
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutCts.CancelAfter(_timeout);
 
         try
         {
-            using var httpRequest = CreateJsonRequest(requestUri);
+            using var httpRequest = await CreateJsonRequestAsync(
+                requestUri,
+                safeRequest.AppVersion,
+                safeRequest.ManifestVersion,
+                _ticketStore?.BundleTicket ?? "",
+                timeoutCts.Token).ConfigureAwait(false);
             using var response = await _httpClient.SendAsync(
                 httpRequest,
                 HttpCompletionOption.ResponseHeadersRead,
@@ -153,23 +176,51 @@ public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
         }
     }
 
-    private HttpRequestMessage CreateJsonRequest(Uri requestUri)
+    private async Task<HttpRequestMessage> CreateJsonRequestAsync(
+        Uri requestUri,
+        string appVersion,
+        string manifestVersion,
+        string bundleTicket,
+        CancellationToken cancellationToken)
     {
         var httpRequest = new HttpRequestMessage(HttpMethod.Get, requestUri);
         httpRequest.Headers.UserAgent.ParseAdd(BuildUserAgentValue());
         httpRequest.Headers.Accept.ParseAdd("application/json");
+        if (_authenticator is not null)
+        {
+            _logger.Debug(
+                "Security",
+                $"gpu-bundle auth apply app_version={NormalizeLogValue(appVersion, ResolveAppVersion())} manifest_version_present={FormatBool(!string.IsNullOrWhiteSpace(manifestVersion))} bundle_ticket_present={FormatBool(!string.IsNullOrWhiteSpace(bundleTicket))}");
+            await _authenticator.ApplyAsync(
+                httpRequest,
+                new OptiClickApiRequestContext
+                {
+                    AppVersion = string.IsNullOrWhiteSpace(appVersion)
+                        ? ResolveAppVersion()
+                        : (appVersion ?? "").Trim(),
+                    ManifestVersion = (manifestVersion ?? "").Trim(),
+                    BundleTicket = (bundleTicket ?? "").Trim()
+                },
+                cancellationToken).ConfigureAwait(false);
+        }
+
         return httpRequest;
     }
 
     private string BuildUserAgentValue()
     {
-        var normalizedVersion = (_appVersionProvider?.Invoke() ?? "").Trim();
+        var normalizedVersion = ResolveAppVersion();
         if (string.IsNullOrWhiteSpace(normalizedVersion))
         {
             normalizedVersion = "0.0.0";
         }
 
         return $"{UserAgentProduct}/{normalizedVersion}";
+    }
+
+    private string ResolveAppVersion()
+    {
+        return (_appVersionProvider?.Invoke() ?? "").Trim();
     }
 
     private static Uri BuildUnsupportedReportUri(Uri baseUri, GpuBundleUnsupportedReportRequest request)
@@ -202,5 +253,10 @@ public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
     {
         var normalized = (value ?? "").Trim();
         return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+    }
+
+    private static string FormatBool(bool value)
+    {
+        return value ? "true" : "false";
     }
 }

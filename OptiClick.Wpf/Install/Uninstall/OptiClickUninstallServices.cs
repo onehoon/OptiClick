@@ -34,6 +34,14 @@ public sealed record OptiClickUninstallPlanBuildRequest
 
 public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuilder
 {
+    private static readonly string[] OptiScalerRootExactTargetFileNames =
+    [
+        "OptiScaler.ini",
+        "fakenvapi.dll",
+        "fakenvapi.ini",
+        "fakenvapi.log"
+    ];
+
     private readonly InfrastructureUninstall.IOptiClickUninstallPlanBuilder _inner;
     private readonly IProfilePathResolver _profilePathResolver;
 
@@ -75,7 +83,7 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
         }
 
         var targets = new List<InfrastructureUninstall.UninstallComponentTarget>();
-        AddOptiScalerConfigTarget(targets);
+        AddOptiScalerRootExactTargets(targets);
         AddReFrameworkTarget(targets, descriptor.ReFrameworkUrl);
         AddSpecialKTarget(targets, descriptor.SpecialK, ResolveFinalProxyDllName(request, descriptor));
         AddUltimateAsiLoaderTargets(targets, descriptor.RequiresUltimateAsiLoader, request.UalDetectedNames);
@@ -84,15 +92,18 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
             .ToArray();
     }
 
-    private static void AddOptiScalerConfigTarget(
+    private static void AddOptiScalerRootExactTargets(
         ICollection<InfrastructureUninstall.UninstallComponentTarget> targets)
     {
-        targets.Add(new InfrastructureUninstall.UninstallComponentTarget
+        foreach (var fileName in OptiScalerRootExactTargetFileNames)
         {
-            Kind = InfrastructureUninstall.UninstallCandidateKind.OptiScaler,
-            RelativePath = "OptiScaler.ini",
-            RequiresSignatureValidation = false
-        });
+            targets.Add(new InfrastructureUninstall.UninstallComponentTarget
+            {
+                Kind = InfrastructureUninstall.UninstallCandidateKind.OptiScaler,
+                RelativePath = fileName,
+                RequiresSignatureValidation = false
+            });
+        }
     }
 
     private static IReadOnlyList<InfrastructureUninstall.UninstallEngineIniCleanupTarget> BuildEngineIniCleanupTargets(
