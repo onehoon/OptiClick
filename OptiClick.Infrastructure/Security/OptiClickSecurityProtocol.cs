@@ -332,19 +332,22 @@ public sealed class OptiClickClientRegistrationClient : IOptiClickClientRegistra
     private readonly Func<string?> _appVersionProvider;
     private readonly IAppLogger _logger;
     private readonly TimeSpan _timeout;
+    private readonly IOptiClickServerClock? _serverClock;
 
     public OptiClickClientRegistrationClient(
         HttpClient httpClient,
         Uri? registrationEndpoint,
         Func<string?> appVersionProvider,
         IAppLogger? logger = null,
-        TimeSpan? timeout = null)
+        TimeSpan? timeout = null,
+        IOptiClickServerClock? serverClock = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _registrationEndpoint = registrationEndpoint;
         _appVersionProvider = appVersionProvider ?? (() => "");
         _logger = logger ?? NullAppLogger.Instance;
         _timeout = timeout ?? TimeSpan.FromSeconds(5);
+        _serverClock = serverClock;
     }
 
     public async Task<OptiClickClientRegistrationResult> RegisterAsync(CancellationToken cancellationToken = default)
@@ -380,8 +383,10 @@ public sealed class OptiClickClientRegistrationClient : IOptiClickClientRegistra
                 request,
                 HttpCompletionOption.ResponseHeadersRead,
                 timeoutCts.Token).ConfigureAwait(false);
+            response.RequestMessage ??= request;
 
             _logger.Debug("Security", $"client registration response status={(int)response.StatusCode}");
+            _serverClock?.Observe(response);
             if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.MethodNotAllowed)
             {
                 _logger.Info("Security", $"client registration unsupported status={(int)response.StatusCode}");
@@ -975,6 +980,7 @@ public sealed class RemoteDownloadTicketClient : IRemoteDownloadTicketClient
     private readonly Func<string?> _appVersionProvider;
     private readonly IAppLogger _logger;
     private readonly TimeSpan _timeout;
+    private readonly IOptiClickServerClock? _serverClock;
 
     public RemoteDownloadTicketClient(
         HttpClient httpClient,
@@ -982,7 +988,8 @@ public sealed class RemoteDownloadTicketClient : IRemoteDownloadTicketClient
         IOptiClickApiRequestAuthenticator? authenticator,
         Func<string?> appVersionProvider,
         IAppLogger? logger = null,
-        TimeSpan? timeout = null)
+        TimeSpan? timeout = null,
+        IOptiClickServerClock? serverClock = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _downloadTicketEndpoint = downloadTicketEndpoint;
@@ -990,6 +997,7 @@ public sealed class RemoteDownloadTicketClient : IRemoteDownloadTicketClient
         _appVersionProvider = appVersionProvider ?? (() => "");
         _logger = logger ?? NullAppLogger.Instance;
         _timeout = timeout ?? TimeSpan.FromSeconds(5);
+        _serverClock = serverClock;
     }
 
     public async Task<string> TryGetDownloadTicketAsync(
@@ -1020,63 +1028,82 @@ public sealed class RemoteDownloadTicketClient : IRemoteDownloadTicketClient
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutCts.CancelAfter(_timeout);
 
+        var timestampSkewRecoveryRetried = false;
         try
         {
-            _logger.Debug(
-                "Security",
-                $"download ticket request start bundle={NormalizeLogValue(resource.Bundle, "none")} version={NormalizeLogValue(resource.Version, "none")} filename={NormalizeLogValue(resource.Filename, "none")} app_version={ResolveAppVersionForLog()} authenticator_configured={FormatBool(_authenticator is not null)}");
-            using var request = new HttpRequestMessage(HttpMethod.Get, BuildTicketRequestUri(endpoint, resource));
-            request.Headers.UserAgent.ParseAdd(BuildUserAgentValue());
-            request.Headers.Accept.ParseAdd("application/json");
-            if (_authenticator is not null)
+            while (true)
             {
-                await _authenticator.ApplyAsync(
+                _logger.Debug(
+                    "Security",
+                    $"download ticket request start bundle={NormalizeLogValue(resource.Bundle, "none")} version={NormalizeLogValue(resource.Version, "none")} filename={NormalizeLogValue(resource.Filename, "none")} app_version={ResolveAppVersionForLog()} authenticator_configured={FormatBool(_authenticator is not null)}");
+                using var request = new HttpRequestMessage(HttpMethod.Get, BuildTicketRequestUri(endpoint, resource));
+                request.Headers.UserAgent.ParseAdd(BuildUserAgentValue());
+                request.Headers.Accept.ParseAdd("application/json");
+                if (_authenticator is not null)
+                {
+                    await _authenticator.ApplyAsync(
+                        request,
+                        new OptiClickApiRequestContext
+                        {
+                            AppVersion = (_appVersionProvider() ?? "").Trim()
+                        },
+                        timeoutCts.Token).ConfigureAwait(false);
+                }
+
+                using var response = await _httpClient.SendAsync(
                     request,
-                    new OptiClickApiRequestContext
-                    {
-                        AppVersion = (_appVersionProvider() ?? "").Trim()
-                    },
+                    HttpCompletionOption.ResponseHeadersRead,
                     timeoutCts.Token).ConfigureAwait(false);
+                response.RequestMessage ??= request;
+
+                _logger.Debug("Security", $"download ticket response status={(int)response.StatusCode}");
+                var clockAdjusted = _serverClock?.Observe(response) == true;
+                if (OptiClickTimestampSkewRecovery.ShouldRetryAfterClockAdjustment(
+                        request,
+                        response,
+                        clockAdjusted,
+                        timestampSkewRecoveryRetried))
+                {
+                    timestampSkewRecoveryRetried = true;
+                    _logger.Warning(
+                        "Security",
+                        $"remote retry reason=timestamp_skew_recovery path={OptiClickTimestampSkewRecovery.ResolvePathForLog(request)}");
+                    continue;
+                }
+
+                if (response.StatusCode is HttpStatusCode.NotFound)
+                {
+                    _logger.Info("Security", $"download ticket unsupported status={(int)response.StatusCode}");
+                    return "";
+                }
+
+                if (response.StatusCode is HttpStatusCode.ServiceUnavailable)
+                {
+                    _logger.Warning("Security", $"download ticket unavailable status={(int)response.StatusCode}");
+                    return "";
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.Warning("Security", $"download ticket unavailable status={(int)response.StatusCode}");
+                    return "";
+                }
+
+                await using var stream = await response.Content.ReadAsStreamAsync(timeoutCts.Token).ConfigureAwait(false);
+                using var document = await JsonDocument.ParseAsync(stream, cancellationToken: timeoutCts.Token).ConfigureAwait(false);
+                if (!document.RootElement.TryGetProperty("ok", out var ok)
+                    || ok.ValueKind != JsonValueKind.True
+                    || !document.RootElement.TryGetProperty("download_ticket", out var ticketElement)
+                    || ticketElement.ValueKind != JsonValueKind.String)
+                {
+                    _logger.Warning("Security", "download ticket invalid_payload");
+                    return "";
+                }
+
+                var ticket = ticketElement.GetString()?.Trim() ?? "";
+                _logger.Debug("Security", $"download ticket success ticket_present={FormatBool(!string.IsNullOrWhiteSpace(ticket))}");
+                return ticket;
             }
-
-            using var response = await _httpClient.SendAsync(
-                request,
-                HttpCompletionOption.ResponseHeadersRead,
-                timeoutCts.Token).ConfigureAwait(false);
-
-            _logger.Debug("Security", $"download ticket response status={(int)response.StatusCode}");
-            if (response.StatusCode is HttpStatusCode.NotFound)
-            {
-                _logger.Info("Security", $"download ticket unsupported status={(int)response.StatusCode}");
-                return "";
-            }
-
-            if (response.StatusCode is HttpStatusCode.ServiceUnavailable)
-            {
-                _logger.Warning("Security", $"download ticket unavailable status={(int)response.StatusCode}");
-                return "";
-            }
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.Warning("Security", $"download ticket unavailable status={(int)response.StatusCode}");
-                return "";
-            }
-
-            await using var stream = await response.Content.ReadAsStreamAsync(timeoutCts.Token).ConfigureAwait(false);
-            using var document = await JsonDocument.ParseAsync(stream, cancellationToken: timeoutCts.Token).ConfigureAwait(false);
-            if (!document.RootElement.TryGetProperty("ok", out var ok)
-                || ok.ValueKind != JsonValueKind.True
-                || !document.RootElement.TryGetProperty("download_ticket", out var ticketElement)
-                || ticketElement.ValueKind != JsonValueKind.String)
-            {
-                _logger.Warning("Security", "download ticket invalid_payload");
-                return "";
-            }
-
-            var ticket = ticketElement.GetString()?.Trim() ?? "";
-            _logger.Debug("Security", $"download ticket success ticket_present={FormatBool(!string.IsNullOrWhiteSpace(ticket))}");
-            return ticket;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

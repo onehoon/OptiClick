@@ -92,9 +92,11 @@ public sealed partial class AppCompositionRoot
 
     public IArchiveDownloader CreateArchiveDownloader(
         HttpClient? httpClient = null,
-        IArchiveDownloadRequestPreparer? requestPreparer = null)
+        IArchiveDownloadRequestPreparer? requestPreparer = null,
+        IOptiClickServerClock? serverClock = null,
+        IAppLogger? logger = null)
     {
-        return new ArchiveDownloader(httpClient ?? new HttpClient(), requestPreparer);
+        return new ArchiveDownloader(httpClient ?? new HttpClient(), requestPreparer, serverClock, logger);
     }
 
     public IArchiveExtractor CreateArchiveExtractor()

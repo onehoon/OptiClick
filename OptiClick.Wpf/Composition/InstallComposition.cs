@@ -173,7 +173,9 @@ public sealed class InstallComposition
     {
         var archiveCachePaths = ArchiveCachePaths.CreateDefault(app.LocalDataPathProvider);
         var archiveDownloader = _root.CreateArchiveDownloader(
-            requestPreparer: app.SecurityServices.ArchiveDownloadRequestPreparer);
+            requestPreparer: app.SecurityServices.ArchiveDownloadRequestPreparer,
+            serverClock: app.SecurityServices.ServerClock,
+            logger: app.AppLogger);
         var archiveExtractor = _root.CreateArchiveExtractor();
         var archiveManifestStore = _root.CreateArchiveDownloadManifestStore(archiveCachePaths.ManifestRoot);
         var optiScalerPayloadCacheService = new OptiScalerPayloadCacheService(

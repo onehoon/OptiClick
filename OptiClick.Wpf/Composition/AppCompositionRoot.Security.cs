@@ -10,6 +10,7 @@ namespace OptiClick.Wpf.Composition;
 
 public sealed record AppSecurityServices
 {
+    public required IOptiClickServerClock ServerClock { get; init; }
     public required IOptiClickApiRequestAuthenticator ApiRequestAuthenticator { get; init; }
     public required IOptiClickApiTicketStore TicketStore { get; init; }
     public required IArchiveDownloadRequestPreparer ArchiveDownloadRequestPreparer { get; init; }
@@ -30,6 +31,9 @@ public sealed partial class AppCompositionRoot
         var sharedHttpClient = httpClient ?? new HttpClient();
         var effectiveLogger = logger ?? NullAppLogger.Instance;
         Func<string?> readAppVersion = () => appVersionProvider.GetCurrentVersion();
+        var serverClock = new OptiClickServerClock(
+            EnumerateTrustedWorkerApiEndpoints(remoteDataOptions),
+            logger: effectiveLogger);
 
         var credentialStore = new ProtectedDataOptiClickClientCredentialStore(
             credentialPath: BuildCredentialPath(localDataPathProvider),
@@ -38,7 +42,8 @@ public sealed partial class AppCompositionRoot
             sharedHttpClient,
             BuildApiEndpoint(remoteDataOptions, "/v1/client/register"),
             readAppVersion,
-            effectiveLogger);
+            effectiveLogger,
+            serverClock: serverClock);
         var credentialProvider = new OptiClickClientCredentialProvider(
             credentialStore,
             registrationClient,
@@ -50,13 +55,15 @@ public sealed partial class AppCompositionRoot
             new OptiClickHmacSigner(),
             new OptiClickRequestCanonicalizer(),
             new OptiClickApiSession(),
+            utcNow: () => serverClock.UtcNow,
             logger: effectiveLogger);
         var downloadTicketClient = new RemoteDownloadTicketClient(
             sharedHttpClient,
             BuildApiEndpoint(remoteDataOptions, "/v1/download-ticket"),
             authenticator,
             readAppVersion,
-            effectiveLogger);
+            effectiveLogger,
+            serverClock: serverClock);
         var archiveRequestPreparer = new OptiClickArchiveDownloadRequestPreparer(
             downloadTicketClient,
             authenticator,
@@ -65,6 +72,7 @@ public sealed partial class AppCompositionRoot
 
         return new AppSecurityServices
         {
+            ServerClock = serverClock,
             ApiRequestAuthenticator = authenticator,
             TicketStore = ticketStore,
             ArchiveDownloadRequestPreparer = archiveRequestPreparer
@@ -91,6 +99,18 @@ public sealed partial class AppCompositionRoot
         }
 
         return null;
+    }
+
+    private static IEnumerable<Uri> EnumerateTrustedWorkerApiEndpoints(RemoteDataOptions? remoteDataOptions)
+    {
+        foreach (var endpoint in EnumerateCandidateEndpoints(remoteDataOptions))
+        {
+            if (Uri.TryCreate(endpoint, UriKind.Absolute, out var uri)
+                && IsWorkerApiEndpointCandidate(uri))
+            {
+                yield return uri;
+            }
+        }
     }
 
     private static string BuildCredentialPath(IAppLocalDataPathProvider localDataPathProvider)

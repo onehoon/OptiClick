@@ -16,6 +16,7 @@ public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
     private readonly Func<string?>? _appVersionProvider;
     private readonly IOptiClickApiRequestAuthenticator? _authenticator;
     private readonly IOptiClickApiTicketStore? _ticketStore;
+    private readonly IOptiClickServerClock? _serverClock;
     private readonly RemoteJsonFetcher _jsonFetcher;
 
     public RemoteGpuBundleClient(
@@ -27,7 +28,8 @@ public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
         TimeSpan? retryDelay = null,
         Func<string?>? appVersionProvider = null,
         IOptiClickApiRequestAuthenticator? authenticator = null,
-        IOptiClickApiTicketStore? ticketStore = null)
+        IOptiClickApiTicketStore? ticketStore = null,
+        IOptiClickServerClock? serverClock = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _requestUriBuilder = requestUriBuilder ?? throw new ArgumentNullException(nameof(requestUriBuilder));
@@ -35,13 +37,15 @@ public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
         _appVersionProvider = appVersionProvider;
         _authenticator = authenticator;
         _ticketStore = ticketStore;
+        _serverClock = serverClock;
         _timeout = timeout ?? RemoteJsonFetcher.DefaultTimeout;
         _jsonFetcher = new RemoteJsonFetcher(
             _httpClient,
             _logger,
             timeout,
             maxAttempts,
-            retryDelay);
+            retryDelay,
+            _serverClock);
     }
 
     public async Task<RemoteGpuBundleFetchResult> FetchAsync(
@@ -129,29 +133,48 @@ public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutCts.CancelAfter(_timeout);
 
+        var timestampSkewRecoveryRetried = false;
         try
         {
-            using var httpRequest = await CreateJsonRequestAsync(
-                requestUri,
-                safeRequest.AppVersion,
-                safeRequest.ManifestVersion,
-                _ticketStore?.BundleTicket ?? "",
-                timeoutCts.Token).ConfigureAwait(false);
-            using var response = await _httpClient.SendAsync(
-                httpRequest,
-                HttpCompletionOption.ResponseHeadersRead,
-                timeoutCts.Token);
-
-            if (!response.IsSuccessStatusCode)
+            while (true)
             {
-                var errorCode = $"bundle_report_http_{(int)response.StatusCode}";
-                _logger.Error("remote", $"gpu-bundle-report failed code={errorCode}");
-                return RemoteGpuBundleFetchResult.Failure(errorCode);
-            }
+                using var httpRequest = await CreateJsonRequestAsync(
+                    requestUri,
+                    safeRequest.AppVersion,
+                    safeRequest.ManifestVersion,
+                    _ticketStore?.BundleTicket ?? "",
+                    timeoutCts.Token).ConfigureAwait(false);
+                using var response = await _httpClient.SendAsync(
+                    httpRequest,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    timeoutCts.Token);
+                response.RequestMessage ??= httpRequest;
 
-            var content = await response.Content.ReadAsStringAsync(timeoutCts.Token);
-            _logger.Info("remote", $"gpu-bundle-report success status={(int)response.StatusCode}");
-            return RemoteGpuBundleFetchResult.Success(content ?? "");
+                var clockAdjusted = _serverClock?.Observe(response) == true;
+                if (OptiClickTimestampSkewRecovery.ShouldRetryAfterClockAdjustment(
+                        httpRequest,
+                        response,
+                        clockAdjusted,
+                        timestampSkewRecoveryRetried))
+                {
+                    timestampSkewRecoveryRetried = true;
+                    _logger.Warning(
+                        "remote",
+                        $"remote retry reason=timestamp_skew_recovery path={OptiClickTimestampSkewRecovery.ResolvePathForLog(httpRequest)}");
+                    continue;
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorCode = $"bundle_report_http_{(int)response.StatusCode}";
+                    _logger.Error("remote", $"gpu-bundle-report failed code={errorCode}");
+                    return RemoteGpuBundleFetchResult.Failure(errorCode);
+                }
+
+                var content = await response.Content.ReadAsStringAsync(timeoutCts.Token);
+                _logger.Info("remote", $"gpu-bundle-report success status={(int)response.StatusCode}");
+                return RemoteGpuBundleFetchResult.Success(content ?? "");
+            }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

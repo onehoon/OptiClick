@@ -16,6 +16,7 @@ public sealed class RemoteGpuBundleManifestClient : IRemoteGpuBundleManifestClie
     private readonly Func<string?>? _appVersionProvider;
     private readonly IOptiClickApiRequestAuthenticator? _authenticator;
     private readonly IOptiClickApiTicketStore? _ticketStore;
+    private readonly IOptiClickServerClock? _serverClock;
     private readonly RemoteJsonFetcher _jsonFetcher;
 
     public RemoteGpuBundleManifestClient(
@@ -28,7 +29,8 @@ public sealed class RemoteGpuBundleManifestClient : IRemoteGpuBundleManifestClie
         TimeSpan? retryDelay = null,
         Func<string?>? appVersionProvider = null,
         IOptiClickApiRequestAuthenticator? authenticator = null,
-        IOptiClickApiTicketStore? ticketStore = null)
+        IOptiClickApiTicketStore? ticketStore = null,
+        IOptiClickServerClock? serverClock = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _requestUriBuilder = requestUriBuilder ?? throw new ArgumentNullException(nameof(requestUriBuilder));
@@ -37,12 +39,14 @@ public sealed class RemoteGpuBundleManifestClient : IRemoteGpuBundleManifestClie
         _appVersionProvider = appVersionProvider;
         _authenticator = authenticator;
         _ticketStore = ticketStore;
+        _serverClock = serverClock;
         _jsonFetcher = new RemoteJsonFetcher(
             _httpClient,
             _logger,
             timeout,
             maxAttempts,
-            retryDelay);
+            retryDelay,
+            _serverClock);
     }
 
     public async Task<RemoteGpuBundleManifestFetchResult> FetchAsync(

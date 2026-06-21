@@ -1,5 +1,6 @@
 using System.IO;
 using System.Net.Http;
+using OptiClick.Infrastructure.Logging;
 using OptiClick.Infrastructure.Security;
 
 namespace OptiClick.Infrastructure.Archives;
@@ -47,15 +48,21 @@ public sealed class ArchiveDownloader
     private readonly HttpClient _httpClient;
     private readonly IArchiveFileVerifier _fileVerifier;
     private readonly IArchiveDownloadRequestPreparer? _requestPreparer;
+    private readonly IOptiClickServerClock? _serverClock;
+    private readonly IAppLogger _logger;
 
     public ArchiveDownloader(
         HttpClient httpClient,
         IArchiveFileVerifier? fileVerifier = null,
-        IArchiveDownloadRequestPreparer? requestPreparer = null)
+        IArchiveDownloadRequestPreparer? requestPreparer = null,
+        IOptiClickServerClock? serverClock = null,
+        IAppLogger? logger = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _fileVerifier = fileVerifier ?? new ArchiveFileVerifier(_httpClient);
         _requestPreparer = requestPreparer;
+        _serverClock = serverClock;
+        _logger = logger ?? NullAppLogger.Instance;
     }
 
     public async Task<ArchiveDownloadResult> DownloadAsync(
@@ -85,41 +92,65 @@ public sealed class ArchiveDownloader
         {
             try
             {
-                using var request = new HttpRequestMessage(HttpMethod.Get, uri);
-                await PrepareRequestAsync(request, url, cts.Token).ConfigureAwait(false);
-                using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
-                response.EnsureSuccessStatusCode();
-
-                await using var source = await response.Content.ReadAsStreamAsync(cts.Token);
-                await using var file = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None);
-                await source.CopyToAsync(file, cts.Token);
-                file.Close();
-
-                var verification = await _fileVerifier.VerifyArchiveFileAsync(tempPath, url, fallbackSha256, cts.Token);
-                if (!verification.IsSuccess)
+                var timestampSkewRecoveryRetried = false;
+                while (true)
                 {
-                    TryDelete(tempPath);
-                    if (ShouldRetryVerificationFailure(verification, attempt))
+                    using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+                    await PrepareRequestAsync(request, url, cts.Token).ConfigureAwait(false);
+                    using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                    response.RequestMessage ??= request;
+
+                    var clockAdjusted = _serverClock?.Observe(response) == true;
+                    if (OptiClickTimestampSkewRecovery.ShouldRetryAfterClockAdjustment(
+                            request,
+                            response,
+                            clockAdjusted,
+                            timestampSkewRecoveryRetried))
                     {
+                        timestampSkewRecoveryRetried = true;
+                        _logger.Warning(
+                            "Security",
+                            $"archive download retry reason=timestamp_skew_recovery source_host={OptiClickTimestampSkewRecovery.ResolveHostForLog(request)}");
                         continue;
                     }
 
-                    return ArchiveDownloadResult.Failure(
-                        verification.ErrorCode,
-                        BuildVerificationFailureMessage(verification, attempt));
-                }
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        TryDelete(tempPath);
+                        return ArchiveDownloadResult.Failure("request_failed");
+                    }
 
-                if (File.Exists(destination))
-                {
-                    File.Delete(destination);
-                }
+                    await using var source = await response.Content.ReadAsStreamAsync(cts.Token);
+                    await using var file = new FileStream(tempPath, FileMode.Create, FileAccess.Write, FileShare.None);
+                    await source.CopyToAsync(file, cts.Token);
+                    file.Close();
 
-                File.Move(tempPath, destination);
-                return ArchiveDownloadResult.Success(
-                    destination,
-                    verification.Source,
-                    verification.ExpectedSha256,
-                    verification.ActualSha256);
+                    var verification = await _fileVerifier.VerifyArchiveFileAsync(tempPath, url, fallbackSha256, cts.Token);
+                    if (!verification.IsSuccess)
+                    {
+                        TryDelete(tempPath);
+                        if (ShouldRetryVerificationFailure(verification, attempt))
+                        {
+                            break;
+                        }
+
+                        return ArchiveDownloadResult.Failure(
+                            verification.ErrorCode,
+                            BuildVerificationFailureMessage(verification, attempt));
+                    }
+
+                    if (File.Exists(destination))
+                    {
+                        File.Delete(destination);
+                    }
+
+                    File.Move(tempPath, destination);
+                    return ArchiveDownloadResult.Success(
+                        destination,
+                        verification.Source,
+                        verification.ExpectedSha256,
+                        verification.ActualSha256);
+                }
             }
             catch (OperationCanceledException) when (cts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
             {

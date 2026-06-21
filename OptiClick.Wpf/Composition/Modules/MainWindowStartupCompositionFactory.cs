@@ -44,7 +44,11 @@ internal static class MainWindowStartupCompositionFactory
         var startupFlowCoordinator = new StartupFlowCoordinator();
         var coverCacheBootstrapFileSystem = new InstallFileSystem();
         var coverCacheBootstrapExtraBundleInstaller = new ExtraBundleInstaller(
-            new ArchiveDownloader(new HttpClient(), app.SecurityServices.ArchiveDownloadRequestPreparer),
+            new ArchiveDownloader(
+                new HttpClient(),
+                app.SecurityServices.ArchiveDownloadRequestPreparer,
+                app.SecurityServices.ServerClock,
+                app.AppLogger),
             new ZipArchiveExtractor(),
             coverCacheBootstrapFileSystem,
             app.LocalDataPathProvider.InstallExecutionTempDirectory);
