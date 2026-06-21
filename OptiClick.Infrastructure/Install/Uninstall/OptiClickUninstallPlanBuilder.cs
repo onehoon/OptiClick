@@ -5,7 +5,13 @@ namespace OptiClick.Infrastructure.Install.Uninstall;
 public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuilder
 {
     private static readonly string[] AllowedExtensions = [".dll", ".asi"];
-    private const string OptiScalerConfigFileName = "OptiScaler.ini";
+    private static readonly string[] SignaturelessOptiScalerRootExactFileNames =
+    [
+        "OptiScaler.ini",
+        "fakenvapi.dll",
+        "fakenvapi.ini",
+        "fakenvapi.log"
+    ];
 
     private readonly IOptiClickUninstallFileSystem _fileSystem;
     private readonly IOptiClickUninstallSignatureDetector _signatureDetector;
@@ -258,7 +264,10 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
                 map[fullPath] = rules;
             }
 
-            var rule = new ExactTargetRule(target.Kind, target.RequiresSignatureValidation);
+            var rule = new ExactTargetRule(
+                target.Kind,
+                target.RequiresSignatureValidation,
+                NormalizeComponentTargetRelativePath(target.RelativePath));
             if (!rules.Contains(rule))
             {
                 rules.Add(rule);
@@ -324,10 +333,10 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
     private static bool IsAllowedExactTarget(string fullPath, UninstallComponentTarget target)
     {
         return IsAllowedExtension(fullPath)
-               || IsSignaturelessOptiScalerConfigTarget(fullPath, target);
+               || IsSignaturelessOptiScalerRootExactTarget(fullPath, target);
     }
 
-    private static bool IsSignaturelessOptiScalerConfigTarget(string fullPath, UninstallComponentTarget target)
+    private static bool IsSignaturelessOptiScalerRootExactTarget(string fullPath, UninstallComponentTarget target)
     {
         if (target.RequiresSignatureValidation || target.Kind != UninstallCandidateKind.OptiScaler)
         {
@@ -335,8 +344,8 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
         }
 
         var normalizedRelativePath = NormalizeComponentTargetRelativePath(target.RelativePath);
-        return string.Equals(normalizedRelativePath, OptiScalerConfigFileName, StringComparison.OrdinalIgnoreCase)
-               && string.Equals(Path.GetFileName(fullPath), OptiScalerConfigFileName, StringComparison.OrdinalIgnoreCase);
+        return IsSignaturelessOptiScalerRootExactFileName(normalizedRelativePath)
+               && string.Equals(Path.GetFileName(fullPath), normalizedRelativePath, StringComparison.OrdinalIgnoreCase);
     }
 
     private static ExactTargetRule? ResolveSignaturelessExactTarget(
@@ -347,7 +356,8 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
             ? rules.FirstOrDefault(rule =>
                 !rule.RequiresSignatureValidation
                 && rule.Kind == UninstallCandidateKind.OptiScaler
-                && string.Equals(Path.GetFileName(fullPath), OptiScalerConfigFileName, StringComparison.OrdinalIgnoreCase))
+                && IsSignaturelessOptiScalerRootExactFileName(rule.RelativePath)
+                && string.Equals(Path.GetFileName(fullPath), rule.RelativePath, StringComparison.OrdinalIgnoreCase))
             : null;
     }
 
@@ -447,6 +457,13 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
         return normalizedRelative.Trim('/');
     }
 
+    private static bool IsSignaturelessOptiScalerRootExactFileName(string fileName)
+    {
+        return SignaturelessOptiScalerRootExactFileNames.Contains(
+            (fileName ?? "").Trim(),
+            StringComparer.OrdinalIgnoreCase);
+    }
+
     private static bool ExactTargetsContainKind(
         IReadOnlyDictionary<string, List<ExactTargetRule>> exactTargets,
         string fullPath,
@@ -468,5 +485,8 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
             : UninstallSkipReasons.VersionInfoUnavailable;
     }
 
-    private sealed record ExactTargetRule(UninstallCandidateKind Kind, bool RequiresSignatureValidation);
+    private sealed record ExactTargetRule(
+        UninstallCandidateKind Kind,
+        bool RequiresSignatureValidation,
+        string RelativePath);
 }

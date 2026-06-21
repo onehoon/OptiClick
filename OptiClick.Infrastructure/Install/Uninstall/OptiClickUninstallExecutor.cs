@@ -4,7 +4,13 @@ namespace OptiClick.Infrastructure.Install.Uninstall;
 
 public sealed class OptiClickUninstallExecutor : IOptiClickUninstallExecutor
 {
-    private const string OptiScalerConfigFileName = "OptiScaler.ini";
+    private static readonly string[] SignaturelessOptiScalerRootExactFileNames =
+    [
+        "OptiScaler.ini",
+        "fakenvapi.dll",
+        "fakenvapi.ini",
+        "fakenvapi.log"
+    ];
 
     private readonly IOptiClickUninstallFileSystem _fileSystem;
     private readonly IOptiClickUninstallSignatureDetector _signatureDetector;
@@ -308,10 +314,9 @@ public sealed class OptiClickUninstallExecutor : IOptiClickUninstallExecutor
     private static bool CanDeleteWithoutSignatureValidation(UninstallCandidate candidate, string relativePath)
     {
         return candidate.Kind == UninstallCandidateKind.OptiScaler
-               && string.Equals(
-                   (relativePath ?? "").Replace('\\', '/'),
-                   OptiScalerConfigFileName,
-                   StringComparison.OrdinalIgnoreCase);
+               && SignaturelessOptiScalerRootExactFileNames.Contains(
+                   (relativePath ?? "").Replace('\\', '/').Trim(),
+                   StringComparer.OrdinalIgnoreCase);
     }
 
     private static string ResolveDetectionSkipReason(UninstallSignatureDetection detection)
