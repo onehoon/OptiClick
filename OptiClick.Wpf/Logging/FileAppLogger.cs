@@ -17,6 +17,11 @@ public sealed class FileAppLogger : IAppLogger
 
     public string LogDirectory => _inner.LogDirectory;
 
+    public void Debug(string category, string message)
+    {
+        _inner.Debug(category, message);
+    }
+
     public void Info(string category, string message)
     {
         _inner.Info(category, message);

@@ -222,31 +222,58 @@ public sealed partial class AppCompositionRoot
 
     public IRemoteDataContractSmokeRunner CreateRemoteDataContractSmokeRunner()
     {
-        var languageProvider = new SystemAppLanguageProvider(CreateAppLogger());
+        var logger = CreateAppLogger();
+        var appVersionProvider = CreateAppVersionProvider();
+        var localDataPathProvider = CreateAppLocalDataPathProvider();
+        var sharedHttpClient = new HttpClient();
+        var languageProvider = new SystemAppLanguageProvider(logger);
         var remoteOptionsLoader = new RemoteDataOptionsLoader();
-        var remoteEndpointProvider = new ConfigurationRemoteEndpointProvider(remoteOptionsLoader.Load());
+        var remoteDataOptions = remoteOptionsLoader.Load();
+        var remoteEndpointProvider = new ConfigurationRemoteEndpointProvider(remoteDataOptions);
+        var securityServices = CreateAppSecurityServices(
+            remoteDataOptions,
+            localDataPathProvider,
+            logger,
+            appVersionProvider,
+            sharedHttpClient);
         var runtimeOverrideFactory = new RuntimeTestEnvironmentOverrideProviderFactory();
-        var gpuProvider = runtimeOverrideFactory.ResolveGpuProvider(new WindowsGpuInfoProvider(CreateAppLogger()));
+        var gpuProvider = runtimeOverrideFactory.ResolveGpuProvider(new WindowsGpuInfoProvider(logger));
         var deviceProvider = runtimeOverrideFactory.ResolveDeviceProvider(new WindowsDeviceInfoProvider());
         var runtimeContextProvider = new RuntimeContextProvider(
             gpuProvider,
             deviceProvider,
             languageProvider,
             remoteEndpointProvider,
-            CreateAppLogger());
+            logger);
 
         var runtimeDataLoader = CreateRemoteRuntimeDataLoader(
-            CreateRemoteRuntimeDataClient(remoteEndpointProvider, logger: CreateAppLogger()),
+            CreateRemoteRuntimeDataClient(
+                remoteEndpointProvider,
+                sharedHttpClient,
+                logger,
+                appVersionProvider,
+                securityServices.ApiRequestAuthenticator),
             CreateRemoteRuntimeDataParser());
 
         return new RemoteDataContractSmokeRunner(
             runtimeContextProvider,
             runtimeDataLoader,
-            CreateRemoteGpuBundleManifestClient(),
+            CreateRemoteGpuBundleManifestClient(
+                sharedHttpClient,
+                logger,
+                appVersionProvider,
+                securityServices.ApiRequestAuthenticator,
+                securityServices.TicketStore),
             CreateGpuBundleManifestRuleResolver(),
-            CreateRemoteGpuBundleClient(),
+            CreateRemoteGpuBundleClient(
+                sharedHttpClient,
+                logger,
+                appVersionProvider,
+                securityServices.ApiRequestAuthenticator,
+                securityServices.TicketStore),
             CreateRemoteGpuBundleParser(),
-            CreateGpuBundleGameDatabaseMerger());
+            CreateGpuBundleGameDatabaseMerger(),
+            () => appVersionProvider.GetCurrentVersion());
     }
 
     public IShellGameCardStateResolver CreateShellGameCardStateResolver()

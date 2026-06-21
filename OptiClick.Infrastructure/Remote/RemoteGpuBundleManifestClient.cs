@@ -64,6 +64,9 @@ public sealed class RemoteGpuBundleManifestClient : IRemoteGpuBundleManifestClie
             return RemoteGpuBundleManifestFetchResult.Failure("invalid_manifest_endpoint");
         }
 
+        _logger.Info(
+            "Security",
+            $"gpu-bundle-manifest security context authenticator_configured={FormatBool(_authenticator is not null)} ticket_store_configured={FormatBool(_ticketStore is not null)} app_version={NormalizeLogValue(ResolveAppVersion(), "none")}");
         var fetchResult = await _jsonFetcher.FetchStringAsync(
             cancellationToken => CreateJsonRequestAsync(requestUri, cancellationToken),
             new RemoteJsonFetchOptions
@@ -101,6 +104,9 @@ public sealed class RemoteGpuBundleManifestClient : IRemoteGpuBundleManifestClie
         }
 
         var policyRevision = ReadHeader(fetchResult, "X-OptiClick-Policy-Revision");
+        _logger.Info(
+            "Security",
+            $"gpu-bundle-manifest ticket received bundle_ticket_present={FormatBool(!string.IsNullOrWhiteSpace(bundleTicket))} policy_revision={NormalizeLogValue(policyRevision, "none")}");
         _logger.Info("remote", $"gpu-bundle-manifest parsed rules={parsed.Manifest.Rules.Count} manifest_version={NormalizeLogValue(parsed.Manifest.ManifestVersion, "none")}");
         return RemoteGpuBundleManifestFetchResult.Success(parsed.Manifest, bundleTicket, policyRevision);
     }
@@ -112,6 +118,9 @@ public sealed class RemoteGpuBundleManifestClient : IRemoteGpuBundleManifestClie
         httpRequest.Headers.Accept.ParseAdd("application/json");
         if (_authenticator is not null)
         {
+            _logger.Debug(
+                "Security",
+                $"gpu-bundle-manifest auth apply app_version={NormalizeLogValue(ResolveAppVersion(), "none")}");
             await _authenticator.ApplyAsync(
                 httpRequest,
                 new OptiClickApiRequestContext
@@ -144,6 +153,11 @@ public sealed class RemoteGpuBundleManifestClient : IRemoteGpuBundleManifestClie
     {
         var normalized = (value ?? "").Trim();
         return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+    }
+
+    private static string FormatBool(bool value)
+    {
+        return value ? "true" : "false";
     }
 
     private static string ReadHeader(RemoteJsonFetchResult result, string headerName)

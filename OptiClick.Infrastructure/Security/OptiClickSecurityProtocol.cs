@@ -110,8 +110,11 @@ public sealed class ProtectedDataOptiClickClientCredentialStore : IOptiClickClie
 
     public async Task<OptiClickClientCredential?> LoadAsync(CancellationToken cancellationToken = default)
     {
+        var fileName = Path.GetFileName(_credentialPath);
+        _logger.Debug("Security", $"client credential load start file={fileName}");
         if (!File.Exists(_credentialPath))
         {
+            _logger.Info("Security", $"client credential load skipped reason=file_missing file={fileName}");
             return null;
         }
 
@@ -120,6 +123,7 @@ public sealed class ProtectedDataOptiClickClientCredentialStore : IOptiClickClie
             var json = await File.ReadAllTextAsync(_credentialPath, cancellationToken).ConfigureAwait(false);
             if (string.IsNullOrWhiteSpace(json))
             {
+                _logger.Info("Security", $"client credential load skipped reason=empty_file file={fileName}");
                 return null;
             }
 
@@ -129,7 +133,10 @@ public sealed class ProtectedDataOptiClickClientCredentialStore : IOptiClickClie
                 || string.IsNullOrWhiteSpace(stored.ClientId)
                 || string.IsNullOrWhiteSpace(stored.ProtectedClientSecret))
             {
-                MoveCorruptCredentialFile();
+                var movedPath = MoveCorruptCredentialFile();
+                _logger.Warning(
+                    "Security",
+                    $"client credential load invalid reason=invalid_payload file={fileName} moved={Path.GetFileName(movedPath)}");
                 return null;
             }
 
@@ -138,10 +145,16 @@ public sealed class ProtectedDataOptiClickClientCredentialStore : IOptiClickClie
             var clientSecret = Encoding.UTF8.GetString(secretBytes);
             if (string.IsNullOrWhiteSpace(clientSecret))
             {
-                MoveCorruptCredentialFile();
+                var movedPath = MoveCorruptCredentialFile();
+                _logger.Warning(
+                    "Security",
+                    $"client credential load invalid reason=empty_secret file={fileName} moved={Path.GetFileName(movedPath)}");
                 return null;
             }
 
+            _logger.Info(
+                "Security",
+                $"client credential load success file={fileName} client_id_present=true created_at_present={FormatBool(stored.CreatedAtUtc != default)}");
             return new OptiClickClientCredential
             {
                 SchemaVersion = stored.SchemaVersion,
@@ -170,10 +183,12 @@ public sealed class ProtectedDataOptiClickClientCredentialStore : IOptiClickClie
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        var fileName = Path.GetFileName(_credentialPath);
         if (credential is null
             || string.IsNullOrWhiteSpace(credential.ClientId)
             || string.IsNullOrWhiteSpace(credential.ClientSecret))
         {
+            _logger.Info("Security", $"client credential save skipped reason=invalid_credential file={fileName}");
             return Task.CompletedTask;
         }
 
@@ -194,12 +209,15 @@ public sealed class ProtectedDataOptiClickClientCredentialStore : IOptiClickClie
 
             var json = JsonSerializer.Serialize(stored, SerializerOptions);
             AtomicFileWriter.WriteAllTextAtomic(_credentialPath, json);
+            _logger.Info(
+                "Security",
+                $"client credential save success file={fileName} app_version={NormalizeLogValue(appVersion, "none")}");
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             _logger.Warning(
                 "Security",
-                $"client credential save failed file={Path.GetFileName(_credentialPath)} type={ex.GetType().Name}");
+                $"client credential save failed file={fileName} type={ex.GetType().Name}");
         }
 
         return Task.CompletedTask;
@@ -225,6 +243,17 @@ public sealed class ProtectedDataOptiClickClientCredentialStore : IOptiClickClie
             "Security",
             StoreFileName);
     }
+
+    private static string FormatBool(bool value)
+    {
+        return value ? "true" : "false";
+    }
+
+    private static string NormalizeLogValue(string? value, string fallback)
+    {
+        var normalized = (value ?? "").Trim();
+        return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+    }
 }
 
 public sealed record OptiClickClientRegistrationResponse
@@ -245,9 +274,49 @@ public sealed record OptiClickClientRegistrationResponse
     public DateTimeOffset CreatedAtUtc { get; init; }
 }
 
+public enum OptiClickClientRegistrationFailureKind
+{
+    None = 0,
+    Unsupported = 1,
+    TransientFailure = 2
+}
+
+public sealed record OptiClickClientRegistrationResult
+{
+    public OptiClickClientCredential? Credential { get; init; }
+    public OptiClickClientRegistrationFailureKind FailureKind { get; init; }
+
+    public bool IsSuccess => Credential is not null;
+    public bool IsUnsupported => FailureKind == OptiClickClientRegistrationFailureKind.Unsupported;
+
+    public static OptiClickClientRegistrationResult Success(OptiClickClientCredential credential)
+    {
+        return new OptiClickClientRegistrationResult
+        {
+            Credential = credential
+        };
+    }
+
+    public static OptiClickClientRegistrationResult Unsupported()
+    {
+        return new OptiClickClientRegistrationResult
+        {
+            FailureKind = OptiClickClientRegistrationFailureKind.Unsupported
+        };
+    }
+
+    public static OptiClickClientRegistrationResult TransientFailure()
+    {
+        return new OptiClickClientRegistrationResult
+        {
+            FailureKind = OptiClickClientRegistrationFailureKind.TransientFailure
+        };
+    }
+}
+
 public interface IOptiClickClientRegistrationClient
 {
-    Task<OptiClickClientCredential?> RegisterAsync(CancellationToken cancellationToken = default);
+    Task<OptiClickClientRegistrationResult> RegisterAsync(CancellationToken cancellationToken = default);
 }
 
 public sealed class OptiClickClientRegistrationClient : IOptiClickClientRegistrationClient
@@ -278,11 +347,12 @@ public sealed class OptiClickClientRegistrationClient : IOptiClickClientRegistra
         _timeout = timeout ?? TimeSpan.FromSeconds(5);
     }
 
-    public async Task<OptiClickClientCredential?> RegisterAsync(CancellationToken cancellationToken = default)
+    public async Task<OptiClickClientRegistrationResult> RegisterAsync(CancellationToken cancellationToken = default)
     {
         if (_registrationEndpoint is null)
         {
-            return null;
+            _logger.Info("Security", "client registration skipped reason=endpoint_missing");
+            return OptiClickClientRegistrationResult.Unsupported();
         }
 
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -290,6 +360,9 @@ public sealed class OptiClickClientRegistrationClient : IOptiClickClientRegistra
 
         try
         {
+            _logger.Info(
+                "Security",
+                $"client registration request start endpoint_host={NormalizeLogValue(_registrationEndpoint.Host, "none")} endpoint_path={NormalizeLogValue(_registrationEndpoint.AbsolutePath, "none")} app_version={ResolveAppVersionForLog()}");
             using var request = new HttpRequestMessage(HttpMethod.Post, _registrationEndpoint)
             {
                 Content = new StringContent("{}", Encoding.UTF8, "application/json")
@@ -302,15 +375,17 @@ public sealed class OptiClickClientRegistrationClient : IOptiClickClientRegistra
                 HttpCompletionOption.ResponseHeadersRead,
                 timeoutCts.Token).ConfigureAwait(false);
 
-            if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.ServiceUnavailable)
+            _logger.Info("Security", $"client registration response status={(int)response.StatusCode}");
+            if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.MethodNotAllowed or HttpStatusCode.ServiceUnavailable)
             {
-                return null;
+                _logger.Info("Security", $"client registration unsupported status={(int)response.StatusCode}");
+                return OptiClickClientRegistrationResult.Unsupported();
             }
 
             if (!response.IsSuccessStatusCode)
             {
                 _logger.Info("Security", $"client registration unavailable status={(int)response.StatusCode}");
-                return null;
+                return OptiClickClientRegistrationResult.TransientFailure();
             }
 
             await using var stream = await response.Content.ReadAsStreamAsync(timeoutCts.Token).ConfigureAwait(false);
@@ -324,18 +399,23 @@ public sealed class OptiClickClientRegistrationClient : IOptiClickClientRegistra
                 || string.IsNullOrWhiteSpace(payload.ClientId)
                 || string.IsNullOrWhiteSpace(payload.ClientSecret))
             {
-                return null;
+                _logger.Info("Security", "client registration invalid_payload");
+                return OptiClickClientRegistrationResult.TransientFailure();
             }
 
-            return new OptiClickClientCredential
-            {
-                SchemaVersion = payload.SchemaVersion,
-                ClientId = payload.ClientId.Trim(),
-                ClientSecret = payload.ClientSecret.Trim(),
-                CreatedAtUtc = payload.CreatedAtUtc == default
-                    ? DateTimeOffset.UtcNow
-                    : payload.CreatedAtUtc
-            };
+            _logger.Info(
+                "Security",
+                $"client registration success client_id_present=true created_at_present={FormatBool(payload.CreatedAtUtc != default)}");
+            return OptiClickClientRegistrationResult.Success(
+                new OptiClickClientCredential
+                {
+                    SchemaVersion = payload.SchemaVersion,
+                    ClientId = payload.ClientId.Trim(),
+                    ClientSecret = payload.ClientSecret.Trim(),
+                    CreatedAtUtc = payload.CreatedAtUtc == default
+                        ? DateTimeOffset.UtcNow
+                        : payload.CreatedAtUtc
+                });
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -344,7 +424,7 @@ public sealed class OptiClickClientRegistrationClient : IOptiClickClientRegistra
         catch (Exception ex)
         {
             _logger.Info("Security", $"client registration skipped type={ex.GetType().Name}");
-            return null;
+            return OptiClickClientRegistrationResult.TransientFailure();
         }
     }
 
@@ -352,6 +432,22 @@ public sealed class OptiClickClientRegistrationClient : IOptiClickClientRegistra
     {
         var version = (_appVersionProvider() ?? "").Trim();
         return $"{UserAgentProduct}/{(string.IsNullOrWhiteSpace(version) ? "0.0.0" : version)}";
+    }
+
+    private string ResolveAppVersionForLog()
+    {
+        return NormalizeLogValue(_appVersionProvider(), "none");
+    }
+
+    private static string FormatBool(bool value)
+    {
+        return value ? "true" : "false";
+    }
+
+    private static string NormalizeLogValue(string? value, string fallback)
+    {
+        var normalized = (value ?? "").Trim();
+        return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
     }
 }
 
@@ -362,28 +458,35 @@ public interface IOptiClickClientCredentialProvider
 
 public sealed class OptiClickClientCredentialProvider : IOptiClickClientCredentialProvider
 {
+    private static readonly TimeSpan RegistrationRetryBackoff = TimeSpan.FromSeconds(30);
+
     private readonly IOptiClickClientCredentialStore _store;
     private readonly IOptiClickClientRegistrationClient _registrationClient;
     private readonly Func<string?> _appVersionProvider;
+    private readonly IAppLogger _logger;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private OptiClickClientCredential? _cachedCredential;
     private bool _storeLoaded;
-    private bool _registrationAttempted;
+    private bool _registrationUnsupported;
+    private DateTimeOffset _nextRegistrationAttemptUtc;
 
     public OptiClickClientCredentialProvider(
         IOptiClickClientCredentialStore store,
         IOptiClickClientRegistrationClient registrationClient,
-        Func<string?> appVersionProvider)
+        Func<string?> appVersionProvider,
+        IAppLogger? logger = null)
     {
         _store = store ?? throw new ArgumentNullException(nameof(store));
         _registrationClient = registrationClient ?? throw new ArgumentNullException(nameof(registrationClient));
         _appVersionProvider = appVersionProvider ?? (() => "");
+        _logger = logger ?? NullAppLogger.Instance;
     }
 
     public async Task<OptiClickClientCredential?> GetCredentialAsync(CancellationToken cancellationToken = default)
     {
         if (_cachedCredential is not null)
         {
+            _logger.Debug("Security", "client credential provider cache_hit=true");
             return _cachedCredential;
         }
 
@@ -392,42 +495,78 @@ public sealed class OptiClickClientCredentialProvider : IOptiClickClientCredenti
         {
             if (_cachedCredential is not null)
             {
+                _logger.Debug("Security", "client credential provider cache_hit=true scope=locked");
                 return _cachedCredential;
             }
 
             if (!_storeLoaded)
             {
+                _logger.Debug("Security", "client credential provider store_load start");
                 _cachedCredential = await _store.LoadAsync(cancellationToken).ConfigureAwait(false);
                 _storeLoaded = true;
                 if (_cachedCredential is not null)
                 {
+                    _logger.Info("Security", "client credential provider store_hit=true");
                     return _cachedCredential;
                 }
+
+                _logger.Info("Security", "client credential provider store_hit=false");
             }
 
-            if (_registrationAttempted)
+            if (_registrationUnsupported)
             {
+                _logger.Info("Security", "client credential provider registration skipped reason=unsupported_cached");
                 return null;
             }
 
-            _registrationAttempted = true;
-            var registered = await _registrationClient.RegisterAsync(cancellationToken).ConfigureAwait(false);
-            if (registered is null)
+            if (_nextRegistrationAttemptUtc > DateTimeOffset.UtcNow)
             {
+                var remainingSeconds = Math.Max(0, (int)Math.Ceiling((_nextRegistrationAttemptUtc - DateTimeOffset.UtcNow).TotalSeconds));
+                _logger.Info("Security", $"client credential provider registration skipped reason=backoff seconds_remaining={remainingSeconds}");
                 return null;
             }
 
+            _logger.Info(
+                "Security",
+                $"client credential provider registration start app_version={NormalizeLogValue(_appVersionProvider(), "none")}");
+            var registrationResult = await _registrationClient.RegisterAsync(cancellationToken).ConfigureAwait(false);
+            if (!registrationResult.IsSuccess || registrationResult.Credential is null)
+            {
+                if (registrationResult.IsUnsupported)
+                {
+                    _registrationUnsupported = true;
+                    _logger.Info("Security", "client credential provider registration result=unsupported");
+                }
+                else
+                {
+                    _nextRegistrationAttemptUtc = DateTimeOffset.UtcNow.Add(RegistrationRetryBackoff);
+                    _logger.Info(
+                        "Security",
+                        $"client credential provider registration result=transient backoff_seconds={(int)RegistrationRetryBackoff.TotalSeconds}");
+                }
+
+                return null;
+            }
+
+            var registered = registrationResult.Credential;
             await _store.SaveAsync(
                 registered,
                 _appVersionProvider() ?? "",
                 cancellationToken).ConfigureAwait(false);
             _cachedCredential = registered;
+            _logger.Info("Security", "client credential provider registration result=success saved=true");
             return _cachedCredential;
         }
         finally
         {
             _gate.Release();
         }
+    }
+
+    private static string NormalizeLogValue(string? value, string fallback)
+    {
+        var normalized = (value ?? "").Trim();
+        return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
     }
 }
 
@@ -658,6 +797,7 @@ public sealed class OptiClickApiRequestAuthenticator : IOptiClickApiRequestAuthe
     private readonly IOptiClickApiSession _session;
     private readonly Func<DateTimeOffset> _utcNow;
     private readonly Func<string> _nonceFactory;
+    private readonly IAppLogger _logger;
 
     public OptiClickApiRequestAuthenticator(
         IOptiClickClientCredentialProvider credentialProvider,
@@ -665,7 +805,8 @@ public sealed class OptiClickApiRequestAuthenticator : IOptiClickApiRequestAuthe
         OptiClickRequestCanonicalizer canonicalizer,
         IOptiClickApiSession session,
         Func<DateTimeOffset>? utcNow = null,
-        Func<string>? nonceFactory = null)
+        Func<string>? nonceFactory = null,
+        IAppLogger? logger = null)
     {
         _credentialProvider = credentialProvider ?? throw new ArgumentNullException(nameof(credentialProvider));
         _hmacSigner = hmacSigner ?? throw new ArgumentNullException(nameof(hmacSigner));
@@ -673,6 +814,7 @@ public sealed class OptiClickApiRequestAuthenticator : IOptiClickApiRequestAuthe
         _session = session ?? throw new ArgumentNullException(nameof(session));
         _utcNow = utcNow ?? (() => DateTimeOffset.UtcNow);
         _nonceFactory = nonceFactory ?? CreateNonce;
+        _logger = logger ?? NullAppLogger.Instance;
     }
 
     public async Task ApplyAsync(
@@ -683,15 +825,25 @@ public sealed class OptiClickApiRequestAuthenticator : IOptiClickApiRequestAuthe
         ArgumentNullException.ThrowIfNull(request);
         var safeContext = context ?? new OptiClickApiRequestContext();
         var appVersion = (safeContext.AppVersion ?? "").Trim();
+        var method = NormalizeLogValue(request.Method?.Method, "none");
+        var path = NormalizeLogValue(request.RequestUri?.AbsolutePath, "none");
+
+        _logger.Debug(
+            "Security",
+            $"api auth apply start method={method} path={path} app_version={NormalizeLogValue(appVersion, "none")} include_signature={FormatBool(safeContext.IncludeSignature)} manifest_version_present={FormatBool(!string.IsNullOrWhiteSpace(safeContext.ManifestVersion))} bundle_ticket_present={FormatBool(!string.IsNullOrWhiteSpace(safeContext.BundleTicket))} download_ticket_present={FormatBool(!string.IsNullOrWhiteSpace(safeContext.DownloadTicket))}");
 
         SetHeader(request, OptiClickProtocolHeaders.Protocol, "2");
         SetHeader(request, OptiClickProtocolHeaders.AppVersion, appVersion);
         SetHeader(request, OptiClickProtocolHeaders.AppStartId, _session.AppStartId);
         SetOptionalHeader(request, OptiClickProtocolHeaders.BundleTicket, safeContext.BundleTicket);
         SetOptionalHeader(request, OptiClickProtocolHeaders.DownloadTicket, safeContext.DownloadTicket);
+        _logger.Debug(
+            "Security",
+            $"api auth base headers applied method={method} path={path} protocol2=true app_start_id_present={FormatBool(!string.IsNullOrWhiteSpace(_session.AppStartId))}");
 
         if (!safeContext.IncludeSignature)
         {
+            _logger.Info("Security", $"api auth signature skipped reason=include_signature_false method={method} path={path}");
             return;
         }
 
@@ -702,6 +854,7 @@ public sealed class OptiClickApiRequestAuthenticator : IOptiClickApiRequestAuthe
                 || string.IsNullOrWhiteSpace(credential.ClientId)
                 || string.IsNullOrWhiteSpace(credential.ClientSecret))
             {
+                _logger.Info("Security", $"api auth signature skipped reason=credential_missing method={method} path={path}");
                 return;
             }
 
@@ -716,6 +869,7 @@ public sealed class OptiClickApiRequestAuthenticator : IOptiClickApiRequestAuthe
             var signature = _hmacSigner.SignWithBase64UrlSecret(credential.ClientSecret, canonical);
             if (string.IsNullOrWhiteSpace(signature))
             {
+                _logger.Info("Security", $"api auth signature skipped reason=signature_empty method={method} path={path}");
                 return;
             }
 
@@ -723,17 +877,21 @@ public sealed class OptiClickApiRequestAuthenticator : IOptiClickApiRequestAuthe
             SetHeader(request, OptiClickProtocolHeaders.Timestamp, timestamp);
             SetHeader(request, OptiClickProtocolHeaders.Nonce, nonce);
             SetHeader(request, OptiClickProtocolHeaders.Signature, signature);
+            _logger.Info(
+                "Security",
+                $"api auth signature applied method={method} path={path} client_id_present=true timestamp_present=true manifest_version_present={FormatBool(!string.IsNullOrWhiteSpace(safeContext.ManifestVersion))} bundle_ticket_present={FormatBool(!string.IsNullOrWhiteSpace(safeContext.BundleTicket))} download_ticket_present={FormatBool(!string.IsNullOrWhiteSpace(safeContext.DownloadTicket))}");
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             throw;
         }
-        catch
+        catch (Exception ex)
         {
             RemoveHeader(request, OptiClickProtocolHeaders.ClientId);
             RemoveHeader(request, OptiClickProtocolHeaders.Timestamp);
             RemoveHeader(request, OptiClickProtocolHeaders.Nonce);
             RemoveHeader(request, OptiClickProtocolHeaders.Signature);
+            _logger.Warning("Security", $"api auth signature skipped reason=exception method={method} path={path} type={ex.GetType().Name}");
         }
     }
 
@@ -767,6 +925,17 @@ public sealed class OptiClickApiRequestAuthenticator : IOptiClickApiRequestAuthe
     {
         return OptiClickBase64Url.Encode(RandomNumberGenerator.GetBytes(18));
     }
+
+    private static string FormatBool(bool value)
+    {
+        return value ? "true" : "false";
+    }
+
+    private static string NormalizeLogValue(string? value, string fallback)
+    {
+        var normalized = (value ?? "").Trim();
+        return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+    }
 }
 
 public sealed record ExtraBundleResourcePath
@@ -778,6 +947,8 @@ public sealed record ExtraBundleResourcePath
 
 public interface IRemoteDownloadTicketClient
 {
+    bool CanRequestTicketForSource(string sourceUrl);
+
     Task<string> TryGetDownloadTicketAsync(
         string sourceUrl,
         CancellationToken cancellationToken = default);
@@ -813,9 +984,24 @@ public sealed class RemoteDownloadTicketClient : IRemoteDownloadTicketClient
         string sourceUrl,
         CancellationToken cancellationToken = default)
     {
-        if (_downloadTicketEndpoint is null
-            || !TryParseExtraBundleResourceUrl(sourceUrl, out var resource))
+        var endpoint = _downloadTicketEndpoint;
+        if (endpoint is null)
         {
+            _logger.Info("Security", "download ticket skipped reason=endpoint_missing");
+            return "";
+        }
+
+        if (!TryParseExtraBundleResourceUrl(sourceUrl, out var resource))
+        {
+            _logger.Info("Security", "download ticket skipped reason=invalid_resource_url");
+            return "";
+        }
+
+        if (!HasSameOrigin(sourceUrl, endpoint))
+        {
+            _logger.Info(
+                "Security",
+                $"download ticket skipped reason=origin_mismatch source_host={ResolveHostForLog(sourceUrl)} endpoint_host={NormalizeLogValue(endpoint.Host, "none")}");
             return "";
         }
 
@@ -824,7 +1010,10 @@ public sealed class RemoteDownloadTicketClient : IRemoteDownloadTicketClient
 
         try
         {
-            using var request = new HttpRequestMessage(HttpMethod.Get, BuildTicketRequestUri(_downloadTicketEndpoint, resource));
+            _logger.Info(
+                "Security",
+                $"download ticket request start bundle={NormalizeLogValue(resource.Bundle, "none")} version={NormalizeLogValue(resource.Version, "none")} filename={NormalizeLogValue(resource.Filename, "none")} app_version={ResolveAppVersionForLog()} authenticator_configured={FormatBool(_authenticator is not null)}");
+            using var request = new HttpRequestMessage(HttpMethod.Get, BuildTicketRequestUri(endpoint, resource));
             request.Headers.UserAgent.ParseAdd(BuildUserAgentValue());
             request.Headers.Accept.ParseAdd("application/json");
             if (_authenticator is not null)
@@ -843,8 +1032,10 @@ public sealed class RemoteDownloadTicketClient : IRemoteDownloadTicketClient
                 HttpCompletionOption.ResponseHeadersRead,
                 timeoutCts.Token).ConfigureAwait(false);
 
+            _logger.Info("Security", $"download ticket response status={(int)response.StatusCode}");
             if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.ServiceUnavailable)
             {
+                _logger.Info("Security", $"download ticket unsupported status={(int)response.StatusCode}");
                 return "";
             }
 
@@ -861,10 +1052,13 @@ public sealed class RemoteDownloadTicketClient : IRemoteDownloadTicketClient
                 || !document.RootElement.TryGetProperty("download_ticket", out var ticketElement)
                 || ticketElement.ValueKind != JsonValueKind.String)
             {
+                _logger.Info("Security", "download ticket invalid_payload");
                 return "";
             }
 
-            return ticketElement.GetString()?.Trim() ?? "";
+            var ticket = ticketElement.GetString()?.Trim() ?? "";
+            _logger.Info("Security", $"download ticket success ticket_present={FormatBool(!string.IsNullOrWhiteSpace(ticket))}");
+            return ticket;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -875,6 +1069,13 @@ public sealed class RemoteDownloadTicketClient : IRemoteDownloadTicketClient
             _logger.Info("Security", $"download ticket skipped type={ex.GetType().Name}");
             return "";
         }
+    }
+
+    public bool CanRequestTicketForSource(string sourceUrl)
+    {
+        return _downloadTicketEndpoint is not null
+            && TryParseExtraBundleResourceUrl(sourceUrl, out _)
+            && HasSameOrigin(sourceUrl, _downloadTicketEndpoint);
     }
 
     public static bool TryParseExtraBundleResourceUrl(string sourceUrl, out ExtraBundleResourcePath resource)
@@ -915,6 +1116,18 @@ public sealed class RemoteDownloadTicketClient : IRemoteDownloadTicketClient
             Filename = filename
         };
         return true;
+    }
+
+    private static bool HasSameOrigin(string sourceUrl, Uri endpoint)
+    {
+        if (!Uri.TryCreate((sourceUrl ?? "").Trim(), UriKind.Absolute, out var source))
+        {
+            return false;
+        }
+
+        return string.Equals(source.Scheme, endpoint.Scheme, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(source.Host, endpoint.Host, StringComparison.OrdinalIgnoreCase)
+            && source.Port == endpoint.Port;
     }
 
     private static Uri BuildTicketRequestUri(Uri endpoint, ExtraBundleResourcePath resource)
@@ -958,6 +1171,29 @@ public sealed class RemoteDownloadTicketClient : IRemoteDownloadTicketClient
         var version = (_appVersionProvider() ?? "").Trim();
         return $"{UserAgentProduct}/{(string.IsNullOrWhiteSpace(version) ? "0.0.0" : version)}";
     }
+
+    private string ResolveAppVersionForLog()
+    {
+        return NormalizeLogValue(_appVersionProvider(), "none");
+    }
+
+    private static string ResolveHostForLog(string sourceUrl)
+    {
+        return Uri.TryCreate((sourceUrl ?? "").Trim(), UriKind.Absolute, out var uri)
+            ? NormalizeLogValue(uri.Host, "none")
+            : "invalid";
+    }
+
+    private static string FormatBool(bool value)
+    {
+        return value ? "true" : "false";
+    }
+
+    private static string NormalizeLogValue(string? value, string fallback)
+    {
+        var normalized = (value ?? "").Trim();
+        return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+    }
 }
 
 public interface IArchiveDownloadRequestPreparer
@@ -973,15 +1209,18 @@ public sealed class OptiClickArchiveDownloadRequestPreparer : IArchiveDownloadRe
     private readonly IRemoteDownloadTicketClient _downloadTicketClient;
     private readonly IOptiClickApiRequestAuthenticator _authenticator;
     private readonly Func<string?> _appVersionProvider;
+    private readonly IAppLogger _logger;
 
     public OptiClickArchiveDownloadRequestPreparer(
         IRemoteDownloadTicketClient downloadTicketClient,
         IOptiClickApiRequestAuthenticator authenticator,
-        Func<string?> appVersionProvider)
+        Func<string?> appVersionProvider,
+        IAppLogger? logger = null)
     {
         _downloadTicketClient = downloadTicketClient ?? throw new ArgumentNullException(nameof(downloadTicketClient));
         _authenticator = authenticator ?? throw new ArgumentNullException(nameof(authenticator));
         _appVersionProvider = appVersionProvider ?? (() => "");
+        _logger = logger ?? NullAppLogger.Instance;
     }
 
     public async Task PrepareAsync(
@@ -990,14 +1229,19 @@ public sealed class OptiClickArchiveDownloadRequestPreparer : IArchiveDownloadRe
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (!RemoteDownloadTicketClient.TryParseExtraBundleResourceUrl(sourceUrl, out _))
+        if (!_downloadTicketClient.CanRequestTicketForSource(sourceUrl))
         {
+            _logger.Info("Security", $"archive download prepare skipped reason=ticket_not_available source_host={ResolveHostForLog(sourceUrl)}");
             return;
         }
 
+        _logger.Info(
+            "Security",
+            $"archive download prepare start source_host={ResolveHostForLog(sourceUrl)} app_version={NormalizeLogValue(_appVersionProvider(), "none")}");
         var downloadTicket = await _downloadTicketClient.TryGetDownloadTicketAsync(
             sourceUrl,
             cancellationToken).ConfigureAwait(false);
+        _logger.Info("Security", $"archive download prepare ticket_result download_ticket_present={FormatBool(!string.IsNullOrWhiteSpace(downloadTicket))}");
 
         await _authenticator.ApplyAsync(
             request,
@@ -1007,5 +1251,26 @@ public sealed class OptiClickArchiveDownloadRequestPreparer : IArchiveDownloadRe
                 DownloadTicket = downloadTicket
             },
             cancellationToken).ConfigureAwait(false);
+        _logger.Info(
+            "Security",
+            $"archive download prepare complete download_ticket_present={FormatBool(!string.IsNullOrWhiteSpace(downloadTicket))}");
+    }
+
+    private static string ResolveHostForLog(string sourceUrl)
+    {
+        return Uri.TryCreate((sourceUrl ?? "").Trim(), UriKind.Absolute, out var uri)
+            ? NormalizeLogValue(uri.Host, "none")
+            : "invalid";
+    }
+
+    private static string FormatBool(bool value)
+    {
+        return value ? "true" : "false";
+    }
+
+    private static string NormalizeLogValue(string? value, string fallback)
+    {
+        var normalized = (value ?? "").Trim();
+        return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
     }
 }

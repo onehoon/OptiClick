@@ -98,18 +98,20 @@ public sealed class RemoteJsonFetcher
 
         for (var attempt = 1; attempt <= _maxAttempts; attempt++)
         {
-            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeoutCts.CancelAfter(_timeout);
-
             try
             {
+                _logger.Debug(safeOptions.LogCategory, $"{safeOptions.RequestLogMessage} attempt={attempt} max_attempts={_maxAttempts}");
                 _logger.Info(safeOptions.LogCategory, safeOptions.RequestLogMessage);
-                using var request = await createRequest(timeoutCts.Token).ConfigureAwait(false);
+                using var request = await createRequest(cancellationToken).ConfigureAwait(false);
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                timeoutCts.CancelAfter(_timeout);
+
                 using var response = await _httpClient.SendAsync(
                     request,
                     HttpCompletionOption.ResponseHeadersRead,
                     timeoutCts.Token);
 
+                _logger.Debug(safeOptions.LogCategory, $"{safeOptions.RequestLogMessage} response_status={(int)response.StatusCode}");
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorCode = $"{safeOptions.HttpErrorPrefix}{(int)response.StatusCode}";

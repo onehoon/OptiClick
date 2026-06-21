@@ -67,6 +67,9 @@ public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
         _logger.Info(
             "remote",
             $"gpu-bundle request vendor={NormalizeLogValue(safeRequest.Vendor, "none")} bundle={NormalizeLogValue(safeRequest.BundleKey, "none")} gpu_raw={NormalizeLogValue(safeRequest.GpuRaw, "none")} request_source={NormalizeLogValue(safeRequest.RequestSource, "none")} device_manufacturer={NormalizeLogValue(safeRequest.DeviceManufacturer, "none")} device_model={NormalizeLogValue(safeRequest.DeviceModel, "none")} app_version={NormalizeLogValue(safeRequest.AppVersion, "none")} manifest_version={NormalizeLogValue(safeRequest.ManifestVersion, "none")}");
+        _logger.Info(
+            "Security",
+            $"gpu-bundle security context authenticator_configured={FormatBool(_authenticator is not null)} bundle_ticket_present={FormatBool(!string.IsNullOrWhiteSpace(_ticketStore?.BundleTicket))} app_version={NormalizeLogValue(safeRequest.AppVersion, "none")} manifest_version_present={FormatBool(!string.IsNullOrWhiteSpace(safeRequest.ManifestVersion))}");
 
         var fetchResult = await _jsonFetcher.FetchStringAsync(
             cancellationToken => CreateJsonRequestAsync(
@@ -119,6 +122,9 @@ public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
         _logger.Info(
             "remote",
             $"gpu-bundle-report request vendor={NormalizeLogValue(safeRequest.Vendor, "none")} bundle=unknown gpu_group=unknown gpu_raw={NormalizeLogValue(safeRequest.GpuRaw, "none")} request_source={NormalizeLogValue(safeRequest.RequestSource, "none")} device_manufacturer={NormalizeLogValue(safeRequest.DeviceManufacturer, "none")} device_model={NormalizeLogValue(safeRequest.DeviceModel, "none")} app_version={NormalizeLogValue(safeRequest.AppVersion, "none")} manifest_version={NormalizeLogValue(safeRequest.ManifestVersion, "none")} report_only=1 reason={NormalizeLogValue(safeRequest.Reason, "manifest_no_match")}");
+        _logger.Info(
+            "Security",
+            $"gpu-bundle-report security context authenticator_configured={FormatBool(_authenticator is not null)} bundle_ticket_present={FormatBool(!string.IsNullOrWhiteSpace(_ticketStore?.BundleTicket))} app_version={NormalizeLogValue(safeRequest.AppVersion, "none")} manifest_version_present={FormatBool(!string.IsNullOrWhiteSpace(safeRequest.ManifestVersion))}");
 
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutCts.CancelAfter(_timeout);
@@ -182,6 +188,9 @@ public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
         httpRequest.Headers.Accept.ParseAdd("application/json");
         if (_authenticator is not null)
         {
+            _logger.Debug(
+                "Security",
+                $"gpu-bundle auth apply app_version={NormalizeLogValue(appVersion, ResolveAppVersion())} manifest_version_present={FormatBool(!string.IsNullOrWhiteSpace(manifestVersion))} bundle_ticket_present={FormatBool(!string.IsNullOrWhiteSpace(bundleTicket))}");
             await _authenticator.ApplyAsync(
                 httpRequest,
                 new OptiClickApiRequestContext
@@ -244,5 +253,10 @@ public sealed class RemoteGpuBundleClient : IRemoteGpuBundleClient
     {
         var normalized = (value ?? "").Trim();
         return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+    }
+
+    private static string FormatBool(bool value)
+    {
+        return value ? "true" : "false";
     }
 }
