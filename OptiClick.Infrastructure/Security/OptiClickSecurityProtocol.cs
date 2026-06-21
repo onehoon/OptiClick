@@ -368,6 +368,12 @@ public sealed class OptiClickClientRegistrationClient : IOptiClickClientRegistra
                 Content = new StringContent("{}", Encoding.UTF8, "application/json")
             };
             request.Headers.UserAgent.ParseAdd(BuildUserAgentValue());
+            var appVersion = (_appVersionProvider() ?? "").Trim();
+            if (!string.IsNullOrWhiteSpace(appVersion))
+            {
+                request.Headers.TryAddWithoutValidation(OptiClickProtocolHeaders.AppVersion, appVersion);
+            }
+
             request.Headers.Accept.ParseAdd("application/json");
 
             using var response = await _httpClient.SendAsync(
@@ -376,10 +382,16 @@ public sealed class OptiClickClientRegistrationClient : IOptiClickClientRegistra
                 timeoutCts.Token).ConfigureAwait(false);
 
             _logger.Info("Security", $"client registration response status={(int)response.StatusCode}");
-            if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.MethodNotAllowed or HttpStatusCode.ServiceUnavailable)
+            if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.MethodNotAllowed)
             {
                 _logger.Info("Security", $"client registration unsupported status={(int)response.StatusCode}");
                 return OptiClickClientRegistrationResult.Unsupported();
+            }
+
+            if (response.StatusCode is HttpStatusCode.ServiceUnavailable)
+            {
+                _logger.Info("Security", $"client registration unavailable status={(int)response.StatusCode}");
+                return OptiClickClientRegistrationResult.TransientFailure();
             }
 
             if (!response.IsSuccessStatusCode)

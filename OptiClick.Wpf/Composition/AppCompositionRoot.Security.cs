@@ -82,7 +82,7 @@ public sealed partial class AppCompositionRoot
         foreach (var endpoint in EnumerateCandidateEndpoints(remoteDataOptions))
         {
             if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri)
-                || string.IsNullOrWhiteSpace(uri.Host))
+                || !IsWorkerApiEndpointCandidate(uri))
             {
                 continue;
             }
@@ -108,9 +108,35 @@ public sealed partial class AppCompositionRoot
             yield break;
         }
 
-        yield return remoteDataOptions.RuntimeDataUrl;
-        yield return remoteDataOptions.GpuBundleManifestUrl;
         yield return remoteDataOptions.GpuBundleUrl;
+        yield return remoteDataOptions.GpuBundleManifestUrl;
+        yield return remoteDataOptions.RuntimeDataUrl;
         yield return remoteDataOptions.ManifestEndpoint;
+    }
+
+    private static bool IsWorkerApiEndpointCandidate(Uri uri)
+    {
+        if (string.IsNullOrWhiteSpace(uri.Host))
+        {
+            return false;
+        }
+
+        if (!string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var host = uri.Host.Trim().ToLowerInvariant();
+        if (host == "github.com"
+            || host == "raw.githubusercontent.com"
+            || host.EndsWith(".githubusercontent.com", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var path = uri.AbsolutePath.TrimEnd('/');
+        return string.Equals(path, "/v1", StringComparison.Ordinal)
+            || path.StartsWith("/v1/", StringComparison.Ordinal);
     }
 }
