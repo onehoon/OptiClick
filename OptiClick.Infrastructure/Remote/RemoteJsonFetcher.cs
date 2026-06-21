@@ -102,7 +102,7 @@ public sealed class RemoteJsonFetcher
         var timestampSkewRecoveryRetried = false;
         var attempt = 1;
 
-        while (true)
+        while (attempt <= _maxAttempts)
         {
             try
             {
