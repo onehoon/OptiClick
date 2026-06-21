@@ -29,6 +29,7 @@ using OptiClick.Wpf.Shell.Selection;
 using OptiClick.Wpf.Services;
 using OptiClick.Wpf.ViewModels;
 using OptiClick.Infrastructure.Scan;
+using OptiClick.Infrastructure.Security;
 using OptiClickShell;
 
 namespace OptiClick.Wpf.Composition;
@@ -89,9 +90,11 @@ public sealed partial class AppCompositionRoot
         return new ArchiveDownloadManifestStore(manifestRoot);
     }
 
-    public IArchiveDownloader CreateArchiveDownloader(HttpClient? httpClient = null)
+    public IArchiveDownloader CreateArchiveDownloader(
+        HttpClient? httpClient = null,
+        IArchiveDownloadRequestPreparer? requestPreparer = null)
     {
-        return new ArchiveDownloader(httpClient ?? new HttpClient());
+        return new ArchiveDownloader(httpClient ?? new HttpClient(), requestPreparer);
     }
 
     public IArchiveExtractor CreateArchiveExtractor()

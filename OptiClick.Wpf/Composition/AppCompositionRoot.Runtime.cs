@@ -27,6 +27,7 @@ using OptiClick.Wpf.Shell.Scan;
 using OptiClick.Wpf.Shell.Selection;
 using OptiClick.Wpf.Services;
 using OptiClick.Infrastructure.FileSystem;
+using OptiClick.Infrastructure.Security;
 using OptiClick.Wpf.ViewModels;
 using OptiClickShell;
 
@@ -87,7 +88,9 @@ public sealed partial class AppCompositionRoot
     public IRemoteGpuBundleManifestClient CreateRemoteGpuBundleManifestClient(
         HttpClient? httpClient = null,
         IAppLogger? logger = null,
-        IAppVersionProvider? appVersionProvider = null)
+        IAppVersionProvider? appVersionProvider = null,
+        IOptiClickApiRequestAuthenticator? authenticator = null,
+        IOptiClickApiTicketStore? ticketStore = null)
     {
         var requestUriBuilder = CreateGpuBundleManifestRequestUriBuilder();
         var inner = new RemoteGpuBundleManifestClient(
@@ -95,7 +98,9 @@ public sealed partial class AppCompositionRoot
             requestUriBuilder,
             CreateRemoteGpuBundleManifestParser(),
             logger,
-            appVersionProvider: appVersionProvider is null ? null : (() => appVersionProvider.GetCurrentVersion()));
+            appVersionProvider: appVersionProvider is null ? null : (() => appVersionProvider.GetCurrentVersion()),
+            authenticator: authenticator,
+            ticketStore: ticketStore);
         return new CachedRemoteGpuBundleManifestClient(inner, requestUriBuilder);
     }
 
@@ -117,13 +122,17 @@ public sealed partial class AppCompositionRoot
     public IRemoteGpuBundleClient CreateRemoteGpuBundleClient(
         HttpClient? httpClient = null,
         IAppLogger? logger = null,
-        IAppVersionProvider? appVersionProvider = null)
+        IAppVersionProvider? appVersionProvider = null,
+        IOptiClickApiRequestAuthenticator? authenticator = null,
+        IOptiClickApiTicketStore? ticketStore = null)
     {
         return new RemoteGpuBundleClient(
             httpClient ?? new HttpClient(),
             CreateGpuBundleRequestUriBuilder(),
             logger,
-            appVersionProvider: appVersionProvider is null ? null : (() => appVersionProvider.GetCurrentVersion()));
+            appVersionProvider: appVersionProvider is null ? null : (() => appVersionProvider.GetCurrentVersion()),
+            authenticator: authenticator,
+            ticketStore: ticketStore);
     }
 
     public IRemoteGpuBundleRuntimeLoader CreateRemoteGpuBundleRuntimeLoader(IAppLogger? logger = null)
@@ -159,13 +168,15 @@ public sealed partial class AppCompositionRoot
         IRemoteEndpointProvider remoteEndpointProvider,
         HttpClient? httpClient = null,
         IAppLogger? logger = null,
-        IAppVersionProvider? appVersionProvider = null)
+        IAppVersionProvider? appVersionProvider = null,
+        IOptiClickApiRequestAuthenticator? authenticator = null)
     {
         return new RemoteRuntimeDataClient(
             remoteEndpointProvider,
             httpClient ?? new HttpClient(),
             logger,
-            appVersionProvider: appVersionProvider is null ? null : (() => appVersionProvider.GetCurrentVersion()));
+            appVersionProvider: appVersionProvider is null ? null : (() => appVersionProvider.GetCurrentVersion()),
+            authenticator: authenticator);
     }
 
     public IRemoteRuntimeDataLoader CreateRemoteRuntimeDataLoader(
