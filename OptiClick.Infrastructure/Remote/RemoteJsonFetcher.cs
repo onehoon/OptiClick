@@ -1,5 +1,6 @@
 using System.Net.Http;
 using OptiClick.Infrastructure.Logging;
+using OptiClick.Infrastructure.Security;
 
 namespace OptiClick.Infrastructure.Remote;
 
@@ -58,6 +59,7 @@ public sealed class RemoteJsonFetcher
 
     private readonly HttpClient _httpClient;
     private readonly IAppLogger _logger;
+    private readonly IOptiClickServerClock? _serverClock;
     private readonly TimeSpan _timeout;
     private readonly int _maxAttempts;
     private readonly TimeSpan _retryDelay;
@@ -67,10 +69,12 @@ public sealed class RemoteJsonFetcher
         IAppLogger? logger = null,
         TimeSpan? timeout = null,
         int maxAttempts = DefaultMaxAttempts,
-        TimeSpan? retryDelay = null)
+        TimeSpan? retryDelay = null,
+        IOptiClickServerClock? serverClock = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _logger = logger ?? NullAppLogger.Instance;
+        _serverClock = serverClock;
         _timeout = timeout ?? DefaultTimeout;
         _maxAttempts = Math.Max(1, maxAttempts);
         _retryDelay = retryDelay ?? DefaultRetryDelay;
@@ -95,8 +99,10 @@ public sealed class RemoteJsonFetcher
     {
         ArgumentNullException.ThrowIfNull(createRequest);
         var safeOptions = options ?? new RemoteJsonFetchOptions();
+        var timestampSkewRecoveryRetried = false;
+        var attempt = 1;
 
-        for (var attempt = 1; attempt <= _maxAttempts; attempt++)
+        while (true)
         {
             try
             {
@@ -110,14 +116,30 @@ public sealed class RemoteJsonFetcher
                     request,
                     HttpCompletionOption.ResponseHeadersRead,
                     timeoutCts.Token);
+                response.RequestMessage ??= request;
 
                 _logger.Debug(safeOptions.LogCategory, $"{safeOptions.RequestLogMessage} response_status={(int)response.StatusCode}");
+                var clockAdjusted = _serverClock?.Observe(response) == true;
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorCode = $"{safeOptions.HttpErrorPrefix}{(int)response.StatusCode}";
+                    if (OptiClickTimestampSkewRecovery.ShouldRetryAfterClockAdjustment(
+                            request,
+                            response,
+                            clockAdjusted,
+                            timestampSkewRecoveryRetried))
+                    {
+                        timestampSkewRecoveryRetried = true;
+                        _logger.Warning(
+                            safeOptions.LogCategory,
+                            $"remote retry reason=timestamp_skew_recovery path={OptiClickTimestampSkewRecovery.ResolvePathForLog(request)}");
+                        continue;
+                    }
+
                     if (ShouldRetry(errorCode, safeOptions.HttpErrorPrefix, attempt)
                         && await TryDelayBeforeRetryAsync(attempt, errorCode, safeOptions, cancellationToken))
                     {
+                        attempt++;
                         continue;
                     }
 
@@ -133,6 +155,7 @@ public sealed class RemoteJsonFetcher
                     if (ShouldRetry(errorCode, safeOptions.HttpErrorPrefix, attempt)
                         && await TryDelayBeforeRetryAsync(attempt, errorCode, safeOptions, cancellationToken))
                     {
+                        attempt++;
                         continue;
                     }
 
@@ -154,6 +177,7 @@ public sealed class RemoteJsonFetcher
                 if (ShouldRetry(errorCode, safeOptions.HttpErrorPrefix, attempt)
                     && await TryDelayBeforeRetryAsync(attempt, errorCode, safeOptions, cancellationToken))
                 {
+                    attempt++;
                     continue;
                 }
 
@@ -166,6 +190,7 @@ public sealed class RemoteJsonFetcher
                 if (ShouldRetry(errorCode, safeOptions.HttpErrorPrefix, attempt)
                     && await TryDelayBeforeRetryAsync(attempt, errorCode, safeOptions, cancellationToken))
                 {
+                    attempt++;
                     continue;
                 }
 
@@ -183,6 +208,7 @@ public sealed class RemoteJsonFetcher
                 if (ShouldRetry(errorCode, safeOptions.HttpErrorPrefix, attempt)
                     && await TryDelayBeforeRetryAsync(attempt, errorCode, safeOptions, cancellationToken))
                 {
+                    attempt++;
                     continue;
                 }
 

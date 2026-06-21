@@ -90,7 +90,8 @@ public sealed partial class AppCompositionRoot
         IAppLogger? logger = null,
         IAppVersionProvider? appVersionProvider = null,
         IOptiClickApiRequestAuthenticator? authenticator = null,
-        IOptiClickApiTicketStore? ticketStore = null)
+        IOptiClickApiTicketStore? ticketStore = null,
+        IOptiClickServerClock? serverClock = null)
     {
         var requestUriBuilder = CreateGpuBundleManifestRequestUriBuilder();
         var inner = new RemoteGpuBundleManifestClient(
@@ -100,7 +101,8 @@ public sealed partial class AppCompositionRoot
             logger,
             appVersionProvider: appVersionProvider is null ? null : (() => appVersionProvider.GetCurrentVersion()),
             authenticator: authenticator,
-            ticketStore: ticketStore);
+            ticketStore: ticketStore,
+            serverClock: serverClock);
         return new CachedRemoteGpuBundleManifestClient(inner, requestUriBuilder);
     }
 
@@ -124,7 +126,8 @@ public sealed partial class AppCompositionRoot
         IAppLogger? logger = null,
         IAppVersionProvider? appVersionProvider = null,
         IOptiClickApiRequestAuthenticator? authenticator = null,
-        IOptiClickApiTicketStore? ticketStore = null)
+        IOptiClickApiTicketStore? ticketStore = null,
+        IOptiClickServerClock? serverClock = null)
     {
         return new RemoteGpuBundleClient(
             httpClient ?? new HttpClient(),
@@ -132,7 +135,8 @@ public sealed partial class AppCompositionRoot
             logger,
             appVersionProvider: appVersionProvider is null ? null : (() => appVersionProvider.GetCurrentVersion()),
             authenticator: authenticator,
-            ticketStore: ticketStore);
+            ticketStore: ticketStore,
+            serverClock: serverClock);
     }
 
     [Obsolete("Use the overload that receives an authenticator and ticket store for production remote API calls.")]
@@ -144,7 +148,8 @@ public sealed partial class AppCompositionRoot
             securityComposition.AppVersionProvider,
             securityComposition.SharedHttpClient,
             securityComposition.SecurityServices.ApiRequestAuthenticator,
-            securityComposition.SecurityServices.TicketStore);
+            securityComposition.SecurityServices.TicketStore,
+            securityComposition.SecurityServices.ServerClock);
     }
 
     [Obsolete("Use the overload that receives an authenticator and ticket store for production remote API calls.")]
@@ -159,7 +164,8 @@ public sealed partial class AppCompositionRoot
             securityComposition.AppVersionProvider,
             securityComposition.SharedHttpClient,
             securityComposition.SecurityServices.ApiRequestAuthenticator,
-            securityComposition.SecurityServices.TicketStore);
+            securityComposition.SecurityServices.TicketStore,
+            securityComposition.SecurityServices.ServerClock);
     }
 
     public IRemoteGpuBundleRuntimeLoader CreateRemoteGpuBundleRuntimeLoader(
@@ -185,14 +191,15 @@ public sealed partial class AppCompositionRoot
         IAppVersionProvider? appVersionProvider,
         HttpClient? httpClient,
         IOptiClickApiRequestAuthenticator? authenticator,
-        IOptiClickApiTicketStore? ticketStore)
+        IOptiClickApiTicketStore? ticketStore,
+        IOptiClickServerClock? serverClock = null)
     {
         var sharedHttpClient = httpClient ?? new HttpClient();
         var effectiveAppVersionProvider = appVersionProvider ?? CreateAppVersionProvider();
         return new RemoteGpuBundleRuntimeLoader(
-            CreateRemoteGpuBundleManifestClient(sharedHttpClient, logger, effectiveAppVersionProvider, authenticator, ticketStore),
+            CreateRemoteGpuBundleManifestClient(sharedHttpClient, logger, effectiveAppVersionProvider, authenticator, ticketStore, serverClock),
             CreateGpuBundleManifestRuleResolver(),
-            CreateRemoteGpuBundleClient(sharedHttpClient, logger, effectiveAppVersionProvider, authenticator, ticketStore),
+            CreateRemoteGpuBundleClient(sharedHttpClient, logger, effectiveAppVersionProvider, authenticator, ticketStore, serverClock),
             CreateRemoteGpuBundleParser(),
             effectiveAppVersionProvider,
             logger);
@@ -208,14 +215,16 @@ public sealed partial class AppCompositionRoot
         HttpClient? httpClient = null,
         IAppLogger? logger = null,
         IAppVersionProvider? appVersionProvider = null,
-        IOptiClickApiRequestAuthenticator? authenticator = null)
+        IOptiClickApiRequestAuthenticator? authenticator = null,
+        IOptiClickServerClock? serverClock = null)
     {
         return new RemoteRuntimeDataClient(
             remoteEndpointProvider,
             httpClient ?? new HttpClient(),
             logger,
             appVersionProvider: appVersionProvider is null ? null : (() => appVersionProvider.GetCurrentVersion()),
-            authenticator: authenticator);
+            authenticator: authenticator,
+            serverClock: serverClock);
     }
 
     public IRemoteRuntimeDataLoader CreateRemoteRuntimeDataLoader(
@@ -241,7 +250,8 @@ public sealed partial class AppCompositionRoot
                 securityComposition.AppVersionProvider,
                 securityComposition.SharedHttpClient,
                 securityComposition.SecurityServices.ApiRequestAuthenticator,
-                securityComposition.SecurityServices.TicketStore),
+                securityComposition.SecurityServices.TicketStore,
+                securityComposition.SecurityServices.ServerClock),
             CreateGpuBundleGameDatabaseMerger());
     }
 
@@ -255,7 +265,8 @@ public sealed partial class AppCompositionRoot
             securityComposition.SharedHttpClient,
             securityComposition.AppVersionProvider,
             securityComposition.SecurityServices.ApiRequestAuthenticator,
-            securityComposition.SecurityServices.TicketStore);
+            securityComposition.SecurityServices.TicketStore,
+            securityComposition.SecurityServices.ServerClock);
     }
 
     [Obsolete("Use the overload that receives an authenticator and ticket store for production remote API calls.")]
@@ -272,7 +283,8 @@ public sealed partial class AppCompositionRoot
             securityComposition.SharedHttpClient,
             securityComposition.AppVersionProvider,
             securityComposition.SecurityServices.ApiRequestAuthenticator,
-            securityComposition.SecurityServices.TicketStore);
+            securityComposition.SecurityServices.TicketStore,
+            securityComposition.SecurityServices.ServerClock);
     }
 
     public IRemoteCatalogPipeline CreateRemoteCatalogPipeline(
@@ -301,11 +313,12 @@ public sealed partial class AppCompositionRoot
         HttpClient? httpClient,
         IAppVersionProvider? appVersionProvider,
         IOptiClickApiRequestAuthenticator? authenticator,
-        IOptiClickApiTicketStore? ticketStore)
+        IOptiClickApiTicketStore? ticketStore,
+        IOptiClickServerClock? serverClock = null)
     {
         return new RemoteCatalogPipeline(
             runtimeDataLoader,
-            CreateRemoteGpuBundleRuntimeLoaderCore(logger, appVersionProvider, httpClient, authenticator, ticketStore),
+            CreateRemoteGpuBundleRuntimeLoaderCore(logger, appVersionProvider, httpClient, authenticator, ticketStore, serverClock),
             CreateGpuBundleGameDatabaseMerger());
     }
 
@@ -361,7 +374,8 @@ public sealed partial class AppCompositionRoot
                 sharedHttpClient,
                 logger,
                 appVersionProvider,
-                securityServices.ApiRequestAuthenticator),
+                securityServices.ApiRequestAuthenticator,
+                securityServices.ServerClock),
             CreateRemoteRuntimeDataParser());
 
         return new RemoteDataContractSmokeRunner(
@@ -372,14 +386,16 @@ public sealed partial class AppCompositionRoot
                 logger,
                 appVersionProvider,
                 securityServices.ApiRequestAuthenticator,
-                securityServices.TicketStore),
+                securityServices.TicketStore,
+                securityServices.ServerClock),
             CreateGpuBundleManifestRuleResolver(),
             CreateRemoteGpuBundleClient(
                 sharedHttpClient,
                 logger,
                 appVersionProvider,
                 securityServices.ApiRequestAuthenticator,
-                securityServices.TicketStore),
+                securityServices.TicketStore,
+                securityServices.ServerClock),
             CreateRemoteGpuBundleParser(),
             CreateGpuBundleGameDatabaseMerger(),
             () => appVersionProvider.GetCurrentVersion());

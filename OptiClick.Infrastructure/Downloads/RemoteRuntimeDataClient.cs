@@ -14,6 +14,7 @@ public sealed class RemoteRuntimeDataClient : IRemoteRuntimeDataClient
     private readonly IAppLogger _logger;
     private readonly Func<string?>? _appVersionProvider;
     private readonly IOptiClickApiRequestAuthenticator? _authenticator;
+    private readonly IOptiClickServerClock? _serverClock;
     private readonly RemoteJsonFetcher _jsonFetcher;
 
     public RemoteRuntimeDataClient(
@@ -24,19 +25,22 @@ public sealed class RemoteRuntimeDataClient : IRemoteRuntimeDataClient
         IOptiClickApiRequestAuthenticator? authenticator = null,
         TimeSpan? timeout = null,
         int maxAttempts = RemoteJsonFetcher.DefaultMaxAttempts,
-        TimeSpan? retryDelay = null)
+        TimeSpan? retryDelay = null,
+        IOptiClickServerClock? serverClock = null)
     {
         _endpointProvider = endpointProvider ?? throw new ArgumentNullException(nameof(endpointProvider));
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _logger = logger ?? NullAppLogger.Instance;
         _appVersionProvider = appVersionProvider;
         _authenticator = authenticator;
+        _serverClock = serverClock;
         _jsonFetcher = new RemoteJsonFetcher(
             _httpClient,
             _logger,
             timeout,
             maxAttempts,
-            retryDelay);
+            retryDelay,
+            _serverClock);
     }
 
     public async Task<RemoteRuntimeDataFetchResult> FetchAsync(CancellationToken cancellationToken = default)
