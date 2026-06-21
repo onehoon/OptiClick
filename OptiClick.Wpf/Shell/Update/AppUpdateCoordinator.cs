@@ -39,8 +39,9 @@ public sealed class AppUpdateCoordinator
         return new AppUpdateCoordinatorResult
         {
             ShouldContinue = true,
-            ShouldShowDialog = checkResult.IsUpdateAvailable,
+            ShouldShowDialog = checkResult.IsUpdateAvailable && !checkResult.ShouldExecuteImmediately,
             IsUpdateAvailable = checkResult.IsUpdateAvailable,
+            ShouldExecuteImmediately = checkResult.ShouldExecuteImmediately,
             StatusText = request.Trigger == AppUpdateTrigger.Manual
                 ? checkResult.StatusText
                 : "",

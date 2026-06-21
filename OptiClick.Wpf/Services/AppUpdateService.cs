@@ -62,6 +62,9 @@ public sealed class AppUpdateService(IAppUpdateVersionComparer versionComparer) 
             displayVersion = latestVersion;
         }
 
+        var isForced = RuntimeDataRowReader.GetString(row, "force_update")
+            .Equals("true", StringComparison.OrdinalIgnoreCase);
+
         updateInfo = new AppUpdateInfo(
             currentVersion,
             latestVersion,
@@ -69,7 +72,8 @@ public sealed class AppUpdateService(IAppUpdateVersionComparer versionComparer) 
             url,
             filename,
             RuntimeDataRowReader.GetString(row, "note"),
-            packageType);
+            packageType,
+            isForced);
         return true;
     }
 

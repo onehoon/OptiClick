@@ -20,8 +20,9 @@ public abstract record AppUpdateFlowResult
 public sealed record AppUpdateCheckResult : AppUpdateFlowResult
 {
     public bool IsUpdateAvailable { get; init; }
+    public bool ShouldExecuteImmediately { get; init; }
     public AppUpdateInfo? UpdateInfo { get; init; }
-    public AppDialogRequest DialogRequest { get; init; } = new();
+    public AppDialogRequest? DialogRequest { get; init; }
 }
 
 public sealed record AppUpdateExecutionFlowResult : AppUpdateFlowResult
