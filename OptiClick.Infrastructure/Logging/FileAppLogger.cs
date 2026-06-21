@@ -7,6 +7,7 @@ namespace OptiClick.Infrastructure.Logging;
 public sealed class FileAppLogger : IAppLogger
 {
     private const string LineTimestampFormat = "HH:mm:ss.fff";
+    private const string LogLevelEnvironmentVariable = "OPTICLICK_LOG_LEVEL";
     private readonly object _syncRoot = new();
     private readonly ISystemClock _clock;
     private readonly AppLogRetentionPolicy _retentionPolicy;
@@ -15,11 +16,13 @@ public sealed class FileAppLogger : IAppLogger
     public FileAppLogger(
         string logDirectory,
         ISystemClock? clock = null,
-        AppLogRetentionPolicy? retentionPolicy = null)
+        AppLogRetentionPolicy? retentionPolicy = null,
+        AppLogLevel? minimumLevel = null)
     {
         LogDirectory = (logDirectory ?? "").Trim();
         _clock = clock ?? new SystemClock();
         _retentionPolicy = retentionPolicy ?? new AppLogRetentionPolicy();
+        MinimumLevel = minimumLevel ?? ResolveMinimumLevelFromEnvironment();
 
         try
         {
@@ -33,6 +36,8 @@ public sealed class FileAppLogger : IAppLogger
     }
 
     public string LogDirectory { get; }
+
+    public AppLogLevel MinimumLevel { get; }
 
     public void Debug(string category, string message)
     {
@@ -61,6 +66,11 @@ public sealed class FileAppLogger : IAppLogger
 
     private void Write(AppLogLevel level, string category, string message, Exception? exception)
     {
+        if (level < MinimumLevel)
+        {
+            return;
+        }
+
         try
         {
             lock (_syncRoot)
@@ -170,6 +180,24 @@ public sealed class FileAppLogger : IAppLogger
     private static void AppendLine(string path, string line)
     {
         File.AppendAllText(path, line + Environment.NewLine, Encoding.UTF8);
+    }
+
+    private static AppLogLevel ResolveMinimumLevelFromEnvironment()
+    {
+        var value = (Environment.GetEnvironmentVariable(LogLevelEnvironmentVariable) ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return AppLogLevel.Info;
+        }
+
+        if (string.Equals(value, "warn", StringComparison.OrdinalIgnoreCase))
+        {
+            return AppLogLevel.Warning;
+        }
+
+        return Enum.TryParse<AppLogLevel>(value, ignoreCase: true, out var level)
+            ? level
+            : AppLogLevel.Info;
     }
 
     private void EnsureLogDirectory()

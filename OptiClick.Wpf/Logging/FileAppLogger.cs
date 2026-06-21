@@ -7,12 +7,14 @@ public sealed class FileAppLogger : IAppLogger
     public FileAppLogger(
         string logDirectory,
         ISystemClock? clock = null,
-        AppLogRetentionPolicy? retentionPolicy = null)
+        AppLogRetentionPolicy? retentionPolicy = null,
+        AppLogLevel? minimumLevel = null)
     {
         _inner = new OptiClick.Infrastructure.Logging.FileAppLogger(
             logDirectory,
             clock,
-            ConvertRetentionPolicy(retentionPolicy));
+            ConvertRetentionPolicy(retentionPolicy),
+            ConvertLogLevel(minimumLevel));
     }
 
     public string LogDirectory => _inner.LogDirectory;
@@ -54,6 +56,18 @@ public sealed class FileAppLogger : IAppLogger
             RetentionDays = retentionPolicy.RetentionDays,
             FileNamePrefix = retentionPolicy.FileNamePrefix,
             FileNameExtension = retentionPolicy.FileNameExtension
+        };
+    }
+
+    private static OptiClick.Infrastructure.Logging.AppLogLevel? ConvertLogLevel(AppLogLevel? level)
+    {
+        return level switch
+        {
+            AppLogLevel.Debug => OptiClick.Infrastructure.Logging.AppLogLevel.Debug,
+            AppLogLevel.Info => OptiClick.Infrastructure.Logging.AppLogLevel.Info,
+            AppLogLevel.Warning => OptiClick.Infrastructure.Logging.AppLogLevel.Warning,
+            AppLogLevel.Error => OptiClick.Infrastructure.Logging.AppLogLevel.Error,
+            _ => null
         };
     }
 }
