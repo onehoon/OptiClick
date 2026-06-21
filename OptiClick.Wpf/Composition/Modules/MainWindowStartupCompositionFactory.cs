@@ -46,9 +46,9 @@ internal static class MainWindowStartupCompositionFactory
         var coverCacheBootstrapExtraBundleInstaller = new ExtraBundleInstaller(
             new ArchiveDownloader(
                 new HttpClient(),
-                app.SecurityServices.ArchiveDownloadRequestPreparer,
-                app.SecurityServices.ServerClock,
-                app.AppLogger),
+                requestPreparer: app.SecurityServices.ArchiveDownloadRequestPreparer,
+                serverClock: app.SecurityServices.ServerClock,
+                logger: app.AppLogger),
             new ZipArchiveExtractor(),
             coverCacheBootstrapFileSystem,
             app.LocalDataPathProvider.InstallExecutionTempDirectory);
