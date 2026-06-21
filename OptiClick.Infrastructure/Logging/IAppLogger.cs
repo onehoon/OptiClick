@@ -4,6 +4,7 @@ public interface IAppLogger
 {
     string LogDirectory { get; }
 
+    void Debug(string category, string message);
     void Info(string category, string message);
     void Warning(string category, string message);
     void Error(string category, string message);
@@ -19,6 +20,10 @@ public sealed class NullAppLogger : IAppLogger
     }
 
     public string LogDirectory => "";
+
+    public void Debug(string category, string message)
+    {
+    }
 
     public void Info(string category, string message)
     {

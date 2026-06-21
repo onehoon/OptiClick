@@ -1,3 +1,4 @@
+using System.IO;
 using System.Net.Http;
 using OptiClick.Core.Runtime;
 using OptiClick.Infrastructure.FileSystem;
@@ -30,7 +31,9 @@ public sealed partial class AppCompositionRoot
         var effectiveLogger = logger ?? NullAppLogger.Instance;
         Func<string?> readAppVersion = () => appVersionProvider.GetCurrentVersion();
 
-        var credentialStore = new ProtectedDataOptiClickClientCredentialStore(logger: effectiveLogger);
+        var credentialStore = new ProtectedDataOptiClickClientCredentialStore(
+            credentialPath: BuildCredentialPath(localDataPathProvider),
+            logger: effectiveLogger);
         var registrationClient = new OptiClickClientRegistrationClient(
             sharedHttpClient,
             BuildApiEndpoint(remoteDataOptions, "/v1/client/register"),
@@ -39,13 +42,15 @@ public sealed partial class AppCompositionRoot
         var credentialProvider = new OptiClickClientCredentialProvider(
             credentialStore,
             registrationClient,
-            readAppVersion);
+            readAppVersion,
+            effectiveLogger);
         var ticketStore = new OptiClickApiTicketStore();
         var authenticator = new OptiClickApiRequestAuthenticator(
             credentialProvider,
             new OptiClickHmacSigner(),
             new OptiClickRequestCanonicalizer(),
-            new OptiClickApiSession());
+            new OptiClickApiSession(),
+            logger: effectiveLogger);
         var downloadTicketClient = new RemoteDownloadTicketClient(
             sharedHttpClient,
             BuildApiEndpoint(remoteDataOptions, "/v1/download-ticket"),
@@ -55,7 +60,8 @@ public sealed partial class AppCompositionRoot
         var archiveRequestPreparer = new OptiClickArchiveDownloadRequestPreparer(
             downloadTicketClient,
             authenticator,
-            readAppVersion);
+            readAppVersion,
+            effectiveLogger);
 
         return new AppSecurityServices
         {
@@ -85,6 +91,14 @@ public sealed partial class AppCompositionRoot
         }
 
         return null;
+    }
+
+    private static string BuildCredentialPath(IAppLocalDataPathProvider localDataPathProvider)
+    {
+        return Path.Combine(
+            localDataPathProvider.RootDirectory,
+            "Security",
+            "client-credential.json");
     }
 
     private static IEnumerable<string> EnumerateCandidateEndpoints(RemoteDataOptions? remoteDataOptions)

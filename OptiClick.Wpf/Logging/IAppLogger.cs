@@ -14,6 +14,10 @@ public sealed class NullAppLogger : IAppLogger
 
     public string LogDirectory => "";
 
+    public void Debug(string category, string message)
+    {
+    }
+
     public void Info(string category, string message)
     {
     }

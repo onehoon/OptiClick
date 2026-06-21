@@ -55,6 +55,9 @@ public sealed class RemoteRuntimeDataClient : IRemoteRuntimeDataClient
             return RemoteRuntimeDataFetchResult.Failure("invalid_endpoint");
         }
 
+        _logger.Info(
+            "Security",
+            $"runtime-data security context authenticator_configured={FormatBool(_authenticator is not null)} app_version={NormalizeLogValue(ResolveAppVersion(), "none")}");
         var fetchResult = await _jsonFetcher.FetchStringAsync(
             async requestCancellationToken =>
             {
@@ -109,5 +112,16 @@ public sealed class RemoteRuntimeDataClient : IRemoteRuntimeDataClient
     private string ResolveAppVersion()
     {
         return (_appVersionProvider?.Invoke() ?? "").Trim();
+    }
+
+    private static string FormatBool(bool value)
+    {
+        return value ? "true" : "false";
+    }
+
+    private static string NormalizeLogValue(string? value, string fallback)
+    {
+        var normalized = (value ?? "").Trim();
+        return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
     }
 }
