@@ -27,6 +27,7 @@ public sealed record AppSharedServices
     public required IInstallManagementDialogService InstallManagementDialogService { get; init; }
     public required IRemoteEndpointProvider RemoteEndpointProvider { get; init; }
     public required IShellMockDataProvider MockDataProvider { get; init; }
+    public required AppSecurityServices SecurityServices { get; init; }
 }
 
 public sealed class AppServicesComposition
@@ -42,9 +43,15 @@ public sealed class AppServicesComposition
     {
         var localDataPathProvider = _root.CreateAppLocalDataPathProvider();
         var remoteOptionsLoader = new RemoteDataOptionsLoader();
-        var remoteEndpointProvider = new ConfigurationRemoteEndpointProvider(remoteOptionsLoader.Load());
+        var remoteDataOptions = remoteOptionsLoader.Load();
+        var remoteEndpointProvider = new ConfigurationRemoteEndpointProvider(remoteDataOptions);
         var appLogger = new FileAppLogger(localDataPathProvider.LogDirectory);
         var appVersionProvider = _root.CreateAppVersionProvider();
+        var securityServices = _root.CreateAppSecurityServices(
+            remoteDataOptions,
+            localDataPathProvider,
+            appLogger,
+            appVersionProvider);
         var languageProvider = new SystemAppLanguageProvider(appLogger);
         var stringsProvider = new AppStringsProvider();
         var dialogHost = new DialogHostViewModel();
@@ -75,7 +82,8 @@ public sealed class AppServicesComposition
             InstallManagementDialogHost = installManagementDialogHost,
             InstallManagementDialogService = installManagementDialogService,
             RemoteEndpointProvider = remoteEndpointProvider,
-            MockDataProvider = new ShellMockDataProvider()
+            MockDataProvider = new ShellMockDataProvider(),
+            SecurityServices = securityServices
         };
     }
 }

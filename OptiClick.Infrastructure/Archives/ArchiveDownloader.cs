@@ -1,5 +1,6 @@
 using System.IO;
 using System.Net.Http;
+using OptiClick.Infrastructure.Security;
 
 namespace OptiClick.Infrastructure.Archives;
 
@@ -45,11 +46,16 @@ public sealed class ArchiveDownloader
 
     private readonly HttpClient _httpClient;
     private readonly IArchiveFileVerifier _fileVerifier;
+    private readonly IArchiveDownloadRequestPreparer? _requestPreparer;
 
-    public ArchiveDownloader(HttpClient httpClient, IArchiveFileVerifier? fileVerifier = null)
+    public ArchiveDownloader(
+        HttpClient httpClient,
+        IArchiveFileVerifier? fileVerifier = null,
+        IArchiveDownloadRequestPreparer? requestPreparer = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _fileVerifier = fileVerifier ?? new ArchiveFileVerifier(_httpClient);
+        _requestPreparer = requestPreparer;
     }
 
     public async Task<ArchiveDownloadResult> DownloadAsync(
@@ -79,7 +85,9 @@ public sealed class ArchiveDownloader
         {
             try
             {
-                using var response = await _httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+                using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+                await PrepareRequestAsync(request, url, cts.Token).ConfigureAwait(false);
+                using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
                 response.EnsureSuccessStatusCode();
 
                 await using var source = await response.Content.ReadAsStreamAsync(cts.Token);
@@ -150,6 +158,30 @@ public sealed class ArchiveDownloader
         catch
         {
             // Ignore cleanup failure.
+        }
+    }
+
+    private async Task PrepareRequestAsync(
+        HttpRequestMessage request,
+        string sourceUrl,
+        CancellationToken cancellationToken)
+    {
+        if (_requestPreparer is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _requestPreparer.PrepareAsync(request, sourceUrl, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch
+        {
+            // Download tickets are optional; keep the legacy download path alive.
         }
     }
 

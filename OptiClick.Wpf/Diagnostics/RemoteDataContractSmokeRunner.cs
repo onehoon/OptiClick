@@ -37,6 +37,7 @@ public sealed class RemoteDataContractSmokeRunner : IRemoteDataContractSmokeRunn
     private readonly IRemoteGpuBundleClient _bundleClient;
     private readonly IRemoteGpuBundleParser _bundleParser;
     private readonly IGpuBundleGameDatabaseMerger _gpuBundleMerger;
+    private readonly Func<string?> _appVersionProvider;
 
     public RemoteDataContractSmokeRunner(
         IRuntimeContextProvider runtimeContextProvider,
@@ -45,7 +46,8 @@ public sealed class RemoteDataContractSmokeRunner : IRemoteDataContractSmokeRunn
         IGpuBundleManifestRuleResolver ruleResolver,
         IRemoteGpuBundleClient bundleClient,
         IRemoteGpuBundleParser bundleParser,
-        IGpuBundleGameDatabaseMerger gpuBundleMerger)
+        IGpuBundleGameDatabaseMerger gpuBundleMerger,
+        Func<string?>? appVersionProvider = null)
     {
         _runtimeContextProvider = runtimeContextProvider ?? throw new ArgumentNullException(nameof(runtimeContextProvider));
         _runtimeDataLoader = runtimeDataLoader ?? throw new ArgumentNullException(nameof(runtimeDataLoader));
@@ -54,6 +56,7 @@ public sealed class RemoteDataContractSmokeRunner : IRemoteDataContractSmokeRunn
         _bundleClient = bundleClient ?? throw new ArgumentNullException(nameof(bundleClient));
         _bundleParser = bundleParser ?? throw new ArgumentNullException(nameof(bundleParser));
         _gpuBundleMerger = gpuBundleMerger ?? throw new ArgumentNullException(nameof(gpuBundleMerger));
+        _appVersionProvider = appVersionProvider ?? (() => "");
     }
 
     public async Task<RemoteDataContractSmokeResult> RunAsync(
@@ -80,6 +83,8 @@ public sealed class RemoteDataContractSmokeRunner : IRemoteDataContractSmokeRunn
             var selectedGpu = SelectGpu(runtimeContext);
             var gpuVendor = NormalizeVendor(selectedGpu?.Vendor, selectedGpu?.Name);
             var gpuName = NormalizeDisplay(selectedGpu?.Name);
+            var appVersion = NormalizeAppVersion(_appVersionProvider());
+            lines.Add($"AppVersion: {(string.IsNullOrWhiteSpace(appVersion) ? "-" : appVersion)}");
             lines.Add($"RuntimeContext: gpu_vendor={gpuVendor}, gpu_name={gpuName}");
 
             if (!runtimeDataConfigured || !manifestConfigured || !bundleConfigured)
@@ -156,6 +161,7 @@ public sealed class RemoteDataContractSmokeRunner : IRemoteDataContractSmokeRunn
                 GpuRaw = ruleMatch.GpuRaw,
                 ManifestVersion = manifestResult.Manifest.ManifestVersion,
                 RequestSource = "app",
+                AppVersion = appVersion,
                 DeviceManufacturer = runtimeContext.Device?.Manufacturer ?? "",
                 DeviceModel = runtimeContext.Device?.Model ?? ""
             };
@@ -252,6 +258,11 @@ public sealed class RemoteDataContractSmokeRunner : IRemoteDataContractSmokeRunn
         }
 
         return text;
+    }
+
+    private static string NormalizeAppVersion(string? value)
+    {
+        return (value ?? "").Trim();
     }
 
     private static string NormalizeCode(string? value)

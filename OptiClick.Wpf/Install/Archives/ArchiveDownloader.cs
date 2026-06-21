@@ -1,4 +1,5 @@
 using System.Net.Http;
+using OptiClick.Infrastructure.Security;
 
 namespace OptiClick.Wpf.Install.Archives;
 
@@ -66,9 +67,13 @@ public sealed class ArchiveDownloader : IArchiveDownloader
 {
     private readonly OptiClick.Infrastructure.Archives.ArchiveDownloader _inner;
 
-    public ArchiveDownloader(HttpClient httpClient)
+    public ArchiveDownloader(
+        HttpClient httpClient,
+        IArchiveDownloadRequestPreparer? requestPreparer = null)
     {
-        _inner = new OptiClick.Infrastructure.Archives.ArchiveDownloader(httpClient ?? throw new ArgumentNullException(nameof(httpClient)));
+        _inner = new OptiClick.Infrastructure.Archives.ArchiveDownloader(
+            httpClient ?? throw new ArgumentNullException(nameof(httpClient)),
+            requestPreparer: requestPreparer);
     }
 
     internal ArchiveDownloader(OptiClick.Infrastructure.Archives.ArchiveDownloader inner)

@@ -34,6 +34,11 @@ public sealed class FileAppLogger : IAppLogger
 
     public string LogDirectory { get; }
 
+    public void Debug(string category, string message)
+    {
+        Write(AppLogLevel.Debug, category, message, exception: null);
+    }
+
     public void Info(string category, string message)
     {
         Write(AppLogLevel.Info, category, message, exception: null);
@@ -67,6 +72,7 @@ public sealed class FileAppLogger : IAppLogger
                 var logPath = ResolveLogFilePath(now);
                 var levelText = level switch
                 {
+                    AppLogLevel.Debug => "DEBUG",
                     AppLogLevel.Info => "INFO",
                     AppLogLevel.Warning => "WARN",
                     _ => "ERROR"

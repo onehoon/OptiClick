@@ -5,16 +5,23 @@ namespace OptiClick.Infrastructure.Remote;
 
 public sealed class RemoteJsonFetchResult
 {
+    private static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> EmptyHeaders =
+        new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
+
     public bool IsSuccess { get; init; }
     public string ErrorCode { get; init; } = "";
     public string Content { get; init; } = "";
+    public IReadOnlyDictionary<string, IReadOnlyList<string>> Headers { get; init; } = EmptyHeaders;
 
-    public static RemoteJsonFetchResult Success(string content)
+    public static RemoteJsonFetchResult Success(
+        string content,
+        IReadOnlyDictionary<string, IReadOnlyList<string>>? headers = null)
     {
         return new RemoteJsonFetchResult
         {
             IsSuccess = true,
-            Content = content ?? ""
+            Content = content ?? "",
+            Headers = headers ?? EmptyHeaders
         };
     }
 
@@ -75,22 +82,36 @@ public sealed class RemoteJsonFetcher
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(createRequest);
+        return await FetchStringAsync(
+            _ => Task.FromResult(createRequest()),
+            options,
+            cancellationToken);
+    }
+
+    public async Task<RemoteJsonFetchResult> FetchStringAsync(
+        Func<CancellationToken, Task<HttpRequestMessage>> createRequest,
+        RemoteJsonFetchOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(createRequest);
         var safeOptions = options ?? new RemoteJsonFetchOptions();
 
         for (var attempt = 1; attempt <= _maxAttempts; attempt++)
         {
-            using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            timeoutCts.CancelAfter(_timeout);
-
             try
             {
+                _logger.Debug(safeOptions.LogCategory, $"{safeOptions.RequestLogMessage} attempt={attempt} max_attempts={_maxAttempts}");
                 _logger.Info(safeOptions.LogCategory, safeOptions.RequestLogMessage);
-                using var request = createRequest();
+                using var request = await createRequest(cancellationToken).ConfigureAwait(false);
+                using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                timeoutCts.CancelAfter(_timeout);
+
                 using var response = await _httpClient.SendAsync(
                     request,
                     HttpCompletionOption.ResponseHeadersRead,
                     timeoutCts.Token);
 
+                _logger.Debug(safeOptions.LogCategory, $"{safeOptions.RequestLogMessage} response_status={(int)response.StatusCode}");
                 if (!response.IsSuccessStatusCode)
                 {
                     var errorCode = $"{safeOptions.HttpErrorPrefix}{(int)response.StatusCode}";
@@ -104,6 +125,7 @@ public sealed class RemoteJsonFetcher
                     return RemoteJsonFetchResult.Failure(errorCode);
                 }
 
+                var headers = CreateHeadersSnapshot(response);
                 var content = await response.Content.ReadAsStringAsync(timeoutCts.Token);
                 if (string.IsNullOrWhiteSpace(content))
                 {
@@ -119,7 +141,7 @@ public sealed class RemoteJsonFetcher
                 }
 
                 _logger.Info(safeOptions.LogCategory, $"{safeOptions.SuccessLogMessagePrefix} bytes={content.Length}");
-                return RemoteJsonFetchResult.Success(content);
+                return RemoteJsonFetchResult.Success(content, headers);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -233,5 +255,21 @@ public sealed class RemoteJsonFetcher
     {
         var normalized = (value ?? "").Trim();
         return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+    }
+
+    private static IReadOnlyDictionary<string, IReadOnlyList<string>> CreateHeadersSnapshot(HttpResponseMessage response)
+    {
+        var headers = new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var header in response.Headers)
+        {
+            headers[header.Key] = header.Value.ToArray();
+        }
+
+        foreach (var header in response.Content.Headers)
+        {
+            headers[header.Key] = header.Value.ToArray();
+        }
+
+        return headers;
     }
 }

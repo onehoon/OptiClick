@@ -17,6 +17,8 @@ internal sealed record AppCacheResetTarget(string Path, AppCacheResetTargetKind 
 internal sealed class AppCacheResetService
 {
     internal const string FirstRunStateFileName = "startup_state.json";
+    internal const string SecurityDirectoryName = "Security";
+    internal const string ClientCredentialFileName = "client-credential.json";
 
     private readonly IAppLocalDataPathProvider _localDataPathProvider;
     private readonly IAppLogger _appLogger;
@@ -66,7 +68,11 @@ internal sealed class AppCacheResetService
             DirectoryTarget(archiveCachePaths.Root),
             DirectoryTarget(archiveCachePaths.ManifestRoot),
             DirectoryTarget(_localDataPathProvider.InstallExecutionTempDirectory),
-            FileTarget(Path.Combine(manifestDirectory, FirstRunStateFileName))
+            FileTarget(Path.Combine(manifestDirectory, FirstRunStateFileName)),
+            FileTarget(Path.Combine(
+                _localDataPathProvider.RootDirectory,
+                SecurityDirectoryName,
+                ClientCredentialFileName))
         ];
     }
 
