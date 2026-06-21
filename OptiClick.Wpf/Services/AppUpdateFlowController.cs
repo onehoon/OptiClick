@@ -43,8 +43,11 @@ public sealed class AppUpdateFlowController
         return new AppUpdateCheckResult
         {
             IsUpdateAvailable = true,
+            ShouldExecuteImmediately = updateInfo.IsForced,
             UpdateInfo = updateInfo,
-            DialogRequest = _dialogPresenter.BuildUpdateAvailableDialog(updateInfo, request.Text),
+            DialogRequest = updateInfo.IsForced
+                ? null
+                : _dialogPresenter.BuildUpdateAvailableDialog(updateInfo, request.Text),
             Logs = logs
         };
     }

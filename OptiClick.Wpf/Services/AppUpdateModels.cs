@@ -15,7 +15,8 @@ public sealed record AppUpdateInfo(
     string DownloadUrl,
     string DownloadFileName,
     string Note,
-    AppUpdatePackageType PackageType);
+    AppUpdatePackageType PackageType,
+    bool IsForced);
 
 public sealed record AppUpdatePreparedFile(
     string DownloadedOriginalPath,
