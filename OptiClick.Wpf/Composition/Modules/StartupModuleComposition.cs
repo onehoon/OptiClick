@@ -44,7 +44,6 @@ internal static class StartupModuleComposition
                                                 startupBackgroundTaskManager,
                                                 archiveReadinessRefreshCoordinator,
                                                 archiveReadinessWarmupController,
-                                                fallbackServices.FirstRunStateStore,
                                                 coverCacheBootstrapService,
                                                 fallbackServices.LocalDataPathProvider);
         var startupFlowCoordinator = appDependencies.StartupFlowCoordinator ?? new StartupFlowCoordinator();

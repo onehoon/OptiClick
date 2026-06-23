@@ -11,6 +11,8 @@ namespace OptiClick.Wpf.Shell.Startup;
 
 public interface ICoverCacheBootstrapService
 {
+    bool IsReady();
+
     Task<CoverCacheBootstrapResult> BootstrapAsync(
         IProgress<CoverCacheBootstrapState>? progress = null,
         CancellationToken cancellationToken = default);
@@ -89,7 +91,7 @@ public sealed class CoverCacheBootstrapService : ICoverCacheBootstrapService
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (HasCompletedManifestAndCoverFiles())
+        if (IsReady())
         {
             progress?.Report(CoverCacheBootstrapState.NotRequired);
             return CoverCacheBootstrapResult.NotRequired();
@@ -136,10 +138,26 @@ public sealed class CoverCacheBootstrapService : ICoverCacheBootstrapService
         }
     }
 
-    private bool HasCompletedManifestAndCoverFiles()
+    public bool IsReady()
     {
         var manifestPath = GetManifestPath();
-        if (!File.Exists(manifestPath))
+        if (!_fileSystem.FileExists(manifestPath))
+        {
+            return false;
+        }
+
+        CoverCacheManifest? manifest;
+        try
+        {
+            var json = File.ReadAllText(manifestPath);
+            manifest = JsonSerializer.Deserialize<CoverCacheManifest>(json, SerializerOptions);
+        }
+        catch
+        {
+            return false;
+        }
+
+        if (manifest is null || manifest.CopiedFileCount <= 0)
         {
             return false;
         }
@@ -152,7 +170,9 @@ public sealed class CoverCacheBootstrapService : ICoverCacheBootstrapService
 
         try
         {
-            return _fileSystem.EnumerateFiles(coverCacheDirectory, "*", SearchOption.TopDirectoryOnly).Any();
+            return _fileSystem.EnumerateFiles(coverCacheDirectory, "*", SearchOption.AllDirectories)
+                .Take(manifest.CopiedFileCount)
+                .Count() >= manifest.CopiedFileCount;
         }
         catch
         {
@@ -259,5 +279,10 @@ public sealed class NoOpCoverCacheBootstrapService : ICoverCacheBootstrapService
         cancellationToken.ThrowIfCancellationRequested();
         progress?.Report(CoverCacheBootstrapState.NotRequired);
         return Task.FromResult(CoverCacheBootstrapResult.NotRequired());
+    }
+
+    public bool IsReady()
+    {
+        return true;
     }
 }

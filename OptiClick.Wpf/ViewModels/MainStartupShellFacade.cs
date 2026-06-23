@@ -71,13 +71,14 @@ internal sealed record MainStartupShellFacade
                     SetArchiveReadiness = readiness => input.RuntimeShellState.SetArchiveReadiness(readiness),
                     UpdateStartupPreparationState = input.UpdateStartupPreparationState,
                     ClearLastErrorCode = input.ClearLastErrorCode,
-                    ApplyFirstRunPreparationOverlay =
-                        visible => input.ReadStartupOverlay().ApplyFirstRunPreparationOverlay(visible),
-                    ShowFirstRunPreparationFailureAsync =
+                    ApplyStartupPreparationOverlay =
+                        visible => input.ReadStartupOverlay().ApplyStartupPreparationOverlay(visible),
+                    ShowStartupPreparationFailureAsync =
                         (request, ct) => input.DialogPresenter.ShowSafelyAsync(request, ct),
                     ShouldBlockStartupForUnsupportedOperatingSystem =
                         input.ShouldBlockStartupForUnsupportedOperatingSystem,
                     ReadModuleDownloadLinks = () => input.RuntimeShellState.ModuleDownloadLinks,
+                    ReadOptiScalerVariantCatalog = () => input.RuntimeShellState.LatestOptiScalerVariantCatalog,
                     ReadFsr4VariantCatalog = () => input.RuntimeShellState.LatestFsr4VariantCatalog,
                     RefreshArchiveReadinessWithoutCoordinatorAsync =
                         input.RefreshArchiveReadinessWithoutCoordinatorAsync,
@@ -87,8 +88,8 @@ internal sealed record MainStartupShellFacade
                     LogAppWarning = message => input.AppLogger.Warning(MainViewModelLogCategories.App, message),
                     LogInstallInfo = message => input.AppLogger.Info(MainViewModelLogCategories.Install, message),
                     LogInstallWarning = message => input.AppLogger.Warning(MainViewModelLogCategories.Install, message),
-                    ReadFirstRunPreparationFailedTitle = () => input.ReadStrings().FirstRunPreparationFailedTitle,
-                    ReadFirstRunPreparationFailedSummary = () => input.ReadStrings().FirstRunPreparationFailedSummary,
+                    ReadStartupPreparationFailedTitle = () => input.ReadStrings().StartupPreparationFailedTitle,
+                    ReadStartupPreparationFailedSummary = () => input.ReadStrings().StartupPreparationFailedSummary,
                     ReadDialogButtonOkText = () => input.ReadStrings().DialogButtonOk
                 }
             });

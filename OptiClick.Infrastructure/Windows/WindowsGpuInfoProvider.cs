@@ -4,27 +4,35 @@ using OptiClick.Infrastructure.Logging;
 
 namespace OptiClick.Infrastructure.Windows;
 
-public sealed class WindowsGpuInfoProvider : IGpuInfoProvider
+public sealed class WindowsGpuInfoProvider : IGpuInfoProvider, IRuntimeHardwareDetectionInfoProvider
 {
-    private readonly Func<IReadOnlyList<GpuInfo>> _query;
+    private const string LogCategory = "runtime-gpu";
+
+    private readonly Func<WindowsGpuInfoQueryResult> _query;
     private readonly IAppLogger _logger;
+    private RuntimeHardwareDetectionInfo _detectionInfo = new();
 
     public WindowsGpuInfoProvider()
-        : this(QueryGpuInfos, null)
+        : this(QueryGpuInfos, null, true)
     {
     }
 
     public WindowsGpuInfoProvider(IAppLogger? logger)
-        : this(QueryGpuInfos, logger)
+        : this(QueryGpuInfos, logger, true)
     {
     }
 
     public WindowsGpuInfoProvider(Func<IReadOnlyList<GpuInfo>> query)
-        : this(query, null)
+        : this(() => CreateLegacyQueryResult(query), null, true)
     {
     }
 
     public WindowsGpuInfoProvider(Func<IReadOnlyList<GpuInfo>> query, IAppLogger? logger)
+        : this(() => CreateLegacyQueryResult(query), logger, true)
+    {
+    }
+
+    internal WindowsGpuInfoProvider(Func<WindowsGpuInfoQueryResult> query, IAppLogger? logger, bool useQueryResult)
     {
         _query = query ?? throw new ArgumentNullException(nameof(query));
         _logger = logger ?? NullAppLogger.Instance;
@@ -34,40 +42,74 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider
     {
         try
         {
-            var gpus = _query();
+            var queryResult = _query();
+            var gpus = queryResult.Gpus;
+            _detectionInfo = NormalizeDetection(queryResult.Detection);
             if (gpus is null || gpus.Count == 0)
             {
-                _logger.Warning("runtime-gpu", "gpu query returned empty result; using Unknown GPU fallback.");
+                _detectionInfo = _detectionInfo with { GpuInfoSource = "fallback" };
+                _logger.Warning(LogCategory, "gpu query returned empty result; using Unknown GPU fallback.");
+                LogDetection(_detectionInfo);
                 return CreateUnknownGpuFallback();
             }
 
             var supportedGpus = FilterSupportedGpus(gpus);
             if (supportedGpus.Count == 0)
             {
-                _logger.Warning("runtime-gpu", "gpu query returned only unsupported vendors; using Unknown GPU fallback.");
+                _detectionInfo = _detectionInfo with
+                {
+                    GpuInfoSource = "fallback",
+                    WmiGpuStatus = string.IsNullOrWhiteSpace(_detectionInfo.WmiGpuStatus)
+                        ? WindowsWmiQueryStatuses.Success
+                        : _detectionInfo.WmiGpuStatus
+                };
+                _logger.Warning(LogCategory, "gpu query returned only unsupported vendors; using Unknown GPU fallback.");
+                LogDetection(_detectionInfo);
                 return CreateUnknownGpuFallback();
             }
 
+            _detectionInfo = _detectionInfo with
+            {
+                GpuInfoSource = string.IsNullOrWhiteSpace(_detectionInfo.GpuInfoSource)
+                    ? "wmi"
+                    : _detectionInfo.GpuInfoSource
+            };
+            LogDetection(_detectionInfo);
             return EnsurePrimaryGpu(supportedGpus);
         }
         catch (Exception exception)
         {
-            _logger.Error("runtime-gpu", "gpu query failed; using Unknown GPU fallback.", exception);
+            _detectionInfo = new RuntimeHardwareDetectionInfo
+            {
+                GpuInfoSource = "fallback",
+                WmiGpuStatus = WindowsWmiQueryStatuses.Exception,
+                WmiGpuAttempts = 0
+            };
+            _logger.Error(LogCategory, "gpu query failed; using Unknown GPU fallback.", exception);
             return CreateUnknownGpuFallback();
         }
     }
 
-    private static IReadOnlyList<GpuInfo> QueryGpuInfos()
+    public RuntimeHardwareDetectionInfo GetHardwareDetectionInfo()
+    {
+        return _detectionInfo;
+    }
+
+    private static WindowsGpuInfoQueryResult QueryGpuInfos()
     {
         if (!OperatingSystem.IsWindows())
         {
-            return CreateUnknownGpuFallback();
+            return CreateResult(
+                [],
+                "fallback",
+                WindowsWmiQueryStatuses.NonWindows,
+                0);
         }
 
         var results = new List<GpuInfo>();
         var dedupe = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        var rows = WindowsWmiQueryHelper.Query(
+        var wmiResult = WindowsWmiQueryHelper.QueryWithResult(
             "SELECT Name, PNPDeviceID, AdapterCompatibility, VideoProcessor FROM Win32_VideoController",
             static item =>
             new WmiGpuRow
@@ -76,9 +118,19 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider
                 AdapterId = WindowsWmiQueryHelper.ReadString(item, "PNPDeviceID"),
                 AdapterCompatibility = WindowsWmiQueryHelper.ReadString(item, "AdapterCompatibility"),
                 VideoProcessor = WindowsWmiQueryHelper.ReadString(item, "VideoProcessor")
-            });
+            },
+            new WindowsWmiQueryOptions { SourceName = "Win32_VideoController" });
 
-        foreach (var row in rows)
+        if (wmiResult.Status != WindowsWmiQueryStatuses.Success)
+        {
+            return CreateResult(
+                [],
+                "fallback",
+                wmiResult.Status,
+                wmiResult.Attempts);
+        }
+
+        foreach (var row in wmiResult.Rows)
         {
             var vendor = ResolveVendor(row.AdapterCompatibility, row.Name, row.VideoProcessor);
             if (!IsSupportedVendor(vendor))
@@ -105,7 +157,11 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider
             });
         }
 
-        return results.Count == 0 ? CreateUnknownGpuFallback() : EnsurePrimaryGpu(results);
+        return CreateResult(
+            results,
+            results.Count == 0 ? "fallback" : "wmi",
+            wmiResult.Status,
+            wmiResult.Attempts);
     }
 
     private static IReadOnlyList<GpuInfo> FilterSupportedGpus(IReadOnlyList<GpuInfo> gpus)
@@ -149,6 +205,51 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider
         ];
     }
 
+    private static WindowsGpuInfoQueryResult CreateLegacyQueryResult(Func<IReadOnlyList<GpuInfo>> query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        return CreateResult(
+            query(),
+            "wmi",
+            WindowsWmiQueryStatuses.Success,
+            1);
+    }
+
+    private static WindowsGpuInfoQueryResult CreateResult(
+        IReadOnlyList<GpuInfo> gpus,
+        string source,
+        string wmiStatus,
+        int attempts)
+    {
+        return new WindowsGpuInfoQueryResult
+        {
+            Gpus = gpus ?? [],
+            Detection = new RuntimeHardwareDetectionInfo
+            {
+                GpuInfoSource = (source ?? "").Trim(),
+                WmiGpuStatus = (wmiStatus ?? "").Trim(),
+                WmiGpuAttempts = Math.Max(0, attempts)
+            }
+        };
+    }
+
+    private static RuntimeHardwareDetectionInfo NormalizeDetection(RuntimeHardwareDetectionInfo detection)
+    {
+        return new RuntimeHardwareDetectionInfo
+        {
+            GpuInfoSource = (detection.GpuInfoSource ?? "").Trim(),
+            WmiGpuStatus = (detection.WmiGpuStatus ?? "").Trim(),
+            WmiGpuAttempts = detection.WmiGpuAttempts
+        };
+    }
+
+    private void LogDetection(RuntimeHardwareDetectionInfo detection)
+    {
+        _logger.Info(
+            LogCategory,
+            $"gpu info source={NormalizeLogValue(detection.GpuInfoSource, "none")} wmi_status={NormalizeLogValue(detection.WmiGpuStatus, "none")} attempts={detection.WmiGpuAttempts}");
+    }
+
     private static string ResolveVendor(string adapterCompatibility, string name, string videoProcessor)
     {
         var source = string.Join(
@@ -186,6 +287,12 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider
         return source.Contains(value, StringComparison.OrdinalIgnoreCase);
     }
 
+    private static string NormalizeLogValue(string? value, string fallback)
+    {
+        var normalized = (value ?? "").Trim();
+        return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+    }
+
     private sealed record WmiGpuRow
     {
         public string Name { get; init; } = "";
@@ -193,4 +300,10 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider
         public string AdapterCompatibility { get; init; } = "";
         public string VideoProcessor { get; init; } = "";
     }
+}
+
+internal sealed record WindowsGpuInfoQueryResult
+{
+    public IReadOnlyList<GpuInfo> Gpus { get; init; } = [];
+    public RuntimeHardwareDetectionInfo Detection { get; init; } = new();
 }

@@ -7,4 +7,5 @@ public sealed record RuntimeContext
     public DeviceInfo Device { get; init; } = new();
     public AppLanguage Language { get; init; } = AppLanguage.English;
     public RemoteDataOptions RemoteData { get; init; } = new();
+    public RuntimeHardwareDetectionInfo HardwareDetection { get; init; } = new();
 }

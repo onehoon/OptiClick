@@ -178,10 +178,10 @@ public sealed record AppStrings
     public string RuntimeDetectingGpu { get; init; } = "";
     public string RuntimeStartupInitWarning { get; init; } = "";
     public string RuntimeSummaryPreparing { get; init; } = "";
-    public string FirstRunPreparationTitle { get; init; } = "";
-    public string FirstRunPreparationBody { get; init; } = "";
-    public string FirstRunPreparationFailedTitle { get; init; } = "";
-    public string FirstRunPreparationFailedSummary { get; init; } = "";
+    public string StartupPreparationTitle { get; init; } = "";
+    public string StartupPreparationBody { get; init; } = "";
+    public string StartupPreparationFailedTitle { get; init; } = "";
+    public string StartupPreparationFailedSummary { get; init; } = "";
 
     public string RuntimeCatalogUnexpectedErrorTitle { get; init; } = "";
     public string RuntimeCatalogUnexpectedErrorSummary { get; init; } = "";

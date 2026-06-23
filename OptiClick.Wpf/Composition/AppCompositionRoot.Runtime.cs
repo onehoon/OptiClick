@@ -360,7 +360,7 @@ public sealed partial class AppCompositionRoot
             sharedHttpClient);
         var runtimeOverrideFactory = new RuntimeTestEnvironmentOverrideProviderFactory();
         var gpuProvider = runtimeOverrideFactory.ResolveGpuProvider(new WindowsGpuInfoProvider(logger));
-        var deviceProvider = runtimeOverrideFactory.ResolveDeviceProvider(new WindowsDeviceInfoProvider());
+        var deviceProvider = runtimeOverrideFactory.ResolveDeviceProvider(new WindowsDeviceInfoProvider(logger));
         var runtimeContextProvider = new RuntimeContextProvider(
             gpuProvider,
             deviceProvider,

@@ -11,6 +11,11 @@ public sealed class CoverCacheBootstrapCoordinator
         _coverCacheBootstrapService = coverCacheBootstrapService ?? throw new ArgumentNullException(nameof(coverCacheBootstrapService));
     }
 
+    public bool IsReady()
+    {
+        return _coverCacheBootstrapService.IsReady();
+    }
+
     public async Task<CoverCacheBootstrapResult> StartForColdStartAsync(
         StartupPreparationCoordinatorRequest request,
         CancellationToken cancellationToken)

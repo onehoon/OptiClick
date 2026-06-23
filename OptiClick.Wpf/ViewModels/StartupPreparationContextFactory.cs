@@ -29,15 +29,16 @@ internal sealed class StartupPreparationContextFactory
             },
             UiPort = new StartupPreparationUiPort
             {
-                ApplyFirstRunPreparationOverlay = _input.ApplyFirstRunPreparationOverlay,
-                ShowFirstRunPreparationFailureAsync =
-                    _input.ShowFirstRunPreparationFailureAsync
+                ApplyStartupPreparationOverlay = _input.ApplyStartupPreparationOverlay,
+                ShowStartupPreparationFailureAsync =
+                    _input.ShowStartupPreparationFailureAsync
             },
             RuntimePort = new StartupPreparationRuntimePort
             {
                 ShouldBlockStartupForUnsupportedOperatingSystem =
                     _input.ShouldBlockStartupForUnsupportedOperatingSystem,
                 ReadModuleDownloadLinks = _input.ReadModuleDownloadLinks,
+                ReadOptiScalerVariantCatalog = _input.ReadOptiScalerVariantCatalog,
                 ReadFsr4VariantCatalog = _input.ReadFsr4VariantCatalog,
                 RefreshArchiveReadinessWithoutCoordinatorAsync =
                     _input.RefreshArchiveReadinessWithoutCoordinatorAsync,
@@ -50,10 +51,10 @@ internal sealed class StartupPreparationContextFactory
                 LogInstallInfo = _input.LogInstallInfo,
                 LogInstallWarning = _input.LogInstallWarning
             },
-            FirstRunPreparationFailureText = new StartupPreparationFailureText
+            StartupPreparationFailureText = new StartupPreparationFailureText
             {
-                Title = _input.ReadFirstRunPreparationFailedTitle(),
-                Summary = _input.ReadFirstRunPreparationFailedSummary(),
+                Title = _input.ReadStartupPreparationFailedTitle(),
+                Summary = _input.ReadStartupPreparationFailedSummary(),
                 PrimaryButtonText = _input.ReadDialogButtonOkText()
             }
         };
@@ -71,10 +72,11 @@ internal sealed record StartupPreparationContextFactoryInput
     }
 
     public required Func<string, string, string> ClearLastErrorCode { get; init; }
-    public required Action<bool> ApplyFirstRunPreparationOverlay { get; init; }
-    public required Func<AppDialogRequest, CancellationToken, Task> ShowFirstRunPreparationFailureAsync { get; init; }
+    public required Action<bool> ApplyStartupPreparationOverlay { get; init; }
+    public required Func<AppDialogRequest, CancellationToken, Task> ShowStartupPreparationFailureAsync { get; init; }
     public required Func<bool> ShouldBlockStartupForUnsupportedOperatingSystem { get; init; }
     public required Func<ModuleDownloadLinkContext> ReadModuleDownloadLinks { get; init; }
+    public required Func<OptiScalerVariantCatalog> ReadOptiScalerVariantCatalog { get; init; }
     public required Func<Fsr4VariantCatalog> ReadFsr4VariantCatalog { get; init; }
     public required Func<CancellationToken, Task<ArchiveReadinessFlowResult>> RefreshArchiveReadinessWithoutCoordinatorAsync
     {
@@ -87,7 +89,7 @@ internal sealed record StartupPreparationContextFactoryInput
     public required Action<string> LogAppWarning { get; init; }
     public required Action<string> LogInstallInfo { get; init; }
     public required Action<string> LogInstallWarning { get; init; }
-    public required Func<string> ReadFirstRunPreparationFailedTitle { get; init; }
-    public required Func<string> ReadFirstRunPreparationFailedSummary { get; init; }
+    public required Func<string> ReadStartupPreparationFailedTitle { get; init; }
+    public required Func<string> ReadStartupPreparationFailedSummary { get; init; }
     public required Func<string> ReadDialogButtonOkText { get; init; }
 }
