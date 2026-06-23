@@ -1,5 +1,5 @@
-using OptiClick.Core.Abstractions;
-using OptiClick.Core.Models;
+using OptiClick.Core.Install;
+using OptiClick.Infrastructure.FileSystem;
 using OptiClick.Wpf.Install.Archives;
 using OptiClick.Wpf.Install.Planning;
 using OptiClick.Wpf.Models;
@@ -14,8 +14,7 @@ public sealed class StartupPreparationCoordinator
     private readonly StartupBackgroundTaskManager _startupBackgroundTaskManager;
     private readonly ArchiveReadinessRefreshCoordinator _archiveReadinessRefreshCoordinator;
     private readonly ArchiveReadinessWarmupController _archiveReadinessWarmupController;
-    private readonly FirstRunPreparationDecisionService _firstRunPreparationDecisionService;
-    private readonly FirstRunStateMarkerService _firstRunStateMarkerService;
+    private readonly StartupPreparationDecisionService _startupPreparationDecisionService;
     private readonly CoverCacheBootstrapCoordinator _coverCacheBootstrapCoordinator;
     private Task _startupDialogsReadyTask = Task.CompletedTask;
 
@@ -23,15 +22,13 @@ public sealed class StartupPreparationCoordinator
         StartupBackgroundTaskManager startupBackgroundTaskManager,
         ArchiveReadinessRefreshCoordinator archiveReadinessRefreshCoordinator,
         ArchiveReadinessWarmupController archiveReadinessWarmupController,
-        IFirstRunStateStore firstRunStateStore,
         ICoverCacheBootstrapService coverCacheBootstrapService,
         IAppLocalDataPathProvider localDataPathProvider)
         : this(
             startupBackgroundTaskManager,
             archiveReadinessRefreshCoordinator,
             archiveReadinessWarmupController,
-            new FirstRunPreparationDecisionService(firstRunStateStore, localDataPathProvider),
-            new FirstRunStateMarkerService(firstRunStateStore),
+            new StartupPreparationDecisionService(localDataPathProvider),
             new CoverCacheBootstrapCoordinator(coverCacheBootstrapService))
     {
     }
@@ -40,15 +37,13 @@ public sealed class StartupPreparationCoordinator
         StartupBackgroundTaskManager startupBackgroundTaskManager,
         ArchiveReadinessRefreshCoordinator archiveReadinessRefreshCoordinator,
         ArchiveReadinessWarmupController archiveReadinessWarmupController,
-        FirstRunPreparationDecisionService firstRunPreparationDecisionService,
-        FirstRunStateMarkerService firstRunStateMarkerService,
+        StartupPreparationDecisionService startupPreparationDecisionService,
         CoverCacheBootstrapCoordinator coverCacheBootstrapCoordinator)
     {
         _startupBackgroundTaskManager = startupBackgroundTaskManager ?? throw new ArgumentNullException(nameof(startupBackgroundTaskManager));
         _archiveReadinessRefreshCoordinator = archiveReadinessRefreshCoordinator ?? throw new ArgumentNullException(nameof(archiveReadinessRefreshCoordinator));
         _archiveReadinessWarmupController = archiveReadinessWarmupController ?? throw new ArgumentNullException(nameof(archiveReadinessWarmupController));
-        _firstRunPreparationDecisionService = firstRunPreparationDecisionService ?? throw new ArgumentNullException(nameof(firstRunPreparationDecisionService));
-        _firstRunStateMarkerService = firstRunStateMarkerService ?? throw new ArgumentNullException(nameof(firstRunStateMarkerService));
+        _startupPreparationDecisionService = startupPreparationDecisionService ?? throw new ArgumentNullException(nameof(startupPreparationDecisionService));
         _coverCacheBootstrapCoordinator = coverCacheBootstrapCoordinator ?? throw new ArgumentNullException(nameof(coverCacheBootstrapCoordinator));
     }
 
@@ -92,23 +87,46 @@ public sealed class StartupPreparationCoordinator
         TaskCompletionSource startupDialogsReadySource)
     {
         var cancellationToken = cancellationTokenSource.Token;
-        var showFirstRunPreparationOverlay = false;
+        var showStartupPreparationOverlay = false;
         ArchiveReadinessFlowResult? archiveReadinessResult = null;
         CancellationTokenSource? coverCacheBootstrapCancellation = null;
         Task<CoverCacheBootstrapResult>? coverCacheBootstrapTask = null;
         try
         {
-            showFirstRunPreparationOverlay = await ShouldShowFirstRunPreparationOverlayAsync(
+            var shouldBlockStartupForUnsupportedOperatingSystem =
+                request.RuntimePort.ShouldBlockStartupForUnsupportedOperatingSystem();
+            var startupPreparationDecision = ShouldShowStartupPreparationOverlay(
                 request,
-                cancellationToken);
-            if (showFirstRunPreparationOverlay)
+                shouldBlockStartupForUnsupportedOperatingSystem);
+            var shouldBootstrapCoverCache = !shouldBlockStartupForUnsupportedOperatingSystem
+                && !_coverCacheBootstrapCoordinator.IsReady();
+            showStartupPreparationOverlay = startupPreparationDecision.ShouldShowOverlay
+                || shouldBootstrapCoverCache;
+
+            if (startupPreparationDecision.LocalReadiness is not null)
             {
-                request.UiPort.ApplyFirstRunPreparationOverlay(true);
+                request.StatePort.SetArchiveReadiness(startupPreparationDecision.LocalReadiness);
+            }
+
+            if (showStartupPreparationOverlay)
+            {
+                request.UiPort.ApplyStartupPreparationOverlay(true);
                 request.LogPort.LogAppInfo("milestone startup_overlay_shown");
-                coverCacheBootstrapCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                coverCacheBootstrapTask = _coverCacheBootstrapCoordinator.StartForColdStartAsync(
-                    request,
-                    coverCacheBootstrapCancellation.Token);
+                startupDialogsReadySource.TrySetResult();
+                if (shouldBootstrapCoverCache)
+                {
+                    coverCacheBootstrapCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    coverCacheBootstrapTask = _coverCacheBootstrapCoordinator.StartForColdStartAsync(
+                        request,
+                        coverCacheBootstrapCancellation.Token);
+                }
+                else
+                {
+                    request.StatePort.UpdateStartupPreparationState(state => state with
+                    {
+                        CoverCacheBootstrapState = CoverCacheBootstrapState.NotRequired
+                    });
+                }
             }
             else
             {
@@ -145,7 +163,7 @@ public sealed class StartupPreparationCoordinator
         finally
         {
             var archiveWarmupState = _archiveReadinessWarmupController.State;
-            if (showFirstRunPreparationOverlay)
+            if (showStartupPreparationOverlay)
             {
                 var coverCacheBootstrapResult = await _coverCacheBootstrapCoordinator.ResolveCompletionAsync(
                     request,
@@ -153,9 +171,9 @@ public sealed class StartupPreparationCoordinator
                     coverCacheBootstrapCancellation,
                     archiveWarmupState,
                     archiveReadinessResult);
-                request.UiPort.ApplyFirstRunPreparationOverlay(false);
-                request.LogPort.LogAppInfo("milestone first_run_overlay_hidden");
-                await CompleteFirstRunPreparationOverlayAsync(
+                request.UiPort.ApplyStartupPreparationOverlay(false);
+                request.LogPort.LogAppInfo("milestone startup_overlay_hidden");
+                await CompleteStartupPreparationOverlayAsync(
                     request,
                     archiveWarmupState,
                     archiveReadinessResult,
@@ -178,34 +196,22 @@ public sealed class StartupPreparationCoordinator
         }
     }
 
-    private async Task<bool> ShouldShowFirstRunPreparationOverlayAsync(
+    private StartupPreparationDecision ShouldShowStartupPreparationOverlay(
         StartupPreparationCoordinatorRequest request,
-        CancellationToken cancellationToken)
+        bool shouldBlockStartupForUnsupportedOperatingSystem)
     {
-        var decision = await _firstRunPreparationDecisionService.DecideAsync(
-            new FirstRunPreparationDecisionRequest
+        return _startupPreparationDecisionService.Decide(
+            new StartupPreparationDecisionRequest
             {
-                ShouldBlockStartupForUnsupportedOperatingSystem = request.RuntimePort.ShouldBlockStartupForUnsupportedOperatingSystem(),
+                ShouldBlockStartupForUnsupportedOperatingSystem = shouldBlockStartupForUnsupportedOperatingSystem,
                 LatestArchiveReadiness = request.StatePort.ReadLatestArchiveReadiness(),
                 ModuleDownloadLinks = request.RuntimePort.ReadModuleDownloadLinks(),
+                OptiScalerVariantCatalog = request.RuntimePort.ReadOptiScalerVariantCatalog(),
                 Fsr4VariantCatalog = request.RuntimePort.ReadFsr4VariantCatalog()
-            },
-            cancellationToken);
-
-        if (decision.LocalReadiness is not null)
-        {
-            request.StatePort.SetArchiveReadiness(decision.LocalReadiness);
-        }
-
-        if (decision.ShouldSavePreparedMarker)
-        {
-            await _firstRunStateMarkerService.SaveCompletedMarkerAsync(CancellationToken.None);
-        }
-
-        return decision.ShouldShowOverlay;
+            });
     }
 
-    private async Task CompleteFirstRunPreparationOverlayAsync(
+    private async Task CompleteStartupPreparationOverlayAsync(
         StartupPreparationCoordinatorRequest request,
         ArchiveReadinessWarmupState archiveWarmupState,
         ArchiveReadinessFlowResult? archiveReadinessResult,
@@ -223,16 +229,15 @@ public sealed class StartupPreparationCoordinator
             && AreRequiredStartupArchivesReady(readiness)
             && CoverCacheBootstrapCoordinator.IsReady(coverCacheBootstrapResult.State))
         {
-            await _firstRunStateMarkerService.SaveCompletedMarkerAsync(CancellationToken.None, coverCacheBootstrapResult);
             return;
         }
 
-        await request.UiPort.ShowFirstRunPreparationFailureAsync(
-            CreateFirstRunPreparationFailureRequest(request.FirstRunPreparationFailureText),
+        await request.UiPort.ShowStartupPreparationFailureAsync(
+            CreateStartupPreparationFailureRequest(request.StartupPreparationFailureText),
             CancellationToken.None);
     }
 
-    private static AppDialogRequest CreateFirstRunPreparationFailureRequest(StartupPreparationFailureText text)
+    private static AppDialogRequest CreateStartupPreparationFailureRequest(StartupPreparationFailureText text)
     {
         return new AppDialogRequest
         {
@@ -250,7 +255,7 @@ public sealed class StartupPreparationCoordinator
     private static bool AreRequiredStartupArchivesReady(ArchiveReadinessSnapshot readiness)
     {
         // All install archives are startup-critical. Missing "optional" caches can still make a later
-        // game-specific install fail after the user reaches the final button, so first-run warmup must
+        // game-specific install fail after the user reaches the final button, so startup warmup must
         // verify the complete archive set instead of only the currently selected game's plan.
         return readiness.AreAllStartupArchivesReady();
     }
@@ -263,7 +268,7 @@ public sealed record StartupPreparationCoordinatorRequest
     public required StartupPreparationUiPort UiPort { get; init; }
     public required StartupPreparationRuntimePort RuntimePort { get; init; }
     public required StartupPreparationLogPort LogPort { get; init; }
-    public required StartupPreparationFailureText FirstRunPreparationFailureText { get; init; }
+    public required StartupPreparationFailureText StartupPreparationFailureText { get; init; }
 }
 
 public sealed record StartupPreparationStatePort
@@ -281,14 +286,15 @@ public sealed record StartupPreparationStatePort
 
 public sealed record StartupPreparationUiPort
 {
-    public required Action<bool> ApplyFirstRunPreparationOverlay { get; init; }
-    public required Func<AppDialogRequest, CancellationToken, Task> ShowFirstRunPreparationFailureAsync { get; init; }
+    public required Action<bool> ApplyStartupPreparationOverlay { get; init; }
+    public required Func<AppDialogRequest, CancellationToken, Task> ShowStartupPreparationFailureAsync { get; init; }
 }
 
 public sealed record StartupPreparationRuntimePort
 {
     public required Func<bool> ShouldBlockStartupForUnsupportedOperatingSystem { get; init; }
     public required Func<ModuleDownloadLinkContext> ReadModuleDownloadLinks { get; init; }
+    public required Func<OptiScalerVariantCatalog> ReadOptiScalerVariantCatalog { get; init; }
     public required Func<Fsr4VariantCatalog> ReadFsr4VariantCatalog { get; init; }
     public required Func<CancellationToken, Task<ArchiveReadinessFlowResult>> RefreshArchiveReadinessWithoutCoordinatorAsync
     {

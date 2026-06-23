@@ -40,44 +40,84 @@ public sealed class RuntimeContextProvider : IRuntimeContextProvider
 
     public RuntimeContext GetRuntimeContext()
     {
-        var gpus = GetSafeGpus();
+        var gpuResult = new RuntimeGpuDetectionResult(
+            UnknownGpuFallback,
+            new RuntimeHardwareDetectionInfo
+            {
+                GpuInfoSource = "fallback",
+                WmiGpuStatus = "exception"
+            });
+        var deviceResult = new RuntimeDeviceDetectionResult(
+            new DeviceInfo(),
+            new RuntimeHardwareDetectionInfo
+            {
+                DeviceInfoSource = "fallback",
+                WmiDeviceStatus = "exception"
+            });
+
+        Parallel.Invoke(
+            () => gpuResult = GetSafeGpus(),
+            () => deviceResult = GetSafeDevice());
+
+        var gpus = gpuResult.Gpus;
         var selectedGpu = SelectSingleGpu(gpus);
         return new RuntimeContext
         {
             Gpus = gpus,
             SelectedGpu = selectedGpu,
-            Device = GetSafeDevice(),
+            Device = deviceResult.Device,
             Language = GetSafeLanguage(),
-            RemoteData = GetSafeRemoteData()
+            RemoteData = GetSafeRemoteData(),
+            HardwareDetection = MergeHardwareDetection(deviceResult.Detection, gpuResult.Detection)
         };
     }
 
-    private IReadOnlyList<GpuInfo> GetSafeGpus()
+    private RuntimeGpuDetectionResult GetSafeGpus()
     {
         try
         {
             var gpus = _gpuProvider.GetGpus();
-            return gpus is null || gpus.Count == 0 ? UnknownGpuFallback : gpus;
+            var safeGpus = gpus is null || gpus.Count == 0 ? UnknownGpuFallback : gpus;
+            var detection = GetProviderDetectionInfo(_gpuProvider);
+            if (string.IsNullOrWhiteSpace(detection.GpuInfoSource) && ReferenceEquals(safeGpus, UnknownGpuFallback))
+            {
+                detection = detection with { GpuInfoSource = "fallback" };
+            }
+
+            return new RuntimeGpuDetectionResult(safeGpus, detection);
         }
         catch (Exception ex)
         {
             _logger?.Warning(LogCategory, "gpu provider failed; using unknown fallback");
             _logger?.Error(LogCategory, "gpu provider exception", ex);
-            return UnknownGpuFallback;
+            return new RuntimeGpuDetectionResult(
+                UnknownGpuFallback,
+                new RuntimeHardwareDetectionInfo
+                {
+                    GpuInfoSource = "fallback",
+                    WmiGpuStatus = "exception"
+                });
         }
     }
 
-    private DeviceInfo GetSafeDevice()
+    private RuntimeDeviceDetectionResult GetSafeDevice()
     {
         try
         {
-            return _deviceProvider.GetDeviceInfo() ?? new DeviceInfo();
+            var device = _deviceProvider.GetDeviceInfo() ?? new DeviceInfo();
+            return new RuntimeDeviceDetectionResult(device, GetProviderDetectionInfo(_deviceProvider));
         }
         catch (Exception ex)
         {
             _logger?.Warning(LogCategory, "device provider failed; using empty device info");
             _logger?.Error(LogCategory, "device provider exception", ex);
-            return new DeviceInfo();
+            return new RuntimeDeviceDetectionResult(
+                new DeviceInfo(),
+                new RuntimeHardwareDetectionInfo
+                {
+                    DeviceInfoSource = "fallback",
+                    WmiDeviceStatus = "exception"
+                });
         }
     }
 
@@ -113,4 +153,34 @@ public sealed class RuntimeContextProvider : IRuntimeContextProvider
     {
         return gpus.Count == 1 ? gpus[0] : null;
     }
+
+    private static RuntimeHardwareDetectionInfo GetProviderDetectionInfo(object provider)
+    {
+        return provider is IRuntimeHardwareDetectionInfoProvider diagnosticsProvider
+            ? diagnosticsProvider.GetHardwareDetectionInfo() ?? new RuntimeHardwareDetectionInfo()
+            : new RuntimeHardwareDetectionInfo();
+    }
+
+    private static RuntimeHardwareDetectionInfo MergeHardwareDetection(
+        RuntimeHardwareDetectionInfo device,
+        RuntimeHardwareDetectionInfo gpu)
+    {
+        return new RuntimeHardwareDetectionInfo
+        {
+            DeviceInfoSource = (device.DeviceInfoSource ?? "").Trim(),
+            GpuInfoSource = (gpu.GpuInfoSource ?? "").Trim(),
+            WmiDeviceStatus = (device.WmiDeviceStatus ?? "").Trim(),
+            WmiGpuStatus = (gpu.WmiGpuStatus ?? "").Trim(),
+            WmiDeviceAttempts = Math.Max(0, device.WmiDeviceAttempts),
+            WmiGpuAttempts = Math.Max(0, gpu.WmiGpuAttempts)
+        };
+    }
+
+    private sealed record RuntimeGpuDetectionResult(
+        IReadOnlyList<GpuInfo> Gpus,
+        RuntimeHardwareDetectionInfo Detection);
+
+    private sealed record RuntimeDeviceDetectionResult(
+        DeviceInfo Device,
+        RuntimeHardwareDetectionInfo Detection);
 }

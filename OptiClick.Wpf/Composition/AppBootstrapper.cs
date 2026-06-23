@@ -92,6 +92,7 @@ public sealed class AppBootstrapper
         app.MainWindow = mainWindow;
         mainWindow.Show();
         startupLogger.Info(MainViewModelLogCategories.App, "milestone main_window_shown");
+        StartWindowsTimeSyncRepairInBackground();
         if (shouldRequestForegroundAfterUpdate)
         {
             WindowForegroundActivationService.RequestForeground(mainWindow, startupLogger);
@@ -119,6 +120,14 @@ public sealed class AppBootstrapper
                 }
             });
         }
+    }
+
+    private static void StartWindowsTimeSyncRepairInBackground()
+    {
+        ThreadPool.QueueUserWorkItem(static _ =>
+        {
+            _ = new WindowsTimeSyncRepairService().TryRepairAsync();
+        });
     }
 
     private static async Task RunStartupSequenceAsync(

@@ -61,7 +61,6 @@ internal static class MainWindowStartupCompositionFactory
             startupBackgroundTaskManager,
             archiveReadinessRefreshCoordinator,
             archiveReadinessWarmupController,
-            app.FirstRunStateStore,
             coverCacheBootstrapService,
             app.LocalDataPathProvider);
 

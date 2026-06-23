@@ -163,7 +163,13 @@ public sealed class RemoteDataContractSmokeRunner : IRemoteDataContractSmokeRunn
                 RequestSource = "app",
                 AppVersion = appVersion,
                 DeviceManufacturer = runtimeContext.Device?.Manufacturer ?? "",
-                DeviceModel = runtimeContext.Device?.Model ?? ""
+                DeviceModel = runtimeContext.Device?.Model ?? "",
+                DeviceInfoSource = runtimeContext.HardwareDetection.DeviceInfoSource,
+                GpuInfoSource = runtimeContext.HardwareDetection.GpuInfoSource,
+                WmiDeviceStatus = runtimeContext.HardwareDetection.WmiDeviceStatus,
+                WmiGpuStatus = runtimeContext.HardwareDetection.WmiGpuStatus,
+                WmiDeviceAttempts = runtimeContext.HardwareDetection.WmiDeviceAttempts,
+                WmiGpuAttempts = runtimeContext.HardwareDetection.WmiGpuAttempts
             };
 
             var bundleFetchResult = await _bundleClient.FetchAsync((remote.GpuBundleUrl ?? "").Trim(), bundleFetchRequest, cancellationToken);

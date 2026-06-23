@@ -155,6 +155,7 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
                     manifestResult.Manifest.ManifestVersion,
                     NormalizeLogValue(match.Vendor, ""),
                     NormalizeLogValue(match.GpuRaw, GpuBundleManifestFetchRequestFactory.NormalizeWhitespace(selectedGpu.Name)),
+                    selectedGpu,
                     appVersion,
                     cancellationToken);
                 return RemoteGpuBundleRuntimeLoadResult.Unsupported(match.ErrorCode);
@@ -174,6 +175,7 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
                     manifestResult.Manifest.ManifestVersion,
                     NormalizeLogValue(match.Vendor, ""),
                     NormalizeLogValue(match.GpuRaw, GpuBundleManifestFetchRequestFactory.NormalizeWhitespace(selectedGpu.Name)),
+                    selectedGpu,
                     appVersion,
                     cancellationToken);
                 return RemoteGpuBundleRuntimeLoadResult.Failure(
@@ -193,7 +195,13 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
                 RequestSource = "app",
                 DeviceManufacturer = safeRuntimeContext.Device?.Manufacturer ?? "",
                 DeviceModel = safeRuntimeContext.Device?.Model ?? "",
-                AppVersion = appVersion
+                AppVersion = appVersion,
+                DeviceInfoSource = safeRuntimeContext.HardwareDetection.DeviceInfoSource,
+                GpuInfoSource = safeRuntimeContext.HardwareDetection.GpuInfoSource,
+                WmiDeviceStatus = safeRuntimeContext.HardwareDetection.WmiDeviceStatus,
+                WmiGpuStatus = safeRuntimeContext.HardwareDetection.WmiGpuStatus,
+                WmiDeviceAttempts = safeRuntimeContext.HardwareDetection.WmiDeviceAttempts,
+                WmiGpuAttempts = safeRuntimeContext.HardwareDetection.WmiGpuAttempts
             };
 
             var fetchResult = await _bundleClient.FetchAsync(bundleEndpoint, request, cancellationToken);
@@ -294,25 +302,51 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
         string manifestVersion,
         string vendor,
         string gpuRaw,
+        GpuInfo selectedGpu,
         string appVersion,
         CancellationToken cancellationToken)
     {
+        var detection = runtimeContext.HardwareDetection ?? new RuntimeHardwareDetectionInfo();
+        var reason = "manifest_no_match";
+        var reportVendor = (vendor ?? "").Trim();
+        var reportGpuRaw = (gpuRaw ?? "").Trim();
+
+        if (IsGpuDetectionFailed(detection, selectedGpu))
+        {
+            reason = "gpu_detection_failed";
+            reportVendor = "";
+            reportGpuRaw = "";
+        }
+        else if (!IsManifestNoMatchReportCandidate(reportVendor, reportGpuRaw))
+        {
+            _logger.Info(
+                "remote",
+                $"gpu-bundle-runtime report-only skipped reason=not_reportable vendor={NormalizeLogValue(reportVendor, "none")} gpu_raw={NormalizeLogValue(reportGpuRaw, "none")} gpu_info_source={NormalizeLogValue(detection.GpuInfoSource, "none")} wmi_gpu_status={NormalizeLogValue(detection.WmiGpuStatus, "none")} attempts={detection.WmiGpuAttempts}");
+            return;
+        }
+
         _logger.Info(
             "remote",
-            $"gpu-bundle-runtime report-only vendor={NormalizeLogValue(vendor, "none")} gpu_raw={NormalizeLogValue(gpuRaw, "none")} manifest_version={NormalizeLogValue(manifestVersion, "none")}");
+            $"gpu-bundle-runtime report-only reason={reason} vendor={NormalizeLogValue(reportVendor, "none")} gpu_raw={NormalizeLogValue(reportGpuRaw, "none")} gpu_info_source={NormalizeLogValue(detection.GpuInfoSource, "none")} wmi_gpu_status={NormalizeLogValue(detection.WmiGpuStatus, "none")} attempts={detection.WmiGpuAttempts} manifest_version={NormalizeLogValue(manifestVersion, "none")}");
 
         var reportResult = await _bundleClient.ReportUnsupportedAsync(
             bundleEndpoint,
             new GpuBundleUnsupportedReportRequest
             {
-                Vendor = vendor,
-                GpuRaw = gpuRaw,
+                Vendor = reportVendor,
+                GpuRaw = reportGpuRaw,
                 RequestSource = "app",
                 DeviceManufacturer = (runtimeContext.Device?.Manufacturer ?? "").Trim(),
                 DeviceModel = (runtimeContext.Device?.Model ?? "").Trim(),
                 AppVersion = (appVersion ?? "").Trim(),
                 ManifestVersion = (manifestVersion ?? "").Trim(),
-                Reason = "manifest_no_match"
+                Reason = reason,
+                DeviceInfoSource = detection.DeviceInfoSource,
+                GpuInfoSource = detection.GpuInfoSource,
+                WmiDeviceStatus = detection.WmiDeviceStatus,
+                WmiGpuStatus = detection.WmiGpuStatus,
+                WmiDeviceAttempts = detection.WmiDeviceAttempts,
+                WmiGpuAttempts = detection.WmiGpuAttempts
             },
             cancellationToken);
 
@@ -329,6 +363,47 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
     {
         var normalized = (value ?? "").Trim();
         return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+    }
+
+    private static bool IsGpuDetectionFailed(RuntimeHardwareDetectionInfo detection, GpuInfo selectedGpu)
+    {
+        var wmiStatus = (detection.WmiGpuStatus ?? "").Trim();
+        if (!string.IsNullOrWhiteSpace(wmiStatus)
+            && !string.Equals(wmiStatus, "success", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return IsUnknownGpuFallback(selectedGpu) && !string.Equals(wmiStatus, "success", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsManifestNoMatchReportCandidate(string vendor, string gpuRaw)
+    {
+        return IsSupportedReportVendor(vendor) && !IsPlaceholderGpuRaw(gpuRaw);
+    }
+
+    private static bool IsSupportedReportVendor(string vendor)
+    {
+        return string.Equals(vendor, "nvidia", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(vendor, "amd", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(vendor, "intel", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsUnknownGpuFallback(GpuInfo gpu)
+    {
+        return gpu is not null
+               && string.Equals(gpu.Name?.Trim(), "Unknown GPU", StringComparison.OrdinalIgnoreCase)
+               && string.Equals(gpu.Vendor?.Trim(), "Unknown", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsPlaceholderGpuRaw(string gpuRaw)
+    {
+        var normalized = (gpuRaw ?? "").Trim().ToLowerInvariant();
+        return string.IsNullOrWhiteSpace(normalized)
+               || normalized == "unknown gpu"
+               || normalized == "wmi fail"
+               || normalized == "wmi failed"
+               || normalized == "gpu detection failed";
     }
 
     private static string FormatFsr4Policy(Fsr4ManifestPolicy? policy)

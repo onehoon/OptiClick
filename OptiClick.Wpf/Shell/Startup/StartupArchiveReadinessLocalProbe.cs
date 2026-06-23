@@ -17,6 +17,7 @@ internal static class StartupArchiveReadinessLocalProbe
         return TryBuildReadySnapshot(
             pathProvider,
             moduleDownloadLinks,
+            OptiScalerVariantCatalog.Empty,
             Fsr4VariantCatalog.Empty,
             out readiness);
     }
@@ -24,6 +25,21 @@ internal static class StartupArchiveReadinessLocalProbe
     public static bool TryBuildReadySnapshot(
         IAppLocalDataPathProvider pathProvider,
         ModuleDownloadLinkContext moduleDownloadLinks,
+        Fsr4VariantCatalog fsr4VariantCatalog,
+        out ArchiveReadinessSnapshot readiness)
+    {
+        return TryBuildReadySnapshot(
+            pathProvider,
+            moduleDownloadLinks,
+            OptiScalerVariantCatalog.Empty,
+            fsr4VariantCatalog,
+            out readiness);
+    }
+
+    public static bool TryBuildReadySnapshot(
+        IAppLocalDataPathProvider pathProvider,
+        ModuleDownloadLinkContext moduleDownloadLinks,
+        OptiScalerVariantCatalog optiScalerVariantCatalog,
         Fsr4VariantCatalog fsr4VariantCatalog,
         out ArchiveReadinessSnapshot readiness)
     {
@@ -39,6 +55,10 @@ internal static class StartupArchiveReadinessLocalProbe
             var cachePaths = ArchiveCachePaths.CreateDefault(pathProvider);
             var manifestStore = new ArchiveDownloadManifestStore(cachePaths.ManifestRoot);
             var validator = new OptiScalerPayloadValidator();
+            var optiScalerVariantsReady = AreOptiScalerVariantsReady(
+                cachePaths,
+                validator,
+                optiScalerVariantCatalog);
             var states = new Dictionary<ArchiveAssetKey, ArchivePreparationState>
             {
                 [ArchiveAssetKey.OptiScaler] = ResolveOptiScalerPayloadState(
@@ -67,11 +87,64 @@ internal static class StartupArchiveReadinessLocalProbe
             };
             states[ArchiveAssetKey.Fsr4] = BuildFsr4AggregateState(snapshot.Fsr4VariantStates);
             readiness = ArchivePreparationSnapshotMapper.ToInstallPlanSnapshot(snapshot);
-            return states.Values.All(static state => state.Ready);
+            return states.Values.All(static state => state.Ready)
+                   && optiScalerVariantsReady;
         }
         catch
         {
             readiness = ArchiveReadinessSnapshot.NotReady;
+            return false;
+        }
+    }
+
+    public static bool AreStartupOverlayVariantTargetsReady(
+        IAppLocalDataPathProvider pathProvider,
+        OptiScalerVariantCatalog optiScalerVariantCatalog,
+        Fsr4VariantCatalog fsr4VariantCatalog)
+    {
+        if (pathProvider is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            var cachePaths = ArchiveCachePaths.CreateDefault(pathProvider);
+            var manifestStore = new ArchiveDownloadManifestStore(cachePaths.ManifestRoot);
+            return AreOptiScalerVariantsReady(
+                       cachePaths,
+                       new OptiScalerPayloadValidator(),
+                       optiScalerVariantCatalog)
+                   && AreFsr4VariantsReady(
+                       cachePaths,
+                       manifestStore,
+                       fsr4VariantCatalog);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public static bool AreOptiScalerVariantsReady(
+        IAppLocalDataPathProvider pathProvider,
+        OptiScalerVariantCatalog optiScalerVariantCatalog)
+    {
+        if (pathProvider is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            var cachePaths = ArchiveCachePaths.CreateDefault(pathProvider);
+            return AreOptiScalerVariantsReady(
+                cachePaths,
+                new OptiScalerPayloadValidator(),
+                optiScalerVariantCatalog);
+        }
+        catch
+        {
             return false;
         }
     }
@@ -157,6 +230,89 @@ internal static class StartupArchiveReadinessLocalProbe
         }
 
         return states;
+    }
+
+    private static bool AreFsr4VariantsReady(
+        ArchiveCachePaths cachePaths,
+        IArchiveDownloadManifestStore manifestStore,
+        Fsr4VariantCatalog? fsr4VariantCatalog)
+    {
+        var catalog = fsr4VariantCatalog ?? Fsr4VariantCatalog.Empty;
+        if (catalog.Options.Count == 0)
+        {
+            return true;
+        }
+
+        return ResolveFsr4VariantStates(cachePaths, manifestStore, catalog)
+            .Values
+            .All(static state => state.Ready);
+    }
+
+    private static bool AreOptiScalerVariantsReady(
+        ArchiveCachePaths cachePaths,
+        OptiScalerPayloadValidator validator,
+        OptiScalerVariantCatalog? optiScalerVariantCatalog)
+    {
+        var catalog = optiScalerVariantCatalog ?? OptiScalerVariantCatalog.Empty;
+        if (!catalog.HasRuntimeVariants)
+        {
+            return true;
+        }
+
+        var manifest = new OptiScalerVariantManifestStore(cachePaths.ManifestRoot).Load();
+        foreach (var option in catalog.Options)
+        {
+            if (!IsOptiScalerVariantReady(cachePaths, validator, manifest, option))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool IsOptiScalerVariantReady(
+        ArchiveCachePaths cachePaths,
+        OptiScalerPayloadValidator validator,
+        OptiScalerVariantManifest manifest,
+        OptiScalerVariantOption option)
+    {
+        var variant = OptiScalerVariantCatalogBuilder.NormalizeVariant(option.Variant);
+        if (string.IsNullOrWhiteSpace(variant)
+            || !manifest.Variants.TryGetValue(variant, out var entry)
+            || !string.Equals(OptiScalerVariantCatalogBuilder.NormalizeVariant(entry.Variant), variant, StringComparison.OrdinalIgnoreCase)
+            || !entry.Ready
+            || !string.Equals(entry.State, OptiScalerVariantArchiveStates.Ready, StringComparison.OrdinalIgnoreCase)
+            || IsOptiScalerVariantMetadataChanged(entry, option))
+        {
+            return false;
+        }
+
+        var expectedCacheEntry = ArchivePayloadCacheEntryNames.ResolveOptiScalerEntryName(option.ToRemoteArchiveEntry());
+        if (!string.Equals(entry.CacheEntry, expectedCacheEntry, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var expectedPayloadDirectory = Path.Combine(cachePaths.OptiScalerPayloadCacheRoot, expectedCacheEntry);
+        if (!string.Equals(entry.PayloadDirectory, expectedPayloadDirectory, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return validator.IsValid(entry.PayloadDirectory, out _);
+    }
+
+    private static bool IsOptiScalerVariantMetadataChanged(
+        OptiScalerVariantManifestEntry entry,
+        OptiScalerVariantOption option)
+    {
+        return !string.Equals(entry.Version, option.Version, StringComparison.Ordinal)
+               || !string.Equals(entry.FileVersion, option.FileVersion, StringComparison.Ordinal)
+               || !string.Equals(entry.ProductVersion, option.ProductVersion, StringComparison.Ordinal)
+               || !string.Equals(entry.Filename, option.Filename, StringComparison.Ordinal)
+               || !string.Equals(entry.Url, option.Url, StringComparison.Ordinal)
+               || !string.Equals(entry.Sha256, option.Sha256, StringComparison.OrdinalIgnoreCase);
     }
 
     private static ArchivePreparationState ResolveFsr4VariantPayloadState(

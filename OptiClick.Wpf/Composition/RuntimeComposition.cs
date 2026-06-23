@@ -95,7 +95,7 @@ public sealed class RuntimeComposition
         var runtimeCatalogDialogPresenter = new RuntimeCatalogDialogPresenter();
         var runtimeOverrideFactory = new RuntimeTestEnvironmentOverrideProviderFactory();
         var gpuProvider = runtimeOverrideFactory.ResolveGpuProvider(new WindowsGpuInfoProvider(app.AppLogger));
-        var deviceProvider = runtimeOverrideFactory.ResolveDeviceProvider(new WindowsDeviceInfoProvider());
+        var deviceProvider = runtimeOverrideFactory.ResolveDeviceProvider(new WindowsDeviceInfoProvider(app.AppLogger));
         var runtimeContextProvider = new RuntimeContextProvider(
             gpuProvider,
             deviceProvider,

@@ -39,7 +39,13 @@ public sealed class RuntimeTestEnvironmentOverrideProviderFactory
             gpus.Add(BuildGpuInfo(parsedGpuNames[i], i == 0, i));
         }
 
-        return new MockGpuInfoProvider(gpus);
+        return new MockGpuInfoProvider(
+            gpus,
+            new RuntimeHardwareDetectionInfo
+            {
+                GpuInfoSource = "test_override",
+                WmiGpuStatus = "success"
+            });
     }
 
     public IDeviceInfoProvider ResolveDeviceProvider(IDeviceInfoProvider fallbackProvider)
@@ -61,6 +67,11 @@ public sealed class RuntimeTestEnvironmentOverrideProviderFactory
                 Manufacturer = manufacturer,
                 Model = model,
                 DeviceName = deviceName
+            },
+            new RuntimeHardwareDetectionInfo
+            {
+                DeviceInfoSource = "test_override",
+                WmiDeviceStatus = "success"
             });
     }
 

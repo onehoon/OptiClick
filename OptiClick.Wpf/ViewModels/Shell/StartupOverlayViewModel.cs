@@ -5,7 +5,7 @@ namespace OptiClick.Wpf.ViewModels.Shell;
 
 public sealed class StartupOverlayViewModel : ViewModelBase
 {
-    private bool _isFirstRunPreparationOverlayVisible;
+    private bool _isStartupPreparationOverlayVisible;
     private StartupPreparationState _startupPreparationState = StartupPreparationState.Empty;
 
     public StartupPreparationState StartupPreparationState
@@ -14,24 +14,24 @@ public sealed class StartupOverlayViewModel : ViewModelBase
         private set => SetProperty(ref _startupPreparationState, value);
     }
 
-    public Visibility FirstRunPreparationOverlayVisibility =>
-        IsFirstRunPreparationOverlayVisible ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility StartupPreparationOverlayVisibility =>
+        IsStartupPreparationOverlayVisible ? Visibility.Visible : Visibility.Collapsed;
 
-    public bool IsFirstRunPreparationOverlayVisible
+    public bool IsStartupPreparationOverlayVisible
     {
-        get => _isFirstRunPreparationOverlayVisible;
+        get => _isStartupPreparationOverlayVisible;
         private set
         {
-            if (SetProperty(ref _isFirstRunPreparationOverlayVisible, value))
+            if (SetProperty(ref _isStartupPreparationOverlayVisible, value))
             {
-                OnPropertyChanged(nameof(FirstRunPreparationOverlayVisibility));
+                OnPropertyChanged(nameof(StartupPreparationOverlayVisibility));
             }
         }
     }
 
-    public void ApplyFirstRunPreparationOverlay(bool isVisible)
+    public void ApplyStartupPreparationOverlay(bool isVisible)
     {
-        IsFirstRunPreparationOverlayVisible = isVisible;
+        IsStartupPreparationOverlayVisible = isVisible;
     }
 
     public void ApplyPreparationState(StartupPreparationState state)

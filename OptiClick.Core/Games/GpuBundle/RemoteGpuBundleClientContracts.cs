@@ -46,6 +46,12 @@ public sealed class GpuBundleFetchRequest
     public string DeviceModel { get; init; } = "";
     public string AppVersion { get; init; } = "";
     public string ManifestVersion { get; init; } = "";
+    public string DeviceInfoSource { get; init; } = "";
+    public string GpuInfoSource { get; init; } = "";
+    public string WmiDeviceStatus { get; init; } = "";
+    public string WmiGpuStatus { get; init; } = "";
+    public int WmiDeviceAttempts { get; init; }
+    public int WmiGpuAttempts { get; init; }
 }
 
 public sealed class GpuBundleUnsupportedReportRequest
@@ -58,6 +64,12 @@ public sealed class GpuBundleUnsupportedReportRequest
     public string AppVersion { get; init; } = "";
     public string ManifestVersion { get; init; } = "";
     public string Reason { get; init; } = "manifest_no_match";
+    public string DeviceInfoSource { get; init; } = "";
+    public string GpuInfoSource { get; init; } = "";
+    public string WmiDeviceStatus { get; init; } = "";
+    public string WmiGpuStatus { get; init; } = "";
+    public int WmiDeviceAttempts { get; init; }
+    public int WmiGpuAttempts { get; init; }
 }
 
 public interface IGpuBundleRequestUriBuilder
