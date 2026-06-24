@@ -163,7 +163,11 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
 
             if (!match.IsMatched)
             {
-                var matchError = string.IsNullOrWhiteSpace(match.ErrorCode) ? "gpu_bundle_rule_not_matched" : match.ErrorCode;
+                var matchError = IsGpuDetectionFailed(safeRuntimeContext.HardwareDetection, selectedGpu)
+                    ? "gpu_detection_failed"
+                    : string.IsNullOrWhiteSpace(match.ErrorCode)
+                        ? "gpu_bundle_rule_not_matched"
+                        : match.ErrorCode;
                 _logger.Error(
                     "remote",
                     $"gpu-bundle-runtime failed stage=rule_match code={NormalizeLogValue(matchError, "gpu_bundle_rule_not_matched")} vendor={NormalizeLogValue(match.Vendor, "none")} gpu_raw={NormalizeLogValue(match.GpuRaw, "none")}");
@@ -178,8 +182,7 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
                     selectedGpu,
                     appVersion,
                     cancellationToken);
-                return RemoteGpuBundleRuntimeLoadResult.Failure(
-                    string.IsNullOrWhiteSpace(match.ErrorCode) ? "gpu_bundle_rule_not_matched" : match.ErrorCode);
+                return RemoteGpuBundleRuntimeLoadResult.Failure(matchError);
             }
 
             _logger.Info(
@@ -367,14 +370,13 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
 
     private static bool IsGpuDetectionFailed(RuntimeHardwareDetectionInfo detection, GpuInfo selectedGpu)
     {
-        var wmiStatus = (detection.WmiGpuStatus ?? "").Trim();
-        if (!string.IsNullOrWhiteSpace(wmiStatus)
-            && !string.Equals(wmiStatus, "success", StringComparison.OrdinalIgnoreCase))
+        var gpuInfoSource = (detection.GpuInfoSource ?? "").Trim();
+        if (string.Equals(gpuInfoSource, "fallback", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
 
-        return IsUnknownGpuFallback(selectedGpu) && !string.Equals(wmiStatus, "success", StringComparison.OrdinalIgnoreCase);
+        return IsUnknownGpuFallback(selectedGpu);
     }
 
     private static bool IsManifestNoMatchReportCandidate(string vendor, string gpuRaw)

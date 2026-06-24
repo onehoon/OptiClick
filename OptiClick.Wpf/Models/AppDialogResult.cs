@@ -10,5 +10,6 @@ public enum AppDialogResult
     Acknowledge,
     Close,
     OpenGuide,
-    OpenIssue
+    OpenIssue,
+    Retry
 }

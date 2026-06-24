@@ -8,4 +8,5 @@ public sealed record RuntimeCatalogFlowRequest
     public required RuntimeContext LatestRuntimeContext { get; init; }
     public required AppLanguage SelectedLanguage { get; init; }
     public required RuntimeCatalogFlowText Text { get; init; }
+    public bool IsGpuDetectionRetryAttempt { get; init; }
 }

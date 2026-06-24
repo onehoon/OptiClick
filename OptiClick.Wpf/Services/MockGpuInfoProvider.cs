@@ -77,7 +77,11 @@ public sealed class MockGpuInfoProvider : IGpuInfoProvider, IRuntimeHardwareDete
         {
             GpuInfoSource = (detection.GpuInfoSource ?? "").Trim(),
             WmiGpuStatus = (detection.WmiGpuStatus ?? "").Trim(),
-            WmiGpuAttempts = Math.Max(0, detection.WmiGpuAttempts)
+            WmiGpuErrorType = (detection.WmiGpuErrorType ?? "").Trim(),
+            WmiGpuAttempts = Math.Max(0, detection.WmiGpuAttempts),
+            DxgiGpuStatus = (detection.DxgiGpuStatus ?? "").Trim(),
+            DxgiGpuCount = Math.Max(0, detection.DxgiGpuCount),
+            GpuDetectionErrorType = (detection.GpuDetectionErrorType ?? "").Trim()
         };
     }
 }

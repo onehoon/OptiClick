@@ -95,7 +95,9 @@ public sealed class RuntimeContextProvider : IRuntimeContextProvider
                 new RuntimeHardwareDetectionInfo
                 {
                     GpuInfoSource = "fallback",
-                    WmiGpuStatus = "exception"
+                    WmiGpuStatus = "exception",
+                    WmiGpuErrorType = ex.GetType().Name,
+                    GpuDetectionErrorType = $"wmi:{ex.GetType().Name}"
                 });
         }
     }
@@ -171,8 +173,12 @@ public sealed class RuntimeContextProvider : IRuntimeContextProvider
             GpuInfoSource = (gpu.GpuInfoSource ?? "").Trim(),
             WmiDeviceStatus = (device.WmiDeviceStatus ?? "").Trim(),
             WmiGpuStatus = (gpu.WmiGpuStatus ?? "").Trim(),
+            WmiGpuErrorType = (gpu.WmiGpuErrorType ?? "").Trim(),
             WmiDeviceAttempts = Math.Max(0, device.WmiDeviceAttempts),
-            WmiGpuAttempts = Math.Max(0, gpu.WmiGpuAttempts)
+            WmiGpuAttempts = Math.Max(0, gpu.WmiGpuAttempts),
+            DxgiGpuStatus = (gpu.DxgiGpuStatus ?? "").Trim(),
+            DxgiGpuCount = Math.Max(0, gpu.DxgiGpuCount),
+            GpuDetectionErrorType = (gpu.GpuDetectionErrorType ?? "").Trim()
         };
     }
 
