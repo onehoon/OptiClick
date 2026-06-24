@@ -57,11 +57,17 @@ public sealed class RuntimeCatalogCoordinator
                     request.LatestRuntimeContext.RemoteData,
                     request.Text.EndpointStatusText));
 
+            var flowRequest = request.BuildRuntimeCatalogRequest(
+                request.LatestRuntimeContext,
+                request.SelectedLanguage,
+                request.Text.FlowText);
+            if (request.RefreshMode == RuntimeCatalogRefreshMode.GpuDetectionRetry)
+            {
+                flowRequest = flowRequest with { IsGpuDetectionRetryAttempt = true };
+            }
+
             var result = await _runtimeCatalogFlowController.RefreshAsync(
-                request.BuildRuntimeCatalogRequest(
-                    request.LatestRuntimeContext,
-                    request.SelectedLanguage,
-                    request.Text.FlowText),
+                flowRequest,
                 cancellationToken);
             await request.ApplyRuntimeCatalogFlowResultAsync(
                 result,

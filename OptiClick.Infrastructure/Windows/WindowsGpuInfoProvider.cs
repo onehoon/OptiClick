@@ -8,17 +8,21 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider, IRuntimeHardwareD
 {
     private const string LogCategory = "runtime-gpu";
 
-    private readonly Func<WindowsGpuInfoQueryResult> _query;
+    private readonly Func<WindowsGpuInfoQueryResult> _wmiQuery;
+    private readonly Func<WindowsDxgiGpuQueryResult> _dxgiQuery;
     private readonly IAppLogger _logger;
     private RuntimeHardwareDetectionInfo _detectionInfo = new();
 
     public WindowsGpuInfoProvider()
-        : this(QueryGpuInfos, null, true)
+        : this((IAppLogger?)null)
     {
     }
 
     public WindowsGpuInfoProvider(IAppLogger? logger)
-        : this(QueryGpuInfos, logger, true)
+        : this(
+            () => QueryWmiGpuInfos(logger),
+            () => new WindowsDxgiGpuInfoProvider(logger).Query(),
+            logger)
     {
     }
 
@@ -33,8 +37,20 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider, IRuntimeHardwareD
     }
 
     internal WindowsGpuInfoProvider(Func<WindowsGpuInfoQueryResult> query, IAppLogger? logger, bool useQueryResult)
+        : this(
+            query,
+            static () => new WindowsDxgiGpuQueryResult { Status = WindowsDxgiQueryStatuses.NotAttempted },
+            logger)
     {
-        _query = query ?? throw new ArgumentNullException(nameof(query));
+    }
+
+    internal WindowsGpuInfoProvider(
+        Func<WindowsGpuInfoQueryResult> wmiQuery,
+        Func<WindowsDxgiGpuQueryResult> dxgiQuery,
+        IAppLogger? logger)
+    {
+        _wmiQuery = wmiQuery ?? throw new ArgumentNullException(nameof(wmiQuery));
+        _dxgiQuery = dxgiQuery ?? throw new ArgumentNullException(nameof(dxgiQuery));
         _logger = logger ?? NullAppLogger.Instance;
     }
 
@@ -42,40 +58,53 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider, IRuntimeHardwareD
     {
         try
         {
-            var queryResult = _query();
-            var gpus = queryResult.Gpus;
-            _detectionInfo = NormalizeDetection(queryResult.Detection);
-            if (gpus is null || gpus.Count == 0)
+            var wmiResult = QueryWmiSafely();
+            var wmiDetection = NormalizeDetection(wmiResult.Detection);
+            var wmiSupportedGpus = FilterSupportedGpus(wmiResult.Gpus);
+            if (wmiSupportedGpus.Count > 0)
             {
-                _detectionInfo = _detectionInfo with { GpuInfoSource = "fallback" };
-                _logger.Warning(LogCategory, "gpu query returned empty result; using Unknown GPU fallback.");
-                LogDetection(_detectionInfo);
-                return CreateUnknownGpuFallback();
-            }
-
-            var supportedGpus = FilterSupportedGpus(gpus);
-            if (supportedGpus.Count == 0)
-            {
-                _detectionInfo = _detectionInfo with
+                _detectionInfo = wmiDetection with
                 {
-                    GpuInfoSource = "fallback",
-                    WmiGpuStatus = string.IsNullOrWhiteSpace(_detectionInfo.WmiGpuStatus)
-                        ? WindowsWmiQueryStatuses.Success
-                        : _detectionInfo.WmiGpuStatus
+                    GpuInfoSource = string.IsNullOrWhiteSpace(wmiDetection.GpuInfoSource)
+                        ? "wmi"
+                        : wmiDetection.GpuInfoSource,
+                    DxgiGpuStatus = WindowsDxgiQueryStatuses.NotAttempted,
+                    DxgiGpuCount = 0,
+                    GpuDetectionErrorType = ""
                 };
-                _logger.Warning(LogCategory, "gpu query returned only unsupported vendors; using Unknown GPU fallback.");
-                LogDetection(_detectionInfo);
-                return CreateUnknownGpuFallback();
+                LogDetection(_detectionInfo, wmiSupportedGpus.Count);
+                return EnsurePrimaryGpu(wmiSupportedGpus);
             }
 
-            _detectionInfo = _detectionInfo with
+            var dxgiResult = QueryDxgiSafely();
+            var dxgiStatus = NormalizeDxgiStatus(dxgiResult);
+            var dxgiSupportedGpus = FilterSupportedGpus(dxgiResult.Gpus);
+            if (dxgiSupportedGpus.Count > 0)
             {
-                GpuInfoSource = string.IsNullOrWhiteSpace(_detectionInfo.GpuInfoSource)
-                    ? "wmi"
-                    : _detectionInfo.GpuInfoSource
+                _detectionInfo = wmiDetection with
+                {
+                    GpuInfoSource = "dxgi",
+                    DxgiGpuStatus = dxgiStatus,
+                    DxgiGpuCount = Math.Max(0, dxgiResult.AdapterCount),
+                    GpuDetectionErrorType = ResolveGpuDetectionErrorType(wmiDetection, dxgiStatus, dxgiResult.ErrorType)
+                };
+                LogDetection(_detectionInfo, dxgiSupportedGpus.Count);
+                return EnsurePrimaryGpu(dxgiSupportedGpus);
+            }
+
+            _detectionInfo = wmiDetection with
+            {
+                GpuInfoSource = "fallback",
+                WmiGpuStatus = string.IsNullOrWhiteSpace(wmiDetection.WmiGpuStatus)
+                    ? WindowsWmiQueryStatuses.Exception
+                    : wmiDetection.WmiGpuStatus,
+                DxgiGpuStatus = dxgiStatus,
+                DxgiGpuCount = Math.Max(0, dxgiResult.AdapterCount),
+                GpuDetectionErrorType = ResolveGpuDetectionErrorType(wmiDetection, dxgiStatus, dxgiResult.ErrorType)
             };
-            LogDetection(_detectionInfo);
-            return EnsurePrimaryGpu(supportedGpus);
+            _logger.Warning(LogCategory, "gpu detection failed; using Unknown GPU fallback.");
+            LogDetection(_detectionInfo, 0);
+            return CreateUnknownGpuFallback();
         }
         catch (Exception exception)
         {
@@ -83,7 +112,10 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider, IRuntimeHardwareD
             {
                 GpuInfoSource = "fallback",
                 WmiGpuStatus = WindowsWmiQueryStatuses.Exception,
-                WmiGpuAttempts = 0
+                WmiGpuAttempts = 0,
+                WmiGpuErrorType = exception.GetType().Name,
+                DxgiGpuStatus = WindowsDxgiQueryStatuses.NotAttempted,
+                GpuDetectionErrorType = PrefixErrorType("wmi", exception.GetType().Name)
             };
             _logger.Error(LogCategory, "gpu query failed; using Unknown GPU fallback.", exception);
             return CreateUnknownGpuFallback();
@@ -95,7 +127,7 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider, IRuntimeHardwareD
         return _detectionInfo;
     }
 
-    private static WindowsGpuInfoQueryResult QueryGpuInfos()
+    private static WindowsGpuInfoQueryResult QueryWmiGpuInfos(IAppLogger? logger = null)
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -119,7 +151,12 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider, IRuntimeHardwareD
                 AdapterCompatibility = WindowsWmiQueryHelper.ReadString(item, "AdapterCompatibility"),
                 VideoProcessor = WindowsWmiQueryHelper.ReadString(item, "VideoProcessor")
             },
-            new WindowsWmiQueryOptions { SourceName = "Win32_VideoController" });
+            new WindowsWmiQueryOptions
+            {
+                SourceName = "Win32_VideoController",
+                LogCategory = LogCategory,
+                Logger = logger
+            });
 
         if (wmiResult.Status != WindowsWmiQueryStatuses.Success)
         {
@@ -127,7 +164,8 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider, IRuntimeHardwareD
                 [],
                 "fallback",
                 wmiResult.Status,
-                wmiResult.Attempts);
+                wmiResult.Attempts,
+                wmiResult.ErrorType);
         }
 
         foreach (var row in wmiResult.Rows)
@@ -167,6 +205,45 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider, IRuntimeHardwareD
     private static IReadOnlyList<GpuInfo> FilterSupportedGpus(IReadOnlyList<GpuInfo> gpus)
     {
         return gpus.Where(static gpu => IsSupportedVendor(gpu.Vendor)).ToArray();
+    }
+
+    private WindowsGpuInfoQueryResult QueryWmiSafely()
+    {
+        try
+        {
+            return _wmiQuery();
+        }
+        catch (Exception exception)
+        {
+            return new WindowsGpuInfoQueryResult
+            {
+                Gpus = [],
+                Detection = new RuntimeHardwareDetectionInfo
+                {
+                    GpuInfoSource = "fallback",
+                    WmiGpuStatus = WindowsWmiQueryStatuses.Exception,
+                    WmiGpuAttempts = 0,
+                    WmiGpuErrorType = exception.GetType().Name,
+                    GpuDetectionErrorType = PrefixErrorType("wmi", exception.GetType().Name)
+                }
+            };
+        }
+    }
+
+    private WindowsDxgiGpuQueryResult QueryDxgiSafely()
+    {
+        try
+        {
+            return _dxgiQuery();
+        }
+        catch (Exception exception)
+        {
+            return new WindowsDxgiGpuQueryResult
+            {
+                Status = WindowsDxgiQueryStatuses.Exception,
+                ErrorType = exception.GetType().Name
+            };
+        }
     }
 
     private static IReadOnlyList<GpuInfo> EnsurePrimaryGpu(IReadOnlyList<GpuInfo> gpus)
@@ -219,7 +296,8 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider, IRuntimeHardwareD
         IReadOnlyList<GpuInfo> gpus,
         string source,
         string wmiStatus,
-        int attempts)
+        int attempts,
+        string wmiErrorType = "")
     {
         return new WindowsGpuInfoQueryResult
         {
@@ -228,7 +306,9 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider, IRuntimeHardwareD
             {
                 GpuInfoSource = (source ?? "").Trim(),
                 WmiGpuStatus = (wmiStatus ?? "").Trim(),
-                WmiGpuAttempts = Math.Max(0, attempts)
+                WmiGpuErrorType = (wmiErrorType ?? "").Trim(),
+                WmiGpuAttempts = Math.Max(0, attempts),
+                GpuDetectionErrorType = PrefixErrorType("wmi", wmiErrorType)
             }
         };
     }
@@ -239,15 +319,71 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider, IRuntimeHardwareD
         {
             GpuInfoSource = (detection.GpuInfoSource ?? "").Trim(),
             WmiGpuStatus = (detection.WmiGpuStatus ?? "").Trim(),
-            WmiGpuAttempts = detection.WmiGpuAttempts
+            WmiGpuErrorType = (detection.WmiGpuErrorType ?? "").Trim(),
+            WmiGpuAttempts = detection.WmiGpuAttempts,
+            DxgiGpuStatus = (detection.DxgiGpuStatus ?? "").Trim(),
+            DxgiGpuCount = Math.Max(0, detection.DxgiGpuCount),
+            GpuDetectionErrorType = (detection.GpuDetectionErrorType ?? "").Trim()
         };
     }
 
-    private void LogDetection(RuntimeHardwareDetectionInfo detection)
+    private static string NormalizeDxgiStatus(WindowsDxgiGpuQueryResult result)
+    {
+        var status = (result.Status ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return WindowsDxgiQueryStatuses.Exception;
+        }
+
+        return string.Equals(status, WindowsDxgiQueryStatuses.Empty, StringComparison.OrdinalIgnoreCase)
+               && result.AdapterCount > 0
+            ? WindowsDxgiQueryStatuses.UnsupportedOnly
+            : status;
+    }
+
+    private static string ResolveGpuDetectionErrorType(
+        RuntimeHardwareDetectionInfo wmiDetection,
+        string dxgiStatus,
+        string dxgiErrorType)
+    {
+        if (!string.IsNullOrWhiteSpace(dxgiErrorType))
+        {
+            return PrefixErrorType("dxgi", dxgiErrorType);
+        }
+
+        if (!string.IsNullOrWhiteSpace(wmiDetection.WmiGpuErrorType)
+            && !string.Equals(wmiDetection.WmiGpuStatus, WindowsWmiQueryStatuses.Success, StringComparison.OrdinalIgnoreCase))
+        {
+            return PrefixErrorType("wmi", wmiDetection.WmiGpuErrorType);
+        }
+
+        if (!string.IsNullOrWhiteSpace(wmiDetection.GpuDetectionErrorType)
+            && !string.Equals(wmiDetection.WmiGpuStatus, WindowsWmiQueryStatuses.Success, StringComparison.OrdinalIgnoreCase))
+        {
+            return PrefixErrorType("wmi", wmiDetection.GpuDetectionErrorType);
+        }
+
+        if (!string.IsNullOrWhiteSpace(wmiDetection.WmiGpuStatus)
+            && !string.Equals(wmiDetection.WmiGpuStatus, WindowsWmiQueryStatuses.Success, StringComparison.OrdinalIgnoreCase))
+        {
+            return PrefixErrorType("wmi", wmiDetection.WmiGpuStatus);
+        }
+
+        if (!string.IsNullOrWhiteSpace(dxgiStatus)
+            && !string.Equals(dxgiStatus, WindowsDxgiQueryStatuses.Success, StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(dxgiStatus, WindowsDxgiQueryStatuses.NotAttempted, StringComparison.OrdinalIgnoreCase))
+        {
+            return PrefixErrorType("dxgi", dxgiStatus);
+        }
+
+        return "";
+    }
+
+    private void LogDetection(RuntimeHardwareDetectionInfo detection, int gpuCount)
     {
         _logger.Info(
             LogCategory,
-            $"gpu info source={NormalizeLogValue(detection.GpuInfoSource, "none")} wmi_status={NormalizeLogValue(detection.WmiGpuStatus, "none")} attempts={detection.WmiGpuAttempts}");
+            $"gpu detection completed source={NormalizeLogValue(detection.GpuInfoSource, "none")} wmi_status={NormalizeLogValue(detection.WmiGpuStatus, "none")} wmi_error_type={NormalizeLogValue(detection.WmiGpuErrorType, "none")} wmi_attempts={detection.WmiGpuAttempts} dxgi_status={NormalizeLogValue(detection.DxgiGpuStatus, "none")} dxgi_count={detection.DxgiGpuCount} gpu_detection_error_type={NormalizeLogValue(detection.GpuDetectionErrorType, "none")} gpu_count={gpuCount}");
     }
 
     private static string ResolveVendor(string adapterCompatibility, string name, string videoProcessor)
@@ -291,6 +427,23 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider, IRuntimeHardwareD
     {
         var normalized = (value ?? "").Trim();
         return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+    }
+
+    private static string PrefixErrorType(string source, string? errorType)
+    {
+        var normalized = (errorType ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            return "";
+        }
+
+        if (normalized.StartsWith("wmi:", StringComparison.OrdinalIgnoreCase)
+            || normalized.StartsWith("dxgi:", StringComparison.OrdinalIgnoreCase))
+        {
+            return normalized;
+        }
+
+        return $"{source}:{normalized}";
     }
 
     private sealed record WmiGpuRow

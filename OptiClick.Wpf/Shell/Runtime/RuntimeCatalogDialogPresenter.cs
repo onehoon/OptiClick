@@ -57,6 +57,28 @@ public sealed class RuntimeCatalogDialogPresenter
         };
     }
 
+    public AppDialogRequest BuildGpuDetectionFailedDialog(
+        RuntimeCatalogFlowText text,
+        bool retryFailed = false)
+    {
+        return new AppDialogRequest
+        {
+            Kind = AppDialogKind.Warning,
+            Severity = DialogSeverity.Warning,
+            Title = text.RuntimeCatalogGpuDetectionFailedTitle,
+            Summary = retryFailed
+                ? text.RuntimeCatalogGpuDetectionRetryFailedSummary
+                : text.RuntimeCatalogGpuDetectionFailedSummary,
+            ErrorCode = "gpu_detection_failed",
+            PrimaryButtonText = text.DialogButtonRetryDetection,
+            SecondaryButtonText = text.DialogButtonCancel,
+            PrimaryResult = AppDialogResult.Retry,
+            SecondaryResult = AppDialogResult.Close,
+            CanClose = true,
+            CloseOnOverlayClick = false
+        };
+    }
+
     public AppDialogRequest BuildEmptyCatalogDialog(RuntimeCatalogFlowText text)
     {
         return BuildWarning(

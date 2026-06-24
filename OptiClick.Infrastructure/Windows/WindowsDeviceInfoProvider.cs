@@ -15,12 +15,12 @@ public sealed class WindowsDeviceInfoProvider : IDeviceInfoProvider, IRuntimeHar
     private RuntimeHardwareDetectionInfo _detectionInfo = new();
 
     public WindowsDeviceInfoProvider()
-        : this(QueryDeviceInfo, null)
+        : this((IAppLogger?)null)
     {
     }
 
     public WindowsDeviceInfoProvider(IAppLogger? logger)
-        : this(QueryDeviceInfo, logger)
+        : this(() => QueryDeviceInfo(logger), logger)
     {
     }
 
@@ -63,7 +63,7 @@ public sealed class WindowsDeviceInfoProvider : IDeviceInfoProvider, IRuntimeHar
         return _detectionInfo;
     }
 
-    private static WindowsDeviceInfoQueryResult QueryDeviceInfo()
+    private static WindowsDeviceInfoQueryResult QueryDeviceInfo(IAppLogger? logger = null)
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -83,7 +83,12 @@ public sealed class WindowsDeviceInfoProvider : IDeviceInfoProvider, IRuntimeHar
                 Model = WindowsWmiQueryHelper.ReadString(item, "Model"),
                 DeviceName = WindowsWmiQueryHelper.ReadString(item, "Name")
             },
-            new WindowsWmiQueryOptions { SourceName = "Win32_ComputerSystem" });
+            new WindowsWmiQueryOptions
+            {
+                SourceName = "Win32_ComputerSystem",
+                LogCategory = LogCategory,
+                Logger = logger
+            });
 
         if (wmiResult.Status == WindowsWmiQueryStatuses.Success)
         {

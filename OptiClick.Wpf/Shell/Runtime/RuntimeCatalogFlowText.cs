@@ -21,6 +21,9 @@ public sealed record RuntimeCatalogFlowText
     public required string RuntimeCatalogFailedBullet2 { get; init; }
     public required string RuntimeCatalogUnsupportedGpuTitle { get; init; }
     public required string RuntimeCatalogUnsupportedGpuSummary { get; init; }
+    public required string RuntimeCatalogGpuDetectionFailedTitle { get; init; }
+    public required string RuntimeCatalogGpuDetectionFailedSummary { get; init; }
+    public required string RuntimeCatalogGpuDetectionRetryFailedSummary { get; init; }
     public required string RuntimeCatalogEmptyTitle { get; init; }
     public required string RuntimeCatalogEmptySummary { get; init; }
     public required string RuntimeCatalogEmptyBullet1 { get; init; }
@@ -29,6 +32,8 @@ public sealed record RuntimeCatalogFlowText
     public required string RuntimeCatalogPipelineMissingSummary { get; init; }
     public required string RuntimeCatalogPipelineMissingBullet1 { get; init; }
     public required string DialogButtonOk { get; init; }
+    public required string DialogButtonCancel { get; init; }
+    public required string DialogButtonRetryDetection { get; init; }
     public required string StatusUnknown { get; init; }
 
     public static RuntimeCatalogFlowText FromAppStrings(AppStrings strings)
@@ -53,6 +58,9 @@ public sealed record RuntimeCatalogFlowText
             RuntimeCatalogFailedBullet2 = strings.RuntimeCatalogFailedBullet2,
             RuntimeCatalogUnsupportedGpuTitle = strings.RuntimeCatalogUnsupportedGpuTitle,
             RuntimeCatalogUnsupportedGpuSummary = strings.RuntimeCatalogUnsupportedGpuSummary,
+            RuntimeCatalogGpuDetectionFailedTitle = strings.RuntimeCatalogGpuDetectionFailedTitle,
+            RuntimeCatalogGpuDetectionFailedSummary = strings.RuntimeCatalogGpuDetectionFailedSummary,
+            RuntimeCatalogGpuDetectionRetryFailedSummary = strings.RuntimeCatalogGpuDetectionRetryFailedSummary,
             RuntimeCatalogEmptyTitle = strings.RuntimeCatalogEmptyTitle,
             RuntimeCatalogEmptySummary = strings.RuntimeCatalogEmptySummary,
             RuntimeCatalogEmptyBullet1 = strings.RuntimeCatalogEmptyBullet1,
@@ -61,6 +69,8 @@ public sealed record RuntimeCatalogFlowText
             RuntimeCatalogPipelineMissingSummary = strings.RuntimeCatalogPipelineMissingSummary,
             RuntimeCatalogPipelineMissingBullet1 = strings.RuntimeCatalogPipelineMissingBullet1,
             DialogButtonOk = strings.DialogButtonOk,
+            DialogButtonCancel = strings.DialogButtonCancel,
+            DialogButtonRetryDetection = strings.DialogButtonRetryDetection,
             StatusUnknown = strings.StatusUnknown
         };
     }

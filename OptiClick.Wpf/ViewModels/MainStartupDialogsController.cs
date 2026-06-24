@@ -23,12 +23,20 @@ internal sealed class MainStartupDialogsController
             return;
         }
 
-        await context.ShowDialogAsync(
-            request with
-            {
-                ErrorCode = normalizedCode
-            },
+        var normalizedRequest = request with
+        {
+            ErrorCode = normalizedCode
+        };
+        var result = await context.ShowDialogAsync(
+            normalizedRequest,
             cancellationToken);
+        if (context.HandleDialogResultAsync is not null)
+        {
+            await context.HandleDialogResultAsync(
+                normalizedRequest,
+                result,
+                cancellationToken);
+        }
     }
 
     public void StartInBackground(MainStartupDialogsContext context)
@@ -90,7 +98,8 @@ internal sealed class MainRemoteCatalogDialogContext
 {
     public required OnceDialogGate DialogGate { get; init; }
     public required string FallbackErrorCode { get; init; }
-    public required Func<AppDialogRequest, CancellationToken, Task> ShowDialogAsync { get; init; }
+    public required Func<AppDialogRequest, CancellationToken, Task<AppDialogResult>> ShowDialogAsync { get; init; }
+    public Func<AppDialogRequest, AppDialogResult, CancellationToken, Task>? HandleDialogResultAsync { get; init; }
 }
 
 internal sealed class MainStartupDialogsContext

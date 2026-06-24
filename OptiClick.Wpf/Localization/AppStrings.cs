@@ -197,6 +197,9 @@ public sealed record AppStrings
     public string RuntimeCatalogFailedBullet2 { get; init; } = "";
     public string RuntimeCatalogUnsupportedGpuTitle { get; init; } = "";
     public string RuntimeCatalogUnsupportedGpuSummary { get; init; } = "";
+    public string RuntimeCatalogGpuDetectionFailedTitle { get; init; } = "";
+    public string RuntimeCatalogGpuDetectionFailedSummary { get; init; } = "";
+    public string RuntimeCatalogGpuDetectionRetryFailedSummary { get; init; } = "";
     public string RuntimeCatalogEmptyTitle { get; init; } = "";
     public string RuntimeCatalogEmptySummary { get; init; } = "";
     public string RuntimeCatalogEmptyBullet1 { get; init; } = "";
@@ -224,6 +227,7 @@ public sealed record AppStrings
     public string InstallNoFilesNoNetworkNoSettings { get; init; } = "";
     public string DialogButtonOk { get; init; } = "";
     public string DialogButtonCancel { get; init; } = "";
+    public string DialogButtonRetryDetection { get; init; } = "";
     public string InstallManagementDialogTitle { get; init; } = "";
     public string InstallManagementInstalledSummary { get; init; } = "";
     public string InstallManagementUpdateAvailableSummary { get; init; } = "";

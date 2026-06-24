@@ -109,7 +109,9 @@ public sealed class RuntimeCatalogFlowController
                 ErrorCode = code,
                 RuntimeData = pipelineResult.RuntimeData ?? RemoteRuntimeData.Empty,
                 SettingsStatusText = LocalizedTextFormatter.Format(text.RuntimeRemoteCatalogFailed, code),
-                DialogRequest = IsUnsupportedGpuCatalogError(code)
+                DialogRequest = IsGpuDetectionFailedCatalogError(code, context)
+                    ? _dialogPresenter.BuildGpuDetectionFailedDialog(text, request.IsGpuDetectionRetryAttempt)
+                    : IsUnsupportedGpuCatalogError(code)
                     ? _dialogPresenter.BuildUnsupportedGpuDialog(text)
                     : _dialogPresenter.BuildFailedDialog(code, text),
                 Logs = logs
@@ -222,5 +224,31 @@ public sealed class RuntimeCatalogFlowController
     private static bool IsUnsupportedGpuCatalogError(string errorCode)
     {
         return string.Equals(errorCode, "bundle_rule_not_matched", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsGpuDetectionFailedCatalogError(string errorCode, RuntimeContext context)
+    {
+        if (string.Equals(errorCode, "gpu_detection_failed", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (!string.Equals(errorCode, "gpu_unsupported", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(errorCode, "gpu_not_found", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var detection = context.HardwareDetection ?? new RuntimeHardwareDetectionInfo();
+        return string.Equals(detection.GpuInfoSource, "fallback", StringComparison.OrdinalIgnoreCase)
+               || IsUnknownGpuFallback(context.SelectedGpu)
+               || context.Gpus.Any(IsUnknownGpuFallback);
+    }
+
+    private static bool IsUnknownGpuFallback(GpuInfo? gpu)
+    {
+        return gpu is not null
+               && string.Equals((gpu.Name ?? "").Trim(), "Unknown GPU", StringComparison.OrdinalIgnoreCase)
+               && string.Equals((gpu.Vendor ?? "").Trim(), "Unknown", StringComparison.OrdinalIgnoreCase);
     }
 }
