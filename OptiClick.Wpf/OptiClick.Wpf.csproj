@@ -38,8 +38,8 @@
     <AssemblyProduct>OptiClick</AssemblyProduct>
     <Company>onehoon</Company>
     <Copyright>© 2026 onehoon</Copyright>
-    <AppVersion>0.7.0</AppVersion>
-    <AppFileVersion>0.7.0.0</AppFileVersion>
+    <AppVersion>0.7.1</AppVersion>
+    <AppFileVersion>0.7.1.0</AppFileVersion>
     <Version>$(AppVersion)</Version>
     <AssemblyVersion>$(AppFileVersion)</AssemblyVersion>
     <FileVersion>$(AppFileVersion)</FileVersion>
