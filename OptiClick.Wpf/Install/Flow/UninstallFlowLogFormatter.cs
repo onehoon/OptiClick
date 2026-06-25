@@ -10,12 +10,13 @@ public static class UninstallFlowLogFormatter
     public static string FormatPlanBuildResult(
         string status,
         int candidatesCount,
+        int directoriesCount,
         int engineIniCleanupCount,
         int skippedCount,
         string? errorCode)
     {
         return
-            $"uninstall plan build result status={NormalizeStatusCode(status, "none")} candidates={candidatesCount} engine_ini_cleanup={engineIniCleanupCount} skipped={skippedCount} error={NormalizeStatusCode(errorCode, "none")}";
+            $"uninstall plan build result status={NormalizeStatusCode(status, "none")} candidates={candidatesCount} directories={directoriesCount} engine_ini_cleanup={engineIniCleanupCount} skipped={skippedCount} error={NormalizeStatusCode(errorCode, "none")}";
     }
 
     public static string FormatPlanRejected(string status, string? errorCode)
@@ -32,6 +33,8 @@ public static class UninstallFlowLogFormatter
         string status,
         int deletedCount,
         int failedCount,
+        int deletedDirectoriesCount,
+        int failedDirectoriesCount,
         int skippedCount,
         int engineIniCleanedCount,
         int engineIniFailedCount,
@@ -39,7 +42,7 @@ public static class UninstallFlowLogFormatter
         string? errorCode)
     {
         return
-            $"uninstall execute result status={NormalizeStatusCode(status, "none")} deleted={deletedCount} failed={failedCount} skipped={skippedCount} engine_ini_cleaned={engineIniCleanedCount} engine_ini_failed={engineIniFailedCount} engine_ini_skipped={engineIniSkippedCount} error={NormalizeStatusCode(errorCode, "none")}";
+            $"uninstall execute result status={NormalizeStatusCode(status, "none")} deleted={deletedCount} failed={failedCount} directories_deleted={deletedDirectoriesCount} directories_failed={failedDirectoriesCount} skipped={skippedCount} engine_ini_cleaned={engineIniCleanedCount} engine_ini_failed={engineIniFailedCount} engine_ini_skipped={engineIniSkippedCount} error={NormalizeStatusCode(errorCode, "none")}";
     }
 
     public static string NormalizeStatusCode(string? value, string fallback)

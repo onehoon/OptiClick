@@ -27,6 +27,8 @@ public sealed class OptiClickUninstallFileSystem : IOptiClickUninstallFileSystem
 
     public void DeleteFile(string path) => _inner.DeleteFile(path);
 
+    public void DeleteDirectory(string path, bool recursive = true) => _inner.DeleteDirectory(path, recursive);
+
     public IEnumerable<string> EnumerateFiles(string directoryPath, string searchPattern, SearchOption searchOption)
         => _inner.EnumerateFiles(directoryPath, searchPattern, searchOption);
 }

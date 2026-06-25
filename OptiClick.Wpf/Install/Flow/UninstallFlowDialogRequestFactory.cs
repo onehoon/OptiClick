@@ -108,22 +108,26 @@ internal sealed class UninstallFlowDialogRequestFactory
     private static IReadOnlyList<string> BuildUninstallCandidateLines(InfrastructureUninstall.UninstallPlan plan)
     {
         var lines = new List<string>();
-        AppendCandidateLine(lines, plan.Candidates, InfrastructureUninstall.UninstallCandidateKind.OptiScaler, "OptiScaler");
-        AppendCandidateLine(lines, plan.Candidates, InfrastructureUninstall.UninstallCandidateKind.ReFramework, "REFramework");
-        AppendCandidateLine(lines, plan.Candidates, InfrastructureUninstall.UninstallCandidateKind.UltimateAsiLoader, "Ultimate ASI Loader");
-        AppendCandidateLine(lines, plan.Candidates, InfrastructureUninstall.UninstallCandidateKind.SpecialK, "Special K");
+        AppendCandidateLine(lines, plan.Candidates, plan.DirectoryCandidates, InfrastructureUninstall.UninstallCandidateKind.OptiScaler, "OptiScaler");
+        AppendCandidateLine(lines, plan.Candidates, plan.DirectoryCandidates, InfrastructureUninstall.UninstallCandidateKind.ReFramework, "REFramework");
+        AppendCandidateLine(lines, plan.Candidates, plan.DirectoryCandidates, InfrastructureUninstall.UninstallCandidateKind.UltimateAsiLoader, "Ultimate ASI Loader");
+        AppendCandidateLine(lines, plan.Candidates, plan.DirectoryCandidates, InfrastructureUninstall.UninstallCandidateKind.SpecialK, "Special K");
         return lines;
     }
 
     private static void AppendCandidateLine(
         ICollection<string> target,
         IReadOnlyList<InfrastructureUninstall.UninstallCandidate> candidates,
+        IReadOnlyList<InfrastructureUninstall.UninstallDirectoryCandidate> directories,
         InfrastructureUninstall.UninstallCandidateKind kind,
         string displayName)
     {
         var fileNames = candidates
             .Where(candidate => candidate.Kind == kind)
             .Select(static candidate => ResolveUninstallDisplayFileName(candidate.RelativePath, candidate.FullPath))
+            .Concat(directories
+                .Where(candidate => candidate.Kind == kind)
+                .Select(static candidate => ResolveUninstallDisplayDirectoryName(candidate.RelativePath, candidate.FullPath)))
             .Where(static fileName => !string.IsNullOrWhiteSpace(fileName))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
@@ -150,5 +154,17 @@ internal sealed class UninstallFlowDialogRequestFactory
         }
 
         return (relativePath ?? fullPath ?? "").Trim();
+    }
+
+    private static string ResolveUninstallDisplayDirectoryName(string relativePath, string fullPath)
+    {
+        var fromRelative = (relativePath ?? "").Trim().Replace('\\', '/').Trim('/');
+        if (!string.IsNullOrWhiteSpace(fromRelative))
+        {
+            return $"{fromRelative}/";
+        }
+
+        var fromFullPath = Path.GetFileName((fullPath ?? "").Trim());
+        return string.IsNullOrWhiteSpace(fromFullPath) ? "" : $"{fromFullPath}/";
     }
 }

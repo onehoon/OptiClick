@@ -1,4 +1,5 @@
 using System.IO;
+using OptiClick.Core.Install;
 
 namespace OptiClick.Infrastructure.Install.Uninstall;
 
@@ -61,6 +62,7 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
         var skipped = new List<UninstallSkippedFile>();
         IReadOnlyList<string> filesToScan;
         var exactTargets = BuildExactTargetMap(normalizedTargetPath, request.ComponentTargets, skipped);
+        var directoryCandidates = BuildDirectoryCandidates(normalizedTargetPath, request.DirectoryTargets, skipped);
         try
         {
             var topLevelFiles = _fileSystem
@@ -172,23 +174,76 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
         }
 
         var engineIniCleanupTargets = NormalizeEngineIniCleanupTargets(request.EngineIniCleanupTargets);
-        var status = candidates.Count == 0 && engineIniCleanupTargets.Count == 0
+        var status = candidates.Count == 0 && directoryCandidates.Count == 0 && engineIniCleanupTargets.Count == 0
             ? UninstallPlanStatus.NothingToRemove
             : UninstallPlanStatus.Ready;
         _logger.Info(
             "Uninstall.Validate",
-            $"plan build completed status={status} scanned={filesToScan.Count} candidates={candidates.Count} engine_ini_cleanup={engineIniCleanupTargets.Count} skipped={skipped.Count}");
+            $"plan build completed status={status} scanned={filesToScan.Count} candidates={candidates.Count} directories={directoryCandidates.Count} engine_ini_cleanup={engineIniCleanupTargets.Count} skipped={skipped.Count}");
 
         return new UninstallPlan
         {
             Status = status,
             TargetPath = normalizedTargetPath,
             Candidates = candidates,
+            DirectoryCandidates = directoryCandidates,
             EngineIniCleanupTargets = engineIniCleanupTargets,
             SkippedFiles = skipped,
             ErrorCode = UninstallErrorCodes.None,
             Message = status == UninstallPlanStatus.NothingToRemove ? "No uninstall targets found." : ""
         };
+    }
+
+    private IReadOnlyList<UninstallDirectoryCandidate> BuildDirectoryCandidates(
+        string targetPath,
+        IReadOnlyList<UninstallDirectoryTarget>? targets,
+        ICollection<UninstallSkippedFile> skipped)
+    {
+        if (targets is null || targets.Count == 0)
+        {
+            return Array.Empty<UninstallDirectoryCandidate>();
+        }
+
+        var candidates = new List<UninstallDirectoryCandidate>();
+        foreach (var target in targets)
+        {
+            if (!TryResolveDirectoryTarget(targetPath, target, out var fullPath, out var relativePath, out var reason))
+            {
+                skipped.Add(new UninstallSkippedFile
+                {
+                    FullPath = target.RelativePath,
+                    Reason = reason
+                });
+                continue;
+            }
+
+            if (_fileSystem.FileExists(fullPath))
+            {
+                skipped.Add(new UninstallSkippedFile
+                {
+                    FullPath = fullPath,
+                    Reason = UninstallSkipReasons.FileAtDirectoryTarget
+                });
+                continue;
+            }
+
+            if (!_fileSystem.DirectoryExists(fullPath))
+            {
+                continue;
+            }
+
+            candidates.Add(new UninstallDirectoryCandidate
+            {
+                FullPath = fullPath,
+                RelativePath = relativePath,
+                Kind = target.Kind,
+                Recursive = target.Recursive
+            });
+        }
+
+        return candidates
+            .DistinctBy(static candidate => NormalizeComponentTargetRelativePath(candidate.RelativePath), StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 
     private static IReadOnlyList<UninstallEngineIniCleanupTarget> NormalizeEngineIniCleanupTargets(
@@ -444,6 +499,51 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
             reason = UninstallSkipReasons.InvalidPath;
             return false;
         }
+    }
+
+    private static bool TryResolveDirectoryTarget(
+        string targetPath,
+        UninstallDirectoryTarget target,
+        out string fullPath,
+        out string relativePath,
+        out string reason)
+    {
+        fullPath = "";
+        relativePath = "";
+        reason = "";
+        var normalizedRelative = NormalizeComponentTargetRelativePath(target.RelativePath);
+        if (!IsAllowedDirectoryTarget(target, normalizedRelative))
+        {
+            reason = UninstallSkipReasons.InvalidDirectoryTarget;
+            return false;
+        }
+
+        try
+        {
+            fullPath = Path.GetFullPath(Path.Combine(targetPath, normalizedRelative));
+            if (!OptiClickUninstallPathHelper.IsPathUnderRoot(targetPath, fullPath))
+            {
+                reason = UninstallSkipReasons.OutsideTarget;
+                return false;
+            }
+
+            relativePath = Path.GetRelativePath(targetPath, fullPath).Replace('\\', '/');
+            return true;
+        }
+        catch
+        {
+            reason = UninstallSkipReasons.InvalidPath;
+            return false;
+        }
+    }
+
+    private static bool IsAllowedDirectoryTarget(UninstallDirectoryTarget target, string normalizedRelativePath)
+    {
+        return target.Kind == UninstallCandidateKind.OptiScaler
+               && string.Equals(
+                   normalizedRelativePath,
+                   OptiScalerInstallLayout.LibraryDirectory,
+                   StringComparison.OrdinalIgnoreCase);
     }
 
     private static string NormalizeComponentTargetRelativePath(string relativePath)

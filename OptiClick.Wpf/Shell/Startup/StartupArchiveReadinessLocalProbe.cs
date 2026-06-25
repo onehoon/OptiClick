@@ -1,4 +1,5 @@
 using System.IO;
+using OptiClick.Core.Install;
 using OptiClick.Infrastructure.FileSystem;
 using OptiClick.Wpf.Install.Archives;
 using OptiClick.Wpf.Install.Flow;
@@ -75,6 +76,16 @@ internal static class StartupArchiveReadinessLocalProbe
                     manifestStore,
                     GetEntry(linkContext, ArchiveAssetRuntimeDataKeys.ToRuntimeDataEntryKey(key)),
                     key);
+            }
+
+            if (!states[ArchiveAssetKey.OptiPatcher].Ready
+                && AreOptiScalerPayloadsOptiPatcherReady(
+                    cachePaths,
+                    validator,
+                    optiScalerVariantCatalog,
+                    states[ArchiveAssetKey.OptiScaler]))
+            {
+                states[ArchiveAssetKey.OptiPatcher] = ReadyState(OptiScalerInstallLayout.OptiPatcherFileName, "");
             }
 
             var snapshot = new ArchivePreparationSnapshot
@@ -173,7 +184,7 @@ internal static class StartupArchiveReadinessLocalProbe
 
         foreach (var candidate in candidates)
         {
-            if (validator.IsValid(candidate, out _))
+            if (validator.IsValid(candidate, out _) && HasInjectedOptiPatcher(candidate))
             {
                 return ReadyState(entry.Filename, candidate);
             }
@@ -300,7 +311,29 @@ internal static class StartupArchiveReadinessLocalProbe
             return false;
         }
 
-        return validator.IsValid(entry.PayloadDirectory, out _);
+        return validator.IsValid(entry.PayloadDirectory, out _)
+               && HasInjectedOptiPatcher(entry.PayloadDirectory);
+    }
+
+    private static bool AreOptiScalerPayloadsOptiPatcherReady(
+        ArchiveCachePaths cachePaths,
+        OptiScalerPayloadValidator validator,
+        OptiScalerVariantCatalog? optiScalerVariantCatalog,
+        ArchivePreparationState canonicalOptiScalerState)
+    {
+        var catalog = optiScalerVariantCatalog ?? OptiScalerVariantCatalog.Empty;
+        return catalog.HasRuntimeVariants
+            ? AreOptiScalerVariantsReady(cachePaths, validator, catalog)
+            : canonicalOptiScalerState.Ready;
+    }
+
+    private static bool HasInjectedOptiPatcher(string payloadDirectory)
+    {
+        return File.Exists(Path.Combine(
+            payloadDirectory,
+            OptiScalerInstallLayout.LibraryDirectory,
+            "plugins",
+            OptiScalerInstallLayout.OptiPatcherFileName));
     }
 
     private static bool IsOptiScalerVariantMetadataChanged(

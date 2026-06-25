@@ -60,16 +60,6 @@ public sealed class ComponentPlanBuilder
             });
         }
 
-        if (game.OptiPatcher)
-        {
-            plans.Add(new ComponentPlan
-            {
-                Kind = ComponentKind.OptiPatcher,
-                Source = "OptiPatcher.asi",
-                Destination = "plugins/OptiPatcher.asi"
-            });
-        }
-
         if (game.Unreal5)
         {
             var dxgiExists = snapshot.Contains("dxgi.dll");
@@ -98,7 +88,7 @@ public sealed class ComponentPlanBuilder
 
     private static string ResolveSpecialKDestination(string specialKValue, string finalDllName)
     {
-        if (specialKValue.Equals("plugins", StringComparison.OrdinalIgnoreCase))
+        if (OptiScalerInstallLayout.IsPluginsToken(specialKValue))
         {
             if (string.IsNullOrWhiteSpace(finalDllName)
                 || finalDllName.Contains('/')
@@ -108,7 +98,7 @@ public sealed class ComponentPlanBuilder
                 return "";
             }
 
-            return $"plugins/{finalDllName}";
+            return OptiScalerInstallLayout.PluginFile(finalDllName);
         }
 
         return specialKValue;

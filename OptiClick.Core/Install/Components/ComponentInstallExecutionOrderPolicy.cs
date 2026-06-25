@@ -13,7 +13,6 @@ public static class ComponentInstallExecutionOrderPolicy
             ComponentInstallName.UltimateAsiLoader,
             ComponentInstallName.SpecialK,
             ComponentInstallName.ReFramework,
-            ComponentInstallName.OptiPatcher,
             ComponentInstallName.Unreal5,
             ComponentInstallName.Fsr4
         });
@@ -29,7 +28,7 @@ public static class ComponentInstallExecutionOrderPolicy
         Array.AsReadOnly(PreferredMiddleOrder.Concat(RequiredLast).ToArray());
 
     public static IReadOnlyList<ComponentInstallName> AllComponents { get; } =
-        Array.AsReadOnly(Enum.GetValues<ComponentInstallName>().ToArray());
+        Array.AsReadOnly(FullOrder.ToArray());
 
     static ComponentInstallExecutionOrderPolicy()
     {

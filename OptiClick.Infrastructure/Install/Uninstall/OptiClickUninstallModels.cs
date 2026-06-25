@@ -48,6 +48,8 @@ public static class UninstallSkipReasons
     public const string ReShadeSignatureMatched = "reshade_signature_matched";
     public const string MissingAtExecution = "missing_at_execution";
     public const string DirectoryAtExecution = "directory_at_execution";
+    public const string FileAtDirectoryTarget = "file_at_directory_target";
+    public const string InvalidDirectoryTarget = "invalid_directory_target";
     public const string SignatureChanged = "signature_changed";
     public const string SignatureValidationRequired = "signature_validation_required";
     public const string ConfigTargetMissing = "config_target_missing";
@@ -61,11 +63,20 @@ public sealed record UninstallComponentTarget
     public bool RequiresSignatureValidation { get; init; } = true;
 }
 
+public sealed record UninstallDirectoryTarget
+{
+    public UninstallCandidateKind Kind { get; init; }
+    public string RelativePath { get; init; } = "";
+    public bool Recursive { get; init; } = true;
+}
+
 public sealed record UninstallPlanBuildRequest
 {
     public string TargetPath { get; init; } = "";
     public IReadOnlyList<UninstallComponentTarget> ComponentTargets { get; init; } =
         Array.Empty<UninstallComponentTarget>();
+    public IReadOnlyList<UninstallDirectoryTarget> DirectoryTargets { get; init; } =
+        Array.Empty<UninstallDirectoryTarget>();
     public IReadOnlyList<UninstallEngineIniCleanupTarget> EngineIniCleanupTargets { get; init; } =
         Array.Empty<UninstallEngineIniCleanupTarget>();
 }
@@ -87,6 +98,14 @@ public sealed record UninstallCandidate
     public bool RequiresSignatureValidation { get; init; } = true;
 }
 
+public sealed record UninstallDirectoryCandidate
+{
+    public string FullPath { get; init; } = "";
+    public string RelativePath { get; init; } = "";
+    public UninstallCandidateKind Kind { get; init; }
+    public bool Recursive { get; init; } = true;
+}
+
 public sealed record UninstallSkippedFile
 {
     public string FullPath { get; init; } = "";
@@ -98,6 +117,8 @@ public sealed record UninstallPlan
     public UninstallPlanStatus Status { get; init; }
     public string TargetPath { get; init; } = "";
     public IReadOnlyList<UninstallCandidate> Candidates { get; init; } = Array.Empty<UninstallCandidate>();
+    public IReadOnlyList<UninstallDirectoryCandidate> DirectoryCandidates { get; init; } =
+        Array.Empty<UninstallDirectoryCandidate>();
     public IReadOnlyList<UninstallEngineIniCleanupTarget> EngineIniCleanupTargets { get; init; } =
         Array.Empty<UninstallEngineIniCleanupTarget>();
     public IReadOnlyList<UninstallSkippedFile> SkippedFiles { get; init; } = Array.Empty<UninstallSkippedFile>();
@@ -113,6 +134,22 @@ public sealed record UninstallDeletedFile
 }
 
 public sealed record UninstallFailedFile
+{
+    public string FullPath { get; init; } = "";
+    public string RelativePath { get; init; } = "";
+    public UninstallCandidateKind Kind { get; init; }
+    public string ErrorCode { get; init; } = "";
+    public string Message { get; init; } = "";
+}
+
+public sealed record UninstallDeletedDirectory
+{
+    public string FullPath { get; init; } = "";
+    public string RelativePath { get; init; } = "";
+    public UninstallCandidateKind Kind { get; init; }
+}
+
+public sealed record UninstallFailedDirectory
 {
     public string FullPath { get; init; } = "";
     public string RelativePath { get; init; } = "";
@@ -150,6 +187,10 @@ public sealed record UninstallExecutionResult
     public UninstallExecutionStatus Status { get; init; }
     public IReadOnlyList<UninstallDeletedFile> DeletedFiles { get; init; } = Array.Empty<UninstallDeletedFile>();
     public IReadOnlyList<UninstallFailedFile> FailedFiles { get; init; } = Array.Empty<UninstallFailedFile>();
+    public IReadOnlyList<UninstallDeletedDirectory> DeletedDirectories { get; init; } =
+        Array.Empty<UninstallDeletedDirectory>();
+    public IReadOnlyList<UninstallFailedDirectory> FailedDirectories { get; init; } =
+        Array.Empty<UninstallFailedDirectory>();
     public IReadOnlyList<UninstallSkippedFile> SkippedFiles { get; init; } = Array.Empty<UninstallSkippedFile>();
     public IReadOnlyList<UninstallCleanedEngineIniEntry> CleanedEngineIniEntries { get; init; } =
         Array.Empty<UninstallCleanedEngineIniEntry>();
@@ -209,6 +250,7 @@ public interface IOptiClickUninstallFileSystem
     bool IsWritable(string path);
     void SetWritable(string path);
     void DeleteFile(string path);
+    void DeleteDirectory(string path, bool recursive = true);
     IEnumerable<string> EnumerateFiles(string directoryPath, string searchPattern, SearchOption searchOption);
 }
 

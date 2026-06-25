@@ -38,6 +38,7 @@ internal sealed class UninstallFlowExecutionUseCase
             UninstallFlowLogFormatter.FormatPlanBuildResult(
                 plan.Status.ToString(),
                 plan.Candidates.Count,
+                plan.DirectoryCandidates.Count,
                 plan.EngineIniCleanupTargets.Count,
                 plan.SkippedFiles.Count,
                 plan.ErrorCode)));
@@ -83,6 +84,8 @@ internal sealed class UninstallFlowExecutionUseCase
                     executionResult.Status.ToString(),
                     executionResult.DeletedFiles.Count,
                     executionResult.FailedFiles.Count,
+                    executionResult.DeletedDirectories.Count,
+                    executionResult.FailedDirectories.Count,
                     executionResult.SkippedFiles.Count,
                     executionResult.CleanedEngineIniEntries.Count,
                     executionResult.FailedEngineIniEntries.Count,
@@ -104,7 +107,9 @@ internal sealed class UninstallFlowExecutionUseCase
         InfrastructureUninstall.UninstallPlan plan,
         IReadOnlyList<UninstallFlowLogEntry> logs)
     {
-        if (plan.Candidates.Count == 0 && plan.EngineIniCleanupTargets.Count == 0)
+        if (plan.Candidates.Count == 0
+            && plan.DirectoryCandidates.Count == 0
+            && plan.EngineIniCleanupTargets.Count == 0)
         {
             return new UninstallFlowPlanResult
             {

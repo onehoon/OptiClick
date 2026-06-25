@@ -1,4 +1,5 @@
 using System.IO;
+using OptiClick.Core.Install;
 
 namespace OptiClick.Infrastructure.Install.Uninstall;
 
@@ -58,7 +59,7 @@ public sealed class OptiClickUninstallExecutor : IOptiClickUninstallExecutor
             });
         }
 
-        if (plan.Candidates.Count == 0)
+        if (plan.Candidates.Count == 0 && plan.DirectoryCandidates.Count == 0)
         {
             return Task.FromResult(new UninstallExecutionResult
             {
@@ -81,10 +82,12 @@ public sealed class OptiClickUninstallExecutor : IOptiClickUninstallExecutor
 
         _logger.Info(
             "Uninstall.Execute",
-            $"execution start target={normalizedTarget} candidates={plan.Candidates.Count} skipped={plan.SkippedFiles.Count}");
+            $"execution start target={normalizedTarget} candidates={plan.Candidates.Count} directories={plan.DirectoryCandidates.Count} skipped={plan.SkippedFiles.Count}");
 
         var deleted = new List<UninstallDeletedFile>();
         var failed = new List<UninstallFailedFile>();
+        var deletedDirectories = new List<UninstallDeletedDirectory>();
+        var failedDirectories = new List<UninstallFailedDirectory>();
         var skipped = new List<UninstallSkippedFile>(plan.SkippedFiles);
 
         foreach (var candidate in plan.Candidates)
@@ -202,52 +205,165 @@ public sealed class OptiClickUninstallExecutor : IOptiClickUninstallExecutor
             }
         }
 
-        var result = BuildFinalResult(deleted, failed, skipped);
+        foreach (var candidate in plan.DirectoryCandidates)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (!TryNormalizeCandidate(normalizedTarget, candidate.FullPath, out var fullPath, out var relativePath, out var reason))
+            {
+                skipped.Add(new UninstallSkippedFile
+                {
+                    FullPath = candidate.FullPath,
+                    Reason = reason
+                });
+                continue;
+            }
+
+            if (!CanDeleteDirectoryCandidate(candidate, relativePath))
+            {
+                skipped.Add(new UninstallSkippedFile
+                {
+                    FullPath = fullPath,
+                    Reason = UninstallSkipReasons.InvalidDirectoryTarget
+                });
+                continue;
+            }
+
+            if (_fileSystem.FileExists(fullPath))
+            {
+                skipped.Add(new UninstallSkippedFile
+                {
+                    FullPath = fullPath,
+                    Reason = UninstallSkipReasons.FileAtDirectoryTarget
+                });
+                continue;
+            }
+
+            if (!_fileSystem.DirectoryExists(fullPath))
+            {
+                skipped.Add(new UninstallSkippedFile
+                {
+                    FullPath = fullPath,
+                    Reason = UninstallSkipReasons.MissingAtExecution
+                });
+                continue;
+            }
+
+            try
+            {
+                EnsureDirectoryWritable(fullPath);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("Uninstall.Execute", $"set directory writable failed path={relativePath}", ex);
+                failedDirectories.Add(new UninstallFailedDirectory
+                {
+                    FullPath = fullPath,
+                    RelativePath = relativePath,
+                    Kind = candidate.Kind,
+                    ErrorCode = UninstallErrorCodes.SetWritableFailed,
+                    Message = ex.Message
+                });
+                continue;
+            }
+
+            try
+            {
+                _fileSystem.DeleteDirectory(fullPath, candidate.Recursive);
+                _logger.Info("Uninstall.Execute", $"directory delete success path={relativePath} kind={candidate.Kind}");
+                deletedDirectories.Add(new UninstallDeletedDirectory
+                {
+                    FullPath = fullPath,
+                    RelativePath = relativePath,
+                    Kind = candidate.Kind
+                });
+            }
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
+            {
+                _logger.Warning("Uninstall.Execute", $"directory delete blocked path={relativePath} error={UninstallErrorCodes.LockedOrPermissionDenied}");
+                failedDirectories.Add(new UninstallFailedDirectory
+                {
+                    FullPath = fullPath,
+                    RelativePath = relativePath,
+                    Kind = candidate.Kind,
+                    ErrorCode = UninstallErrorCodes.LockedOrPermissionDenied,
+                    Message = ex.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("Uninstall.Execute", $"directory delete failed path={relativePath}", ex);
+                failedDirectories.Add(new UninstallFailedDirectory
+                {
+                    FullPath = fullPath,
+                    RelativePath = relativePath,
+                    Kind = candidate.Kind,
+                    ErrorCode = UninstallErrorCodes.DeleteFailed,
+                    Message = ex.Message
+                });
+            }
+        }
+
+        var result = BuildFinalResult(deleted, failed, deletedDirectories, failedDirectories, skipped);
         _logger.Info(
             "Uninstall.Execute",
-            $"execution completed status={result.Status} deleted={deleted.Count} failed={failed.Count} skipped={skipped.Count}");
+            $"execution completed status={result.Status} deleted={deleted.Count} directories_deleted={deletedDirectories.Count} failed={failed.Count} directories_failed={failedDirectories.Count} skipped={skipped.Count}");
         return Task.FromResult(result);
     }
 
     private static UninstallExecutionResult BuildFinalResult(
         IReadOnlyList<UninstallDeletedFile> deleted,
         IReadOnlyList<UninstallFailedFile> failed,
+        IReadOnlyList<UninstallDeletedDirectory> deletedDirectories,
+        IReadOnlyList<UninstallFailedDirectory> failedDirectories,
         IReadOnlyList<UninstallSkippedFile> skipped)
     {
-        if (deleted.Count > 0 && failed.Count == 0)
+        var successCount = deleted.Count + deletedDirectories.Count;
+        var failureCount = failed.Count + failedDirectories.Count;
+        if (successCount > 0 && failureCount == 0)
         {
             return new UninstallExecutionResult
             {
                 Status = UninstallExecutionStatus.Success,
                 DeletedFiles = deleted,
                 FailedFiles = failed,
+                DeletedDirectories = deletedDirectories,
+                FailedDirectories = failedDirectories,
                 SkippedFiles = skipped
             };
         }
 
-        if (deleted.Count > 0 && failed.Count > 0)
+        if (successCount > 0 && failureCount > 0)
         {
+            var firstFileFailure = failed.FirstOrDefault();
+            var firstDirectoryFailure = failedDirectories.FirstOrDefault();
             return new UninstallExecutionResult
             {
                 Status = UninstallExecutionStatus.PartialSuccess,
                 DeletedFiles = deleted,
                 FailedFiles = failed,
+                DeletedDirectories = deletedDirectories,
+                FailedDirectories = failedDirectories,
                 SkippedFiles = skipped,
-                ErrorCode = failed[0].ErrorCode,
-                Message = failed[0].Message
+                ErrorCode = firstFileFailure?.ErrorCode ?? firstDirectoryFailure?.ErrorCode ?? UninstallErrorCodes.None,
+                Message = firstFileFailure?.Message ?? firstDirectoryFailure?.Message ?? ""
             };
         }
 
-        if (failed.Count > 0)
+        if (failureCount > 0)
         {
+            var firstFileFailure = failed.FirstOrDefault();
+            var firstDirectoryFailure = failedDirectories.FirstOrDefault();
             return new UninstallExecutionResult
             {
                 Status = UninstallExecutionStatus.Failed,
                 DeletedFiles = deleted,
                 FailedFiles = failed,
+                DeletedDirectories = deletedDirectories,
+                FailedDirectories = failedDirectories,
                 SkippedFiles = skipped,
-                ErrorCode = failed[0].ErrorCode,
-                Message = failed[0].Message
+                ErrorCode = firstFileFailure?.ErrorCode ?? firstDirectoryFailure?.ErrorCode ?? UninstallErrorCodes.None,
+                Message = firstFileFailure?.Message ?? firstDirectoryFailure?.Message ?? ""
             };
         }
 
@@ -256,6 +372,8 @@ public sealed class OptiClickUninstallExecutor : IOptiClickUninstallExecutor
             Status = UninstallExecutionStatus.NothingToRemove,
             DeletedFiles = deleted,
             FailedFiles = failed,
+            DeletedDirectories = deletedDirectories,
+            FailedDirectories = failedDirectories,
             SkippedFiles = skipped
         };
     }
@@ -317,6 +435,31 @@ public sealed class OptiClickUninstallExecutor : IOptiClickUninstallExecutor
                && SignaturelessOptiScalerRootExactFileNames.Contains(
                    (relativePath ?? "").Replace('\\', '/').Trim(),
                    StringComparer.OrdinalIgnoreCase);
+    }
+
+    private void EnsureDirectoryWritable(string directoryPath)
+    {
+        if (!_fileSystem.IsWritable(directoryPath))
+        {
+            _fileSystem.SetWritable(directoryPath);
+        }
+
+        foreach (var filePath in _fileSystem.EnumerateFiles(directoryPath, "*", SearchOption.AllDirectories))
+        {
+            if (!_fileSystem.IsWritable(filePath))
+            {
+                _fileSystem.SetWritable(filePath);
+            }
+        }
+    }
+
+    private static bool CanDeleteDirectoryCandidate(UninstallDirectoryCandidate candidate, string relativePath)
+    {
+        return candidate.Kind == UninstallCandidateKind.OptiScaler
+               && string.Equals(
+                   (relativePath ?? "").Replace('\\', '/').Trim('/'),
+                   OptiScalerInstallLayout.LibraryDirectory,
+                   StringComparison.OrdinalIgnoreCase);
     }
 
     private static string ResolveDetectionSkipReason(UninstallSignatureDetection detection)

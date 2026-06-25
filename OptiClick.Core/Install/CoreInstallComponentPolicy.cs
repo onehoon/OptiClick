@@ -15,13 +15,6 @@ public sealed class CoreInstallComponentPolicy
     private static readonly IReadOnlyList<OptionalComponentRule> OptionalComponentRules =
     [
         new(
-            CoreInstallPlanComponentType.OptiPatcher,
-            static (game, _) => game.RequiresOptiPatcher,
-            "archive",
-            static _ => "plugins/OptiPatcher.asi",
-            static (_, _) => "optipatcher",
-            CoreInstallComponentReasonCodes.OptiPatcherNotRequested),
-        new(
             CoreInstallPlanComponentType.REFramework,
             static (game, _) => !string.IsNullOrWhiteSpace(game.ReFrameworkUrl),
             "archive",
@@ -39,7 +32,7 @@ public sealed class CoreInstallComponentPolicy
             static game =>
             {
                 var value = game.SpecialK;
-                return string.IsNullOrWhiteSpace(value) ? "plugins" : value;
+                return string.IsNullOrWhiteSpace(value) ? OptiScalerInstallLayout.PluginsToken : value;
             },
             static (_, _) => "specialk",
             CoreInstallComponentReasonCodes.SpecialKNotRequested),

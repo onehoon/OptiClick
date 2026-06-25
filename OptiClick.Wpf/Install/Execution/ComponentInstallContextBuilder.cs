@@ -28,10 +28,7 @@ public sealed class ComponentInstallContextBuilder
             UalDetectedNames = input.UalDetectedNames,
             HasPlannedComponentInstallers = input.Plan.Components.Count > 0,
             PlannedComponentInstallers = plannedComponentInstallers,
-            ShouldInstallOptiPatcher = ResolveShouldInstall(
-                input.Plan.Components,
-                CoreInstallPlanComponentType.OptiPatcher,
-                descriptor.RequiresOptiPatcher),
+            ShouldInstallOptiPatcher = false,
             ShouldInstallUltimateAsiLoader = ResolveShouldInstall(
                 input.Plan.Components,
                 CoreInstallPlanComponentType.UltimateAsiLoader,

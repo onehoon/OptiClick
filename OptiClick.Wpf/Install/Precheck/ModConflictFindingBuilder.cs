@@ -102,10 +102,10 @@ public sealed class ModConflictFindingBuilder
             return targets;
         }
 
-        if (string.Equals(specialKValue, "plugins", StringComparison.OrdinalIgnoreCase))
+        if (OptiScalerInstallLayout.IsPluginsToken(specialKValue))
         {
             var dllName = Path.GetFileName((resolvedDllName ?? "").Trim());
-            AddManagedDllTarget(targets, $"plugins/{dllName}");
+            AddManagedDllTarget(targets, OptiScalerInstallLayout.PluginFile(dllName));
             return targets;
         }
 

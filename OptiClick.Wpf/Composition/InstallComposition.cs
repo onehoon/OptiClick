@@ -51,6 +51,7 @@ public sealed class InstallComposition
         public required IArchivePreparationCoordinator ArchivePreparationCoordinator { get; init; }
         public required IOptiScalerVariantArchiveSyncService OptiScalerVariantArchiveSyncService { get; init; }
         public required IFsr4VariantArchiveSyncService Fsr4VariantArchiveSyncService { get; init; }
+        public required IOptiScalerPayloadOptiPatcherInjector OptiScalerPayloadOptiPatcherInjector { get; init; }
     }
 
     private sealed record ConfigProfileServices
@@ -120,7 +121,8 @@ public sealed class InstallComposition
         var archiveReadinessFlowController = new ArchiveReadinessFlowController(
             archivePreparation.ArchivePreparationCoordinator,
             archivePreparation.OptiScalerVariantArchiveSyncService,
-            archivePreparation.Fsr4VariantArchiveSyncService);
+            archivePreparation.Fsr4VariantArchiveSyncService,
+            archivePreparation.OptiScalerPayloadOptiPatcherInjector);
         var configApplyComposition = ConfigApplyCompositionFactory.Create(new ConfigApplyCompositionRequest
         {
             ConfigProfileApplier = configProfileServices.ConfigProfileApplier,
@@ -193,6 +195,7 @@ public sealed class InstallComposition
             new OptiPatcherArchivePreparationService(archiveDownloader, archiveExtractor, archiveManifestStore),
             fsr4ArchivePreparationService,
             optiScalerPayloadCacheService);
+        var optiScalerPayloadOptiPatcherInjector = new OptiScalerPayloadOptiPatcherInjector();
         var optiScalerVariantManifestStore = new OptiScalerVariantManifestStore(
             archiveCachePaths.ManifestRoot,
             app.AppLogger);
@@ -214,7 +217,8 @@ public sealed class InstallComposition
             ArchiveExtractor = archiveExtractor,
             ArchivePreparationCoordinator = archivePreparationCoordinator,
             OptiScalerVariantArchiveSyncService = optiScalerVariantArchiveSyncService,
-            Fsr4VariantArchiveSyncService = fsr4VariantArchiveSyncService
+            Fsr4VariantArchiveSyncService = fsr4VariantArchiveSyncService,
+            OptiScalerPayloadOptiPatcherInjector = optiScalerPayloadOptiPatcherInjector
         };
     }
 

@@ -69,6 +69,7 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
         {
             TargetPath = request.TargetPath,
             ComponentTargets = BuildComponentTargets(request),
+            DirectoryTargets = BuildDirectoryTargets(request),
             EngineIniCleanupTargets = BuildEngineIniCleanupTargets(request, _profilePathResolver)
         });
     }
@@ -90,6 +91,25 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
         return targets
             .DistinctBy(static target => $"{target.Kind}:{NormalizeTargetKey(target.RelativePath)}")
             .ToArray();
+    }
+
+    private static IReadOnlyList<InfrastructureUninstall.UninstallDirectoryTarget> BuildDirectoryTargets(
+        OptiClickUninstallPlanBuildRequest request)
+    {
+        if (request.GameDescriptor is null)
+        {
+            return Array.Empty<InfrastructureUninstall.UninstallDirectoryTarget>();
+        }
+
+        return
+        [
+            new InfrastructureUninstall.UninstallDirectoryTarget
+            {
+                Kind = InfrastructureUninstall.UninstallCandidateKind.OptiScaler,
+                RelativePath = OptiScalerInstallLayout.LibraryDirectory,
+                Recursive = true
+            }
+        ];
     }
 
     private static void AddOptiScalerRootExactTargets(
@@ -167,19 +187,8 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
             return;
         }
 
-        if (string.Equals(normalized, "plugins", StringComparison.OrdinalIgnoreCase))
+        if (OptiScalerInstallLayout.IsPluginsToken(normalized))
         {
-            var proxyName = Path.GetFileName((finalProxyDllName ?? "").Trim());
-            if (string.IsNullOrWhiteSpace(proxyName)
-                || !proxyName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
-
-            AddDllTarget(
-                targets,
-                InfrastructureUninstall.UninstallCandidateKind.SpecialK,
-                $"plugins/{proxyName}");
             return;
         }
 
@@ -522,14 +531,17 @@ public sealed class OptiClickUninstallExecutor : IOptiClickUninstallExecutor
     {
         var deletedFiles = fileResult.DeletedFiles;
         var failedFiles = fileResult.FailedFiles;
+        var deletedDirectories = fileResult.DeletedDirectories;
+        var failedDirectories = fileResult.FailedDirectories;
         var skippedFiles = fileResult.SkippedFiles;
         var cleanedEntries = cleanupResult.CleanedEntries;
         var failedEntries = cleanupResult.FailedEntries;
         var skippedEntries = cleanupResult.SkippedEntries;
         var fileLevelFailure = fileResult.Status == InfrastructureUninstall.UninstallExecutionStatus.Failed
-                               && failedFiles.Count == 0;
-        var successCount = deletedFiles.Count + cleanedEntries.Count;
-        var failureCount = failedFiles.Count + failedEntries.Count + (fileLevelFailure ? 1 : 0);
+                               && failedFiles.Count == 0
+                               && failedDirectories.Count == 0;
+        var successCount = deletedFiles.Count + deletedDirectories.Count + cleanedEntries.Count;
+        var failureCount = failedFiles.Count + failedDirectories.Count + failedEntries.Count + (fileLevelFailure ? 1 : 0);
         var status = (successCount, failureCount) switch
         {
             (> 0, 0) => InfrastructureUninstall.UninstallExecutionStatus.Success,
@@ -538,6 +550,7 @@ public sealed class OptiClickUninstallExecutor : IOptiClickUninstallExecutor
             _ => InfrastructureUninstall.UninstallExecutionStatus.NothingToRemove
         };
         var firstFailedFile = failedFiles.FirstOrDefault();
+        var firstFailedDirectory = failedDirectories.FirstOrDefault();
         var firstFailedEntry = failedEntries.FirstOrDefault();
 
         return new InfrastructureUninstall.UninstallExecutionResult
@@ -545,14 +558,18 @@ public sealed class OptiClickUninstallExecutor : IOptiClickUninstallExecutor
             Status = status,
             DeletedFiles = deletedFiles,
             FailedFiles = failedFiles,
+            DeletedDirectories = deletedDirectories,
+            FailedDirectories = failedDirectories,
             SkippedFiles = skippedFiles,
             CleanedEngineIniEntries = cleanedEntries,
             SkippedEngineIniEntries = skippedEntries,
             FailedEngineIniEntries = failedEntries,
             ErrorCode = firstFailedFile?.ErrorCode
+                        ?? firstFailedDirectory?.ErrorCode
                         ?? firstFailedEntry?.ErrorCode
                         ?? (fileLevelFailure ? fileResult.ErrorCode : InfrastructureUninstall.UninstallErrorCodes.None),
             Message = firstFailedFile?.Message
+                      ?? firstFailedDirectory?.Message
                       ?? firstFailedEntry?.Message
                       ?? (fileLevelFailure ? fileResult.Message : "")
         };
@@ -582,6 +599,8 @@ internal sealed class FileSystemAdapter : InfrastructureUninstall.IOptiClickUnin
     public void SetWritable(string path) => _inner.SetWritable(path);
 
     public void DeleteFile(string path) => _inner.DeleteFile(path);
+
+    public void DeleteDirectory(string path, bool recursive = true) => _inner.DeleteDirectory(path, recursive);
 
     public IEnumerable<string> EnumerateFiles(string directoryPath, string searchPattern, SearchOption searchOption)
         => _inner.EnumerateFiles(directoryPath, searchPattern, searchOption);

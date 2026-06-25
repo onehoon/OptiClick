@@ -76,7 +76,7 @@ public sealed class CoreInstallFileOperationPolicy
                 DestinationPathHint = component.DestinationHint,
                 Component = component.Type,
                 IsDestructive = component.Type is CoreInstallPlanComponentType.Unreal5,
-                RequiresExistingFileSnapshot = component.Type is CoreInstallPlanComponentType.Unreal5 or CoreInstallPlanComponentType.OptiPatcher,
+                RequiresExistingFileSnapshot = component.Type is CoreInstallPlanComponentType.Unreal5,
                 Notes = "Dry-run operation hint only. No file system action is executed."
             });
         }

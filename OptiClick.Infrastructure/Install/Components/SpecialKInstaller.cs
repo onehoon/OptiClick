@@ -123,7 +123,7 @@ public sealed class SpecialKInstaller : ISpecialKInstaller
     private static string ResolveDestinationRelativePath(string specialKValue, string finalDllName)
     {
         var normalized = NormalizeSpecialKValue(specialKValue);
-        if (string.Equals(normalized, "plugins", StringComparison.OrdinalIgnoreCase))
+        if (OptiScalerInstallLayout.IsPluginsToken(normalized))
         {
             var dllName = (finalDllName ?? "").Trim();
             if (string.IsNullOrWhiteSpace(dllName)
@@ -134,7 +134,7 @@ public sealed class SpecialKInstaller : ISpecialKInstaller
                 throw new InvalidOperationException("Invalid final dll name for plugins mode.");
             }
 
-            return $"plugins/{dllName}";
+            return OptiScalerInstallLayout.PluginFile(dllName);
         }
 
         return InstallerExecutionHelpers.NormalizeRelativeDllPath(normalized);
@@ -169,11 +169,17 @@ public sealed class SpecialKInstaller : ISpecialKInstaller
 
     private static IReadOnlyList<string> BuildLegacyCandidates(string finalDllName)
     {
-        var candidates = new List<string> { "dxgi.dll", "plugins/dxgi.dll" };
+        var candidates = new List<string>
+        {
+            "dxgi.dll",
+            "plugins/dxgi.dll",
+            OptiScalerInstallLayout.PluginFile("dxgi.dll")
+        };
         var name = (finalDllName ?? "").Trim();
         if (!string.IsNullOrWhiteSpace(name) && name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
         {
             candidates.Add($"plugins/{name}");
+            candidates.Add(OptiScalerInstallLayout.PluginFile(name));
         }
 
         return candidates
