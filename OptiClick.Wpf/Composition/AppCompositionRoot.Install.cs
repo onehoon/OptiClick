@@ -183,13 +183,6 @@ public sealed partial class AppCompositionRoot
         return new SpecialKInstaller(dllPayloadInstaller, fileSystem, detectors);
     }
 
-    public IOptiPatcherInstaller CreateOptiPatcherInstaller(
-        IArchiveSourceReader archiveSourceReader,
-        IInstallFileSystem fileSystem)
-    {
-        return new OptiPatcherInstaller(archiveSourceReader, fileSystem);
-    }
-
     public IUnreal5Installer CreateUnreal5Installer(
         IArchiveSourceReader archiveSourceReader,
         IArchiveExtractor archiveExtractor,
@@ -217,7 +210,6 @@ public sealed partial class AppCompositionRoot
         IExtraBundleInstaller extraBundleInstaller,
         ISpecialKInstaller specialKInstaller,
         IReFrameworkInstaller reFrameworkInstaller,
-        IOptiPatcherInstaller optiPatcherInstaller,
         IUnreal5Installer unreal5Installer,
         IFsr4Installer fsr4Installer,
         IAppLogger? logger = null)
@@ -227,7 +219,6 @@ public sealed partial class AppCompositionRoot
             extraBundleInstaller,
             specialKInstaller,
             reFrameworkInstaller,
-            optiPatcherInstaller,
             unreal5Installer,
             fsr4Installer,
             logger);

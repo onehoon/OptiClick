@@ -27,7 +27,6 @@ public sealed class ComponentInstallContextBuilder
             Fsr4Variant = descriptor.Fsr4Variant,
             HasPlannedComponentInstallers = input.Plan.Components.Count > 0,
             PlannedComponentInstallers = plannedComponentInstallers,
-            ShouldInstallOptiPatcher = false,
             ShouldInstallUnreal5 = ResolveShouldInstall(
                 input.Plan.Components,
                 CoreInstallPlanComponentType.Unreal5,
@@ -47,7 +46,6 @@ public sealed class ComponentInstallContextBuilder
                 CoreInstallPlanComponentType.SpecialK,
                 descriptor.SpecialK),
             ExtraBundleAlias = ResolveExtraBundleAlias(input.Plan.Components, descriptor),
-            OptiPatcherCachedArchivePath = input.LatestArchiveReadiness.OptiPatcherSourceArchive,
             SpecialKCachedArchivePath = input.LatestArchiveReadiness.SpecialKSourceArchive,
             ReFrameworkCachedArchivePath = input.LatestArchiveReadiness.ReframeworkSourceArchive,
             Unreal5CachedArchivePath = input.LatestArchiveReadiness.Unreal5SourceArchive,

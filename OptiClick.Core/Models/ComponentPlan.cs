@@ -5,7 +5,6 @@ public enum ComponentKind
     ExtraBundle,
     SpecialK,
     Reframework,
-    OptiPatcher,
     Unreal5,
     Fsr4
 }

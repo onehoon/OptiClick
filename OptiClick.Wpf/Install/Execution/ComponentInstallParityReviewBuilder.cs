@@ -60,7 +60,6 @@ public sealed class ComponentInstallParityReviewBuilder : IComponentInstallParit
             ProxyCandidateChain = chain,
             ManagedBackupCandidates = OptiScalerManagedBackupPolicy.TargetFileNames.ToArray(),
             LegacyCleanupTargets = OptiScalerLegacyCleanupPolicy.TargetFileNames.ToArray(),
-            OptiPatcher = IsEnabled(plan, CoreInstallPlanComponentType.OptiPatcher),
             ReFramework = IsEnabled(plan, CoreInstallPlanComponentType.REFramework),
             SpecialK = IsEnabled(plan, CoreInstallPlanComponentType.SpecialK),
             Unreal5 = IsEnabled(plan, CoreInstallPlanComponentType.Unreal5),

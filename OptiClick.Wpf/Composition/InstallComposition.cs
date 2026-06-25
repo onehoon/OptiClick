@@ -241,7 +241,6 @@ public sealed class InstallComposition
             _root.CreateExtraBundleInstaller(archiveDownloader, archiveExtractor, installFileSystem),
             _root.CreateSpecialKInstaller(dllPayloadInstaller, installFileSystem, signatures),
             _root.CreateReFrameworkInstaller(dllPayloadInstaller, installFileSystem, signatures),
-            _root.CreateOptiPatcherInstaller(archiveSourceReader, installFileSystem),
             _root.CreateUnreal5Installer(archiveSourceReader, archiveExtractor, installFileSystem),
             _root.CreateFsr4Installer(archiveExtractor, installFileSystem),
             app.AppLogger);

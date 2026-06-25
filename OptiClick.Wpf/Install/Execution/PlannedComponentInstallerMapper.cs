@@ -33,9 +33,6 @@ internal static class PlannedComponentInstallerMapper
             case CoreInstallPlanComponentType.OptiScalerCore:
                 component = ComponentInstallName.OptiScalerCore;
                 return true;
-            case CoreInstallPlanComponentType.OptiPatcher:
-                component = default;
-                return false;
             case CoreInstallPlanComponentType.REFramework:
                 component = ComponentInstallName.ReFramework;
                 return true;

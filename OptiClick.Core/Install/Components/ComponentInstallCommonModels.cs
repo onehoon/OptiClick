@@ -15,7 +15,6 @@ public enum ComponentInstallName
     ExtraBundle,
     SpecialK,
     ReFramework,
-    OptiPatcher,
     Unreal5,
     Fsr4
 }
@@ -105,7 +104,6 @@ public sealed record ComponentInstallContext
     public bool HasPlannedComponentInstallers { get; init; }
     public IReadOnlyList<ComponentInstallName> PlannedComponentInstallers { get; init; } = Array.Empty<ComponentInstallName>();
     public ModuleDownloadLinkCatalog ModuleDownloadLinks { get; init; } = ModuleDownloadLinkCatalog.Empty;
-    public bool ShouldInstallOptiPatcher { get; init; }
     public bool ShouldInstallUnreal5 { get; init; }
     public bool ShouldInstallFsr4 { get; init; }
     public string GpuBundleKey { get; init; } = "";
@@ -113,7 +111,6 @@ public sealed record ComponentInstallContext
     public string ReFrameworkDestination { get; init; } = "";
     public string SpecialKValue { get; init; } = "";
     public string ExtraBundleAlias { get; init; } = "";
-    public string OptiPatcherCachedArchivePath { get; init; } = "";
     public string SpecialKCachedArchivePath { get; init; } = "";
     public string ReFrameworkCachedArchivePath { get; init; } = "";
     public string Unreal5CachedArchivePath { get; init; } = "";

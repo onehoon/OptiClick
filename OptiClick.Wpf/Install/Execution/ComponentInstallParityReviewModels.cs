@@ -29,7 +29,6 @@ public sealed record ComponentInstallParityReviewResult
     public IReadOnlyList<string> ManagedBackupCandidates { get; init; } = [];
     public IReadOnlyList<string> LegacyCleanupTargets { get; init; } = [];
 
-    public bool OptiPatcher { get; init; }
     public bool ReFramework { get; init; }
     public bool SpecialK { get; init; }
     public bool Unreal5 { get; init; }

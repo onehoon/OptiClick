@@ -4,19 +4,6 @@ namespace OptiClick.Wpf.Install.Execution;
 
 internal static class InfrastructureComponentContextMapper
 {
-    public static InfrastructureComponents.OptiPatcherInstallContext ToOptiPatcherContext(ComponentInstallContext context)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-
-        return new InfrastructureComponents.OptiPatcherInstallContext
-        {
-            TargetPath = context.TargetPath,
-            UseOptiPatcher = context.ShouldInstallOptiPatcher,
-            ModuleDownloadLinks = context.ModuleDownloadLinks,
-            OptiPatcherCachedArchivePath = context.OptiPatcherCachedArchivePath
-        };
-    }
-
     public static InfrastructureComponents.ReFrameworkInstallContext ToReFrameworkContext(ComponentInstallContext context)
     {
         ArgumentNullException.ThrowIfNull(context);

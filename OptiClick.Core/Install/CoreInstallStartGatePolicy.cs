@@ -154,8 +154,6 @@ public sealed class CoreInstallStartGatePolicy
         {
             switch (component)
             {
-                case CoreInstallPlanComponentType.OptiPatcher when input.ArchiveReadiness.OptiPatcherState != ArchiveReadinessState.Ready:
-                    return true;
                 case CoreInstallPlanComponentType.SpecialK when input.ArchiveReadiness.SpecialKState != ArchiveReadinessState.Ready:
                     return true;
                 case CoreInstallPlanComponentType.REFramework when input.ArchiveReadiness.ReframeworkState != ArchiveReadinessState.Ready:

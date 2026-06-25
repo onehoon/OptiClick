@@ -184,7 +184,8 @@ public sealed class OptiScalerPayloadOptiPatcherInjector : IOptiScalerPayloadOpt
     private static bool HasRequiredOptiScalerPayload(string payloadDirectory)
     {
         return File.Exists(Path.Combine(payloadDirectory, OptiScalerInstallLayout.RootDllFileName))
-               && File.Exists(Path.Combine(payloadDirectory, OptiScalerInstallLayout.RootIniFileName));
+               && File.Exists(Path.Combine(payloadDirectory, OptiScalerInstallLayout.RootIniFileName))
+               && Directory.Exists(Path.Combine(payloadDirectory, OptiScalerInstallLayout.LibraryDirectory));
     }
 
     private static void CleanupExistingOptiPatcherFiles(string pluginsDirectory, string destination)

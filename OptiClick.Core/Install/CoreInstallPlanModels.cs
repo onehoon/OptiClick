@@ -15,7 +15,6 @@ public enum CoreInstallPlanStepType
 public enum CoreInstallPlanComponentType
 {
     OptiScalerCore,
-    OptiPatcher,
     REFramework,
     SpecialK,
     Unreal5,

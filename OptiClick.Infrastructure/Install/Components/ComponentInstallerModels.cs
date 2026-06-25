@@ -21,7 +21,6 @@ public enum ComponentInstallName
     SpecialK = (int)CoreComponentInstallName.SpecialK,
     ReFramework = (int)CoreComponentInstallName.ReFramework,
     ExtraBundle = (int)CoreComponentInstallName.ExtraBundle,
-    OptiPatcher = (int)CoreComponentInstallName.OptiPatcher,
     Unreal5 = (int)CoreComponentInstallName.Unreal5,
     Fsr4 = (int)CoreComponentInstallName.Fsr4
 }
@@ -109,7 +108,6 @@ internal static class ComponentInstallerModelMapper
         ComponentInstallName.SpecialK => CoreComponentInstallName.SpecialK,
         ComponentInstallName.ReFramework => CoreComponentInstallName.ReFramework,
         ComponentInstallName.ExtraBundle => CoreComponentInstallName.ExtraBundle,
-        ComponentInstallName.OptiPatcher => CoreComponentInstallName.OptiPatcher,
         ComponentInstallName.Unreal5 => CoreComponentInstallName.Unreal5,
         ComponentInstallName.Fsr4 => CoreComponentInstallName.Fsr4,
         _ => throw new ArgumentOutOfRangeException(nameof(component), component, PostCoreOnlyMessage)
@@ -128,7 +126,6 @@ internal static class ComponentInstallerModelMapper
         CoreComponentInstallName.SpecialK => ComponentInstallName.SpecialK,
         CoreComponentInstallName.ReFramework => ComponentInstallName.ReFramework,
         CoreComponentInstallName.ExtraBundle => ComponentInstallName.ExtraBundle,
-        CoreComponentInstallName.OptiPatcher => ComponentInstallName.OptiPatcher,
         CoreComponentInstallName.Unreal5 => ComponentInstallName.Unreal5,
         CoreComponentInstallName.Fsr4 => ComponentInstallName.Fsr4,
         _ => throw new ArgumentOutOfRangeException(nameof(component), component, PostCoreOnlyMessage)
@@ -165,14 +162,6 @@ public sealed record ExtraBundleInstallContext
     public string TargetPath { get; init; } = "";
     public string ExtraBundleAlias { get; init; } = "";
     public ModuleDownloadLinkCatalog ModuleDownloadLinks { get; init; } = ModuleDownloadLinkCatalog.Empty;
-}
-
-public sealed record OptiPatcherInstallContext
-{
-    public string TargetPath { get; init; } = "";
-    public bool UseOptiPatcher { get; init; }
-    public ModuleDownloadLinkCatalog ModuleDownloadLinks { get; init; } = ModuleDownloadLinkCatalog.Empty;
-    public string OptiPatcherCachedArchivePath { get; init; } = "";
 }
 
 public sealed record Unreal5InstallContext
