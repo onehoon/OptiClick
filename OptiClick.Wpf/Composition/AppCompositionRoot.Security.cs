@@ -57,17 +57,10 @@ public sealed partial class AppCompositionRoot
             new OptiClickApiSession(),
             utcNow: () => serverClock.UtcNow,
             logger: effectiveLogger);
-        var downloadTicketClient = new RemoteDownloadTicketClient(
-            sharedHttpClient,
-            BuildApiEndpoint(remoteDataOptions, "/v1/download-ticket"),
-            authenticator,
-            readAppVersion,
-            effectiveLogger,
-            serverClock: serverClock);
         var archiveRequestPreparer = new OptiClickArchiveDownloadRequestPreparer(
-            downloadTicketClient,
             authenticator,
             readAppVersion,
+            BuildApiEndpoint(remoteDataOptions, "/v1/resources/extra_bundle"),
             effectiveLogger);
 
         return new AppSecurityServices

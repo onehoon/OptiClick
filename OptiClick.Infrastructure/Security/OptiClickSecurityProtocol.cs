@@ -1251,20 +1251,20 @@ public interface IArchiveDownloadRequestPreparer
 
 public sealed class OptiClickArchiveDownloadRequestPreparer : IArchiveDownloadRequestPreparer
 {
-    private readonly IRemoteDownloadTicketClient _downloadTicketClient;
     private readonly IOptiClickApiRequestAuthenticator _authenticator;
     private readonly Func<string?> _appVersionProvider;
+    private readonly Uri? _archiveResourceEndpoint;
     private readonly IAppLogger _logger;
 
     public OptiClickArchiveDownloadRequestPreparer(
-        IRemoteDownloadTicketClient downloadTicketClient,
         IOptiClickApiRequestAuthenticator authenticator,
         Func<string?> appVersionProvider,
+        Uri? archiveResourceEndpoint = null,
         IAppLogger? logger = null)
     {
-        _downloadTicketClient = downloadTicketClient ?? throw new ArgumentNullException(nameof(downloadTicketClient));
         _authenticator = authenticator ?? throw new ArgumentNullException(nameof(authenticator));
         _appVersionProvider = appVersionProvider ?? (() => "");
+        _archiveResourceEndpoint = archiveResourceEndpoint;
         _logger = logger ?? NullAppLogger.Instance;
     }
 
@@ -1274,38 +1274,44 @@ public sealed class OptiClickArchiveDownloadRequestPreparer : IArchiveDownloadRe
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (!_downloadTicketClient.CanRequestTicketForSource(sourceUrl))
+        if (!CanPrepareArchiveRequestForSource(sourceUrl))
         {
-            _logger.Debug("Security", $"archive download prepare skipped reason=ticket_not_available source_host={ResolveHostForLog(sourceUrl)}");
+            _logger.Debug("Security", $"archive download prepare skipped reason=source_not_supported source_host={ResolveHostForLog(sourceUrl)}");
             return;
         }
 
         _logger.Debug(
             "Security",
             $"archive download prepare start source_host={ResolveHostForLog(sourceUrl)} app_version={NormalizeLogValue(_appVersionProvider(), "none")}");
-        var downloadTicket = await _downloadTicketClient.TryGetDownloadTicketAsync(
-            sourceUrl,
-            cancellationToken).ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(downloadTicket))
-        {
-            _logger.Warning("Security", "archive download prepare ticket_result download_ticket_present=false");
-        }
-        else
-        {
-            _logger.Debug("Security", "archive download prepare ticket_result download_ticket_present=true");
-        }
-
         await _authenticator.ApplyAsync(
             request,
             new OptiClickApiRequestContext
             {
-                AppVersion = (_appVersionProvider() ?? "").Trim(),
-                DownloadTicket = downloadTicket
+                AppVersion = (_appVersionProvider() ?? "").Trim()
             },
             cancellationToken).ConfigureAwait(false);
         _logger.Debug(
             "Security",
-            $"archive download prepare complete download_ticket_present={FormatBool(!string.IsNullOrWhiteSpace(downloadTicket))}");
+            "archive download prepare complete signed=true");
+    }
+
+    private bool CanPrepareArchiveRequestForSource(string sourceUrl)
+    {
+        return _archiveResourceEndpoint is not null
+            && RemoteDownloadTicketClient.TryParseExtraBundleResourceUrl(sourceUrl, out _)
+            && HasSameOrigin(sourceUrl, _archiveResourceEndpoint);
+    }
+
+    private static bool HasSameOrigin(string sourceUrl, Uri endpoint)
+    {
+        if (!Uri.TryCreate((sourceUrl ?? "").Trim(), UriKind.Absolute, out var source))
+        {
+            return false;
+        }
+
+        return string.Equals(source.Scheme, endpoint.Scheme, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(source.Host, endpoint.Host, StringComparison.OrdinalIgnoreCase)
+            && source.Port == endpoint.Port;
     }
 
     private static string ResolveHostForLog(string sourceUrl)
@@ -1313,11 +1319,6 @@ public sealed class OptiClickArchiveDownloadRequestPreparer : IArchiveDownloadRe
         return Uri.TryCreate((sourceUrl ?? "").Trim(), UriKind.Absolute, out var uri)
             ? NormalizeLogValue(uri.Host, "none")
             : "invalid";
-    }
-
-    private static string FormatBool(bool value)
-    {
-        return value ? "true" : "false";
     }
 
     private static string NormalizeLogValue(string? value, string fallback)
