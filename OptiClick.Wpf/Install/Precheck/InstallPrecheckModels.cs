@@ -21,7 +21,6 @@ public sealed record ModPrecheckState
     {
         ReShade = new ModBinaryState(),
         SpecialK = new ModBinaryState(),
-        UltimateAsiLoader = new ModBinaryState(),
         RenoDx = new ModFilePresenceState(),
         LennyModLoader = new ModFilePresenceState(),
         ScriptHookRdr2 = new ModFilePresenceState()
@@ -29,7 +28,6 @@ public sealed record ModPrecheckState
 
     public ModBinaryState ReShade { get; init; } = new();
     public ModBinaryState SpecialK { get; init; } = new();
-    public ModBinaryState UltimateAsiLoader { get; init; } = new();
     public ModFilePresenceState RenoDx { get; init; } = new();
     public ModFilePresenceState LennyModLoader { get; init; } = new();
     public ModFilePresenceState ScriptHookRdr2 { get; init; } = new();

@@ -51,8 +51,7 @@ public sealed class ModPrecheckScanner : IModPrecheckScanner
         var detectedPaths = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase)
         {
             [ModConflictKinds.ReShade] = [],
-            [ModConflictKinds.SpecialK] = [],
-            [ModConflictKinds.UltimateAsiLoader] = []
+            [ModConflictKinds.SpecialK] = []
         };
 
         foreach (var filePath in dllCandidates.Values)
@@ -71,7 +70,6 @@ public sealed class ModPrecheckScanner : IModPrecheckScanner
         {
             ReShade = BuildModBinaryState(detectedPaths[ModConflictKinds.ReShade]),
             SpecialK = BuildModBinaryState(detectedPaths[ModConflictKinds.SpecialK]),
-            UltimateAsiLoader = BuildModBinaryState(detectedPaths[ModConflictKinds.UltimateAsiLoader]),
             RenoDx = BuildModFilePresenceState(renoDxPaths),
             LennyModLoader = BuildModFilePresenceState(lennyModLoaderPaths),
             ScriptHookRdr2 = BuildModFilePresenceState(scriptHookRdr2Paths)

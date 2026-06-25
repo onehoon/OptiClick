@@ -12,7 +12,6 @@ public sealed record ArchiveCachePaths
     public required string OptiPatcherCacheDir { get; init; }
     public required string SpecialKCacheDir { get; init; }
     public required string ReFrameworkCacheDir { get; init; }
-    public required string UltimateAsiLoaderCacheDir { get; init; }
     public required string Unreal5CacheDir { get; init; }
     public required string OptiScalerPayloadCacheRoot { get; init; }
 
@@ -32,7 +31,6 @@ public sealed record ArchiveCachePaths
             OptiPatcherCacheDir = Path.Combine(archivesRoot, "OptiPatcher"),
             SpecialKCacheDir = Path.Combine(archivesRoot, "SpecialK"),
             ReFrameworkCacheDir = Path.Combine(archivesRoot, "REFramework"),
-            UltimateAsiLoaderCacheDir = Path.Combine(archivesRoot, "UltimateAsiLoader"),
             Unreal5CacheDir = Path.Combine(archivesRoot, "Unreal5"),
             OptiScalerPayloadCacheRoot = optiScalerArchiveRoot
         };
@@ -47,7 +45,6 @@ public sealed record ArchiveCachePaths
         Directory.CreateDirectory(OptiPatcherCacheDir);
         Directory.CreateDirectory(SpecialKCacheDir);
         Directory.CreateDirectory(ReFrameworkCacheDir);
-        Directory.CreateDirectory(UltimateAsiLoaderCacheDir);
         Directory.CreateDirectory(Unreal5CacheDir);
         Directory.CreateDirectory(OptiScalerPayloadCacheRoot);
     }
@@ -61,7 +58,6 @@ public sealed record ArchiveCachePaths
             ArchiveAssetKey.OptiPatcher => OptiPatcherCacheDir,
             ArchiveAssetKey.SpecialK => SpecialKCacheDir,
             ArchiveAssetKey.ReFramework => ReFrameworkCacheDir,
-            ArchiveAssetKey.UltimateAsiLoader => UltimateAsiLoaderCacheDir,
             ArchiveAssetKey.Unreal5 => Unreal5CacheDir,
             _ => Root
         };

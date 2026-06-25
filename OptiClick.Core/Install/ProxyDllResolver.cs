@@ -19,16 +19,13 @@ public sealed class ProxyDllResolver
 
     public ProxyDllResolutionResult Resolve(
         GameEntry game,
-        ExistingFileSnapshot snapshot,
-        UalMode ualMode)
+        ExistingFileSnapshot snapshot)
     {
         if (!ProxyDllNamePolicy.TryResolvePreferredStart(game.OptiScalerDllName, out var preferredStart, out _))
         {
             return new ProxyDllResolutionResult
             {
                 Success = false,
-                UseUal = ualMode != UalMode.None,
-                UalMode = ualMode,
                 FailureReason = ProxyDllNamePolicy.InvalidPreferredProxyNameErrorCode
             };
         }
@@ -45,8 +42,6 @@ public sealed class ProxyDllResolver
                 return new ProxyDllResolutionResult
                 {
                     FinalDllName = candidate,
-                    UseUal = ualMode != UalMode.None,
-                    UalMode = ualMode,
                     BackupCandidates = backups,
                     SkippedCandidates = skipped
                 };
@@ -58,8 +53,6 @@ public sealed class ProxyDllResolver
                 return new ProxyDllResolutionResult
                 {
                     FinalDllName = candidate,
-                    UseUal = ualMode != UalMode.None,
-                    UalMode = ualMode,
                     BackupCandidates = backups,
                     SkippedCandidates = skipped
                 };
@@ -71,8 +64,6 @@ public sealed class ProxyDllResolver
         return new ProxyDllResolutionResult
         {
             Success = false,
-            UseUal = ualMode != UalMode.None,
-            UalMode = ualMode,
             BackupCandidates = backups,
             SkippedCandidates = skipped,
             FailureReason = "proxy_candidate_unavailable"

@@ -37,7 +37,6 @@ public interface IFileSignatureDetectors
 {
     bool IsReShadeDll(string filePath);
     bool IsSpecialKDll(string filePath);
-    bool IsUltimateAsiLoaderDll(string filePath);
 }
 
 public sealed record ComponentArchiveDownloadResult

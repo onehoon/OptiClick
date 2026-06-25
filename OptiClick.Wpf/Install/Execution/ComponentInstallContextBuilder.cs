@@ -25,14 +25,9 @@ public sealed class ComponentInstallContextBuilder
             GpuName = (selectedGpu?.Name ?? "").Trim(),
             Fsr4SourceArchive = input.LatestArchiveReadiness.ResolveFsr4VariantSourceArchive(descriptor.Fsr4Variant),
             Fsr4Variant = descriptor.Fsr4Variant,
-            UalDetectedNames = input.UalDetectedNames,
             HasPlannedComponentInstallers = input.Plan.Components.Count > 0,
             PlannedComponentInstallers = plannedComponentInstallers,
             ShouldInstallOptiPatcher = false,
-            ShouldInstallUltimateAsiLoader = ResolveShouldInstall(
-                input.Plan.Components,
-                CoreInstallPlanComponentType.UltimateAsiLoader,
-                descriptor.RequiresUltimateAsiLoader),
             ShouldInstallUnreal5 = ResolveShouldInstall(
                 input.Plan.Components,
                 CoreInstallPlanComponentType.Unreal5,
@@ -52,7 +47,6 @@ public sealed class ComponentInstallContextBuilder
                 CoreInstallPlanComponentType.SpecialK,
                 descriptor.SpecialK),
             ExtraBundleAlias = ResolveExtraBundleAlias(input.Plan.Components, descriptor),
-            UalCachedArchivePath = input.LatestArchiveReadiness.UalSourceArchive,
             OptiPatcherCachedArchivePath = input.LatestArchiveReadiness.OptiPatcherSourceArchive,
             SpecialKCachedArchivePath = input.LatestArchiveReadiness.SpecialKSourceArchive,
             ReFrameworkCachedArchivePath = input.LatestArchiveReadiness.ReframeworkSourceArchive,

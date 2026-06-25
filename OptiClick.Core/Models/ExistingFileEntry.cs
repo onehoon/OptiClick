@@ -7,7 +7,6 @@ public enum DllOwnerKind
     OptiScaler,
     ReShade,
     SpecialK,
-    UltimateAsiLoader,
     RenoDx,
     Other
 }

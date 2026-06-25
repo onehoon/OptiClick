@@ -36,12 +36,6 @@ public sealed class FileSignatureDetectors
         return text.Contains("special k", StringComparison.Ordinal) || text.Contains("specialk", StringComparison.Ordinal);
     }
 
-    public bool IsUltimateAsiLoaderDll(string filePath)
-    {
-        var text = string.Join(' ', ReadVersion(filePath).Values).ToLowerInvariant();
-        return text.Contains("ultimate asi loader", StringComparison.Ordinal);
-    }
-
     private Dictionary<string, string> ReadVersion(string filePath)
     {
         if (!_fileExists(filePath))

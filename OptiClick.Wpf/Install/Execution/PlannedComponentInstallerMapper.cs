@@ -42,9 +42,6 @@ internal static class PlannedComponentInstallerMapper
             case CoreInstallPlanComponentType.SpecialK:
                 component = ComponentInstallName.SpecialK;
                 return true;
-            case CoreInstallPlanComponentType.UltimateAsiLoader:
-                component = ComponentInstallName.UltimateAsiLoader;
-                return true;
             case CoreInstallPlanComponentType.Unreal5:
                 component = ComponentInstallName.Unreal5;
                 return true;

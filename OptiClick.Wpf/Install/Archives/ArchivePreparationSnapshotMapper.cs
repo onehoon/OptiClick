@@ -14,8 +14,6 @@ public static class ArchivePreparationSnapshotMapper
             Fsr4State = ResolveFsr4AggregateState(snapshot, fsr4Variants),
             Fsr4SourceArchive = snapshot.Get(ArchiveAssetKey.Fsr4).ArchivePath,
             Fsr4Variants = fsr4Variants,
-            UalState = MapState(snapshot.Get(ArchiveAssetKey.UltimateAsiLoader)),
-            UalSourceArchive = snapshot.Get(ArchiveAssetKey.UltimateAsiLoader).ArchivePath,
             OptiPatcherState = MapState(snapshot.Get(ArchiveAssetKey.OptiPatcher)),
             OptiPatcherSourceArchive = snapshot.Get(ArchiveAssetKey.OptiPatcher).ArchivePath,
             SpecialKState = MapState(snapshot.Get(ArchiveAssetKey.SpecialK)),

@@ -28,7 +28,6 @@ public sealed record OptiClickUninstallPlanBuildRequest
     public string TargetPath { get; init; } = "";
     public InstallGameDescriptor? GameDescriptor { get; init; }
     public string FinalProxyDllName { get; init; } = "";
-    public IReadOnlyList<string> UalDetectedNames { get; init; } = [];
     public IReadOnlyList<RuntimeDataRawRow> EngineIniProfileRows { get; init; } = [];
 }
 
@@ -86,8 +85,7 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
         var targets = new List<InfrastructureUninstall.UninstallComponentTarget>();
         AddOptiScalerRootExactTargets(targets);
         AddReFrameworkTarget(targets, descriptor.ReFrameworkUrl);
-        AddSpecialKTarget(targets, descriptor.SpecialK, ResolveFinalProxyDllName(request, descriptor));
-        AddUltimateAsiLoaderTargets(targets, descriptor.RequiresUltimateAsiLoader, request.UalDetectedNames);
+        AddSpecialKTarget(targets, descriptor.SpecialK);
         return targets
             .DistinctBy(static target => $"{target.Kind}:{NormalizeTargetKey(target.RelativePath)}")
             .ToArray();
@@ -178,8 +176,7 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
 
     private static void AddSpecialKTarget(
         ICollection<InfrastructureUninstall.UninstallComponentTarget> targets,
-        string specialKValue,
-        string finalProxyDllName)
+        string specialKValue)
     {
         var normalized = NormalizeRelativePath(specialKValue);
         if (string.IsNullOrWhiteSpace(normalized))
@@ -193,23 +190,6 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
         }
 
         AddDllTarget(targets, InfrastructureUninstall.UninstallCandidateKind.SpecialK, normalized);
-    }
-
-    private static void AddUltimateAsiLoaderTargets(
-        ICollection<InfrastructureUninstall.UninstallComponentTarget> targets,
-        bool enabled,
-        IReadOnlyList<string> detectedNames)
-    {
-        if (!enabled)
-        {
-            return;
-        }
-
-        AddDllTarget(targets, InfrastructureUninstall.UninstallCandidateKind.UltimateAsiLoader, "dinput8.dll");
-        foreach (var detectedName in detectedNames ?? Array.Empty<string>())
-        {
-            AddDllTarget(targets, InfrastructureUninstall.UninstallCandidateKind.UltimateAsiLoader, detectedName);
-        }
     }
 
     private static void AddDllTarget(
@@ -242,27 +222,6 @@ public sealed class OptiClickUninstallPlanBuilder : IOptiClickUninstallPlanBuild
         }
 
         return normalized.Trim('/');
-    }
-
-    private static string ResolveFinalProxyDllName(
-        OptiClickUninstallPlanBuildRequest request,
-        InstallGameDescriptor descriptor)
-    {
-        var requested = Path.GetFileName((request.FinalProxyDllName ?? "").Trim());
-        if (!string.IsNullOrWhiteSpace(requested)
-            && requested.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-        {
-            return requested;
-        }
-
-        var preferred = Path.GetFileName((descriptor.OptiScalerDllName ?? "").Trim());
-        if (!string.IsNullOrWhiteSpace(preferred)
-            && preferred.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-        {
-            return preferred;
-        }
-
-        return string.IsNullOrWhiteSpace(preferred) ? "dxgi.dll" : "";
     }
 
     private static string NormalizeTargetKey(string value) => NormalizeRelativePath(value).ToLowerInvariant();
@@ -694,14 +653,6 @@ internal sealed class SignatureDetectorAdapter : InfrastructureUninstall.IOptiCl
             return InfrastructureUninstall.UninstallSignatureDetection.Matched(
                 InfrastructureUninstall.UninstallCandidateKind.SpecialK,
                 matchedText);
-        }
-
-        if (_detectors.IsUltimateAsiLoaderDll(filePath)
-            || metadataText.Contains("ultimate asi loader", StringComparison.Ordinal))
-        {
-            return InfrastructureUninstall.UninstallSignatureDetection.Matched(
-                InfrastructureUninstall.UninstallCandidateKind.UltimateAsiLoader,
-                "ultimate asi loader");
         }
 
         return InfrastructureUninstall.UninstallSignatureDetection.NotMatched(

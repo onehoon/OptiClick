@@ -110,7 +110,6 @@ internal sealed class UninstallFlowDialogRequestFactory
         var lines = new List<string>();
         AppendCandidateLine(lines, plan.Candidates, plan.DirectoryCandidates, InfrastructureUninstall.UninstallCandidateKind.OptiScaler, "OptiScaler");
         AppendCandidateLine(lines, plan.Candidates, plan.DirectoryCandidates, InfrastructureUninstall.UninstallCandidateKind.ReFramework, "REFramework");
-        AppendCandidateLine(lines, plan.Candidates, plan.DirectoryCandidates, InfrastructureUninstall.UninstallCandidateKind.UltimateAsiLoader, "Ultimate ASI Loader");
         AppendCandidateLine(lines, plan.Candidates, plan.DirectoryCandidates, InfrastructureUninstall.UninstallCandidateKind.SpecialK, "Special K");
         return lines;
     }

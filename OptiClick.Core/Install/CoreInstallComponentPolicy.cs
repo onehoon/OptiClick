@@ -37,13 +37,6 @@ public sealed class CoreInstallComponentPolicy
             static (_, _) => "specialk",
             CoreInstallComponentReasonCodes.SpecialKNotRequested),
         new(
-            CoreInstallPlanComponentType.UltimateAsiLoader,
-            static (game, _) => game.RequiresUltimateAsiLoader,
-            "archive",
-            static _ => "dinput8.dll",
-            static (_, _) => "ual",
-            CoreInstallComponentReasonCodes.UalNotRequested),
-        new(
             CoreInstallPlanComponentType.Unreal5,
             static (game, _) => game.RequiresUnreal5,
             "archive",

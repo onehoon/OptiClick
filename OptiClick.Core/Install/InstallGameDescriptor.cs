@@ -12,7 +12,6 @@ public sealed record InstallGameDescriptor
     public string OptiScalerDllName { get; init; } = "";
     public string ReFrameworkUrl { get; init; } = "";
     public string SpecialK { get; init; } = "";
-    public bool RequiresUltimateAsiLoader { get; init; }
     public bool RequiresOptiPatcher { get; init; }
     public bool RequiresUnreal5 { get; init; }
     public bool RequiresRtssProfile { get; init; }

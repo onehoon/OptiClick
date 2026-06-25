@@ -18,7 +18,6 @@ public enum CoreInstallPlanComponentType
     OptiPatcher,
     REFramework,
     SpecialK,
-    UltimateAsiLoader,
     Unreal5,
     ExtraBundle,
     Fsr4,
@@ -214,7 +213,6 @@ public sealed record ArchiveReadinessSnapshot
     {
         OptiScalerState = ArchiveReadinessState.NotReady,
         Fsr4State = ArchiveReadinessState.NotReady,
-        UalState = ArchiveReadinessState.NotReady,
         OptiPatcherState = ArchiveReadinessState.NotReady,
         SpecialKState = ArchiveReadinessState.NotReady,
         ReframeworkState = ArchiveReadinessState.NotReady,
@@ -232,8 +230,6 @@ public sealed record ArchiveReadinessSnapshot
     public string Fsr4SourceArchive { get; init; } = "";
     public IReadOnlyDictionary<string, Fsr4VariantReadiness> Fsr4Variants { get; init; } =
         new Dictionary<string, Fsr4VariantReadiness>(StringComparer.OrdinalIgnoreCase);
-    public ArchiveReadinessState UalState { get; init; } = ArchiveReadinessState.NotReady;
-    public string UalSourceArchive { get; init; } = "";
     public ArchiveReadinessState OptiPatcherState { get; init; } = ArchiveReadinessState.NotReady;
     public string OptiPatcherSourceArchive { get; init; } = "";
     public ArchiveReadinessState SpecialKState { get; init; } = ArchiveReadinessState.NotReady;
@@ -250,7 +246,6 @@ public sealed record ArchiveReadinessSnapshot
                && OptiPatcherState == ArchiveReadinessState.Ready
                && SpecialKState == ArchiveReadinessState.Ready
                && ReframeworkState == ArchiveReadinessState.Ready
-               && UalState == ArchiveReadinessState.Ready
                && Unreal5State == ArchiveReadinessState.Ready;
     }
 

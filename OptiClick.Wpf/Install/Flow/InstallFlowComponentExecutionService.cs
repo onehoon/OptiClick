@@ -29,16 +29,12 @@ public sealed class InstallFlowComponentExecutionService
         ArgumentNullException.ThrowIfNull(request);
 
         var logs = new List<InstallFlowLogEntry>();
-        var ualDetectedNames = ShouldInstallUltimateAsiLoader(request.Plan)
-            ? ResolveUalDetectedNames(request.Precheck)
-            : Array.Empty<string>();
         var context = _componentInstallContextBuilder.Build(new ComponentInstallContextBuildInput
         {
             Plan = request.Plan,
             ExecutionDescriptor = request.ExecutionDescriptor,
             LatestRuntimeContext = request.LatestRuntimeContext,
             LatestArchiveReadiness = request.LatestArchiveReadiness,
-            UalDetectedNames = ualDetectedNames,
             ModuleDownloadLinks = request.ModuleDownloadLinks.Catalog
         });
 
@@ -75,42 +71,6 @@ public sealed class InstallFlowComponentExecutionService
         };
     }
 
-    private static bool ShouldInstallUltimateAsiLoader(CoreInstallPlan plan)
-    {
-        return plan.Components.Any(static component =>
-            component.Enabled
-            && component.Type == CoreInstallPlanComponentType.UltimateAsiLoader);
-    }
-
-    private static IReadOnlyList<string> ResolveUalDetectedNames(InstallPrecheckSnapshot precheck)
-    {
-        if (precheck.Findings.Count == 0)
-        {
-            return Array.Empty<string>();
-        }
-
-        var names = new List<string>();
-        foreach (var finding in precheck.Findings)
-        {
-            if (!string.Equals((finding.Kind ?? "").Trim(), ModConflictKinds.UltimateAsiLoader, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            foreach (var token in finding.Evidence)
-            {
-                var normalized = (token ?? "").Trim();
-                if (!string.IsNullOrWhiteSpace(normalized))
-                {
-                    names.Add(normalized);
-                }
-            }
-        }
-
-        return names
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-    }
 }
 
 public sealed record InstallFlowComponentExecutionRequest

@@ -160,8 +160,6 @@ public sealed class CoreInstallStartGatePolicy
                     return true;
                 case CoreInstallPlanComponentType.REFramework when input.ArchiveReadiness.ReframeworkState != ArchiveReadinessState.Ready:
                     return true;
-                case CoreInstallPlanComponentType.UltimateAsiLoader when input.ArchiveReadiness.UalState != ArchiveReadinessState.Ready:
-                    return true;
                 case CoreInstallPlanComponentType.Unreal5 when input.ArchiveReadiness.Unreal5State != ArchiveReadinessState.Ready:
                     return true;
                 case CoreInstallPlanComponentType.Fsr4 when input.ArchiveReadiness.Fsr4State != ArchiveReadinessState.Ready:

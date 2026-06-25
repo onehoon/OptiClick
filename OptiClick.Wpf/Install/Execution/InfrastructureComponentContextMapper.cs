@@ -44,20 +44,6 @@ internal static class InfrastructureComponentContextMapper
         };
     }
 
-    public static InfrastructureComponents.UltimateAsiLoaderInstallContext ToUltimateAsiLoaderContext(ComponentInstallContext context)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-
-        return new InfrastructureComponents.UltimateAsiLoaderInstallContext
-        {
-            TargetPath = context.TargetPath,
-            UseUltimateAsiLoader = context.ShouldInstallUltimateAsiLoader,
-            UalDetectedNames = context.UalDetectedNames,
-            ModuleDownloadLinks = context.ModuleDownloadLinks,
-            UalCachedArchivePath = context.UalCachedArchivePath
-        };
-    }
-
     public static InfrastructureComponents.ExtraBundleInstallContext ToExtraBundleContext(ComponentInstallContext context)
     {
         ArgumentNullException.ThrowIfNull(context);

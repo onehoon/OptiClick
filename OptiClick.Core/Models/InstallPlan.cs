@@ -1,18 +1,10 @@
 ﻿namespace OptiClick.Core.Models;
 
-public enum UalMode
-{
-    None,
-    SheetFlag
-}
-
 public sealed record InstallPlan
 {
     public string SourceArchive { get; init; } = "";
     public string PreferredProxyName { get; init; } = "";
     public string FinalDllName { get; init; } = "";
-    public bool UseUal { get; init; }
-    public UalMode UalMode { get; init; } = UalMode.None;
     public bool ShouldInstallFsr4 { get; init; }
     public IReadOnlyList<string> ComponentOrder { get; init; } = Array.Empty<string>();
     public IReadOnlyList<ComponentPlan> Components { get; init; } = Array.Empty<ComponentPlan>();

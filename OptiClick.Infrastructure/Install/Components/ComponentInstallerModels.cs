@@ -18,7 +18,6 @@ public enum ComponentInstallName
 {
     // Infrastructure component adapters only handle post-core components.
     // OptiScalerCore is installed by the dedicated core installer path.
-    UltimateAsiLoader = (int)CoreComponentInstallName.UltimateAsiLoader,
     SpecialK = (int)CoreComponentInstallName.SpecialK,
     ReFramework = (int)CoreComponentInstallName.ReFramework,
     ExtraBundle = (int)CoreComponentInstallName.ExtraBundle,
@@ -107,7 +106,6 @@ internal static class ComponentInstallerModelMapper
 
     public static CoreComponentInstallName ToCore(ComponentInstallName component) => component switch
     {
-        ComponentInstallName.UltimateAsiLoader => CoreComponentInstallName.UltimateAsiLoader,
         ComponentInstallName.SpecialK => CoreComponentInstallName.SpecialK,
         ComponentInstallName.ReFramework => CoreComponentInstallName.ReFramework,
         ComponentInstallName.ExtraBundle => CoreComponentInstallName.ExtraBundle,
@@ -127,7 +125,6 @@ internal static class ComponentInstallerModelMapper
 
     public static ComponentInstallName ToInfrastructure(CoreComponentInstallName component) => component switch
     {
-        CoreComponentInstallName.UltimateAsiLoader => ComponentInstallName.UltimateAsiLoader,
         CoreComponentInstallName.SpecialK => ComponentInstallName.SpecialK,
         CoreComponentInstallName.ReFramework => ComponentInstallName.ReFramework,
         CoreComponentInstallName.ExtraBundle => ComponentInstallName.ExtraBundle,
@@ -144,15 +141,6 @@ internal static class ComponentInstallerModelMapper
         CoreComponentInstallStatus.Failed => ComponentInstallStatus.Failed,
         _ => throw new ArgumentOutOfRangeException(nameof(status), status, $"Unsupported core status mapping: {status}")
     };
-}
-
-public sealed record UltimateAsiLoaderInstallContext
-{
-    public string TargetPath { get; init; } = "";
-    public bool UseUltimateAsiLoader { get; init; }
-    public IReadOnlyList<string> UalDetectedNames { get; init; } = Array.Empty<string>();
-    public ModuleDownloadLinkCatalog ModuleDownloadLinks { get; init; } = ModuleDownloadLinkCatalog.Empty;
-    public string UalCachedArchivePath { get; init; } = "";
 }
 
 public sealed record SpecialKInstallContext

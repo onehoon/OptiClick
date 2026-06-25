@@ -10,6 +10,5 @@ public sealed record ComponentInstallContextBuildInput
     public InstallExecutionDescriptor ExecutionDescriptor { get; init; } = InstallExecutionDescriptor.Empty;
     public RuntimeContext LatestRuntimeContext { get; init; } = new();
     public ArchiveReadinessSnapshot LatestArchiveReadiness { get; init; } = ArchiveReadinessSnapshot.NotReady;
-    public IReadOnlyList<string> UalDetectedNames { get; init; } = Array.Empty<string>();
     public ModuleDownloadLinkCatalog ModuleDownloadLinks { get; init; } = ModuleDownloadLinkCatalog.Empty;
 }

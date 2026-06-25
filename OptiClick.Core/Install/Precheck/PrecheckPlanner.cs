@@ -8,7 +8,6 @@ public sealed class PrecheckPlanner
     {
         var findings = new List<PrecheckFinding>();
         var warnings = new List<string>();
-        var ualNames = new List<string>();
 
         foreach (var file in snapshot.Files.Where(file => file.Exists))
         {
@@ -32,11 +31,6 @@ public sealed class PrecheckPlanner
                 Warning = warning
             });
 
-            if (file.OwnerKind == DllOwnerKind.UltimateAsiLoader)
-            {
-                ualNames.Add(Path.GetFileName(file.RelativePath));
-            }
-
             if (!string.IsNullOrWhiteSpace(warning))
             {
                 warnings.Add(warning);
@@ -50,7 +44,6 @@ public sealed class PrecheckPlanner
         {
             Ok = !blockingFindingExists,
             Findings = findings,
-            UalDetectedNames = ualNames.Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
             Warnings = warnings.Distinct(StringComparer.OrdinalIgnoreCase).ToArray()
         };
     }
@@ -62,7 +55,6 @@ public sealed class PrecheckPlanner
             DllOwnerKind.OptiScaler => PrecheckFindingType.OptiScalerManaged,
             DllOwnerKind.ReShade => PrecheckFindingType.ReShade,
             DllOwnerKind.SpecialK => PrecheckFindingType.SpecialK,
-            DllOwnerKind.UltimateAsiLoader => PrecheckFindingType.UltimateAsiLoader,
             DllOwnerKind.RenoDx => PrecheckFindingType.RenoDx,
             _ => PrecheckFindingType.Unknown
         };
@@ -82,11 +74,6 @@ public sealed class PrecheckPlanner
 
     private static string BuildWarning(PrecheckFindingType type, GameEntry game)
     {
-        if (type == PrecheckFindingType.UltimateAsiLoader)
-        {
-            return "";
-        }
-
         return type switch
         {
             PrecheckFindingType.ReShade => PrecheckWarningCodes.ReShadeDetected,

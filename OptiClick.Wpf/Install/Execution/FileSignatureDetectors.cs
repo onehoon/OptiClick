@@ -7,7 +7,6 @@ public interface IFileSignatureDetectors
     bool IsOptiScalerManagedProxyDll(string filePath);
     bool IsReShadeDll(string filePath);
     bool IsSpecialKDll(string filePath);
-    bool IsUltimateAsiLoaderDll(string filePath);
 }
 
 public sealed class FileSignatureDetectors : IFileSignatureDetectors
@@ -31,5 +30,4 @@ public sealed class FileSignatureDetectors : IFileSignatureDetectors
 
     public bool IsSpecialKDll(string filePath) => _inner.IsSpecialKDll(filePath);
 
-    public bool IsUltimateAsiLoaderDll(string filePath) => _inner.IsUltimateAsiLoaderDll(filePath);
 }

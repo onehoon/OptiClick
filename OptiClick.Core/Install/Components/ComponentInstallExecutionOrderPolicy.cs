@@ -10,7 +10,6 @@ public static class ComponentInstallExecutionOrderPolicy
     public static IReadOnlyList<ComponentInstallName> PreferredMiddleOrder { get; } =
         Array.AsReadOnly(new[]
         {
-            ComponentInstallName.UltimateAsiLoader,
             ComponentInstallName.SpecialK,
             ComponentInstallName.ReFramework,
             ComponentInstallName.Unreal5,

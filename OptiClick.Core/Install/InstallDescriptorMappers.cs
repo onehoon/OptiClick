@@ -77,7 +77,6 @@ public static class InstallGameDescriptorMapper
             OptiScalerDllName = input.OptiScalerDllName,
             ReFrameworkUrl = input.ReFrameworkUrl,
             SpecialK = input.SpecialK,
-            RequiresUltimateAsiLoader = input.RequiresUltimateAsiLoader,
             RequiresOptiPatcher = input.RequiresOptiPatcher,
             RequiresUnreal5 = input.RequiresUnreal5,
             RequiresRtssProfile = input.RequiresRtssProfile,

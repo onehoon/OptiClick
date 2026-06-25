@@ -23,7 +23,6 @@ internal static class ShellInstallDescriptorInputMapper
             OptiScalerDllName = mergedMetadata.OptiScalerDllName,
             ReFrameworkUrl = mergedMetadata.ReFrameworkUrl,
             SpecialK = mergedMetadata.SpecialK,
-            RequiresUltimateAsiLoader = mergedMetadata.UltimateAsiLoader,
             RequiresOptiPatcher = mergedMetadata.OptiPatcher,
             RequiresUnreal5 = mergedMetadata.Unreal5,
             RequiresRtssProfile = mergedMetadata.RtssOverlay,

@@ -58,7 +58,6 @@ public sealed class VersionedArchivePreparationService : IVersionedArchivePrepar
         {
             ArchiveAssetKey.SpecialK => new RequiredFilesPayloadValidator(["SpecialK64.dll"]),
             ArchiveAssetKey.ReFramework => new RequiredFilesPayloadValidator(["dinput8.dll"]),
-            ArchiveAssetKey.UltimateAsiLoader => new RequiredFilesPayloadValidator(["dinput8.dll"]),
             ArchiveAssetKey.Unreal5 => new NonEmptyPayloadValidator(),
             _ => new NonEmptyPayloadValidator()
         };

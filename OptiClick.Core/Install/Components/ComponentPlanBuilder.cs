@@ -9,8 +9,7 @@ public sealed class ComponentPlanBuilder
         GameEntry game,
         ExistingFileSnapshot snapshot,
         ProxyDllResolutionResult proxy,
-        ArchiveState archiveState,
-        IReadOnlyList<string> ualDetectedNames)
+        ArchiveState archiveState)
     {
         var plans = new List<ComponentPlan>();
 
@@ -22,17 +21,6 @@ public sealed class ComponentPlanBuilder
                 Source = game.ExtraBundle,
                 Destination = "bundle-root",
                 Metadata = new Dictionary<string, string> { ["alias"] = game.ExtraBundle }
-            });
-        }
-
-        if (proxy.UalMode != UalMode.None)
-        {
-            plans.Add(new ComponentPlan
-            {
-                Kind = ComponentKind.UltimateAsiLoader,
-                Source = "dinput8.dll",
-                Destination = ResolveUalDestination(proxy.UalMode, ualDetectedNames),
-                Metadata = new Dictionary<string, string> { ["mode"] = ToUalModeString(proxy.UalMode) }
             });
         }
 
@@ -104,33 +92,6 @@ public sealed class ComponentPlanBuilder
         return specialKValue;
     }
 
-    private static string ResolveUalRepresentative(IReadOnlyList<string> ualDetectedNames)
-    {
-        return ualDetectedNames.FirstOrDefault(name => name.Equals("dinput8.dll", StringComparison.OrdinalIgnoreCase))
-            ?? ualDetectedNames.FirstOrDefault()
-            ?? "dinput8.dll";
-    }
-
-    private static string ResolveUalDestination(UalMode mode, IReadOnlyList<string> ualDetectedNames)
-    {
-        if (mode == UalMode.None)
-        {
-            return "";
-        }
-
-        return ualDetectedNames.Count > 0
-            ? ResolveUalRepresentative(ualDetectedNames)
-            : "dinput8.dll";
-    }
-
-    private static string ToUalModeString(UalMode mode)
-    {
-        return mode switch
-        {
-            UalMode.SheetFlag => "sheet_flag",
-            _ => "none"
-        };
-    }
 }
 
 

@@ -21,12 +21,6 @@ public sealed class ModConflictFindingBuilder
             findings.Add(specialK);
         }
 
-        var ual = BuildFinding(ModConflictKinds.UltimateAsiLoader, state.UltimateAsiLoader.DllNames);
-        if (ual is not null)
-        {
-            findings.Add(ual);
-        }
-
         var renoDx = BuildFinding(ModConflictKinds.RenoDx, state.RenoDx.RelativePaths);
         if (renoDx is not null)
         {
@@ -64,11 +58,6 @@ public sealed class ModConflictFindingBuilder
         string resolvedDllName)
     {
         var kind = (finding.Kind ?? "").Trim();
-        if (string.Equals(kind, ModConflictKinds.UltimateAsiLoader, StringComparison.OrdinalIgnoreCase))
-        {
-            return descriptor?.RequiresUltimateAsiLoader ?? false;
-        }
-
         if (string.Equals(kind, ModConflictKinds.SpecialK, StringComparison.OrdinalIgnoreCase))
         {
             return IsSpecialKManagedByInstaller(finding, descriptor, resolvedDllName);
@@ -267,7 +256,6 @@ public sealed class ModConflictNoticeBuilder
                 ? $"ReShade: {evidence}\n\nReShade({evidence})와의 호환성을 위해 OptiScaler는 다른 이름으로 설치됩니다."
                 : $"ReShade: {evidence}\n\nFor ReShade ({evidence}) compatibility, OptiScaler will be installed with a different name.",
             ModConflictKinds.SpecialK => $"Special K: {evidence}",
-            ModConflictKinds.UltimateAsiLoader => $"Ultimate ASI Loader: {evidence}",
             ModConflictKinds.RenoDx => $"RenoDX: {evidence}",
             ModConflictKinds.LennyModLoader => $"Lenny's Mod Loader: {evidence}",
             ModConflictKinds.ScriptHookRdr2 => $"Script Hook RDR2: {evidence}",

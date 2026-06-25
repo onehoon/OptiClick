@@ -108,7 +108,7 @@ public sealed class ArchiveReadinessFlowController
 
             logs.Add(InstallFlowLogEntryFactory.Info(
                 "archive",
-                $"refresh completed all_ready={FormatBool(IsAllReady(readiness))} optiscaler={readiness.OptiScalerState} fsr4={readiness.Fsr4State} optipatcher={readiness.OptiPatcherState} specialk={readiness.SpecialKState} reframework={readiness.ReframeworkState} ual={readiness.UalState} unreal5={readiness.Unreal5State}"));
+                $"refresh completed all_ready={FormatBool(IsAllReady(readiness))} optiscaler={readiness.OptiScalerState} fsr4={readiness.Fsr4State} optipatcher={readiness.OptiPatcherState} specialk={readiness.SpecialKState} reframework={readiness.ReframeworkState} unreal5={readiness.Unreal5State}"));
 
             return new ArchiveReadinessFlowResult
             {
@@ -171,7 +171,6 @@ public sealed class ArchiveReadinessFlowController
                && readiness.OptiPatcherState == ArchiveReadinessState.Ready
                && readiness.SpecialKState == ArchiveReadinessState.Ready
                && readiness.ReframeworkState == ArchiveReadinessState.Ready
-               && readiness.UalState == ArchiveReadinessState.Ready
                && readiness.Unreal5State == ArchiveReadinessState.Ready;
     }
 
@@ -306,7 +305,6 @@ public sealed class ArchiveReadinessFlowController
             ArchiveAssetKey.OptiPatcher => ArchiveAssetRuntimeDataKeys.OptiPatcher,
             ArchiveAssetKey.SpecialK => ArchiveAssetRuntimeDataKeys.SpecialK,
             ArchiveAssetKey.ReFramework => ArchiveAssetRuntimeDataKeys.ReFramework,
-            ArchiveAssetKey.UltimateAsiLoader => ArchiveAssetRuntimeDataKeys.UltimateAsiLoader,
             ArchiveAssetKey.Unreal5 => ArchiveAssetRuntimeDataKeys.Unreal5,
             _ => key.ToString().ToLowerInvariant()
         };

@@ -63,7 +63,6 @@ public sealed class ComponentInstallParityReviewBuilder : IComponentInstallParit
             OptiPatcher = IsEnabled(plan, CoreInstallPlanComponentType.OptiPatcher),
             ReFramework = IsEnabled(plan, CoreInstallPlanComponentType.REFramework),
             SpecialK = IsEnabled(plan, CoreInstallPlanComponentType.SpecialK),
-            UltimateAsiLoader = IsEnabled(plan, CoreInstallPlanComponentType.UltimateAsiLoader),
             Unreal5 = IsEnabled(plan, CoreInstallPlanComponentType.Unreal5),
             ExtraBundle = IsEnabled(plan, CoreInstallPlanComponentType.ExtraBundle),
             RtssOverlay = IsEnabled(plan, CoreInstallPlanComponentType.RtssProfile),

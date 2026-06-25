@@ -5,7 +5,6 @@ public enum PrecheckFindingType
     Unknown,
     ReShade,
     SpecialK,
-    UltimateAsiLoader,
     RenoDx,
     LegacyReFramework,
     OptiScalerManaged,

@@ -11,7 +11,6 @@ public sealed record ArchiveState
     public bool ExtraBundleReady { get; init; } = true;
     public bool ReframeworkReady { get; init; } = true;
     public bool SpecialKReady { get; init; } = true;
-    public bool UltimateAsiLoaderReady { get; init; } = true;
     public bool Unreal5Ready { get; init; } = true;
     public bool OptiPatcherReady { get; init; } = true;
 }

@@ -13,7 +13,6 @@ public sealed class ComponentInstallCoordinator : IComponentInstallCoordinator
 {
     private readonly IOptiScalerCoreInstaller _coreInstaller;
     private readonly IExtraBundleInstaller _extraBundleInstaller;
-    private readonly IUltimateAsiLoaderInstaller _ualInstaller;
     private readonly ISpecialKInstaller _specialKInstaller;
     private readonly IReFrameworkInstaller _reFrameworkInstaller;
     private readonly IOptiPatcherInstaller _optiPatcherInstaller;
@@ -24,7 +23,6 @@ public sealed class ComponentInstallCoordinator : IComponentInstallCoordinator
     public ComponentInstallCoordinator(
         IOptiScalerCoreInstaller coreInstaller,
         IExtraBundleInstaller extraBundleInstaller,
-        IUltimateAsiLoaderInstaller ualInstaller,
         ISpecialKInstaller specialKInstaller,
         IReFrameworkInstaller reFrameworkInstaller,
         IOptiPatcherInstaller optiPatcherInstaller,
@@ -34,7 +32,6 @@ public sealed class ComponentInstallCoordinator : IComponentInstallCoordinator
     {
         _coreInstaller = coreInstaller;
         _extraBundleInstaller = extraBundleInstaller;
-        _ualInstaller = ualInstaller;
         _specialKInstaller = specialKInstaller;
         _reFrameworkInstaller = reFrameworkInstaller;
         _optiPatcherInstaller = optiPatcherInstaller;
@@ -93,7 +90,6 @@ public sealed class ComponentInstallCoordinator : IComponentInstallCoordinator
     {
         return component switch
         {
-            ComponentInstallName.UltimateAsiLoader => _ualInstaller.InstallAsync(executionContext, cancellationToken),
             ComponentInstallName.SpecialK => _specialKInstaller.InstallAsync(executionContext, cancellationToken),
             ComponentInstallName.ReFramework => _reFrameworkInstaller.InstallAsync(executionContext, cancellationToken),
             ComponentInstallName.OptiPatcher => _optiPatcherInstaller.InstallAsync(executionContext, cancellationToken),
@@ -145,11 +141,6 @@ public sealed class ComponentInstallCoordinator : IComponentInstallCoordinator
         }
 
         if (!executionOrder.Contains(ComponentInstallName.SpecialK))
-        {
-            return normalizedContext;
-        }
-
-        if (normalizedContext.ShouldInstallUltimateAsiLoader || normalizedContext.UalDetectedNames.Count > 0)
         {
             return normalizedContext;
         }

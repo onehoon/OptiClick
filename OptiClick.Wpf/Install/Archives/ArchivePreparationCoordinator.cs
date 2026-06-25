@@ -105,7 +105,6 @@ public sealed class ArchivePreparationCoordinator : IArchivePreparationCoordinat
         {
             ArchiveAssetKey.SpecialK => "Special K archive",
             ArchiveAssetKey.ReFramework => "REFramework archive",
-            ArchiveAssetKey.UltimateAsiLoader => "Ultimate ASI Loader archive",
             ArchiveAssetKey.Unreal5 => "Unreal5 patch archive",
             _ => "archive"
         };

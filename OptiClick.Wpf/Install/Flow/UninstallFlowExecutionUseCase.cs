@@ -31,7 +31,6 @@ internal sealed class UninstallFlowExecutionUseCase
             TargetPath = targetPath,
             GameDescriptor = request.ExecutionDescriptor.GameDescriptor,
             FinalProxyDllName = request.SelectionSnapshot.FinalProxyDllName,
-            UalDetectedNames = request.SelectionSnapshot.UalDetectedNames,
             EngineIniProfileRows = request.EngineIniProfileRows
         });
         logs.Add(UninstallFlowLogEntry.Info(

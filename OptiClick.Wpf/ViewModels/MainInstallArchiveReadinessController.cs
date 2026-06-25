@@ -95,8 +95,6 @@ internal sealed class MainInstallArchiveReadinessController
                || previous.Fsr4State != current.Fsr4State
                || !string.Equals(previous.Fsr4SourceArchive, current.Fsr4SourceArchive, StringComparison.Ordinal)
                || !AreFsr4VariantsEqual(previous.Fsr4Variants, current.Fsr4Variants)
-               || previous.UalState != current.UalState
-               || !string.Equals(previous.UalSourceArchive, current.UalSourceArchive, StringComparison.Ordinal)
                || previous.OptiPatcherState != current.OptiPatcherState
                || !string.Equals(previous.OptiPatcherSourceArchive, current.OptiPatcherSourceArchive, StringComparison.Ordinal)
                || previous.SpecialKState != current.SpecialKState

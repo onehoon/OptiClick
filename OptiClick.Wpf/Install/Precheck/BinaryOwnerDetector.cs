@@ -36,8 +36,7 @@ public sealed class BinaryOwnerDetector : IBinaryOwnerDetector
     private static readonly IReadOnlyDictionary<string, string[]> OwnerKeywords = new Dictionary<string, string[]>
     {
         [ModConflictKinds.ReShade] = ["reshade"],
-        [ModConflictKinds.SpecialK] = ["special k", "specialk"],
-        [ModConflictKinds.UltimateAsiLoader] = ["ultimate asi loader"]
+        [ModConflictKinds.SpecialK] = ["special k", "specialk"]
     };
 
     private readonly IFileSignatureDetectors _signatureDetectors;

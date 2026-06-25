@@ -183,14 +183,6 @@ public sealed partial class AppCompositionRoot
         return new SpecialKInstaller(dllPayloadInstaller, fileSystem, detectors);
     }
 
-    public IUltimateAsiLoaderInstaller CreateUltimateAsiLoaderInstaller(
-        IDllPayloadInstaller dllPayloadInstaller,
-        IInstallFileSystem fileSystem,
-        IFileSignatureDetectors detectors)
-    {
-        return new UltimateAsiLoaderInstaller(dllPayloadInstaller, fileSystem, detectors);
-    }
-
     public IOptiPatcherInstaller CreateOptiPatcherInstaller(
         IArchiveSourceReader archiveSourceReader,
         IInstallFileSystem fileSystem)
@@ -223,7 +215,6 @@ public sealed partial class AppCompositionRoot
     public IComponentInstallCoordinator CreateComponentInstallCoordinator(
         IOptiScalerCoreInstaller coreInstaller,
         IExtraBundleInstaller extraBundleInstaller,
-        IUltimateAsiLoaderInstaller ualInstaller,
         ISpecialKInstaller specialKInstaller,
         IReFrameworkInstaller reFrameworkInstaller,
         IOptiPatcherInstaller optiPatcherInstaller,
@@ -234,7 +225,6 @@ public sealed partial class AppCompositionRoot
         return new ComponentInstallCoordinator(
             coreInstaller,
             extraBundleInstaller,
-            ualInstaller,
             specialKInstaller,
             reFrameworkInstaller,
             optiPatcherInstaller,

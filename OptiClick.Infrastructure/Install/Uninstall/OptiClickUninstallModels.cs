@@ -4,8 +4,7 @@ public enum UninstallCandidateKind
 {
     OptiScaler,
     ReFramework,
-    SpecialK,
-    UltimateAsiLoader
+    SpecialK
 }
 
 public enum UninstallPlanStatus

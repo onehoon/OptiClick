@@ -7,7 +7,6 @@ public enum ArchiveAssetKey
     OptiPatcher,
     SpecialK,
     ReFramework,
-    UltimateAsiLoader,
     Unreal5
 }
 
@@ -19,7 +18,6 @@ public static class ArchiveAssetRuntimeDataKeys
     public const string OptiPatcher = "optipatcher";
     public const string SpecialK = "specialk";
     public const string ReFramework = "reframework";
-    public const string UltimateAsiLoader = "ultimateasiloader";
     public const string Unreal5 = "unreal5";
 
     public static string ToRuntimeDataEntryKey(ArchiveAssetKey key)
@@ -31,7 +29,6 @@ public static class ArchiveAssetRuntimeDataKeys
             ArchiveAssetKey.OptiPatcher => OptiPatcher,
             ArchiveAssetKey.SpecialK => SpecialK,
             ArchiveAssetKey.ReFramework => ReFramework,
-            ArchiveAssetKey.UltimateAsiLoader => UltimateAsiLoader,
             ArchiveAssetKey.Unreal5 => Unreal5,
             _ => ""
         };
@@ -41,7 +38,6 @@ public static class ArchiveAssetRuntimeDataKeys
     {
         return key switch
         {
-            ArchiveAssetKey.UltimateAsiLoader => "ual",
             _ => ToRuntimeDataEntryKey(key)
         };
     }

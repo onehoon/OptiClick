@@ -133,7 +133,7 @@ public sealed class ShellGameCardViewModelFactory : IShellGameCardViewModelFacto
                 OptiScalerDllName = descriptorInput.OptiScalerDllName,
                 ReframeworkUrl = descriptorInput.ReFrameworkUrl,
                 SpecialK = descriptorInput.SpecialK,
-                UltimateAsiLoader = descriptorInput.RequiresUltimateAsiLoader,
+                UltimateAsiLoader = false,
                 OptiPatcher = descriptorInput.RequiresOptiPatcher,
                 Unreal5 = descriptorInput.RequiresUnreal5,
                 RtssOverlay = descriptorInput.RequiresRtssProfile,

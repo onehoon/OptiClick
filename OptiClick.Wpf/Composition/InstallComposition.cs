@@ -239,7 +239,6 @@ public sealed class InstallComposition
         return _root.CreateComponentInstallCoordinator(
             _root.CreateOptiScalerCoreInstaller(installFileSystem, signatures, proxyDllNameResolver, app.AppLogger),
             _root.CreateExtraBundleInstaller(archiveDownloader, archiveExtractor, installFileSystem),
-            _root.CreateUltimateAsiLoaderInstaller(dllPayloadInstaller, installFileSystem, signatures),
             _root.CreateSpecialKInstaller(dllPayloadInstaller, installFileSystem, signatures),
             _root.CreateReFrameworkInstaller(dllPayloadInstaller, installFileSystem, signatures),
             _root.CreateOptiPatcherInstaller(archiveSourceReader, installFileSystem),

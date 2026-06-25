@@ -32,7 +32,6 @@ public sealed record ComponentInstallParityReviewResult
     public bool OptiPatcher { get; init; }
     public bool ReFramework { get; init; }
     public bool SpecialK { get; init; }
-    public bool UltimateAsiLoader { get; init; }
     public bool Unreal5 { get; init; }
     public bool ExtraBundle { get; init; }
     public bool RtssOverlay { get; init; }

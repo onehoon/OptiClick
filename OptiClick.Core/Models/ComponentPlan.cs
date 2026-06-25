@@ -3,7 +3,6 @@
 public enum ComponentKind
 {
     ExtraBundle,
-    UltimateAsiLoader,
     SpecialK,
     Reframework,
     OptiPatcher,

@@ -53,7 +53,6 @@ public sealed record ArchivePreparationSequence
         ArchiveAssetKey.OptiPatcher,
         ArchiveAssetKey.SpecialK,
         ArchiveAssetKey.ReFramework,
-        ArchiveAssetKey.UltimateAsiLoader,
         ArchiveAssetKey.Unreal5
     ];
 
@@ -62,7 +61,6 @@ public sealed record ArchivePreparationSequence
         ArchiveAssetKey.OptiPatcher,
         ArchiveAssetKey.SpecialK,
         ArchiveAssetKey.ReFramework,
-        ArchiveAssetKey.UltimateAsiLoader,
         ArchiveAssetKey.Unreal5
     ];
 }

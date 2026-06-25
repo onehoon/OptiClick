@@ -114,8 +114,6 @@ internal sealed class FileSignatureDetectorsAdapter : OptiClick.Infrastructure.I
     public bool IsReShadeDll(string filePath) => _inner.IsReShadeDll(filePath);
 
     public bool IsSpecialKDll(string filePath) => _inner.IsSpecialKDll(filePath);
-
-    public bool IsUltimateAsiLoaderDll(string filePath) => _inner.IsUltimateAsiLoaderDll(filePath);
 }
 
 internal sealed class ComponentArchiveDownloaderAdapter : OptiClick.Infrastructure.Install.Components.IComponentArchiveDownloader

@@ -17,7 +17,6 @@ public sealed record InstallExecutionDescriptor
     public string ReFrameworkDestination => EffectiveGameDescriptor.ReFrameworkUrl;
     public string SpecialK => EffectiveGameDescriptor.SpecialK;
     public string ExtraBundle => EffectiveGameDescriptor.ExtraBundle;
-    public bool RequiresUltimateAsiLoader => EffectiveGameDescriptor.RequiresUltimateAsiLoader;
     public bool RequiresOptiPatcher => EffectiveGameDescriptor.RequiresOptiPatcher;
     public bool RequiresUnreal5 => EffectiveGameDescriptor.RequiresUnreal5;
     public string ExcludeListRaw => EffectiveGameDescriptor.ExcludeListRaw;
