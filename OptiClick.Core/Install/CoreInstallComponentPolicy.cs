@@ -54,7 +54,7 @@ public sealed class CoreInstallComponentPolicy
             CoreInstallPlanComponentType.Fsr4,
             static (_, input) => input.ShouldInstallFsr4,
             "archive",
-            static _ => "game_root",
+            static _ => OptiScalerInstallLayout.LibraryDirectory,
             static (_, input) => CoreFsr4VariantArchiveKeys.ToArchiveAlias(input.Fsr4Variant),
             CoreInstallComponentReasonCodes.Fsr4SkippedByGpuPolicy),
         new(

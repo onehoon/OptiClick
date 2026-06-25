@@ -67,7 +67,7 @@ public sealed class ComponentPlanBuilder
             {
                 Kind = ComponentKind.Fsr4,
                 Source = "FSR4",
-                Destination = "target-root"
+                Destination = $"{OptiScalerInstallLayout.LibraryDirectory}/{{cached dll filename}}"
             });
         }
 

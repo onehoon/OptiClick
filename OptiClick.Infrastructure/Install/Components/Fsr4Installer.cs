@@ -1,4 +1,5 @@
 using System.IO;
+using OptiClick.Core.Install;
 
 namespace OptiClick.Infrastructure.Install.Components;
 
@@ -86,7 +87,9 @@ public sealed class Fsr4Installer : IFsr4Installer
             }
 
             var sourceDll = dllCandidates[0];
-            var destination = Path.Combine(context.TargetPath, Path.GetFileName(sourceDll));
+            var destinationDirectory = Path.Combine(context.TargetPath, OptiScalerInstallLayout.LibraryDirectory);
+            _fileSystem.CreateDirectory(destinationDirectory);
+            var destination = Path.Combine(destinationDirectory, Path.GetFileName(sourceDll));
             if (_fileSystem.FileExists(destination))
             {
                 InstallerExecutionHelpers.EnsureWritableIfExists(_fileSystem, destination);
