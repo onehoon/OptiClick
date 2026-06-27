@@ -90,7 +90,7 @@ internal sealed record MainInstallShellFacade
             ReadSelectedGameId = () => input.ReadSelectionState().SelectedGameId ?? "",
             ShowStartupBlockDialogAsync = ct =>
                 input.DialogPresenter.ShowSafelyAsync(
-                    input.StartupNoticePresenter.BuildWindows10StartupBlockDialog(input.ReadStrings()),
+                    input.StartupNoticePresenter.BuildUnsupportedOperatingSystemStartupBlockDialog(input.ReadStrings()),
                     ct),
             RunExclusiveOperationAsync = (operation, ct) =>
                 input.OperationLocks.InstallExecutionLock.TryRunExclusiveAsync(operation, ct),

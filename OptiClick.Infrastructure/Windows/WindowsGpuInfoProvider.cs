@@ -94,7 +94,9 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider, IRuntimeHardwareD
 
             _detectionInfo = wmiDetection with
             {
-                GpuInfoSource = "fallback",
+                GpuInfoSource = IsUnsupportedOnlyGpuDetection(wmiDetection, dxgiStatus, dxgiResult.AdapterCount)
+                    ? "unsupported"
+                    : "fallback",
                 WmiGpuStatus = string.IsNullOrWhiteSpace(wmiDetection.WmiGpuStatus)
                     ? WindowsWmiQueryStatuses.Exception
                     : wmiDetection.WmiGpuStatus,
@@ -195,9 +197,15 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider, IRuntimeHardwareD
             });
         }
 
+        var source = results.Count > 0
+            ? "wmi"
+            : wmiResult.Rows.Count > 0
+                ? "unsupported"
+                : "fallback";
+
         return CreateResult(
             results,
-            results.Count == 0 ? "fallback" : "wmi",
+            source,
             wmiResult.Status,
             wmiResult.Attempts);
     }
@@ -339,6 +347,17 @@ public sealed class WindowsGpuInfoProvider : IGpuInfoProvider, IRuntimeHardwareD
                && result.AdapterCount > 0
             ? WindowsDxgiQueryStatuses.UnsupportedOnly
             : status;
+    }
+
+    private static bool IsUnsupportedOnlyGpuDetection(
+        RuntimeHardwareDetectionInfo wmiDetection,
+        string dxgiStatus,
+        int dxgiAdapterCount)
+    {
+        return string.Equals(wmiDetection.GpuInfoSource, "unsupported", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(dxgiStatus, WindowsDxgiQueryStatuses.UnsupportedOnly, StringComparison.OrdinalIgnoreCase)
+               || (string.Equals(dxgiStatus, WindowsDxgiQueryStatuses.Empty, StringComparison.OrdinalIgnoreCase)
+                   && dxgiAdapterCount > 0);
     }
 
     private static string ResolveGpuDetectionErrorType(

@@ -223,7 +223,8 @@ public sealed class RuntimeCatalogFlowController
 
     private static bool IsUnsupportedGpuCatalogError(string errorCode)
     {
-        return string.Equals(errorCode, "bundle_rule_not_matched", StringComparison.OrdinalIgnoreCase);
+        return string.Equals(errorCode, "bundle_rule_not_matched", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(errorCode, "gpu_unsupported", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsGpuDetectionFailedCatalogError(string errorCode, RuntimeContext context)
@@ -240,6 +241,11 @@ public sealed class RuntimeCatalogFlowController
         }
 
         var detection = context.HardwareDetection ?? new RuntimeHardwareDetectionInfo();
+        if (string.Equals(detection.GpuInfoSource, "unsupported", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
         return string.Equals(detection.GpuInfoSource, "fallback", StringComparison.OrdinalIgnoreCase)
                || IsUnknownGpuFallback(context.SelectedGpu)
                || context.Gpus.Any(IsUnknownGpuFallback);

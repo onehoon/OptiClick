@@ -246,11 +246,11 @@ public sealed record AppStrings
     public string UninstallValidationFailedTitle { get; init; } = "";
     public string UninstallValidationFailedSummary { get; init; } = "";
 
-    public string Windows10NotSupportedTitle { get; init; } = "";
-    public string Windows10NotSupportedSummary { get; init; } = "";
-    public string Windows10NotSupportedBullet1 { get; init; } = "";
-    public string Windows10NotSupportedBullet2 { get; init; } = "";
-    public string Windows10NotSupportedPrimaryButton { get; init; } = "";
+    public string UnsupportedOperatingSystemTitle { get; init; } = "";
+    public string UnsupportedOperatingSystemSummary { get; init; } = "";
+    public string UnsupportedOperatingSystemBullet1 { get; init; } = "";
+    public string UnsupportedOperatingSystemBullet2 { get; init; } = "";
+    public string UnsupportedOperatingSystemPrimaryButton { get; init; } = "";
 
     public string SupportUnableOpenTitle { get; init; } = "";
     public string SupportUnableOpenSummary { get; init; } = "";

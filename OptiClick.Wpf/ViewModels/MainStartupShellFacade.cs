@@ -36,7 +36,7 @@ internal sealed record MainStartupShellFacade
                     SetSettingsStatusText = input.SetSettingsStatusText,
                     ShowStartupBlockDialogAsync = ct =>
                         input.DialogPresenter.ShowSafelyAsync(
-                            input.StartupNoticePresenter.BuildWindows10StartupBlockDialog(input.ReadStrings()),
+                            input.StartupNoticePresenter.BuildUnsupportedOperatingSystemStartupBlockDialog(input.ReadStrings()),
                             ct),
                     RunInitialStartupAsync = input.StartupFlowCoordinator.RunInitialStartupAsync,
                     ShowPendingStartupNoticesAsync = input.ShowPendingStartupNoticesAsync,

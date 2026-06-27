@@ -106,7 +106,7 @@ public sealed partial class MainViewModel : ViewModelBase
 
     private bool ShouldBlockStartupForUnsupportedOperatingSystem()
     {
-        return IsUnsupportedWindows10OperatingSystem();
+        return IsUnsupportedOperatingSystem();
     }
 
     private void SetCurrentView(ShellViewKind view)

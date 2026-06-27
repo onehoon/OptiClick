@@ -13,9 +13,9 @@ public sealed class Windows11OnlyOperatingSystemSupportPolicy : IOperatingSystem
         }
 
         // Windows 11 also reports major version 10, but uses build >= 22000.
-        if (version.Major == 10 && version.Build < 22000)
+        if (version.Major < 10 || (version.Major == 10 && version.Build < 22000))
         {
-            return OperatingSystemSupportState.UnsupportedWindows10(versionText);
+            return OperatingSystemSupportState.UnsupportedOperatingSystem(versionText);
         }
 
         return OperatingSystemSupportState.Supported(versionText);

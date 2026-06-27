@@ -67,11 +67,11 @@ internal sealed class MainRuntimeFeatureFacade
             MainViewModelStatusCodes.Unknown).IsSupported;
     }
 
-    public bool IsUnsupportedWindows10OperatingSystem()
+    public bool IsUnsupportedOperatingSystem()
     {
         return _runtimeShellState.EnsureOperatingSystemEvaluated(
             _operatingSystemSupportPolicy,
-            MainViewModelStatusCodes.Unknown).IsUnsupportedWindows10;
+            MainViewModelStatusCodes.Unknown).IsUnsupportedOperatingSystem;
     }
 
     public Task RefreshRuntimeContextAsync(CancellationToken cancellationToken = default)

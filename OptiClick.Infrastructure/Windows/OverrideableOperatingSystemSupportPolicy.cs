@@ -21,7 +21,7 @@ public sealed class OverrideableOperatingSystemSupportPolicy : IOperatingSystemS
         var normalized = NormalizeOverride(rawOverride);
         return normalized switch
         {
-            10 => OperatingSystemSupportState.UnsupportedWindows10("10 (override)"),
+            10 => OperatingSystemSupportState.UnsupportedOperatingSystem("10 (override)"),
             11 => OperatingSystemSupportState.Supported("11 (override)"),
             _ => _fallbackPolicy.Evaluate()
         };
