@@ -163,11 +163,10 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
 
             if (!match.IsMatched)
             {
-                var matchError = IsGpuDetectionFailed(safeRuntimeContext.HardwareDetection, selectedGpu)
-                    ? "gpu_detection_failed"
-                    : string.IsNullOrWhiteSpace(match.ErrorCode)
-                        ? "gpu_bundle_rule_not_matched"
-                        : match.ErrorCode;
+                var matchError = ResolveRuleMatchError(
+                    match.ErrorCode,
+                    safeRuntimeContext.HardwareDetection,
+                    selectedGpu);
                 _logger.Error(
                     "remote",
                     $"gpu-bundle-runtime failed stage=rule_match code={NormalizeLogValue(matchError, "gpu_bundle_rule_not_matched")} vendor={NormalizeLogValue(match.Vendor, "none")} gpu_raw={NormalizeLogValue(match.GpuRaw, "none")}");
@@ -314,6 +313,14 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
         var reportVendor = (vendor ?? "").Trim();
         var reportGpuRaw = (gpuRaw ?? "").Trim();
 
+        if (IsUnsupportedGpuDetection(detection))
+        {
+            _logger.Info(
+                "remote",
+                $"gpu-bundle-runtime report-only skipped reason=unsupported_gpu vendor={NormalizeLogValue(reportVendor, "none")} gpu_raw={NormalizeLogValue(reportGpuRaw, "none")} gpu_info_source={NormalizeLogValue(detection.GpuInfoSource, "none")} wmi_gpu_status={NormalizeLogValue(detection.WmiGpuStatus, "none")} attempts={detection.WmiGpuAttempts}");
+            return;
+        }
+
         if (IsGpuDetectionFailed(detection, selectedGpu))
         {
             reason = "gpu_detection_failed";
@@ -371,12 +378,42 @@ public sealed class RemoteGpuBundleRuntimeLoader : IRemoteGpuBundleRuntimeLoader
     private static bool IsGpuDetectionFailed(RuntimeHardwareDetectionInfo detection, GpuInfo selectedGpu)
     {
         var gpuInfoSource = (detection.GpuInfoSource ?? "").Trim();
+        if (string.Equals(gpuInfoSource, "unsupported", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
         if (string.Equals(gpuInfoSource, "fallback", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }
 
         return IsUnknownGpuFallback(selectedGpu);
+    }
+
+    private static bool IsUnsupportedGpuDetection(RuntimeHardwareDetectionInfo detection)
+    {
+        return string.Equals((detection.GpuInfoSource ?? "").Trim(), "unsupported", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string ResolveRuleMatchError(
+        string matchErrorCode,
+        RuntimeHardwareDetectionInfo detection,
+        GpuInfo selectedGpu)
+    {
+        if (IsUnsupportedGpuDetection(detection))
+        {
+            return "gpu_unsupported";
+        }
+
+        if (IsGpuDetectionFailed(detection, selectedGpu))
+        {
+            return "gpu_detection_failed";
+        }
+
+        return string.IsNullOrWhiteSpace(matchErrorCode)
+            ? "gpu_bundle_rule_not_matched"
+            : matchErrorCode;
     }
 
     private static bool IsManifestNoMatchReportCandidate(string vendor, string gpuRaw)

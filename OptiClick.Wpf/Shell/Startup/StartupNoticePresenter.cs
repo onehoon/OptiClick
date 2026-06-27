@@ -6,18 +6,18 @@ namespace OptiClick.Wpf.Shell.Startup;
 
 public sealed class StartupNoticePresenter
 {
-    public AppDialogRequest BuildWindows10StartupBlockDialog(AppStrings strings)
+    public AppDialogRequest BuildUnsupportedOperatingSystemStartupBlockDialog(AppStrings strings)
     {
         return new AppDialogRequest
         {
-            Title = strings.Windows10NotSupportedTitle,
-            Summary = strings.Windows10NotSupportedSummary,
+            Title = strings.UnsupportedOperatingSystemTitle,
+            Summary = strings.UnsupportedOperatingSystemSummary,
             Kind = AppDialogKind.Blocking,
             Severity = DialogSeverity.Blocking,
             IsBlocking = true,
             CanClose = false,
             BulletItems = Array.Empty<string>(),
-            PrimaryButtonText = strings.Windows10NotSupportedPrimaryButton
+            PrimaryButtonText = strings.UnsupportedOperatingSystemPrimaryButton
         };
     }
 

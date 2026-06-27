@@ -52,7 +52,7 @@ internal static class MainShellAppPortComposer
             ApplyStateUpdate = access.ApplyStateUpdate,
             ApplyDeferredStateUpdate = access.ApplyDeferredStateUpdate,
             ShouldBlockStartupForUnsupportedOperatingSystem =
-                () => input.ResolveRuntimeFeature().IsUnsupportedWindows10OperatingSystem(),
+                () => input.ResolveRuntimeFeature().IsUnsupportedOperatingSystem(),
             ShowRemoteCatalogDialogOnceAsync = (request, ct) =>
                 startupDependencies.MainStartupDialogsController.ShowRemoteCatalogDialogOnceAsync(
                     CreateRemoteCatalogDialogContext(

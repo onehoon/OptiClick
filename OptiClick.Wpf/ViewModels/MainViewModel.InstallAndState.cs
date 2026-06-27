@@ -100,9 +100,9 @@ public sealed partial class MainViewModel : ViewModelBase
         return _features.Runtime.IsOperatingSystemPolicySupported();
     }
 
-    private bool IsUnsupportedWindows10OperatingSystem()
+    private bool IsUnsupportedOperatingSystem()
     {
-        return _features.Runtime.IsUnsupportedWindows10OperatingSystem();
+        return _features.Runtime.IsUnsupportedOperatingSystem();
     }
 
     private string GetCurrentAppVersion()

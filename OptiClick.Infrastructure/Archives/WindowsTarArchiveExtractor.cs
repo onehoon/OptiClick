@@ -99,7 +99,7 @@ public sealed class WindowsTarArchiveExtractor
         CancellationToken cancellationToken = default)
     {
         var osState = _operatingSystemSupportPolicy.Evaluate();
-        if (osState.IsUnsupportedWindows10 || !osState.IsSupported)
+        if (osState.IsUnsupportedOperatingSystem)
         {
             return ArchiveExtractionResult.Failure("unsupported_os");
         }

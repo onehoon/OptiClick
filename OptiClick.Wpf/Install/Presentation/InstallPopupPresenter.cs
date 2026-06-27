@@ -118,9 +118,9 @@ public sealed class InstallPopupPresenter
             "dialogs.confirm_popup_body" => korean
                 ? "설치 전 안내를 확인한 뒤 다시 시도해 주세요."
                 : "Confirm the installation notice, then try again.",
-            "dialogs.unsupported_os_body" => string.IsNullOrWhiteSpace(strings.Windows10NotSupportedSummary)
+            "dialogs.unsupported_os_body" => string.IsNullOrWhiteSpace(strings.UnsupportedOperatingSystemSummary)
                 ? normalized
-                : strings.Windows10NotSupportedSummary,
+                : strings.UnsupportedOperatingSystemSummary,
             "dialogs.install_permission_denied_body" => korean
                 ? "설치 권한이 부족합니다. 관리자 권한으로 다시 실행한 뒤 시도해 주세요."
                 : "Installation permission was denied. Relaunch as administrator, then try again.",
