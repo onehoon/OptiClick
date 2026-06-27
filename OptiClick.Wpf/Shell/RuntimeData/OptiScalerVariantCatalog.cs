@@ -35,7 +35,6 @@ public sealed record OptiScalerVariantCatalog
     public static readonly OptiScalerVariantCatalog Empty = new();
 
     public IReadOnlyList<OptiScalerVariantOption> Options { get; init; } = [];
-    public OptiScalerVariantOption? CanonicalFallback { get; init; }
 
     public bool HasRuntimeVariants => Options.Count > 0;
 
@@ -60,8 +59,7 @@ public sealed record OptiScalerVariantCatalogBuildResult
 
 public sealed class OptiScalerVariantCatalogBuilder
 {
-    public const string VariantResourceKey = "optiscaler_variants";
-    public const string CanonicalResourceKey = "optiscaler";
+    public const string VariantResourceKey = "optiscaler_variants_0_10";
     public const string StableVariant = "stable";
     public const string PreviewVariant = "preview";
 
@@ -74,7 +72,6 @@ public sealed class OptiScalerVariantCatalogBuilder
         }
 
         var byVariant = new Dictionary<string, OptiScalerVariantOption>(StringComparer.OrdinalIgnoreCase);
-        OptiScalerVariantOption? canonicalFallback = null;
 
         for (var index = 0; index < rows.Count; index++)
         {
@@ -97,12 +94,6 @@ public sealed class OptiScalerVariantCatalogBuilder
                 }
 
                 byVariant[option.Variant] = option;
-                continue;
-            }
-
-            if (canonicalFallback is null && IsCanonicalOptiScalerRow(resourceId, resourceGroup))
-            {
-                canonicalFallback = BuildCanonicalFallbackOption(row, index);
             }
         }
 
@@ -115,8 +106,7 @@ public sealed class OptiScalerVariantCatalogBuilder
         {
             Catalog = new OptiScalerVariantCatalog
             {
-                Options = options,
-                CanonicalFallback = canonicalFallback
+                Options = options
             },
             Logs = logs
         };
@@ -130,24 +120,13 @@ public sealed class OptiScalerVariantCatalogBuilder
     private static bool IsVariantRow(string resourceId, string resourceGroup)
     {
         return string.Equals(resourceId, VariantResourceKey, StringComparison.OrdinalIgnoreCase)
-               || string.Equals(resourceGroup, VariantResourceKey, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static bool IsCanonicalOptiScalerRow(string resourceId, string resourceGroup)
-    {
-        return string.Equals(resourceId, CanonicalResourceKey, StringComparison.OrdinalIgnoreCase)
-               || string.Equals(resourceGroup, CanonicalResourceKey, StringComparison.OrdinalIgnoreCase);
+               && string.Equals(resourceGroup, VariantResourceKey, StringComparison.OrdinalIgnoreCase);
     }
 
     private static OptiScalerVariantOption BuildVariantOption(RuntimeDataResourceRow row, int sourceOrder)
     {
         var variant = NormalizeVariant(RuntimeDataRowReader.GetString(row, "variant"));
         return BuildOption(row, variant, sourceOrder);
-    }
-
-    private static OptiScalerVariantOption BuildCanonicalFallbackOption(RuntimeDataResourceRow row, int sourceOrder)
-    {
-        return BuildOption(row, StableVariant, sourceOrder);
     }
 
     private static OptiScalerVariantOption BuildOption(

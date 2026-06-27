@@ -62,11 +62,9 @@ internal static class StartupArchiveReadinessLocalProbe
                 optiScalerVariantCatalog);
             var states = new Dictionary<ArchiveAssetKey, ArchivePreparationState>
             {
-                [ArchiveAssetKey.OptiScaler] = ResolveOptiScalerPayloadState(
-                    cachePaths,
-                    manifestStore,
-                    validator,
-                    GetEntry(linkContext, ArchiveAssetRuntimeDataKeys.OptiScaler))
+                [ArchiveAssetKey.OptiScaler] = optiScalerVariantsReady
+                    ? ReadyState(OptiScalerVariantCatalogBuilder.VariantResourceKey, "")
+                    : MissingState(OptiScalerVariantCatalogBuilder.VariantResourceKey)
             };
 
             foreach (var key in ArchivePreparationSequence.DefaultStartupOrder)
@@ -267,7 +265,7 @@ internal static class StartupArchiveReadinessLocalProbe
         var catalog = optiScalerVariantCatalog ?? OptiScalerVariantCatalog.Empty;
         if (!catalog.HasRuntimeVariants)
         {
-            return true;
+            return false;
         }
 
         var manifest = new OptiScalerVariantManifestStore(cachePaths.ManifestRoot).Load();
@@ -322,9 +320,8 @@ internal static class StartupArchiveReadinessLocalProbe
         ArchivePreparationState canonicalOptiScalerState)
     {
         var catalog = optiScalerVariantCatalog ?? OptiScalerVariantCatalog.Empty;
-        return catalog.HasRuntimeVariants
-            ? AreOptiScalerVariantsReady(cachePaths, validator, catalog)
-            : canonicalOptiScalerState.Ready;
+        _ = canonicalOptiScalerState;
+        return AreOptiScalerVariantsReady(cachePaths, validator, catalog);
     }
 
     private static bool HasInjectedOptiPatcher(string payloadDirectory)

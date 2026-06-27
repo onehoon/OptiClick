@@ -5,6 +5,8 @@ namespace OptiClick.Wpf.Install.Archives;
 
 public sealed record ArchiveCachePaths
 {
+    private const string ArchiveScopeDirectoryName = "Archives_0_10";
+
     public required string Root { get; init; }
     public required string ManifestRoot { get; init; }
     public required string OptiScalerCacheDir { get; init; }
@@ -18,8 +20,8 @@ public sealed record ArchiveCachePaths
     public static ArchiveCachePaths CreateDefault(IAppLocalDataPathProvider? localDataPathProvider = null)
     {
         var pathProvider = localDataPathProvider ?? new AppLocalDataPathProvider();
-        var archivesRoot = Path.Combine(pathProvider.RootDirectory, "ArchivesV2");
-        var manifestRoot = Path.Combine(pathProvider.ManifestDirectory, "ArchivesV2");
+        var archivesRoot = Path.Combine(pathProvider.RootDirectory, ArchiveScopeDirectoryName);
+        var manifestRoot = Path.Combine(pathProvider.ManifestDirectory, ArchiveScopeDirectoryName);
         var optiScalerArchiveRoot = Path.Combine(archivesRoot, "OptiScaler");
 
         return new ArchiveCachePaths

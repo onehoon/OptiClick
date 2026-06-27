@@ -57,7 +57,7 @@ internal static class OptiScalerCurrentVersionInfoResolver
             safeCatalog,
             OptiScalerVariantCatalogBuilder.StableVariant,
             selected,
-            ResolveFromModuleLinks(moduleDownloadLinks ?? ModuleDownloadLinkContext.Empty));
+            OptiScalerCurrentVersionInfo.Empty);
         var preview = ResolveVariantTarget(
             safeCatalog,
             OptiScalerVariantCatalogBuilder.PreviewVariant,
@@ -113,12 +113,6 @@ internal static class OptiScalerCurrentVersionInfoResolver
         if (string.Equals(selected.Variant, variant, StringComparison.OrdinalIgnoreCase))
         {
             return selected;
-        }
-
-        if (string.Equals(variant, OptiScalerVariantCatalogBuilder.StableVariant, StringComparison.OrdinalIgnoreCase)
-            && catalog.CanonicalFallback is { } canonicalFallback)
-        {
-            return FromVariantOption(canonicalFallback);
         }
 
         return fallback ?? OptiScalerCurrentVersionInfo.Empty;

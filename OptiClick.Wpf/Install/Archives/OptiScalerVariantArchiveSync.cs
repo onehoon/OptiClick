@@ -62,7 +62,6 @@ public sealed record OptiScalerVariantSyncResult
     public string EffectiveProductVersion { get; init; } = "";
     public OptiScalerVariantManifestEntry? EffectiveEntry { get; init; }
     public ArchivePreparationState OptiScalerState { get; init; } = new();
-    public bool UsedCanonicalFallback { get; init; }
     public bool ShouldPersistEffectiveVariant { get; init; }
     public IReadOnlyList<Install.Flow.InstallFlowLogEntry> Logs { get; init; } = [];
 }
@@ -195,8 +194,11 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
 
         if (!safeCatalog.HasRuntimeVariants)
         {
+            logs.Add(InstallFlowLogEntryFactory.Warning("archive", "optiscaler 0.10 variants missing"));
             return new OptiScalerVariantSyncResult
             {
+                EffectiveVariant = preferred,
+                OptiScalerState = MissingVariantState("optiscaler_0_10_variants_missing"),
                 Logs = logs
             };
         }
@@ -283,7 +285,6 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
             .ToArray();
 
         var effectiveEntry = ResolveEffectiveEntry(selectedVariant, readyEntries, out var effectiveVariant);
-        var usedCanonicalFallback = false;
         ArchivePreparationState optiScalerState;
         if (effectiveEntry is not null)
         {
@@ -291,13 +292,7 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
         }
         else
         {
-            var fallback = await TryPrepareCanonicalFallbackAsync(safeCatalog, allowedCacheEntries, logs, cancellationToken);
-            usedCanonicalFallback = fallback.Result is not null && fallback.Result.IsSuccess;
-            optiScalerState = fallback.State;
-            if (usedCanonicalFallback)
-            {
-                effectiveVariant = OptiScalerVariantCatalogBuilder.StableVariant;
-            }
+            optiScalerState = NotReadyState(selectedVariant, nextEntries, safeCatalog);
         }
 
         return new OptiScalerVariantSyncResult
@@ -305,13 +300,12 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
             Manifest = manifest,
             SelectionOptions = selectionOptions,
             EffectiveVariant = effectiveVariant,
-            EffectiveVersion = effectiveEntry?.Version ?? (usedCanonicalFallback ? safeCatalog.CanonicalFallback?.Version ?? "" : ""),
-            EffectiveDisplayVersion = effectiveEntry?.DisplayVersion ?? (usedCanonicalFallback ? safeCatalog.CanonicalFallback?.DisplayVersion ?? "" : ""),
-            EffectiveFileVersion = effectiveEntry?.FileVersion ?? (usedCanonicalFallback ? safeCatalog.CanonicalFallback?.FileVersion ?? "" : ""),
-            EffectiveProductVersion = effectiveEntry?.ProductVersion ?? (usedCanonicalFallback ? safeCatalog.CanonicalFallback?.ProductVersion ?? "" : ""),
+            EffectiveVersion = effectiveEntry?.Version ?? "",
+            EffectiveDisplayVersion = effectiveEntry?.DisplayVersion ?? "",
+            EffectiveFileVersion = effectiveEntry?.FileVersion ?? "",
+            EffectiveProductVersion = effectiveEntry?.ProductVersion ?? "",
             EffectiveEntry = effectiveEntry,
             OptiScalerState = optiScalerState,
-            UsedCanonicalFallback = usedCanonicalFallback,
             ShouldPersistEffectiveVariant = ShouldPersistEffectiveVariant(preferred, runtimeByVariant, effectiveVariant),
             Logs = logs
         };
@@ -323,11 +317,6 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
             .Select(ResolveCacheEntryName)
             .Where(static entry => !string.IsNullOrWhiteSpace(entry))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        if (catalog.Find(OptiScalerVariantCatalogBuilder.StableVariant) is null
-            && catalog.CanonicalFallback is not null)
-        {
-            keep.Add(ResolveCacheEntryName(catalog.CanonicalFallback));
-        }
 
         return keep;
     }
@@ -405,45 +394,6 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
         }
     }
 
-    private async Task<(OptiScalerPayloadCacheResult? Result, ArchivePreparationState State)> TryPrepareCanonicalFallbackAsync(
-        OptiScalerVariantCatalog catalog,
-        IReadOnlySet<string> allowedCacheEntries,
-        ICollection<Install.Flow.InstallFlowLogEntry> logs,
-        CancellationToken cancellationToken)
-    {
-        if (catalog.Find(OptiScalerVariantCatalogBuilder.StableVariant) is not null
-            || catalog.CanonicalFallback is null)
-        {
-            return (null, new ArchivePreparationState());
-        }
-
-        logs.Add(InstallFlowLogEntryFactory.Warning("archive", "optiscaler variants stable missing; trying canonical optiscaler fallback"));
-        var result = await _payloadCacheService.PrepareAsync(
-            catalog.CanonicalFallback.ToRemoteArchiveEntry(),
-            _cachePaths.OptiScalerPayloadCacheRoot,
-            cancellationToken,
-            forceRebuild: false,
-            cacheEntriesToKeep: allowedCacheEntries);
-        if (!result.IsSuccess)
-        {
-            return (result, new ArchivePreparationState
-            {
-                Filename = catalog.CanonicalFallback.Filename,
-                Ready = false,
-                ErrorMessage = result.ErrorCode,
-                StageStatus = result.StageStatus
-            });
-        }
-
-        return (result, new ArchivePreparationState
-        {
-            Filename = catalog.CanonicalFallback.Filename,
-            ArchivePath = result.PayloadDirectory,
-            Ready = true,
-            StageStatus = result.StageStatus
-        });
-    }
-
     private static string ResolveRuntimeSelectionVariant(
         string preferred,
         IReadOnlyDictionary<string, OptiScalerVariantOption> runtimeByVariant)
@@ -496,6 +446,58 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
             ArchivePath = entry.PayloadDirectory,
             Ready = true,
             StageStatus = ArchivePreparationStageStatuses.CachedStatus()
+        };
+    }
+
+    private static ArchivePreparationState NotReadyState(
+        string selectedVariant,
+        IReadOnlyDictionary<string, OptiScalerVariantManifestEntry> entries,
+        OptiScalerVariantCatalog catalog)
+    {
+        if (entries.TryGetValue(selectedVariant, out var selectedEntry))
+        {
+            return FailedState(selectedEntry);
+        }
+
+        if (entries.TryGetValue(OptiScalerVariantCatalogBuilder.StableVariant, out var stableEntry))
+        {
+            return FailedState(stableEntry);
+        }
+
+        var option = catalog.Find(selectedVariant)
+                     ?? catalog.Find(OptiScalerVariantCatalogBuilder.StableVariant)
+                     ?? catalog.Options.FirstOrDefault();
+        return MissingVariantState(
+            "optiscaler_0_10_variant_not_ready",
+            option?.Filename ?? OptiScalerVariantCatalogBuilder.VariantResourceKey);
+    }
+
+    private static ArchivePreparationState FailedState(OptiScalerVariantManifestEntry entry)
+    {
+        var errorCode = string.IsNullOrWhiteSpace(entry.ErrorCode)
+            ? "optiscaler_0_10_variant_not_ready"
+            : entry.ErrorCode;
+
+        return new ArchivePreparationState
+        {
+            Filename = entry.Filename,
+            ArchivePath = entry.PayloadDirectory,
+            Ready = false,
+            ErrorMessage = errorCode,
+            StageStatus = ArchivePreparationStageStatuses.EnsureFailure(ArchivePreparationStageStatus.Unknown, errorCode)
+        };
+    }
+
+    private static ArchivePreparationState MissingVariantState(
+        string errorCode,
+        string filename = OptiScalerVariantCatalogBuilder.VariantResourceKey)
+    {
+        return new ArchivePreparationState
+        {
+            Filename = filename,
+            Ready = false,
+            ErrorMessage = errorCode,
+            StageStatus = ArchivePreparationStageStatuses.MissingMetadata()
         };
     }
 

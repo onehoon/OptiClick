@@ -1,6 +1,7 @@
 using System.IO;
 using OptiClick.Wpf.Install.Flow;
 using OptiClick.Wpf.Install.Planning;
+using OptiClick.Wpf.Shell.RuntimeData;
 
 namespace OptiClick.Wpf.Install.Archives;
 
@@ -44,8 +45,7 @@ public sealed class ArchiveReadinessFlowController
         {
             OptiScalerVariantSyncResult? variantSync = null;
             ArchivePreparationSnapshot optiScalerSnapshot;
-            if (request.OptiScalerVariantCatalog.HasRuntimeVariants
-                && _optiScalerVariantArchiveSyncService is not null)
+            if (_optiScalerVariantArchiveSyncService is not null)
             {
                 variantSync = await _optiScalerVariantArchiveSyncService.SyncAsync(
                     request.OptiScalerVariantCatalog,
@@ -62,9 +62,20 @@ public sealed class ArchiveReadinessFlowController
             }
             else
             {
-                optiScalerSnapshot = await _archivePreparationCoordinator.PrepareOptiScalerAsync(
-                    request.ModuleDownloadLinks,
-                    cancellationToken);
+                logs.Add(InstallFlowLogEntryFactory.Warning("archive", "optiscaler variant sync service missing"));
+                optiScalerSnapshot = new ArchivePreparationSnapshot
+                {
+                    States = new Dictionary<ArchiveAssetKey, ArchivePreparationState>
+                    {
+                        [ArchiveAssetKey.OptiScaler] = new ArchivePreparationState
+                        {
+                            Filename = OptiScalerVariantCatalogBuilder.VariantResourceKey,
+                            Ready = false,
+                            ErrorMessage = "optiscaler_variant_sync_service_missing",
+                            StageStatus = ArchivePreparationStageStatuses.MissingMetadata()
+                        }
+                    }
+                };
             }
 
             var startupSnapshot = await _archivePreparationCoordinator.PrepareStartupArchivesAsync(

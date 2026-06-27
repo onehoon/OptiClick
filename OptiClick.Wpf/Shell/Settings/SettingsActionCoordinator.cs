@@ -124,8 +124,8 @@ public sealed class SettingsActionCoordinator
             Severity = DialogSeverity.Warning,
             Title = isKoreanUi ? "설치 파일 다시 다운로드" : "Redownload install files",
             Summary = isKoreanUi
-                ? "캐시된 설치 파일을 삭제하고 다시 다운로드할 수 있도록 준비합니다.\n\n삭제 대상: ArchivesV2, ArchivesV2 manifest, 설치 임시 파일, 최초 실행 준비 기록.\n\n커버 이미지 캐시, 지원 게임 목록 캐시, 장치 식별 규칙 캐시, 사용자 설정, 스캔 폴더 목록, 로그, 게임 폴더에 설치된 파일은 유지됩니다.\n앱을 다시 시작하면 필요한 설치 파일을 자동으로 다시 다운로드합니다.\n\n계속하시겠습니까?"
-                : "Cached install files will be deleted so they can be downloaded again.\n\nThis includes ArchivesV2 payloads, the ArchivesV2 manifest, install temp files, and the first-run preparation marker.\n\nCover image cache, supported-games cache, device identity rules cache, user settings, scan folder list, logs, and files already installed in game folders will be kept.\nAfter the app restarts, required install files will be downloaded automatically again.\n\nDo you want to continue?",
+                ? "캐시된 설치 파일을 삭제하고 다시 다운로드할 수 있도록 준비합니다.\n\n삭제 대상: Archives_0_10, Archives_0_10 manifest, 설치 임시 파일, 최초 실행 준비 기록.\n\n커버 이미지 캐시, 지원 게임 목록 캐시, 장치 식별 규칙 캐시, 사용자 설정, 스캔 폴더 목록, 로그, 게임 폴더에 설치된 파일은 유지됩니다.\n앱을 다시 시작하면 필요한 설치 파일을 자동으로 다시 다운로드합니다.\n\n계속하시겠습니까?"
+                : "Cached install files will be deleted so they can be downloaded again.\n\nThis includes Archives_0_10 payloads, the Archives_0_10 manifest, install temp files, and the first-run preparation marker.\n\nCover image cache, supported-games cache, device identity rules cache, user settings, scan folder list, logs, and files already installed in game folders will be kept.\nAfter the app restarts, required install files will be downloaded automatically again.\n\nDo you want to continue?",
             PrimaryButtonText = isKoreanUi ? "다시 다운로드" : "Redownload",
             SecondaryButtonText = isKoreanUi ? "\uCDE8\uC18C" : "Cancel",
             PrimaryButtonRole = DialogButtonRole.Destructive,
