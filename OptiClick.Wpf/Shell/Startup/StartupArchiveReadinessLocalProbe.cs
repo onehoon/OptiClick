@@ -158,39 +158,6 @@ internal static class StartupArchiveReadinessLocalProbe
         }
     }
 
-    private static ArchivePreparationState ResolveOptiScalerPayloadState(
-        ArchiveCachePaths cachePaths,
-        IArchiveDownloadManifestStore manifestStore,
-        OptiScalerPayloadValidator validator,
-        ModuleDownloadLinkEntry? rawEntry)
-    {
-        var entry = ArchiveEntryNormalizer.Normalize(rawEntry);
-        var candidates = new List<string>();
-        var expectedEntryName = ArchivePayloadCacheEntryNames.ResolveOptiScalerEntryName(entry);
-        var expectedVersion = ArchiveEntryNormalizer.ResolveOptiScalerCacheVersion(entry);
-        var manifestEntry = manifestStore.TryGetEntry(ArchiveAssetRuntimeDataKeys.OptiScaler);
-        if (IsCurrentPayloadManifestEntry(manifestEntry, expectedVersion, expectedEntryName))
-        {
-            AddCandidate(candidates, Path.Combine(cachePaths.OptiScalerPayloadCacheRoot, manifestEntry!.CacheEntry.Trim()));
-        }
-
-        AddCandidate(
-            candidates,
-            Path.Combine(
-                cachePaths.OptiScalerPayloadCacheRoot,
-                expectedEntryName));
-
-        foreach (var candidate in candidates)
-        {
-            if (validator.IsValid(candidate, out _) && HasInjectedOptiPatcher(candidate))
-            {
-                return ReadyState(entry.Filename, candidate);
-            }
-        }
-
-        return MissingState(entry.Filename);
-    }
-
     private static ArchivePreparationState ResolvePayloadState(
         ArchiveCachePaths cachePaths,
         IArchiveDownloadManifestStore manifestStore,

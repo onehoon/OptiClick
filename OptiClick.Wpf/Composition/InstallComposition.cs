@@ -193,8 +193,7 @@ public sealed class InstallComposition
             archiveCachePaths,
             new VersionedArchivePreparationService(archiveDownloader, archiveManifestStore, archiveExtractor),
             new OptiPatcherArchivePreparationService(archiveDownloader, archiveExtractor, archiveManifestStore),
-            fsr4ArchivePreparationService,
-            optiScalerPayloadCacheService);
+            fsr4ArchivePreparationService);
         var optiScalerPayloadOptiPatcherInjector = new OptiScalerPayloadOptiPatcherInjector();
         var optiScalerVariantManifestStore = new OptiScalerVariantManifestStore(
             archiveCachePaths.ManifestRoot,

@@ -5,10 +5,6 @@ namespace OptiClick.Wpf.Install.Archives;
 
 public interface IArchivePreparationCoordinator
 {
-    Task<ArchivePreparationSnapshot> PrepareOptiScalerAsync(
-        ModuleDownloadLinkContext moduleDownloadLinks,
-        CancellationToken cancellationToken = default);
-
     Task<ArchivePreparationSnapshot> PrepareStartupArchivesAsync(
         ModuleDownloadLinkContext moduleDownloadLinks,
         CancellationToken cancellationToken = default);
@@ -20,46 +16,17 @@ public sealed class ArchivePreparationCoordinator : IArchivePreparationCoordinat
     private readonly IVersionedArchivePreparationService _versionedService;
     private readonly OptiPatcherArchivePreparationService _optiPatcherService;
     private readonly Fsr4ArchivePreparationService _fsr4Service;
-    private readonly IOptiScalerPayloadCacheService _optiScalerPayloadCacheService;
 
     public ArchivePreparationCoordinator(
         ArchiveCachePaths cachePaths,
         IVersionedArchivePreparationService versionedService,
         OptiPatcherArchivePreparationService optiPatcherService,
-        Fsr4ArchivePreparationService fsr4Service,
-        IOptiScalerPayloadCacheService optiScalerPayloadCacheService)
+        Fsr4ArchivePreparationService fsr4Service)
     {
         _cachePaths = cachePaths;
         _versionedService = versionedService;
         _optiPatcherService = optiPatcherService;
         _fsr4Service = fsr4Service;
-        _optiScalerPayloadCacheService = optiScalerPayloadCacheService;
-    }
-
-    public async Task<ArchivePreparationSnapshot> PrepareOptiScalerAsync(
-        ModuleDownloadLinkContext moduleDownloadLinks,
-        CancellationToken cancellationToken = default)
-    {
-        _cachePaths.EnsureDirectories();
-        var linkContext = moduleDownloadLinks ?? ModuleDownloadLinkContext.Empty;
-        var entry = ArchiveEntryNormalizer.Normalize(GetEntry(linkContext, ArchiveAssetRuntimeDataKeys.OptiScaler));
-        var stopwatch = Stopwatch.StartNew();
-        var payloadResult = await _optiScalerPayloadCacheService.PrepareAsync(entry, _cachePaths.OptiScalerPayloadCacheRoot, cancellationToken);
-        return new ArchivePreparationSnapshot
-        {
-            States = new Dictionary<ArchiveAssetKey, ArchivePreparationState>
-            {
-                [ArchiveAssetKey.OptiScaler] = new ArchivePreparationState
-                {
-                    Filename = entry.Filename,
-                    ArchivePath = payloadResult.PayloadDirectory,
-                    Ready = payloadResult.IsSuccess,
-                    Downloading = false,
-                    ErrorMessage = payloadResult.ErrorCode,
-                    StageStatus = WithDuration(payloadResult.StageStatus, stopwatch.ElapsedMilliseconds)
-                }
-            }
-        };
     }
 
     public async Task<ArchivePreparationSnapshot> PrepareStartupArchivesAsync(

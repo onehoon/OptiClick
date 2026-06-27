@@ -39,7 +39,8 @@ public sealed class OptiScalerCoreInstaller : IOptiScalerCoreInstaller
             OptiScalerPayloadDirectory = context.OptiScalerPayloadDirectory,
             FinalDllName = context.FinalDllName,
             PreferredProxyDllName = ResolvePreferredProxyDllName(context),
-            ExcludePatterns = ExcludePatternResolver.Resolve(context.ExecutionDescriptor, context.ModuleDownloadLinks)
+            // 0.10 OptiScaler payloads are managed as a folder; stale exclude_list entries must not skip files.
+            ExcludePatterns = Array.Empty<string>()
         });
 
         if (!result.IsSuccess)
