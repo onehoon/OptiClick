@@ -23,7 +23,6 @@ public sealed class InstallUiStateInputBuilder : IInstallUiStateInputBuilder
 
         var optiReady = input.ArchiveReadiness.OptiScalerState == ArchiveReadinessState.Ready;
         var optiDownloading = input.ArchiveReadiness.OptiScalerState == ArchiveReadinessState.Downloading;
-        var fsr4Ready = !input.ShouldInstallFsr4 || input.ArchiveReadiness.Fsr4State == ArchiveReadinessState.Ready;
         var allArchivesReady = input.ArchiveReadiness.AreAllStartupArchivesReady();
 
         return new InstallButtonStateInputs
@@ -40,7 +39,6 @@ public sealed class InstallUiStateInputBuilder : IInstallUiStateInputBuilder
             InstallPrecheckOk = precheckOk,
             OptiScalerArchiveReady = optiReady,
             OptiScalerArchiveDownloading = optiDownloading,
-            Fsr4Ready = fsr4Ready,
             AllArchivesReady = allArchivesReady,
             GamePopupConfirmed = input.PopupConfirmed
         };

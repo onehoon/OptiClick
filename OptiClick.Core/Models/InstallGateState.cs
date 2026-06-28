@@ -15,7 +15,5 @@ public sealed record InstallGateState
     public bool PrecheckIncomplete { get; init; }
     public bool OptiScalerReady { get; init; } = true;
     public bool InvalidSelection { get; init; }
-    public bool Fsr4Downloading { get; init; }
-    public bool Fsr4Ready { get; init; } = true;
     public bool PopupRequired { get; init; }
 }

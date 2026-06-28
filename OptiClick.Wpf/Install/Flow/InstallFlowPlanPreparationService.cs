@@ -59,8 +59,7 @@ public sealed class InstallFlowPlanPreparationService
         return new InstallFlowPlanPreparationResult
         {
             Plan = plan,
-            ComponentReview = componentReview,
-            ShouldInstallFsr4 = planBuildInput.ShouldInstallFsr4
+            ComponentReview = componentReview
         };
     }
 }
@@ -85,5 +84,4 @@ public sealed record InstallFlowPlanPreparationResult
 {
     public required CoreInstallPlan Plan { get; init; }
     public required ComponentInstallParityReviewResult ComponentReview { get; init; }
-    public required bool ShouldInstallFsr4 { get; init; }
 }

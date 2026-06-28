@@ -3,7 +3,6 @@ namespace OptiClick.Wpf.Install.Archives;
 public enum ArchiveAssetKey
 {
     OptiScaler,
-    Fsr4,
     OptiPatcher,
     SpecialK,
     ReFramework,
@@ -13,8 +12,6 @@ public enum ArchiveAssetKey
 public static class ArchiveAssetRuntimeDataKeys
 {
     public const string OptiScaler = "optiscaler";
-    public const string Fsr4 = "fsr4int8";
-    public const string Fsr4Variants = "fsr4_variants";
     public const string OptiPatcher = "optipatcher";
     public const string SpecialK = "specialk";
     public const string ReFramework = "reframework";
@@ -25,7 +22,6 @@ public static class ArchiveAssetRuntimeDataKeys
         return key switch
         {
             ArchiveAssetKey.OptiScaler => OptiScaler,
-            ArchiveAssetKey.Fsr4 => Fsr4,
             ArchiveAssetKey.OptiPatcher => OptiPatcher,
             ArchiveAssetKey.SpecialK => SpecialK,
             ArchiveAssetKey.ReFramework => ReFramework,
@@ -42,11 +38,4 @@ public static class ArchiveAssetRuntimeDataKeys
         };
     }
 
-    public static string ToFsr4VariantKey(string variant)
-    {
-        var normalized = (variant ?? "").Trim().ToLowerInvariant();
-        return string.IsNullOrWhiteSpace(normalized)
-            ? Fsr4Variants
-            : $"{Fsr4Variants}:{normalized}";
-    }
 }

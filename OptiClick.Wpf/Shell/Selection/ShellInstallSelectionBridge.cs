@@ -110,8 +110,7 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
                     {
                         PrecheckRunning = false,
                         PrecheckSnapshot = request.PrecheckSnapshotFallback
-                    }),
-                    ShouldInstallFsr4 = selectedInputs.ExecutionDescriptor.ShouldInstallFsr4
+                    })
                 };
 
                 return new ShellInstallSelectionResult
@@ -322,7 +321,6 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
             InstallInProgress = request.InstallInProgress,
             AppUpdateInProgress = request.AppUpdateInProgress,
             ResolvedInputs = selectedInputs,
-            ShouldInstallFsr4 = selectedInputs.ExecutionDescriptor.ShouldInstallFsr4,
             InstallButtonPresentation = installButtonPresentation ?? new InstallButtonPresentation()
         };
     }
@@ -338,7 +336,6 @@ public sealed class ShellInstallSelectionBridge : IShellInstallSelectionBridge
             InstallInProgress = state.InstallInProgress,
             AppUpdateInProgress = state.AppUpdateInProgress,
             PopupConfirmed = state.PopupConfirmed,
-            ShouldInstallFsr4 = state.ShouldInstallFsr4,
             ArchiveReadiness = state.ArchiveReadiness,
             Precheck = state.PrecheckSnapshot,
             ActionAvailabilityReasonCode = state.ActionAvailabilityReasonCode,

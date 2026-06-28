@@ -46,14 +46,11 @@ public static class InstallExecutionDescriptorMapper
             return InstallExecutionDescriptor.Empty;
         }
 
-        var shouldInstallFsr4 = InstallFsr4RequirementResolver.Resolve(input.Fsr4.Enabled, input.Fsr4.Variant);
         return new InstallExecutionDescriptor
         {
             GameDescriptor = InstallGameDescriptorMapper.FromInput(input) ?? InstallGameDescriptor.Empty,
             GpuBundleKey = input.GpuBundleKey,
-            GpuGroup = input.GpuGroup,
-            ShouldInstallFsr4 = shouldInstallFsr4,
-            Fsr4Variant = shouldInstallFsr4 ? CoreFsr4InstallPolicy.NormalizeVariant(input.Fsr4.Variant) : ""
+            GpuGroup = input.GpuGroup
         };
     }
 }
@@ -87,12 +84,3 @@ public static class InstallGameDescriptorMapper
     }
 }
 
-public static class InstallFsr4RequirementResolver
-{
-    private static readonly CoreFsr4InstallPolicy InstallPolicy = new();
-
-    public static bool Resolve(bool manifestEnabled, string variant)
-    {
-        return InstallPolicy.ShouldInstall(manifestEnabled, variant);
-    }
-}

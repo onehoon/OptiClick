@@ -31,9 +31,7 @@ public sealed class InstallPlanInputBuilder
             IsSelectionPopupConfirmed = context.IsSelectionPopupConfirmed,
             IsGpuSelectionPending = context.IsGpuSelectionPending,
             IsSheetLoading = context.IsSheetLoading,
-            IsSheetReady = context.IsSheetReady,
-            ShouldInstallFsr4 = executionDescriptor.ShouldInstallFsr4,
-            Fsr4Variant = executionDescriptor.Fsr4Variant
+            IsSheetReady = context.IsSheetReady
         };
     }
 }

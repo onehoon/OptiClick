@@ -15,7 +15,6 @@ public static class CoreInstallPlanReasonCodes
     public const string PrecheckIncomplete = CoreInstallGateReasonCodes.PrecheckIncomplete;
     public const string OptiScalerArchiveDownloading = CoreInstallGateReasonCodes.OptiScalerArchiveDownloading;
     public const string OptiScalerArchiveNotReady = CoreInstallGateReasonCodes.OptiScalerArchiveNotReady;
-    public const string Fsr4NotReady = CoreInstallGateReasonCodes.Fsr4NotReady;
     public const string UnsupportedGpu = CoreInstallGateReasonCodes.UnsupportedGpu;
     public const string ConfirmPopupRequired = CoreInstallGateReasonCodes.ConfirmPopupRequired;
     public const string PredownloadInProgress = CoreInstallGateReasonCodes.PredownloadInProgress;

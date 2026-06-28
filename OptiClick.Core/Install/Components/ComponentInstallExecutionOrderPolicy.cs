@@ -12,8 +12,7 @@ public static class ComponentInstallExecutionOrderPolicy
         {
             ComponentInstallName.SpecialK,
             ComponentInstallName.ReFramework,
-            ComponentInstallName.Unreal5,
-            ComponentInstallName.Fsr4
+            ComponentInstallName.Unreal5
         });
 
     // ExtraBundle must run last so curated game payloads can override the base install.

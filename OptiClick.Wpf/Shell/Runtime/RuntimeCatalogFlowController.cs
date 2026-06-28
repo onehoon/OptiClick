@@ -10,20 +10,17 @@ public sealed class RuntimeCatalogFlowController
     private readonly IRemoteCatalogPipeline? _remoteCatalogPipeline;
     private readonly ModuleDownloadLinkMapBuilder _moduleDownloadLinkMapBuilder;
     private readonly OptiScalerVariantCatalogBuilder _optiScalerVariantCatalogBuilder;
-    private readonly Fsr4VariantCatalogBuilder _fsr4VariantCatalogBuilder;
     private readonly RuntimeCatalogDialogPresenter _dialogPresenter;
 
     public RuntimeCatalogFlowController(
         IRemoteCatalogPipeline? remoteCatalogPipeline,
         ModuleDownloadLinkMapBuilder? moduleDownloadLinkMapBuilder = null,
         RuntimeCatalogDialogPresenter? dialogPresenter = null,
-        OptiScalerVariantCatalogBuilder? optiScalerVariantCatalogBuilder = null,
-        Fsr4VariantCatalogBuilder? fsr4VariantCatalogBuilder = null)
+        OptiScalerVariantCatalogBuilder? optiScalerVariantCatalogBuilder = null)
     {
         _remoteCatalogPipeline = remoteCatalogPipeline;
         _moduleDownloadLinkMapBuilder = moduleDownloadLinkMapBuilder ?? new ModuleDownloadLinkMapBuilder();
         _optiScalerVariantCatalogBuilder = optiScalerVariantCatalogBuilder ?? new OptiScalerVariantCatalogBuilder();
-        _fsr4VariantCatalogBuilder = fsr4VariantCatalogBuilder ?? new Fsr4VariantCatalogBuilder();
         _dialogPresenter = dialogPresenter ?? new RuntimeCatalogDialogPresenter();
     }
 
@@ -123,12 +120,7 @@ public sealed class RuntimeCatalogFlowController
         var moduleDownloadLinks = ModuleDownloadLinkContext.FromEntries(
             _moduleDownloadLinkMapBuilder.Build(runtimeData.ResourceMaster));
         var variantCatalogResult = _optiScalerVariantCatalogBuilder.Build(runtimeData.ResourceMaster);
-        var fsr4VariantCatalogResult = _fsr4VariantCatalogBuilder.Build(runtimeData.ResourceMaster);
         foreach (var log in variantCatalogResult.Logs)
-        {
-            logs.Add(log);
-        }
-        foreach (var log in fsr4VariantCatalogResult.Logs)
         {
             logs.Add(log);
         }
@@ -146,7 +138,6 @@ public sealed class RuntimeCatalogFlowController
                 Catalog = catalog,
                 ModuleDownloadLinks = moduleDownloadLinks,
                 OptiScalerVariantCatalog = variantCatalogResult.Catalog,
-                Fsr4VariantCatalog = fsr4VariantCatalogResult.Catalog,
                 SettingsStatusText = LocalizedTextFormatter.Format(text.RuntimeRemoteCatalogFailed, "empty_catalog"),
                 DialogRequest = _dialogPresenter.BuildEmptyCatalogDialog(text),
                 Logs = logs
@@ -165,7 +156,6 @@ public sealed class RuntimeCatalogFlowController
             Catalog = catalog,
             ModuleDownloadLinks = moduleDownloadLinks,
             OptiScalerVariantCatalog = variantCatalogResult.Catalog,
-            Fsr4VariantCatalog = fsr4VariantCatalogResult.Catalog,
             SettingsStatusText = loadedText,
             ScanStatusText = loadedText,
             ResetRemoteCatalogDialogGate = true,

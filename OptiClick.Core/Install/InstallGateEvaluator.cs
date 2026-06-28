@@ -23,8 +23,6 @@ public sealed class InstallGateEvaluator
         AddIf(workerReasons, state.PrecheckIncomplete, InstallGateReason.PrecheckIncomplete);
         AddIf(workerReasons, !state.OptiScalerReady, InstallGateReason.OptiScalerNotReady);
         AddIf(workerReasons, state.InvalidSelection, InstallGateReason.InvalidSelection);
-        AddIf(workerReasons, state.Fsr4Downloading, InstallGateReason.Fsr4Downloading);
-        AddIf(workerReasons, !state.Fsr4Ready, InstallGateReason.Fsr4NotReady);
         AddIf(workerReasons, state.PopupRequired, InstallGateReason.PopupRequired);
 
         var blockingReason = workerReasons.FirstOrDefault() ?? uiReasons.FirstOrDefault() ?? "";

@@ -10,7 +10,6 @@ public sealed record ArchiveCachePaths
     public required string Root { get; init; }
     public required string ManifestRoot { get; init; }
     public required string OptiScalerCacheDir { get; init; }
-    public required string Fsr4CacheDir { get; init; }
     public required string OptiPatcherCacheDir { get; init; }
     public required string SpecialKCacheDir { get; init; }
     public required string ReFrameworkCacheDir { get; init; }
@@ -29,7 +28,6 @@ public sealed record ArchiveCachePaths
             Root = archivesRoot,
             ManifestRoot = manifestRoot,
             OptiScalerCacheDir = optiScalerArchiveRoot,
-            Fsr4CacheDir = Path.Combine(archivesRoot, "FSR4"),
             OptiPatcherCacheDir = Path.Combine(archivesRoot, "OptiPatcher"),
             SpecialKCacheDir = Path.Combine(archivesRoot, "SpecialK"),
             ReFrameworkCacheDir = Path.Combine(archivesRoot, "REFramework"),
@@ -43,7 +41,6 @@ public sealed record ArchiveCachePaths
         Directory.CreateDirectory(Root);
         Directory.CreateDirectory(ManifestRoot);
         Directory.CreateDirectory(OptiScalerCacheDir);
-        Directory.CreateDirectory(Fsr4CacheDir);
         Directory.CreateDirectory(OptiPatcherCacheDir);
         Directory.CreateDirectory(SpecialKCacheDir);
         Directory.CreateDirectory(ReFrameworkCacheDir);
@@ -56,7 +53,6 @@ public sealed record ArchiveCachePaths
         return key switch
         {
             ArchiveAssetKey.OptiScaler => OptiScalerCacheDir,
-            ArchiveAssetKey.Fsr4 => Fsr4CacheDir,
             ArchiveAssetKey.OptiPatcher => OptiPatcherCacheDir,
             ArchiveAssetKey.SpecialK => SpecialKCacheDir,
             ArchiveAssetKey.ReFramework => ReFrameworkCacheDir,

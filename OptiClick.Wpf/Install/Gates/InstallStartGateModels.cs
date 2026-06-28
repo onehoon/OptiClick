@@ -22,8 +22,6 @@ public sealed record InstallStartGateInput
 
     public ArchiveReadinessSnapshot ArchiveReadiness { get; init; } = ArchiveReadinessSnapshot.NotReady;
     public InstallPrecheckSnapshot Precheck { get; init; } = InstallPrecheckSnapshot.NotStarted;
-    public bool IsFsr4Ready { get; init; } = true;
-    public bool ShouldInstallFsr4 { get; init; }
     public bool IsExtraBundleReady { get; init; } = true;
 
     public bool IsUnsupportedGpu { get; init; }

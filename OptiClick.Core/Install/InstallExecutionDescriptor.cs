@@ -7,8 +7,6 @@ public sealed record InstallExecutionDescriptor
     public InstallGameDescriptor GameDescriptor { get; init; } = InstallGameDescriptor.Empty;
     public string GpuBundleKey { get; init; } = "";
     public string GpuGroup { get; init; } = "";
-    public bool ShouldInstallFsr4 { get; init; }
-    public string Fsr4Variant { get; init; } = "";
 
     public string GameId => EffectiveGameDescriptor.GameId;
     public string MatchExe => EffectiveGameDescriptor.MatchExe;

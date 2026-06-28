@@ -28,7 +28,6 @@ public sealed class StartupPreparationDecisionService
                 _localDataPathProvider,
                 request.ModuleDownloadLinks,
                 request.OptiScalerVariantCatalog,
-                request.Fsr4VariantCatalog,
                 out var localReadiness)
             && AreRequiredStartupArchivesReady(localReadiness))
         {
@@ -38,8 +37,7 @@ public sealed class StartupPreparationDecisionService
         if (AreRequiredStartupArchivesReady(request.LatestArchiveReadiness)
             && StartupArchiveReadinessLocalProbe.AreStartupOverlayVariantTargetsReady(
                 _localDataPathProvider,
-                request.OptiScalerVariantCatalog,
-                request.Fsr4VariantCatalog))
+                request.OptiScalerVariantCatalog))
         {
             return StartupPreparationDecision.Skip();
         }
@@ -61,7 +59,6 @@ public sealed record StartupPreparationDecisionRequest
         ModuleDownloadLinkContext.Empty;
     public OptiScalerVariantCatalog OptiScalerVariantCatalog { get; init; } =
         OptiScalerVariantCatalog.Empty;
-    public Fsr4VariantCatalog Fsr4VariantCatalog { get; init; } = Fsr4VariantCatalog.Empty;
 }
 
 public sealed record StartupPreparationDecision

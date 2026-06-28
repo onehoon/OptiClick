@@ -16,7 +16,6 @@ public static class InstallButtonReasonCodes
     public const string PrecheckIncomplete = InstallStartGateReasonCodes.PrecheckIncomplete;
     public const string OptiScalerArchiveDownloading = InstallStartGateReasonCodes.OptiScalerArchiveDownloading;
     public const string OptiScalerArchiveNotReady = InstallStartGateReasonCodes.OptiScalerArchiveNotReady;
-    public const string Fsr4NotReady = InstallStartGateReasonCodes.Fsr4NotReady;
     public const string AllArchivesNotReady = "all_archives_not_ready";
     public const string UnsupportedGpu = InstallStartGateReasonCodes.UnsupportedGpu;
     public const string DisabledGame = InstallStartGateReasonCodes.DisabledGame;
@@ -41,8 +40,6 @@ public static class InstallEntryRejectionCodes
     public const string PrecheckIncomplete = InstallStartGateReasonCodes.PrecheckIncomplete;
     public const string OptiScalerArchiveNotReady = InstallStartGateReasonCodes.OptiScalerArchiveNotReady;
     public const string InvalidGameSelection = "invalid_game_selection";
-    public const string Fsr4ArchiveDownloading = "fsr4_archive_downloading";
-    public const string Fsr4NotReady = InstallStartGateReasonCodes.Fsr4NotReady;
     public const string DisabledGame = InstallStartGateReasonCodes.DisabledGame;
     public const string FinalProxyMissing = InstallStartGateReasonCodes.FinalProxyMissing;
     public const string ProxyChainUnresolved = InstallStartGateReasonCodes.ProxyChainUnresolved;

@@ -112,9 +112,6 @@ public sealed class InstallPopupPresenter
             "dialogs.optiscaler_archive_not_ready" => korean
                 ? "OptiScaler 설치 파일이 아직 준비되지 않았습니다."
                 : "OptiScaler install files are not ready yet.",
-            "dialogs.fsr4_not_ready" => korean
-                ? "FSR4 설치 파일이 아직 준비되지 않았습니다."
-                : "FSR4 install files are not ready yet.",
             "dialogs.confirm_popup_body" => korean
                 ? "설치 전 안내를 확인한 뒤 다시 시도해 주세요."
                 : "Confirm the installation notice, then try again.",

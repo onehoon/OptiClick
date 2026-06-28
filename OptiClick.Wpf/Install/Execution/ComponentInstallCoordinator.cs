@@ -16,7 +16,6 @@ public sealed class ComponentInstallCoordinator : IComponentInstallCoordinator
     private readonly ISpecialKInstaller _specialKInstaller;
     private readonly IReFrameworkInstaller _reFrameworkInstaller;
     private readonly IUnreal5Installer _unreal5Installer;
-    private readonly IFsr4Installer _fsr4Installer;
     private readonly IAppLogger _logger;
 
     public ComponentInstallCoordinator(
@@ -25,7 +24,6 @@ public sealed class ComponentInstallCoordinator : IComponentInstallCoordinator
         ISpecialKInstaller specialKInstaller,
         IReFrameworkInstaller reFrameworkInstaller,
         IUnreal5Installer unreal5Installer,
-        IFsr4Installer fsr4Installer,
         IAppLogger? logger = null)
     {
         _coreInstaller = coreInstaller;
@@ -33,7 +31,6 @@ public sealed class ComponentInstallCoordinator : IComponentInstallCoordinator
         _specialKInstaller = specialKInstaller;
         _reFrameworkInstaller = reFrameworkInstaller;
         _unreal5Installer = unreal5Installer;
-        _fsr4Installer = fsr4Installer;
         _logger = logger ?? NullAppLogger.Instance;
     }
 
@@ -90,7 +87,6 @@ public sealed class ComponentInstallCoordinator : IComponentInstallCoordinator
             ComponentInstallName.SpecialK => _specialKInstaller.InstallAsync(executionContext, cancellationToken),
             ComponentInstallName.ReFramework => _reFrameworkInstaller.InstallAsync(executionContext, cancellationToken),
             ComponentInstallName.Unreal5 => _unreal5Installer.InstallAsync(executionContext, cancellationToken),
-            ComponentInstallName.Fsr4 => _fsr4Installer.InstallAsync(executionContext, cancellationToken),
             ComponentInstallName.ExtraBundle => _extraBundleInstaller.InstallAsync(executionContext, cancellationToken),
             _ => throw new InvalidOperationException(
                 "Infrastructure component execution supports only post-core components. OptiScalerCore is handled separately via IOptiScalerCoreInstaller.")

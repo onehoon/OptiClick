@@ -9,6 +9,5 @@ public sealed record ArchiveReadinessFlowResult
     public bool IsSuccess { get; init; }
     public ArchiveReadinessSnapshot Readiness { get; init; } = ArchiveReadinessSnapshot.NotReady;
     public OptiScalerVariantSyncResult? OptiScalerVariantSync { get; init; }
-    public Fsr4VariantSyncResult? Fsr4VariantSync { get; init; }
     public IReadOnlyList<InstallFlowLogEntry> Logs { get; init; } = [];
 }

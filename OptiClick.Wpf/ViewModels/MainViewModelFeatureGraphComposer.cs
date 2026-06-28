@@ -262,13 +262,12 @@ internal static class MainViewModelFeatureGraphComposer
             queuePendingStartupNotice: shellInteractionFeature.QueuePendingStartupNotice,
             setRemoteCatalogError: (errorCode, detailErrorCode) =>
                 input.RuntimeShellState.SetRemoteCatalogError(errorCode ?? "", detailErrorCode ?? ""),
-            applyRuntimeData: (runtimeData, remoteCatalog, moduleDownloadLinks, variantCatalog, fsr4VariantCatalog) =>
+            applyRuntimeData: (runtimeData, remoteCatalog, moduleDownloadLinks, variantCatalog) =>
                 input.RuntimeShellState.ApplyRemoteCatalog(
                     runtimeData,
                     remoteCatalog,
                     moduleDownloadLinks,
-                    variantCatalog,
-                    fsr4VariantCatalog),
+                    variantCatalog),
             replaceMatchByGameId: matchByGameId => input.ScannedGameState.ReplaceMatches(matchByGameId),
             replaceTargetPathByGameId: targetPathByGameId =>
                 input.ScannedGameState.ReplaceTargetPaths(targetPathByGameId),

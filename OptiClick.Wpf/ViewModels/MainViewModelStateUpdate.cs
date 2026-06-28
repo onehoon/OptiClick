@@ -22,7 +22,6 @@ public sealed record MainViewModelStateUpdate
     public ShellGameCatalog? RemoteCatalog { get; init; }
     public ModuleDownloadLinkContext? ModuleDownloadLinks { get; init; }
     public OptiScalerVariantCatalog? OptiScalerVariantCatalog { get; init; }
-    public Fsr4VariantCatalog? Fsr4VariantCatalog { get; init; }
 
     public bool ShouldResetRemoteCatalogDialogGate { get; init; }
     public bool ShouldRefreshVisibleGames { get; init; }

@@ -39,7 +39,6 @@ internal sealed class StartupPreparationContextFactory
                     _input.ShouldBlockStartupForUnsupportedOperatingSystem,
                 ReadModuleDownloadLinks = _input.ReadModuleDownloadLinks,
                 ReadOptiScalerVariantCatalog = _input.ReadOptiScalerVariantCatalog,
-                ReadFsr4VariantCatalog = _input.ReadFsr4VariantCatalog,
                 RefreshArchiveReadinessWithoutCoordinatorAsync =
                     _input.RefreshArchiveReadinessWithoutCoordinatorAsync,
                 RecomputeSelectionAfterScanAsync = _input.RecomputeSelectionAfterScanAsync
@@ -77,7 +76,6 @@ internal sealed record StartupPreparationContextFactoryInput
     public required Func<bool> ShouldBlockStartupForUnsupportedOperatingSystem { get; init; }
     public required Func<ModuleDownloadLinkContext> ReadModuleDownloadLinks { get; init; }
     public required Func<OptiScalerVariantCatalog> ReadOptiScalerVariantCatalog { get; init; }
-    public required Func<Fsr4VariantCatalog> ReadFsr4VariantCatalog { get; init; }
     public required Func<CancellationToken, Task<ArchiveReadinessFlowResult>> RefreshArchiveReadinessWithoutCoordinatorAsync
     {
         get;

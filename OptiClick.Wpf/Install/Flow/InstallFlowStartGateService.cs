@@ -40,8 +40,6 @@ public sealed class InstallFlowStartGateService
             TargetPath = request.Plan.TargetFolder,
             ArchiveReadiness = request.ArchiveReadiness,
             Precheck = request.Precheck,
-            ShouldInstallFsr4 = request.ShouldInstallFsr4,
-            IsFsr4Ready = request.ArchiveReadiness.Fsr4State == ArchiveReadinessState.Ready,
             IsExtraBundleReady = request.ModuleDownloadLinks.IsExtraBundleReady(
                 ResolveExtraBundleAlias(request.Plan)),
             IsUnsupportedGpu = string.Equals(
@@ -80,7 +78,6 @@ public sealed record InstallFlowStartGateRequest
     public required InstallFlowReadinessSnapshot Readiness { get; init; }
     public required InstallFlowSelectionGateSnapshot Selection { get; init; }
     public required InstallFlowOperationGateSnapshot Operation { get; init; }
-    public required bool ShouldInstallFsr4 { get; init; }
     public required ComponentInstallParityReviewResult ComponentReview { get; init; }
 }
 

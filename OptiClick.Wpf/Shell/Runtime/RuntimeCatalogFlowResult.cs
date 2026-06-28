@@ -15,7 +15,6 @@ public sealed record RuntimeCatalogFlowResult
     public ModuleDownloadLinkContext ModuleDownloadLinks { get; init; } =
         ModuleDownloadLinkContext.Empty;
     public OptiScalerVariantCatalog OptiScalerVariantCatalog { get; init; } = OptiScalerVariantCatalog.Empty;
-    public Fsr4VariantCatalog Fsr4VariantCatalog { get; init; } = Fsr4VariantCatalog.Empty;
     public string SettingsStatusText { get; init; } = "";
     public string ScanStatusText { get; init; } = "";
     public AppDialogRequest? DialogRequest { get; init; }

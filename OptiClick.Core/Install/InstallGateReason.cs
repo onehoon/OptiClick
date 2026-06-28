@@ -15,7 +15,5 @@ public static class InstallGateReason
     public const string PrecheckIncomplete = "precheck_incomplete";
     public const string OptiScalerNotReady = "optiscaler_not_ready";
     public const string InvalidSelection = "invalid_selection";
-    public const string Fsr4Downloading = "fsr4_downloading";
-    public const string Fsr4NotReady = "fsr4_not_ready";
     public const string PopupRequired = "popup_required";
 }

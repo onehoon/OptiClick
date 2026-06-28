@@ -42,13 +42,6 @@ public sealed class InstallRejectionPresentationResolver : IInstallRejectionPres
                 decision.Detail),
 
             InstallEntryRejectionCodes.InvalidGameSelection => Warning(reasonCode, "common.warning", "dialogs.invalid_game_body"),
-            InstallEntryRejectionCodes.Fsr4ArchiveDownloading => Info(reasonCode, "dialogs.preparing_download_title", "dialogs.preparing_download_body"),
-
-            InstallEntryRejectionCodes.Fsr4NotReady => Warning(
-                reasonCode,
-                "common.warning",
-                "dialogs.fsr4_not_ready",
-                decision.Detail),
 
             InstallEntryRejectionCodes.ConfirmPopupRequired => Warning(reasonCode, "common.notice", "dialogs.confirm_popup_body"),
             InstallEntryRejectionCodes.UnsupportedOs => Warning(reasonCode, "common.warning", "dialogs.unsupported_os_body"),

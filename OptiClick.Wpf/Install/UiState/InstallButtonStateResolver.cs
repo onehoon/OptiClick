@@ -31,7 +31,6 @@ public sealed class InstallButtonStateResolver : IInstallButtonStateResolver
         if (!inputs.InstallPrecheckOk) return InstallButtonReasonCodes.PrecheckIncomplete;
         if (inputs.OptiScalerArchiveDownloading) return InstallButtonReasonCodes.OptiScalerArchiveDownloading;
         if (!inputs.OptiScalerArchiveReady) return InstallButtonReasonCodes.OptiScalerArchiveNotReady;
-        if (!inputs.Fsr4Ready) return InstallButtonReasonCodes.Fsr4NotReady;
         if (!inputs.AllArchivesReady) return InstallButtonReasonCodes.AllArchivesNotReady;
         if (!inputs.HasSupportedGpu) return InstallButtonReasonCodes.UnsupportedGpu;
         if (!inputs.GamePopupConfirmed) return InstallButtonReasonCodes.ConfirmPopupRequired;
@@ -68,16 +67,6 @@ public sealed class InstallEntryGateResolver : IInstallEntryGateResolver
         if (selectedIndex < 0 || selectedIndex >= inputs.FoundGamesCount)
         {
             return Reject(InstallEntryRejectionCodes.InvalidGameSelection);
-        }
-
-        if (inputs.ShouldInstallFsr4 && inputs.Fsr4ArchiveDownloading)
-        {
-            return Reject(InstallEntryRejectionCodes.Fsr4ArchiveDownloading);
-        }
-
-        if (inputs.ShouldInstallFsr4 && (!inputs.Fsr4ArchiveReady || string.IsNullOrWhiteSpace(inputs.Fsr4SourceArchive)))
-        {
-            return Reject(InstallEntryRejectionCodes.Fsr4NotReady, inputs.Fsr4ArchiveError);
         }
 
         if (!inputs.GamePopupConfirmed)

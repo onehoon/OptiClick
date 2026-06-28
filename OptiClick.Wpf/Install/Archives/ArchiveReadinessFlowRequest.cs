@@ -9,6 +9,4 @@ public sealed record ArchiveReadinessFlowRequest
     public OptiScalerVariantCatalog OptiScalerVariantCatalog { get; init; } =
         OptiScalerVariantCatalog.Empty;
     public string PreferredOptiScalerVariant { get; init; } = OptiScalerVariantCatalogBuilder.StableVariant;
-    public Fsr4VariantCatalog Fsr4VariantCatalog { get; init; } =
-        Fsr4VariantCatalog.Empty;
 }

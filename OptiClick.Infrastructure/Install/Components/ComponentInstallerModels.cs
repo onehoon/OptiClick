@@ -21,8 +21,7 @@ public enum ComponentInstallName
     SpecialK = (int)CoreComponentInstallName.SpecialK,
     ReFramework = (int)CoreComponentInstallName.ReFramework,
     ExtraBundle = (int)CoreComponentInstallName.ExtraBundle,
-    Unreal5 = (int)CoreComponentInstallName.Unreal5,
-    Fsr4 = (int)CoreComponentInstallName.Fsr4
+    Unreal5 = (int)CoreComponentInstallName.Unreal5
 }
 
 public static class ComponentInstallErrorCodes
@@ -109,7 +108,6 @@ internal static class ComponentInstallerModelMapper
         ComponentInstallName.ReFramework => CoreComponentInstallName.ReFramework,
         ComponentInstallName.ExtraBundle => CoreComponentInstallName.ExtraBundle,
         ComponentInstallName.Unreal5 => CoreComponentInstallName.Unreal5,
-        ComponentInstallName.Fsr4 => CoreComponentInstallName.Fsr4,
         _ => throw new ArgumentOutOfRangeException(nameof(component), component, PostCoreOnlyMessage)
     };
 
@@ -127,7 +125,6 @@ internal static class ComponentInstallerModelMapper
         CoreComponentInstallName.ReFramework => ComponentInstallName.ReFramework,
         CoreComponentInstallName.ExtraBundle => ComponentInstallName.ExtraBundle,
         CoreComponentInstallName.Unreal5 => ComponentInstallName.Unreal5,
-        CoreComponentInstallName.Fsr4 => ComponentInstallName.Fsr4,
         _ => throw new ArgumentOutOfRangeException(nameof(component), component, PostCoreOnlyMessage)
     };
 
@@ -172,30 +169,3 @@ public sealed record Unreal5InstallContext
     public string Unreal5CachedArchivePath { get; init; } = "";
 }
 
-public sealed record Fsr4InstallContext
-{
-    public string TargetPath { get; init; } = "";
-    public bool UseFsr4 { get; init; }
-    public string Fsr4Variant { get; init; } = "";
-    public string Fsr4SourceArchivePath { get; init; } = "";
-    public string GpuVendor { get; init; } = "";
-    public string GpuName { get; init; } = "";
-    public string GpuBundleKey { get; init; } = "";
-    public string GpuGroup { get; init; } = "";
-}
-
-public sealed record Fsr4InstallEligibilityContext
-{
-    public bool UseFsr4 { get; init; }
-    public string Fsr4Variant { get; init; } = "";
-    public string GpuVendor { get; init; } = "";
-    public string GpuName { get; init; } = "";
-    public string GpuBundleKey { get; init; } = "";
-    public string GpuGroup { get; init; } = "";
-}
-
-public sealed record Fsr4InstallEligibility
-{
-    public bool CanInstall { get; init; }
-    public string SkipReason { get; init; } = "";
-}

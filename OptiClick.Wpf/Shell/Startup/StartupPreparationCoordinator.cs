@@ -206,8 +206,7 @@ public sealed class StartupPreparationCoordinator
                 ShouldBlockStartupForUnsupportedOperatingSystem = shouldBlockStartupForUnsupportedOperatingSystem,
                 LatestArchiveReadiness = request.StatePort.ReadLatestArchiveReadiness(),
                 ModuleDownloadLinks = request.RuntimePort.ReadModuleDownloadLinks(),
-                OptiScalerVariantCatalog = request.RuntimePort.ReadOptiScalerVariantCatalog(),
-                Fsr4VariantCatalog = request.RuntimePort.ReadFsr4VariantCatalog()
+                OptiScalerVariantCatalog = request.RuntimePort.ReadOptiScalerVariantCatalog()
             });
     }
 
@@ -295,7 +294,6 @@ public sealed record StartupPreparationRuntimePort
     public required Func<bool> ShouldBlockStartupForUnsupportedOperatingSystem { get; init; }
     public required Func<ModuleDownloadLinkContext> ReadModuleDownloadLinks { get; init; }
     public required Func<OptiScalerVariantCatalog> ReadOptiScalerVariantCatalog { get; init; }
-    public required Func<Fsr4VariantCatalog> ReadFsr4VariantCatalog { get; init; }
     public required Func<CancellationToken, Task<ArchiveReadinessFlowResult>> RefreshArchiveReadinessWithoutCoordinatorAsync
     {
         get;

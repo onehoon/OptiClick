@@ -52,7 +52,6 @@ internal static class InstallFlowPreparationRequestFactory
             Readiness = readiness,
             Selection = InstallFlowSelectionGateSnapshot.Create(selection),
             Operation = InstallFlowOperationGateSnapshot.Create(context),
-            ShouldInstallFsr4 = planPreparation.ShouldInstallFsr4,
             ComponentReview = planPreparation.ComponentReview
         };
     }

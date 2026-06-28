@@ -16,7 +16,6 @@ public sealed record InstallButtonStateInputs
     public bool InstallPrecheckOk { get; init; }
     public bool OptiScalerArchiveReady { get; init; }
     public bool OptiScalerArchiveDownloading { get; init; }
-    public bool Fsr4Ready { get; init; } = true;
     public bool AllArchivesReady { get; init; }
     public bool GamePopupConfirmed { get; init; }
 }
@@ -52,11 +51,6 @@ public sealed record InstallEntryGateInputs
     public bool OptiScalerArchiveReady { get; init; }
     public string OptiSourceArchive { get; init; } = "";
     public string OptiScalerArchiveError { get; init; } = "";
-    public bool ShouldInstallFsr4 { get; init; }
-    public bool Fsr4ArchiveDownloading { get; init; }
-    public bool Fsr4ArchiveReady { get; init; }
-    public string Fsr4SourceArchive { get; init; } = "";
-    public string Fsr4ArchiveError { get; init; } = "";
     public bool GamePopupConfirmed { get; init; }
 }
 
@@ -107,7 +101,6 @@ public sealed record InstallUiStateBuildInput
     public bool InstallInProgress { get; init; }
     public bool AppUpdateInProgress { get; init; }
     public bool PopupConfirmed { get; init; }
-    public bool ShouldInstallFsr4 { get; init; }
     public ArchiveReadinessSnapshot ArchiveReadiness { get; init; } = ArchiveReadinessSnapshot.NotReady;
     public InstallPrecheckSnapshot Precheck { get; init; } = InstallPrecheckSnapshot.NotStarted;
     public string ActionAvailabilityReasonCode { get; init; } = "";

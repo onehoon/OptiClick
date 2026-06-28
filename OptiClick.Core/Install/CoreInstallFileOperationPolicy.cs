@@ -69,7 +69,7 @@ public sealed class CoreInstallFileOperationPolicy
         {
             operations.Add(new CoreInstallPlanFileOperation
             {
-                Type = component.Type is CoreInstallPlanComponentType.Unreal5 or CoreInstallPlanComponentType.Fsr4
+                Type = component.Type is CoreInstallPlanComponentType.Unreal5
                     ? CoreInstallPlanFileOperationType.ExtractArchive
                     : CoreInstallPlanFileOperationType.CopyComponentFile,
                 SourcePathHint = component.RequiredArchiveAlias,

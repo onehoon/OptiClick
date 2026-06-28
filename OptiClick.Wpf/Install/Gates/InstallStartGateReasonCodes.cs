@@ -20,7 +20,6 @@ public static class InstallStartGateReasonCodes
     public const string OptiScalerArchiveDownloading = CoreInstallGateReasonCodes.OptiScalerArchiveDownloading;
     public const string OptiScalerArchiveNotReady = CoreInstallGateReasonCodes.OptiScalerArchiveNotReady;
     public const string ComponentArchiveNotReady = CoreInstallStartGateReasonCodes.ComponentArchiveNotReady;
-    public const string Fsr4NotReady = CoreInstallGateReasonCodes.Fsr4NotReady;
     public const string UnsupportedGpu = CoreInstallGateReasonCodes.UnsupportedGpu;
     public const string DisabledGame = CoreInstallStartGateReasonCodes.DisabledGame;
     public const string FinalProxyMissing = CoreInstallStartGateReasonCodes.FinalProxyMissing;

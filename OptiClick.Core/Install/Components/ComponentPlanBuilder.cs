@@ -61,16 +61,6 @@ public sealed class ComponentPlanBuilder
             });
         }
 
-        if (archiveState.ShouldInstallFsr4)
-        {
-            plans.Add(new ComponentPlan
-            {
-                Kind = ComponentKind.Fsr4,
-                Source = "FSR4",
-                Destination = $"{OptiScalerInstallLayout.LibraryDirectory}/{{cached dll filename}}"
-            });
-        }
-
         return plans;
     }
 

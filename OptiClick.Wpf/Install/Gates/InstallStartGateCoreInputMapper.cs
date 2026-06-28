@@ -28,8 +28,6 @@ internal static class InstallStartGateCoreInputMapper
             Precheck = input.Precheck ?? InstallPrecheckSnapshot.NotStarted,
             EnabledPlanComponents = ToCoreEnabledPlanComponents(input.InstallPlan),
             IsExtraBundleReady = input.IsExtraBundleReady,
-            ShouldInstallFsr4 = input.ShouldInstallFsr4,
-            IsFsr4Ready = input.IsFsr4Ready,
             IsUnsupportedGpu = input.IsUnsupportedGpu,
             IsDisabledGame = input.IsDisabledGame,
             PlanFailureReasonCode = InstallStartGatePlanFailureResolver.Resolve(input),

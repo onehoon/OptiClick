@@ -15,8 +15,7 @@ public enum ComponentInstallName
     ExtraBundle,
     SpecialK,
     ReFramework,
-    Unreal5,
-    Fsr4
+    Unreal5
 }
 
 public static class ComponentInstallErrorCodes
@@ -99,13 +98,10 @@ public sealed record ComponentInstallContext
     public string OptiScalerDisplayVersion { get; init; } = "";
     public string GpuVendor { get; init; } = "";
     public string GpuName { get; init; } = "";
-    public string Fsr4SourceArchive { get; init; } = "";
-    public string Fsr4Variant { get; init; } = "";
     public bool HasPlannedComponentInstallers { get; init; }
     public IReadOnlyList<ComponentInstallName> PlannedComponentInstallers { get; init; } = Array.Empty<ComponentInstallName>();
     public ModuleDownloadLinkCatalog ModuleDownloadLinks { get; init; } = ModuleDownloadLinkCatalog.Empty;
     public bool ShouldInstallUnreal5 { get; init; }
-    public bool ShouldInstallFsr4 { get; init; }
     public string GpuBundleKey { get; init; } = "";
     public string GpuGroup { get; init; } = "";
     public string ReFrameworkDestination { get; init; } = "";

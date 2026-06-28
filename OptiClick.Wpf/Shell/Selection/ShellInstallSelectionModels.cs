@@ -83,7 +83,6 @@ public sealed record ShellInstallSelectionRequest
     public bool InstallInProgress { get; init; }
     public bool AppUpdateInProgress { get; init; }
     public ResolvedInstallGameInputs ResolvedInputs { get; init; } = ResolvedInstallGameInputs.Empty;
-    public bool ShouldInstallFsr4 => ResolvedInputs.ExecutionDescriptor.ShouldInstallFsr4;
 
     public InstallPrecheckSnapshot PrecheckSnapshotFallback { get; init; } = InstallPrecheckSnapshot.NotStarted;
     public ArchiveReadinessSnapshot ArchiveReadiness { get; init; } = ArchiveReadinessSnapshot.NotReady;
@@ -117,7 +116,6 @@ public sealed record ShellInstallSelectionState
     public bool InstallInProgress { get; init; }
     public bool AppUpdateInProgress { get; init; }
     public ResolvedInstallGameInputs ResolvedInputs { get; init; } = ResolvedInstallGameInputs.Empty;
-    public bool ShouldInstallFsr4 { get; init; }
 
     public ShellPopupRequestQueue PopupQueue { get; init; } = new(Array.Empty<ShellPopupRequest>(), confirmedImmediately: false, precheckOk: false);
     public IReadOnlyList<ShellPopupRequest> PendingPopupRequests { get; init; } = Array.Empty<ShellPopupRequest>();

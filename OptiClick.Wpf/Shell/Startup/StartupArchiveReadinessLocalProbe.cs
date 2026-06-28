@@ -19,21 +19,6 @@ internal static class StartupArchiveReadinessLocalProbe
             pathProvider,
             moduleDownloadLinks,
             OptiScalerVariantCatalog.Empty,
-            Fsr4VariantCatalog.Empty,
-            out readiness);
-    }
-
-    public static bool TryBuildReadySnapshot(
-        IAppLocalDataPathProvider pathProvider,
-        ModuleDownloadLinkContext moduleDownloadLinks,
-        Fsr4VariantCatalog fsr4VariantCatalog,
-        out ArchiveReadinessSnapshot readiness)
-    {
-        return TryBuildReadySnapshot(
-            pathProvider,
-            moduleDownloadLinks,
-            OptiScalerVariantCatalog.Empty,
-            fsr4VariantCatalog,
             out readiness);
     }
 
@@ -41,7 +26,6 @@ internal static class StartupArchiveReadinessLocalProbe
         IAppLocalDataPathProvider pathProvider,
         ModuleDownloadLinkContext moduleDownloadLinks,
         OptiScalerVariantCatalog optiScalerVariantCatalog,
-        Fsr4VariantCatalog fsr4VariantCatalog,
         out ArchiveReadinessSnapshot readiness)
     {
         readiness = ArchiveReadinessSnapshot.NotReady;
@@ -88,13 +72,8 @@ internal static class StartupArchiveReadinessLocalProbe
 
             var snapshot = new ArchivePreparationSnapshot
             {
-                States = states,
-                Fsr4VariantStates = ResolveFsr4VariantStates(
-                    cachePaths,
-                    manifestStore,
-                    fsr4VariantCatalog)
+                States = states
             };
-            states[ArchiveAssetKey.Fsr4] = BuildFsr4AggregateState(snapshot.Fsr4VariantStates);
             readiness = ArchivePreparationSnapshotMapper.ToInstallPlanSnapshot(snapshot);
             return states.Values.All(static state => state.Ready)
                    && optiScalerVariantsReady;
@@ -108,8 +87,7 @@ internal static class StartupArchiveReadinessLocalProbe
 
     public static bool AreStartupOverlayVariantTargetsReady(
         IAppLocalDataPathProvider pathProvider,
-        OptiScalerVariantCatalog optiScalerVariantCatalog,
-        Fsr4VariantCatalog fsr4VariantCatalog)
+        OptiScalerVariantCatalog optiScalerVariantCatalog)
     {
         if (pathProvider is null)
         {
@@ -119,15 +97,10 @@ internal static class StartupArchiveReadinessLocalProbe
         try
         {
             var cachePaths = ArchiveCachePaths.CreateDefault(pathProvider);
-            var manifestStore = new ArchiveDownloadManifestStore(cachePaths.ManifestRoot);
             return AreOptiScalerVariantsReady(
-                       cachePaths,
-                       new OptiScalerPayloadValidator(),
-                       optiScalerVariantCatalog)
-                   && AreFsr4VariantsReady(
-                       cachePaths,
-                       manifestStore,
-                       fsr4VariantCatalog);
+                cachePaths,
+                new OptiScalerPayloadValidator(),
+                optiScalerVariantCatalog);
         }
         catch
         {
@@ -187,41 +160,6 @@ internal static class StartupArchiveReadinessLocalProbe
         }
 
         return MissingState(entry.Filename);
-    }
-
-    private static IReadOnlyDictionary<string, ArchivePreparationState> ResolveFsr4VariantStates(
-        ArchiveCachePaths cachePaths,
-        IArchiveDownloadManifestStore manifestStore,
-        Fsr4VariantCatalog? fsr4VariantCatalog)
-    {
-        var catalog = fsr4VariantCatalog ?? Fsr4VariantCatalog.Empty;
-        var states = new Dictionary<string, ArchivePreparationState>(StringComparer.OrdinalIgnoreCase);
-        foreach (var option in catalog.Options)
-        {
-            states[option.Variant] = ResolveFsr4VariantPayloadState(
-                cachePaths,
-                manifestStore,
-                option,
-                option.Variant);
-        }
-
-        return states;
-    }
-
-    private static bool AreFsr4VariantsReady(
-        ArchiveCachePaths cachePaths,
-        IArchiveDownloadManifestStore manifestStore,
-        Fsr4VariantCatalog? fsr4VariantCatalog)
-    {
-        var catalog = fsr4VariantCatalog ?? Fsr4VariantCatalog.Empty;
-        if (catalog.Options.Count == 0)
-        {
-            return true;
-        }
-
-        return ResolveFsr4VariantStates(cachePaths, manifestStore, catalog)
-            .Values
-            .All(static state => state.Ready);
     }
 
     private static bool AreOptiScalerVariantsReady(
@@ -312,50 +250,6 @@ internal static class StartupArchiveReadinessLocalProbe
                || !string.Equals(entry.Sha256, option.Sha256, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static ArchivePreparationState ResolveFsr4VariantPayloadState(
-        ArchiveCachePaths cachePaths,
-        IArchiveDownloadManifestStore manifestStore,
-        Fsr4VariantOption? option,
-        string variant)
-    {
-        if (option is null)
-        {
-            return MissingState("");
-        }
-
-        var entry = option.ToRemoteArchiveEntry();
-        var cacheRoot = cachePaths.Fsr4CacheDir;
-        var validator = new SingleExtensionPayloadValidator(".dll");
-        var candidates = new List<string>();
-        var expectedEntryName = ArchivePayloadCacheEntryNames.ResolveVersionedEntryName(entry, $"FSR4-{variant}");
-        var expectedVersion = ResolveExpectedManifestVersion(entry, ArchiveAssetKey.Fsr4, expectedEntryName);
-        var manifestEntry = manifestStore.TryGetEntry(ArchiveAssetRuntimeDataKeys.ToFsr4VariantKey(variant));
-        if (IsCurrentPayloadManifestEntry(manifestEntry, expectedVersion, expectedEntryName))
-        {
-            AddCandidate(candidates, Path.Combine(cacheRoot, manifestEntry!.CacheEntry.Trim()));
-        }
-
-        AddCandidate(candidates, Path.Combine(cacheRoot, expectedEntryName));
-
-        foreach (var candidate in candidates)
-        {
-            if (validator.IsValid(candidate, out _))
-            {
-                return ReadyState(entry.Filename, candidate);
-            }
-        }
-
-        return MissingState(entry.Filename);
-    }
-
-    private static ArchivePreparationState BuildFsr4AggregateState(
-        IReadOnlyDictionary<string, ArchivePreparationState> states)
-    {
-        return states.Count > 0 && states.Values.All(static state => state.Ready)
-            ? ReadyState("fsr4_variants", "")
-            : MissingState("fsr4_variants");
-    }
-
     private static string ResolveExpectedEntryName(RemoteArchiveEntry entry, ArchiveAssetKey key)
     {
         return key == ArchiveAssetKey.OptiPatcher
@@ -393,7 +287,6 @@ internal static class StartupArchiveReadinessLocalProbe
     {
         return key switch
         {
-            ArchiveAssetKey.Fsr4 => new SingleExtensionPayloadValidator(".dll"),
             ArchiveAssetKey.OptiPatcher => new OptiPatcherPayloadValidator(),
             ArchiveAssetKey.SpecialK => new RequiredFilesPayloadValidator(["SpecialK64.dll"]),
             ArchiveAssetKey.ReFramework => new RequiredFilesPayloadValidator(["dinput8.dll"]),

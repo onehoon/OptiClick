@@ -79,7 +79,6 @@ internal sealed record MainStartupShellFacade
                         input.ShouldBlockStartupForUnsupportedOperatingSystem,
                     ReadModuleDownloadLinks = () => input.RuntimeShellState.ModuleDownloadLinks,
                     ReadOptiScalerVariantCatalog = () => input.RuntimeShellState.LatestOptiScalerVariantCatalog,
-                    ReadFsr4VariantCatalog = () => input.RuntimeShellState.LatestFsr4VariantCatalog,
                     RefreshArchiveReadinessWithoutCoordinatorAsync =
                         input.RefreshArchiveReadinessWithoutCoordinatorAsync,
                     RecomputeSelectionAfterScanAsync =

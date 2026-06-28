@@ -35,8 +35,7 @@ internal sealed class MainInstallArchiveReadinessController
             {
                 ModuleDownloadLinks = context.State.ModuleDownloadLinks,
                 OptiScalerVariantCatalog = context.State.LatestOptiScalerVariantCatalog,
-                PreferredOptiScalerVariant = context.State.PreferredOptiScalerVariant,
-                Fsr4VariantCatalog = context.State.LatestFsr4VariantCatalog
+                PreferredOptiScalerVariant = context.State.PreferredOptiScalerVariant
             },
             cancellationToken);
 
@@ -92,9 +91,6 @@ internal sealed class MainInstallArchiveReadinessController
                || !string.Equals(previous.OptiScalerDisplayVersion, current.OptiScalerDisplayVersion, StringComparison.Ordinal)
                || !string.Equals(previous.OptiScalerFileVersion, current.OptiScalerFileVersion, StringComparison.Ordinal)
                || !string.Equals(previous.OptiScalerProductVersion, current.OptiScalerProductVersion, StringComparison.Ordinal)
-               || previous.Fsr4State != current.Fsr4State
-               || !string.Equals(previous.Fsr4SourceArchive, current.Fsr4SourceArchive, StringComparison.Ordinal)
-               || !AreFsr4VariantsEqual(previous.Fsr4Variants, current.Fsr4Variants)
                || previous.OptiPatcherState != current.OptiPatcherState
                || !string.Equals(previous.OptiPatcherSourceArchive, current.OptiPatcherSourceArchive, StringComparison.Ordinal)
                || previous.SpecialKState != current.SpecialKState
@@ -105,29 +101,6 @@ internal sealed class MainInstallArchiveReadinessController
                || !string.Equals(previous.Unreal5SourceArchive, current.Unreal5SourceArchive, StringComparison.Ordinal);
     }
 
-    private static bool AreFsr4VariantsEqual(
-        IReadOnlyDictionary<string, Fsr4VariantReadiness> previous,
-        IReadOnlyDictionary<string, Fsr4VariantReadiness> current)
-    {
-        previous ??= new Dictionary<string, Fsr4VariantReadiness>(StringComparer.OrdinalIgnoreCase);
-        current ??= new Dictionary<string, Fsr4VariantReadiness>(StringComparer.OrdinalIgnoreCase);
-
-        if (previous.Count != current.Count)
-        {
-            return false;
-        }
-
-        foreach (var (key, previousValue) in previous)
-        {
-            if (!current.TryGetValue(key, out var currentValue)
-                || previousValue != currentValue)
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
 }
 
 internal sealed class MainInstallArchiveReadinessContext
@@ -142,7 +115,6 @@ internal sealed class MainInstallArchiveReadinessState
     public required ModuleDownloadLinkContext ModuleDownloadLinks { get; init; }
     public required OptiScalerVariantCatalog LatestOptiScalerVariantCatalog { get; init; }
     public required string PreferredOptiScalerVariant { get; init; }
-    public required Fsr4VariantCatalog LatestFsr4VariantCatalog { get; init; }
     public required ArchiveReadinessSnapshot LatestArchiveReadiness { get; init; }
     public required bool RefreshVisibleGamesAfterArchiveReadiness { get; init; }
 }

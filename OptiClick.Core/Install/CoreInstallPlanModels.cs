@@ -19,7 +19,6 @@ public enum CoreInstallPlanComponentType
     SpecialK,
     Unreal5,
     ExtraBundle,
-    Fsr4,
     RtssProfile
 }
 
@@ -211,7 +210,6 @@ public sealed record ArchiveReadinessSnapshot
     public static readonly ArchiveReadinessSnapshot NotReady = new()
     {
         OptiScalerState = ArchiveReadinessState.NotReady,
-        Fsr4State = ArchiveReadinessState.NotReady,
         OptiPatcherState = ArchiveReadinessState.NotReady,
         SpecialKState = ArchiveReadinessState.NotReady,
         ReframeworkState = ArchiveReadinessState.NotReady,
@@ -225,10 +223,6 @@ public sealed record ArchiveReadinessSnapshot
     public string OptiScalerDisplayVersion { get; init; } = "";
     public string OptiScalerFileVersion { get; init; } = "";
     public string OptiScalerProductVersion { get; init; } = "";
-    public ArchiveReadinessState Fsr4State { get; init; } = ArchiveReadinessState.NotReady;
-    public string Fsr4SourceArchive { get; init; } = "";
-    public IReadOnlyDictionary<string, Fsr4VariantReadiness> Fsr4Variants { get; init; } =
-        new Dictionary<string, Fsr4VariantReadiness>(StringComparer.OrdinalIgnoreCase);
     public ArchiveReadinessState OptiPatcherState { get; init; } = ArchiveReadinessState.NotReady;
     public string OptiPatcherSourceArchive { get; init; } = "";
     public ArchiveReadinessState SpecialKState { get; init; } = ArchiveReadinessState.NotReady;
@@ -241,50 +235,11 @@ public sealed record ArchiveReadinessSnapshot
     public bool AreAllStartupArchivesReady()
     {
         return OptiScalerState == ArchiveReadinessState.Ready
-               && Fsr4State == ArchiveReadinessState.Ready
                && OptiPatcherState == ArchiveReadinessState.Ready
                && SpecialKState == ArchiveReadinessState.Ready
                && ReframeworkState == ArchiveReadinessState.Ready
                && Unreal5State == ArchiveReadinessState.Ready;
     }
-
-    public ArchiveReadinessState ResolveFsr4VariantState(string variant)
-    {
-        var normalized = NormalizeFsr4Variant(variant);
-        if (string.IsNullOrWhiteSpace(normalized))
-        {
-            return Fsr4State;
-        }
-
-        return Fsr4Variants.TryGetValue(normalized, out var readiness)
-            ? readiness.State
-            : ArchiveReadinessState.MissingSource;
-    }
-
-    public string ResolveFsr4VariantSourceArchive(string variant)
-    {
-        var normalized = NormalizeFsr4Variant(variant);
-        if (string.IsNullOrWhiteSpace(normalized))
-        {
-            return Fsr4SourceArchive;
-        }
-
-        return Fsr4Variants.TryGetValue(normalized, out var readiness)
-            ? readiness.SourceArchive
-            : "";
-    }
-
-    private static string NormalizeFsr4Variant(string value)
-    {
-        return (value ?? "").Trim().ToLowerInvariant();
-    }
-}
-
-public sealed record Fsr4VariantReadiness
-{
-    public string Variant { get; init; } = "";
-    public ArchiveReadinessState State { get; init; } = ArchiveReadinessState.NotReady;
-    public string SourceArchive { get; init; } = "";
 }
 
 public sealed record CoreInstallConfigProfileHint
@@ -314,6 +269,4 @@ public sealed record CoreInstallPlanBuildInput
     public bool IsGpuSelectionPending { get; init; }
     public bool IsSheetLoading { get; init; }
     public bool IsSheetReady { get; init; } = true;
-    public bool ShouldInstallFsr4 { get; init; }
-    public string Fsr4Variant { get; init; } = "";
 }

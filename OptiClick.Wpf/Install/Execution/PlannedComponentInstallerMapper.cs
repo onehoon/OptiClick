@@ -45,9 +45,6 @@ internal static class PlannedComponentInstallerMapper
             case CoreInstallPlanComponentType.ExtraBundle:
                 component = ComponentInstallName.ExtraBundle;
                 return true;
-            case CoreInstallPlanComponentType.Fsr4:
-                component = ComponentInstallName.Fsr4;
-                return true;
             case CoreInstallPlanComponentType.RtssProfile:
                 component = default;
                 return false;

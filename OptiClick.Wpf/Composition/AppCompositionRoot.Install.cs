@@ -200,18 +200,12 @@ public sealed partial class AppCompositionRoot
         return new ExtraBundleInstaller(downloader, extractor, fileSystem, tempRoot);
     }
 
-    public IFsr4Installer CreateFsr4Installer(IArchiveExtractor extractor, IInstallFileSystem fileSystem)
-    {
-        return new Fsr4Installer(extractor, fileSystem);
-    }
-
     public IComponentInstallCoordinator CreateComponentInstallCoordinator(
         IOptiScalerCoreInstaller coreInstaller,
         IExtraBundleInstaller extraBundleInstaller,
         ISpecialKInstaller specialKInstaller,
         IReFrameworkInstaller reFrameworkInstaller,
         IUnreal5Installer unreal5Installer,
-        IFsr4Installer fsr4Installer,
         IAppLogger? logger = null)
     {
         return new ComponentInstallCoordinator(
@@ -220,7 +214,6 @@ public sealed partial class AppCompositionRoot
             specialKInstaller,
             reFrameworkInstaller,
             unreal5Installer,
-            fsr4Installer,
             logger);
     }
 

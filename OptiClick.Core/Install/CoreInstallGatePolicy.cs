@@ -75,12 +75,6 @@ public sealed class CoreInstallGatePolicy
             reasons.Add(Block(CoreInstallPlanReasonCodes.OptiScalerArchiveNotReady));
         }
 
-        if (input.ShouldInstallFsr4
-            && input.ArchiveReadiness.ResolveFsr4VariantState(input.Fsr4Variant) != ArchiveReadinessState.Ready)
-        {
-            reasons.Add(Block(CoreInstallPlanReasonCodes.Fsr4NotReady));
-        }
-
         if (IsUnsupportedGpu(input))
         {
             reasons.Add(Block(CoreInstallPlanReasonCodes.UnsupportedGpu));

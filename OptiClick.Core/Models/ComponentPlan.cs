@@ -5,8 +5,7 @@ public enum ComponentKind
     ExtraBundle,
     SpecialK,
     Reframework,
-    Unreal5,
-    Fsr4
+    Unreal5
 }
 
 public sealed record ComponentPlan

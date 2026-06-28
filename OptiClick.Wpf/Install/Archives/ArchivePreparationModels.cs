@@ -35,9 +35,6 @@ public sealed record ArchivePreparationSnapshot
     public IReadOnlyDictionary<ArchiveAssetKey, ArchivePreparationState> States { get; init; } =
         new Dictionary<ArchiveAssetKey, ArchivePreparationState>();
 
-    public IReadOnlyDictionary<string, ArchivePreparationState> Fsr4VariantStates { get; init; } =
-        new Dictionary<string, ArchivePreparationState>(StringComparer.OrdinalIgnoreCase);
-
     public ArchivePreparationState Get(ArchiveAssetKey key)
     {
         return States.TryGetValue(key, out var state) ? state : new ArchivePreparationState();
@@ -49,7 +46,6 @@ public sealed record ArchivePreparationSequence
     public static readonly IReadOnlyList<ArchiveAssetKey> StartupReadinessOrder =
     [
         ArchiveAssetKey.OptiScaler,
-        ArchiveAssetKey.Fsr4,
         ArchiveAssetKey.OptiPatcher,
         ArchiveAssetKey.SpecialK,
         ArchiveAssetKey.ReFramework,

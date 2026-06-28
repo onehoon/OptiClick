@@ -42,9 +42,6 @@ public sealed class RuntimeShellState
     public OptiScalerVariantCatalog LatestOptiScalerVariantCatalog { get; private set; } =
         OptiScalerVariantCatalog.Empty;
 
-    public Fsr4VariantCatalog LatestFsr4VariantCatalog { get; private set; } =
-        Fsr4VariantCatalog.Empty;
-
     public IReadOnlyList<OptiScalerVariantSelectionOption> LatestOptiScalerVariantSelectionOptions { get; private set; } = [];
 
     public string EffectiveOptiScalerVariant { get; private set; } = OptiScalerVariantCatalogBuilder.StableVariant;
@@ -59,14 +56,12 @@ public sealed class RuntimeShellState
         RemoteRuntimeData? runtimeData,
         ShellGameCatalog? remoteCatalog,
         ModuleDownloadLinkContext? moduleDownloadLinks,
-        OptiScalerVariantCatalog? optiScalerVariantCatalog = null,
-        Fsr4VariantCatalog? fsr4VariantCatalog = null)
+        OptiScalerVariantCatalog? optiScalerVariantCatalog = null)
     {
         LatestRuntimeData = runtimeData ?? RemoteRuntimeData.Empty;
         LatestRemoteCatalog = remoteCatalog ?? ShellGameCatalog.Empty;
         ModuleDownloadLinks = moduleDownloadLinks ?? ModuleDownloadLinkContext.Empty;
         LatestOptiScalerVariantCatalog = optiScalerVariantCatalog ?? OptiScalerVariantCatalog.Empty;
-        LatestFsr4VariantCatalog = fsr4VariantCatalog ?? Fsr4VariantCatalog.Empty;
     }
 
     public void ApplyOptiScalerVariantSync(OptiScalerVariantSyncResult? result)

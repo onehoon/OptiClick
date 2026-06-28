@@ -9,18 +9,15 @@ public sealed class ArchiveReadinessFlowController
 {
     private readonly IArchivePreparationCoordinator? _archivePreparationCoordinator;
     private readonly IOptiScalerVariantArchiveSyncService? _optiScalerVariantArchiveSyncService;
-    private readonly IFsr4VariantArchiveSyncService? _fsr4VariantArchiveSyncService;
     private readonly IOptiScalerPayloadOptiPatcherInjector? _optiPatcherInjector;
 
     public ArchiveReadinessFlowController(
         IArchivePreparationCoordinator? archivePreparationCoordinator,
         IOptiScalerVariantArchiveSyncService? optiScalerVariantArchiveSyncService = null,
-        IFsr4VariantArchiveSyncService? fsr4VariantArchiveSyncService = null,
         IOptiScalerPayloadOptiPatcherInjector? optiPatcherInjector = null)
     {
         _archivePreparationCoordinator = archivePreparationCoordinator;
         _optiScalerVariantArchiveSyncService = optiScalerVariantArchiveSyncService;
-        _fsr4VariantArchiveSyncService = fsr4VariantArchiveSyncService;
         _optiPatcherInjector = optiPatcherInjector;
     }
 
@@ -81,17 +78,6 @@ public sealed class ArchiveReadinessFlowController
             var startupSnapshot = await _archivePreparationCoordinator.PrepareStartupArchivesAsync(
                 request.ModuleDownloadLinks,
                 cancellationToken);
-            Fsr4VariantSyncResult? fsr4VariantSync = null;
-            if (_fsr4VariantArchiveSyncService is not null)
-            {
-                fsr4VariantSync = await _fsr4VariantArchiveSyncService.SyncAsync(
-                    request.Fsr4VariantCatalog,
-                    cancellationToken);
-                logs.AddRange(fsr4VariantSync.Logs);
-                startupSnapshot = ArchivePreparationSnapshotMerger.Merge(
-                    startupSnapshot,
-                    ToFsr4VariantSnapshot(fsr4VariantSync));
-            }
 
             var optiPatcherInjection = InjectOptiPatcherIntoOptiScalerPayloads(
                 optiScalerSnapshot,
@@ -119,7 +105,7 @@ public sealed class ArchiveReadinessFlowController
 
             logs.Add(InstallFlowLogEntryFactory.Info(
                 "archive",
-                $"refresh completed all_ready={FormatBool(IsAllReady(readiness))} optiscaler={readiness.OptiScalerState} fsr4={readiness.Fsr4State} optipatcher={readiness.OptiPatcherState} specialk={readiness.SpecialKState} reframework={readiness.ReframeworkState} unreal5={readiness.Unreal5State}"));
+                $"refresh completed all_ready={FormatBool(IsAllReady(readiness))} optiscaler={readiness.OptiScalerState} optipatcher={readiness.OptiPatcherState} specialk={readiness.SpecialKState} reframework={readiness.ReframeworkState} unreal5={readiness.Unreal5State}"));
 
             return new ArchiveReadinessFlowResult
             {
@@ -127,7 +113,6 @@ public sealed class ArchiveReadinessFlowController
                 IsSuccess = true,
                 Readiness = readiness,
                 OptiScalerVariantSync = variantSync,
-                Fsr4VariantSync = fsr4VariantSync,
                 Logs = logs
             };
         }
@@ -155,19 +140,6 @@ public sealed class ArchiveReadinessFlowController
         return $"asset={FormatAssetKey(key)} state={FormatState(state)} source={Normalize(stage.Source, "unknown")} download={Normalize(stage.Download, "unknown")} sha={Normalize(stage.Sha, "unknown")} folder={Normalize(stage.Folder, "unknown")} json={Normalize(stage.Json, "unknown")} duration_ms={FormatDuration(stage.DurationMs)} filename={Normalize(state.Filename, "-")} error={Normalize(state.ErrorMessage, "-")}";
     }
 
-    private static ArchivePreparationSnapshot ToFsr4VariantSnapshot(Fsr4VariantSyncResult result)
-    {
-        var safeResult = result ?? new Fsr4VariantSyncResult();
-        return new ArchivePreparationSnapshot
-        {
-            States = new Dictionary<ArchiveAssetKey, ArchivePreparationState>
-            {
-                [ArchiveAssetKey.Fsr4] = safeResult.AggregateState
-            },
-            Fsr4VariantStates = safeResult.StatesByVariant
-        };
-    }
-
     private static bool ShouldLogArchiveDetail(ArchivePreparationState state)
     {
         return !state.Ready
@@ -178,7 +150,6 @@ public sealed class ArchiveReadinessFlowController
     private static bool IsAllReady(ArchiveReadinessSnapshot readiness)
     {
         return readiness.OptiScalerState == ArchiveReadinessState.Ready
-               && readiness.Fsr4State == ArchiveReadinessState.Ready
                && readiness.OptiPatcherState == ArchiveReadinessState.Ready
                && readiness.SpecialKState == ArchiveReadinessState.Ready
                && readiness.ReframeworkState == ArchiveReadinessState.Ready
@@ -312,7 +283,6 @@ public sealed class ArchiveReadinessFlowController
         return key switch
         {
             ArchiveAssetKey.OptiScaler => ArchiveAssetRuntimeDataKeys.OptiScaler,
-            ArchiveAssetKey.Fsr4 => ArchiveAssetRuntimeDataKeys.Fsr4Variants,
             ArchiveAssetKey.OptiPatcher => ArchiveAssetRuntimeDataKeys.OptiPatcher,
             ArchiveAssetKey.SpecialK => ArchiveAssetRuntimeDataKeys.SpecialK,
             ArchiveAssetKey.ReFramework => ArchiveAssetRuntimeDataKeys.ReFramework,

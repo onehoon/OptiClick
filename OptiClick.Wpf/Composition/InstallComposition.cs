@@ -50,7 +50,6 @@ public sealed class InstallComposition
         public required IArchiveExtractor ArchiveExtractor { get; init; }
         public required IArchivePreparationCoordinator ArchivePreparationCoordinator { get; init; }
         public required IOptiScalerVariantArchiveSyncService OptiScalerVariantArchiveSyncService { get; init; }
-        public required IFsr4VariantArchiveSyncService Fsr4VariantArchiveSyncService { get; init; }
         public required IOptiScalerPayloadOptiPatcherInjector OptiScalerPayloadOptiPatcherInjector { get; init; }
     }
 
@@ -121,7 +120,6 @@ public sealed class InstallComposition
         var archiveReadinessFlowController = new ArchiveReadinessFlowController(
             archivePreparation.ArchivePreparationCoordinator,
             archivePreparation.OptiScalerVariantArchiveSyncService,
-            archivePreparation.Fsr4VariantArchiveSyncService,
             archivePreparation.OptiScalerPayloadOptiPatcherInjector);
         var configApplyComposition = ConfigApplyCompositionFactory.Create(new ConfigApplyCompositionRequest
         {
@@ -185,15 +183,10 @@ public sealed class InstallComposition
             archiveExtractor,
             archiveManifestStore,
             new OptiScalerPayloadValidator());
-        var fsr4ArchivePreparationService = new Fsr4ArchivePreparationService(
-            archiveDownloader,
-            archiveExtractor,
-            archiveManifestStore);
         var archivePreparationCoordinator = new ArchivePreparationCoordinator(
             archiveCachePaths,
             new VersionedArchivePreparationService(archiveDownloader, archiveManifestStore, archiveExtractor),
-            new OptiPatcherArchivePreparationService(archiveDownloader, archiveExtractor, archiveManifestStore),
-            fsr4ArchivePreparationService);
+            new OptiPatcherArchivePreparationService(archiveDownloader, archiveExtractor, archiveManifestStore));
         var optiScalerPayloadOptiPatcherInjector = new OptiScalerPayloadOptiPatcherInjector();
         var optiScalerVariantManifestStore = new OptiScalerVariantManifestStore(
             archiveCachePaths.ManifestRoot,
@@ -205,18 +198,12 @@ public sealed class InstallComposition
             archiveManifestStore,
             new OptiScalerPayloadValidator(),
             app.AppLogger);
-        var fsr4VariantArchiveSyncService = new Fsr4VariantArchiveSyncService(
-            archiveCachePaths,
-            fsr4ArchivePreparationService,
-            new Fsr4VariantManifestStore(archiveCachePaths.ManifestRoot, app.AppLogger));
-
         return new ArchivePreparationServices
         {
             ArchiveDownloader = archiveDownloader,
             ArchiveExtractor = archiveExtractor,
             ArchivePreparationCoordinator = archivePreparationCoordinator,
             OptiScalerVariantArchiveSyncService = optiScalerVariantArchiveSyncService,
-            Fsr4VariantArchiveSyncService = fsr4VariantArchiveSyncService,
             OptiScalerPayloadOptiPatcherInjector = optiScalerPayloadOptiPatcherInjector
         };
     }
@@ -241,7 +228,6 @@ public sealed class InstallComposition
             _root.CreateSpecialKInstaller(dllPayloadInstaller, installFileSystem, signatures),
             _root.CreateReFrameworkInstaller(dllPayloadInstaller, installFileSystem, signatures),
             _root.CreateUnreal5Installer(archiveSourceReader, archiveExtractor, installFileSystem),
-            _root.CreateFsr4Installer(archiveExtractor, installFileSystem),
             app.AppLogger);
     }
 

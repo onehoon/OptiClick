@@ -20,7 +20,6 @@ public static class CoreInstallStartGateReasonCodes
     public const string OptiScalerArchiveDownloading = CoreInstallGateReasonCodes.OptiScalerArchiveDownloading;
     public const string OptiScalerArchiveNotReady = CoreInstallGateReasonCodes.OptiScalerArchiveNotReady;
     public const string ComponentArchiveNotReady = "component_archive_not_ready";
-    public const string Fsr4NotReady = CoreInstallGateReasonCodes.Fsr4NotReady;
     public const string UnsupportedGpu = CoreInstallGateReasonCodes.UnsupportedGpu;
     public const string DisabledGame = "disabled_game";
     public const string FinalProxyMissing = "final_proxy_missing";
@@ -47,8 +46,6 @@ public sealed record CoreInstallStartGateInput
     public InstallPrecheckSnapshot Precheck { get; init; } = InstallPrecheckSnapshot.NotStarted;
     public IReadOnlyList<CoreInstallPlanComponentType> EnabledPlanComponents { get; init; } = [];
     public bool IsExtraBundleReady { get; init; } = true;
-    public bool ShouldInstallFsr4 { get; init; }
-    public bool IsFsr4Ready { get; init; } = true;
     public bool IsUnsupportedGpu { get; init; }
     public bool IsDisabledGame { get; init; }
     public string PlanFailureReasonCode { get; init; } = "";
@@ -99,11 +96,6 @@ public sealed class CoreInstallStartGatePolicy
             || string.IsNullOrWhiteSpace(input.ArchiveReadiness.OptiScalerSourceArchive))
         {
             return Reject(CoreInstallStartGateReasonCodes.OptiScalerArchiveNotReady, "archive");
-        }
-
-        if (input.ShouldInstallFsr4 && !input.IsFsr4Ready)
-        {
-            return Reject(CoreInstallStartGateReasonCodes.Fsr4NotReady, "archive");
         }
 
         if (HasNotReadyComponentArchive(input))
@@ -159,8 +151,6 @@ public sealed class CoreInstallStartGatePolicy
                 case CoreInstallPlanComponentType.REFramework when input.ArchiveReadiness.ReframeworkState != ArchiveReadinessState.Ready:
                     return true;
                 case CoreInstallPlanComponentType.Unreal5 when input.ArchiveReadiness.Unreal5State != ArchiveReadinessState.Ready:
-                    return true;
-                case CoreInstallPlanComponentType.Fsr4 when input.ArchiveReadiness.Fsr4State != ArchiveReadinessState.Ready:
                     return true;
                 case CoreInstallPlanComponentType.ExtraBundle when !input.IsExtraBundleReady:
                     return true;

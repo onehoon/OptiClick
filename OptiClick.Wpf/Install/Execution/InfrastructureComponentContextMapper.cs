@@ -56,20 +56,4 @@ internal static class InfrastructureComponentContextMapper
         };
     }
 
-    public static InfrastructureComponents.Fsr4InstallContext ToFsr4Context(ComponentInstallContext context)
-    {
-        ArgumentNullException.ThrowIfNull(context);
-
-        return new InfrastructureComponents.Fsr4InstallContext
-        {
-            TargetPath = context.TargetPath,
-            UseFsr4 = context.ShouldInstallFsr4,
-            Fsr4Variant = context.Fsr4Variant,
-            Fsr4SourceArchivePath = context.Fsr4SourceArchive,
-            GpuVendor = context.GpuVendor,
-            GpuName = context.GpuName,
-            GpuBundleKey = context.GpuBundleKey,
-            GpuGroup = context.GpuGroup
-        };
-    }
 }

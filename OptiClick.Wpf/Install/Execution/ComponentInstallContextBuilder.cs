@@ -23,18 +23,12 @@ public sealed class ComponentInstallContextBuilder
             OptiScalerDisplayVersion = input.LatestArchiveReadiness.OptiScalerDisplayVersion,
             GpuVendor = (selectedGpu?.Vendor ?? "").Trim(),
             GpuName = (selectedGpu?.Name ?? "").Trim(),
-            Fsr4SourceArchive = input.LatestArchiveReadiness.ResolveFsr4VariantSourceArchive(descriptor.Fsr4Variant),
-            Fsr4Variant = descriptor.Fsr4Variant,
             HasPlannedComponentInstallers = input.Plan.Components.Count > 0,
             PlannedComponentInstallers = plannedComponentInstallers,
             ShouldInstallUnreal5 = ResolveShouldInstall(
                 input.Plan.Components,
                 CoreInstallPlanComponentType.Unreal5,
                 descriptor.RequiresUnreal5),
-            ShouldInstallFsr4 = ResolveShouldInstall(
-                input.Plan.Components,
-                CoreInstallPlanComponentType.Fsr4,
-                descriptor.ShouldInstallFsr4),
             GpuBundleKey = descriptor.GpuBundleKey,
             GpuGroup = descriptor.GpuGroup,
             ReFrameworkDestination = ResolveComponentDestination(

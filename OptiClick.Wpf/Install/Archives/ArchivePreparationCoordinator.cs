@@ -15,18 +15,15 @@ public sealed class ArchivePreparationCoordinator : IArchivePreparationCoordinat
     private readonly ArchiveCachePaths _cachePaths;
     private readonly IVersionedArchivePreparationService _versionedService;
     private readonly OptiPatcherArchivePreparationService _optiPatcherService;
-    private readonly Fsr4ArchivePreparationService _fsr4Service;
 
     public ArchivePreparationCoordinator(
         ArchiveCachePaths cachePaths,
         IVersionedArchivePreparationService versionedService,
-        OptiPatcherArchivePreparationService optiPatcherService,
-        Fsr4ArchivePreparationService fsr4Service)
+        OptiPatcherArchivePreparationService optiPatcherService)
     {
         _cachePaths = cachePaths;
         _versionedService = versionedService;
         _optiPatcherService = optiPatcherService;
-        _fsr4Service = fsr4Service;
     }
 
     public async Task<ArchivePreparationSnapshot> PrepareStartupArchivesAsync(
@@ -43,7 +40,6 @@ public sealed class ArchivePreparationCoordinator : IArchivePreparationCoordinat
             var stopwatch = Stopwatch.StartNew();
             ArchivePreparationState state = key switch
             {
-                ArchiveAssetKey.Fsr4 => await _fsr4Service.PrepareAsync(entry, _cachePaths.Fsr4CacheDir, cancellationToken),
                 ArchiveAssetKey.OptiPatcher => await _optiPatcherService.PrepareAsync(entry, _cachePaths.OptiPatcherCacheDir, cancellationToken),
                 _ => await _versionedService.PrepareAsync(
                     key,
