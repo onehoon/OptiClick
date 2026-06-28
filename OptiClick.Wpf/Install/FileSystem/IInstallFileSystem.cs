@@ -16,6 +16,7 @@ public interface IInstallFileSystem
     void SetWritable(string path);
     bool IsWritable(string path);
     IEnumerable<string> EnumerateFiles(string directoryPath, string searchPattern, SearchOption searchOption);
+    IEnumerable<string> EnumerateDirectories(string directoryPath, string searchPattern, SearchOption searchOption);
     IEnumerable<string> EnumerateFileSystemEntries(string directoryPath);
 }
 
@@ -45,5 +46,6 @@ public sealed class InstallFileSystem : IInstallFileSystem
     public void SetWritable(string path) => _inner.SetWritable(path);
     public bool IsWritable(string path) => _inner.IsWritable(path);
     public IEnumerable<string> EnumerateFiles(string directoryPath, string searchPattern, SearchOption searchOption) => _inner.EnumerateFiles(directoryPath, searchPattern, searchOption);
+    public IEnumerable<string> EnumerateDirectories(string directoryPath, string searchPattern, SearchOption searchOption) => _inner.EnumerateDirectories(directoryPath, searchPattern, searchOption);
     public IEnumerable<string> EnumerateFileSystemEntries(string directoryPath) => _inner.EnumerateFileSystemEntries(directoryPath);
 }

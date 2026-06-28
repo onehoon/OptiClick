@@ -563,6 +563,9 @@ internal sealed class FileSystemAdapter : InfrastructureUninstall.IOptiClickUnin
 
     public IEnumerable<string> EnumerateFiles(string directoryPath, string searchPattern, SearchOption searchOption)
         => _inner.EnumerateFiles(directoryPath, searchPattern, searchOption);
+
+    public IEnumerable<string> EnumerateDirectories(string directoryPath, string searchPattern, SearchOption searchOption)
+        => _inner.EnumerateDirectories(directoryPath, searchPattern, searchOption);
 }
 
 internal sealed class SignatureDetectorAdapter : InfrastructureUninstall.IOptiClickUninstallSignatureDetector

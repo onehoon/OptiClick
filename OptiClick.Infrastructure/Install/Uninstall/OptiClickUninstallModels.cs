@@ -251,6 +251,7 @@ public interface IOptiClickUninstallFileSystem
     void DeleteFile(string path);
     void DeleteDirectory(string path, bool recursive = true);
     IEnumerable<string> EnumerateFiles(string directoryPath, string searchPattern, SearchOption searchOption);
+    IEnumerable<string> EnumerateDirectories(string directoryPath, string searchPattern, SearchOption searchOption);
 }
 
 public interface IOptiClickUninstallSignatureDetector

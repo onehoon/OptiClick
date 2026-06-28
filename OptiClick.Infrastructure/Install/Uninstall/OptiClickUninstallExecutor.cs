@@ -444,6 +444,16 @@ public sealed class OptiClickUninstallExecutor : IOptiClickUninstallExecutor
             _fileSystem.SetWritable(directoryPath);
         }
 
+        foreach (var childDirectory in _fileSystem
+                     .EnumerateDirectories(directoryPath, "*", SearchOption.AllDirectories)
+                     .OrderByDescending(static path => path.Length))
+        {
+            if (!_fileSystem.IsWritable(childDirectory))
+            {
+                _fileSystem.SetWritable(childDirectory);
+            }
+        }
+
         foreach (var filePath in _fileSystem.EnumerateFiles(directoryPath, "*", SearchOption.AllDirectories))
         {
             if (!_fileSystem.IsWritable(filePath))

@@ -59,6 +59,9 @@ public sealed class InstallFileSystem
     public IEnumerable<string> EnumerateFiles(string directoryPath, string searchPattern, SearchOption searchOption)
         => Directory.EnumerateFiles(directoryPath, searchPattern, searchOption);
 
+    public IEnumerable<string> EnumerateDirectories(string directoryPath, string searchPattern, SearchOption searchOption)
+        => Directory.EnumerateDirectories(directoryPath, searchPattern, searchOption);
+
     public IEnumerable<string> EnumerateFileSystemEntries(string directoryPath)
         => Directory.EnumerateFileSystemEntries(directoryPath);
 }

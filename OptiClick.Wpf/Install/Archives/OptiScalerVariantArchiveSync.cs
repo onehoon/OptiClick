@@ -403,8 +403,13 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
             return preferred;
         }
 
-        return runtimeByVariant.ContainsKey(OptiScalerVariantCatalogBuilder.StableVariant)
-            ? OptiScalerVariantCatalogBuilder.StableVariant
+        if (runtimeByVariant.ContainsKey(OptiScalerVariantCatalogBuilder.StableVariant))
+        {
+            return OptiScalerVariantCatalogBuilder.StableVariant;
+        }
+
+        return runtimeByVariant.Count == 1
+            ? runtimeByVariant.Keys.First()
             : preferred;
     }
 
