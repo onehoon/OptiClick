@@ -117,6 +117,7 @@ public sealed class RuntimeCatalogFlowController
 
         var runtimeData = pipelineResult.RuntimeData ?? RemoteRuntimeData.Empty;
         var catalog = pipelineResult.Catalog ?? ShellGameCatalog.Empty;
+        var gpuBundleKey = (pipelineResult.GpuBundleLoadResult?.BundleKey ?? "").Trim();
         var moduleDownloadLinks = ModuleDownloadLinkContext.FromEntries(
             _moduleDownloadLinkMapBuilder.Build(runtimeData.ResourceMaster));
         var variantCatalogResult = _optiScalerVariantCatalogBuilder.Build(runtimeData.ResourceMaster);
@@ -138,6 +139,7 @@ public sealed class RuntimeCatalogFlowController
                 Catalog = catalog,
                 ModuleDownloadLinks = moduleDownloadLinks,
                 OptiScalerVariantCatalog = variantCatalogResult.Catalog,
+                GpuBundleKey = gpuBundleKey,
                 SettingsStatusText = LocalizedTextFormatter.Format(text.RuntimeRemoteCatalogFailed, "empty_catalog"),
                 DialogRequest = _dialogPresenter.BuildEmptyCatalogDialog(text),
                 Logs = logs
@@ -156,6 +158,7 @@ public sealed class RuntimeCatalogFlowController
             Catalog = catalog,
             ModuleDownloadLinks = moduleDownloadLinks,
             OptiScalerVariantCatalog = variantCatalogResult.Catalog,
+            GpuBundleKey = gpuBundleKey,
             SettingsStatusText = loadedText,
             ScanStatusText = loadedText,
             ResetRemoteCatalogDialogGate = true,

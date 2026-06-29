@@ -118,6 +118,7 @@ internal sealed record MainInstallArchiveReadinessCompositionInput
     public required MainInstallRuntimeSnapshotReaders RuntimeSnapshotReaders { get; init; }
     public required Func<OptiScalerVariantCatalog> ReadLatestOptiScalerVariantCatalog { get; init; }
     public required Func<string> ReadPreferredOptiScalerVariant { get; init; }
+    public required Func<string> ReadGpuBundleKey { get; init; }
     public required Func<ArchiveReadinessSnapshot> ReadLatestArchiveReadiness { get; init; }
     public required ArchiveReadinessRefreshCoordinator ArchiveReadinessRefreshCoordinator { get; init; }
     public required ArchiveReadinessFlowController ArchiveReadinessFlowController { get; init; }
@@ -254,6 +255,7 @@ internal static class MainInstallContextFactoryComposition
                     ReadModuleDownloadLinks = installArchiveReadiness.RuntimeSnapshotReaders.ReadModuleDownloadLinks,
                     ReadLatestOptiScalerVariantCatalog = installArchiveReadiness.ReadLatestOptiScalerVariantCatalog,
                     ReadPreferredOptiScalerVariant = installArchiveReadiness.ReadPreferredOptiScalerVariant,
+                    ReadGpuBundleKey = installArchiveReadiness.ReadGpuBundleKey,
                     ReadLatestArchiveReadiness = installArchiveReadiness.ReadLatestArchiveReadiness,
                     ArchiveReadinessRefreshCoordinator = installArchiveReadiness.ArchiveReadinessRefreshCoordinator,
                     ArchiveReadinessFlowController = installArchiveReadiness.ArchiveReadinessFlowController,

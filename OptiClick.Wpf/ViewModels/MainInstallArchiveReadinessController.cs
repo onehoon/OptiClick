@@ -35,7 +35,8 @@ internal sealed class MainInstallArchiveReadinessController
             {
                 ModuleDownloadLinks = context.State.ModuleDownloadLinks,
                 OptiScalerVariantCatalog = context.State.LatestOptiScalerVariantCatalog,
-                PreferredOptiScalerVariant = context.State.PreferredOptiScalerVariant
+                PreferredOptiScalerVariant = context.State.PreferredOptiScalerVariant,
+                GpuBundleKey = context.State.GpuBundleKey
             },
             cancellationToken);
 
@@ -115,6 +116,7 @@ internal sealed class MainInstallArchiveReadinessState
     public required ModuleDownloadLinkContext ModuleDownloadLinks { get; init; }
     public required OptiScalerVariantCatalog LatestOptiScalerVariantCatalog { get; init; }
     public required string PreferredOptiScalerVariant { get; init; }
+    public string GpuBundleKey { get; init; } = "";
     public required ArchiveReadinessSnapshot LatestArchiveReadiness { get; init; }
     public required bool RefreshVisibleGamesAfterArchiveReadiness { get; init; }
 }

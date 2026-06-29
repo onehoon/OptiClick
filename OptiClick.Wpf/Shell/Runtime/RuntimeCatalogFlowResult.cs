@@ -15,6 +15,7 @@ public sealed record RuntimeCatalogFlowResult
     public ModuleDownloadLinkContext ModuleDownloadLinks { get; init; } =
         ModuleDownloadLinkContext.Empty;
     public OptiScalerVariantCatalog OptiScalerVariantCatalog { get; init; } = OptiScalerVariantCatalog.Empty;
+    public string GpuBundleKey { get; init; } = "";
     public string SettingsStatusText { get; init; } = "";
     public string ScanStatusText { get; init; } = "";
     public AppDialogRequest? DialogRequest { get; init; }

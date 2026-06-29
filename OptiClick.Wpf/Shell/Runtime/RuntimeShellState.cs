@@ -42,6 +42,8 @@ public sealed class RuntimeShellState
     public OptiScalerVariantCatalog LatestOptiScalerVariantCatalog { get; private set; } =
         OptiScalerVariantCatalog.Empty;
 
+    public string LatestGpuBundleKey { get; private set; } = "";
+
     public IReadOnlyList<OptiScalerVariantSelectionOption> LatestOptiScalerVariantSelectionOptions { get; private set; } = [];
 
     public string EffectiveOptiScalerVariant { get; private set; } = OptiScalerVariantCatalogBuilder.StableVariant;
@@ -56,12 +58,14 @@ public sealed class RuntimeShellState
         RemoteRuntimeData? runtimeData,
         ShellGameCatalog? remoteCatalog,
         ModuleDownloadLinkContext? moduleDownloadLinks,
-        OptiScalerVariantCatalog? optiScalerVariantCatalog = null)
+        OptiScalerVariantCatalog? optiScalerVariantCatalog = null,
+        string? gpuBundleKey = null)
     {
         LatestRuntimeData = runtimeData ?? RemoteRuntimeData.Empty;
         LatestRemoteCatalog = remoteCatalog ?? ShellGameCatalog.Empty;
         ModuleDownloadLinks = moduleDownloadLinks ?? ModuleDownloadLinkContext.Empty;
         LatestOptiScalerVariantCatalog = optiScalerVariantCatalog ?? OptiScalerVariantCatalog.Empty;
+        LatestGpuBundleKey = (gpuBundleKey ?? "").Trim();
     }
 
     public void ApplyOptiScalerVariantSync(OptiScalerVariantSyncResult? result)

@@ -18,7 +18,7 @@ public sealed class MainViewModelStateApplier
     private readonly Action<string?> _setScanStatusText;
     private readonly Action _queuePendingStartupNotice;
     private readonly Action<string, string> _setRemoteCatalogError;
-    private readonly Action<RemoteRuntimeData?, ShellGameCatalog?, ModuleDownloadLinkContext?, OptiScalerVariantCatalog?> _applyRuntimeData;
+    private readonly Action<RemoteRuntimeData?, ShellGameCatalog?, ModuleDownloadLinkContext?, OptiScalerVariantCatalog?, string?> _applyRuntimeData;
     private readonly Action<IReadOnlyDictionary<string, ShellGameMatchResult>> _replaceMatchByGameId;
     private readonly Action<IReadOnlyDictionary<string, string>> _replaceTargetPathByGameId;
     private readonly Action<IReadOnlyList<GameCardViewModel>> _replaceVisibleGames;
@@ -33,7 +33,7 @@ public sealed class MainViewModelStateApplier
         Action<string?> setScanStatusText,
         Action queuePendingStartupNotice,
         Action<string, string> setRemoteCatalogError,
-        Action<RemoteRuntimeData?, ShellGameCatalog?, ModuleDownloadLinkContext?, OptiScalerVariantCatalog?> applyRuntimeData,
+        Action<RemoteRuntimeData?, ShellGameCatalog?, ModuleDownloadLinkContext?, OptiScalerVariantCatalog?, string?> applyRuntimeData,
         Action<IReadOnlyDictionary<string, ShellGameMatchResult>> replaceMatchByGameId,
         Action<IReadOnlyDictionary<string, string>> replaceTargetPathByGameId,
         Action<IReadOnlyList<GameCardViewModel>> replaceVisibleGames,
@@ -90,13 +90,15 @@ public sealed class MainViewModelStateApplier
         if (update.RuntimeData is not null
             || update.RemoteCatalog is not null
             || update.ModuleDownloadLinks is not null
-            || update.OptiScalerVariantCatalog is not null)
+            || update.OptiScalerVariantCatalog is not null
+            || update.GpuBundleKey is not null)
         {
             _applyRuntimeData(
                 update.RuntimeData,
                 update.RemoteCatalog,
                 update.ModuleDownloadLinks,
-                update.OptiScalerVariantCatalog);
+                update.OptiScalerVariantCatalog,
+                update.GpuBundleKey);
         }
 
         if (update.MatchByGameId is { } matchByGameId)

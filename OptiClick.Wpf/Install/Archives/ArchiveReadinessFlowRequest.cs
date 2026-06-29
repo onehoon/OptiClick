@@ -9,4 +9,5 @@ public sealed record ArchiveReadinessFlowRequest
     public OptiScalerVariantCatalog OptiScalerVariantCatalog { get; init; } =
         OptiScalerVariantCatalog.Empty;
     public string PreferredOptiScalerVariant { get; init; } = OptiScalerVariantCatalogBuilder.StableVariant;
+    public string GpuBundleKey { get; init; } = "";
 }

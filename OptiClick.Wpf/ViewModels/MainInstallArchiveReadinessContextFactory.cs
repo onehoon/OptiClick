@@ -26,6 +26,7 @@ internal sealed class MainInstallArchiveReadinessContextFactory
                 ModuleDownloadLinks = _input.ReadModuleDownloadLinks(),
                 LatestOptiScalerVariantCatalog = _input.ReadLatestOptiScalerVariantCatalog(),
                 PreferredOptiScalerVariant = _input.ReadPreferredOptiScalerVariant(),
+                GpuBundleKey = _input.ReadGpuBundleKey(),
                 LatestArchiveReadiness = _input.ReadLatestArchiveReadiness(),
                 RefreshVisibleGamesAfterArchiveReadiness = refreshVisibleGamesAfterArchiveReadiness
             },
@@ -55,6 +56,7 @@ internal sealed record MainInstallArchiveReadinessContextFactoryInput
     public required Func<ModuleDownloadLinkContext> ReadModuleDownloadLinks { get; init; }
     public required Func<OptiScalerVariantCatalog> ReadLatestOptiScalerVariantCatalog { get; init; }
     public required Func<string> ReadPreferredOptiScalerVariant { get; init; }
+    public required Func<string> ReadGpuBundleKey { get; init; }
     public required Func<ArchiveReadinessSnapshot> ReadLatestArchiveReadiness { get; init; }
     public required ArchiveReadinessRefreshCoordinator ArchiveReadinessRefreshCoordinator { get; init; }
     public required ArchiveReadinessFlowController ArchiveReadinessFlowController { get; init; }
