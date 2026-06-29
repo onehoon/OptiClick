@@ -383,7 +383,7 @@ public sealed class OptiScalerVariantArchiveSyncService : IOptiScalerVariantArch
 
             try
             {
-                Directory.Delete(directory, recursive: true);
+                ArchiveDirectoryDeleteHelper.DeleteRecursive(directory);
                 logs.Add(InstallFlowLogEntryFactory.Info("archive", $"optiscaler variant cache removed cache_entry={name}"));
             }
             catch (Exception ex)

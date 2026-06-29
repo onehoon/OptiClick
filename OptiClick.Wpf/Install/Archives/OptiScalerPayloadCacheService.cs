@@ -355,17 +355,7 @@ public sealed class OptiScalerPayloadCacheService : IOptiScalerPayloadCacheServi
 
     private static void TryDeleteDirectory(string path)
     {
-        try
-        {
-            if (Directory.Exists(path))
-            {
-                Directory.Delete(path, recursive: true);
-            }
-        }
-        catch
-        {
-            // Ignore cleanup failure.
-        }
+        ArchiveDirectoryDeleteHelper.TryDeleteRecursive(path);
     }
 
 }
