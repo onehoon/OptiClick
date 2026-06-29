@@ -146,7 +146,8 @@ public static class OptiScalerCommonIniSettingsMaterializer
     public static bool CanWriteAuto(string? compositeKey)
     {
         var normalized = (compositeKey ?? "").Trim();
-        return string.Equals(normalized, OptiScalerFsr411IniKeys.Fsr4ForceModelCompositeKey, StringComparison.OrdinalIgnoreCase)
+        return string.Equals(normalized, OptiScalerFsr411IniKeys.Dx12UpscalerCompositeKey, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(normalized, OptiScalerFsr411IniKeys.Fsr4ForceModelCompositeKey, StringComparison.OrdinalIgnoreCase)
                || string.Equals(normalized, OptiScalerFsr411IniKeys.LoadCustomAmdxc64OnRdna2CompositeKey, StringComparison.OrdinalIgnoreCase);
     }
 }

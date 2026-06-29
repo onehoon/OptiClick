@@ -120,6 +120,46 @@
 
                 <ui:Card Style="{StaticResource OptiScalerCardControlStyle}"
                          HorizontalAlignment="Stretch"
+                         Margin="0,6,0,10"
+                         Visibility="{Binding IsFsr411Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid MinHeight="62">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Style="{StaticResource OptiScalerIconPanelStyle}">
+                            <ui:SymbolIcon Symbol="Settings24"
+                                           Foreground="{StaticResource AccentPrimaryBrush}"
+                                           FontSize="20"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" />
+                        </Border>
+
+                        <StackPanel Grid.Column="2"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Strings.OptiScalerFsr411Title}"
+                                       Style="{StaticResource SectionTitleTextStyle}"
+                                       FontSize="15" />
+                            <TextBlock Text="{Binding Strings.OptiScalerFsr411Description}"
+                                       Style="{StaticResource SmallDescriptionTextStyle}"
+                                       Margin="0,4,0,0" />
+                        </StackPanel>
+
+                        <ComboBox Grid.Column="4"
+                                  Style="{StaticResource OptiScalerComboBoxStyle}"
+                                  ItemsSource="{Binding Fsr411ModeOptions}"
+                                  DisplayMemberPath="DisplayText"
+                                  SelectedValuePath="Value"
+                                  SelectedValue="{Binding SelectedFsr411Mode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    </Grid>
+                </ui:Card>
+
+                <ui:Card Style="{StaticResource OptiScalerCardControlStyle}"
+                         HorizontalAlignment="Stretch"
                          Margin="0,6,0,10">
                     <Grid MinHeight="62">
                         <Grid.ColumnDefinitions>
@@ -157,46 +197,6 @@
                                       SelectedValuePath="Value"
                                       SelectedValue="{Binding SelectedMenuScale, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
-                    </Grid>
-                </ui:Card>
-
-                <ui:Card Style="{StaticResource OptiScalerCardControlStyle}"
-                         HorizontalAlignment="Stretch"
-                         Margin="0,6,0,10"
-                         Visibility="{Binding IsFsr411Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <Grid MinHeight="62">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="12" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="18" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <Border Grid.Column="0" Style="{StaticResource OptiScalerIconPanelStyle}">
-                            <ui:SymbolIcon Symbol="Settings24"
-                                           Foreground="{StaticResource AccentPrimaryBrush}"
-                                           FontSize="20"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center" />
-                        </Border>
-
-                        <StackPanel Grid.Column="2"
-                                    VerticalAlignment="Center">
-                            <TextBlock Text="{Binding Strings.OptiScalerFsr411Title}"
-                                       Style="{StaticResource SectionTitleTextStyle}"
-                                       FontSize="15" />
-                            <TextBlock Text="{Binding Strings.OptiScalerFsr411Description}"
-                                       Style="{StaticResource SmallDescriptionTextStyle}"
-                                       Margin="0,4,0,0" />
-                        </StackPanel>
-
-                        <ComboBox Grid.Column="4"
-                                  Style="{StaticResource OptiScalerComboBoxStyle}"
-                                  ItemsSource="{Binding Fsr411ModeOptions}"
-                                  DisplayMemberPath="DisplayText"
-                                  SelectedValuePath="Value"
-                                  SelectedValue="{Binding SelectedFsr411Mode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                     </Grid>
                 </ui:Card>
 

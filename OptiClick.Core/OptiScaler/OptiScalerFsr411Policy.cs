@@ -52,6 +52,10 @@ public static class OptiScalerFsr411Policy
         return
         [
             Entry(
+                OptiScalerFsr411IniKeys.UpscalersSection,
+                OptiScalerFsr411IniKeys.Dx12Upscaler,
+                "ffx"),
+            Entry(
                 OptiScalerFsr411IniKeys.FsrSection,
                 OptiScalerFsr411IniKeys.Fsr4ForceModel,
                 "2"),
@@ -66,6 +70,10 @@ public static class OptiScalerFsr411Policy
     {
         return
         [
+            Entry(
+                OptiScalerFsr411IniKeys.UpscalersSection,
+                OptiScalerFsr411IniKeys.Dx12Upscaler,
+                ModeAuto),
             Entry(
                 OptiScalerFsr411IniKeys.FsrSection,
                 OptiScalerFsr411IniKeys.Fsr4ForceModel,
