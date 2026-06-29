@@ -16,6 +16,7 @@ public static class OptiScalerCommonIniSettingsMapper
         return NormalizeDraft(
             new OptiScalerCommonIniSettingsDraft
             {
+                Fsr411Mode = OptiScalerFsr411Policy.NormalizeMode(document?.Fsr411Mode),
                 ShowFpsMode = ReadValue(materialized, OptiScalerCommonIniSettingsMaterializer.ShowFpsKey),
                 MenuScale = ReadValue(materialized, OptiScalerCommonIniSettingsMaterializer.MenuScaleKey),
                 FpsOverlayType = ReadValue(materialized, OptiScalerCommonIniSettingsMaterializer.FpsOverlayTypeKey),
@@ -46,6 +47,7 @@ public static class OptiScalerCommonIniSettingsMapper
             new OptiScalerCommonIniSettingsDocument
             {
                 Version = 1,
+                Fsr411Mode = normalized.Fsr411Mode,
                 Entries = entries
             });
     }
@@ -60,6 +62,7 @@ public static class OptiScalerCommonIniSettingsMapper
 
         return new OptiScalerCommonIniSettingsDraft
         {
+            Fsr411Mode = OptiScalerFsr411Policy.NormalizeMode(draft.Fsr411Mode),
             ShowFpsMode = NormalizeShowFpsMode(draft.ShowFpsMode),
             MenuScale = NormalizeAutoValue(draft.MenuScale),
             FpsOverlayType = NormalizeFpsOverlayTypeSelection(draft.FpsOverlayType),

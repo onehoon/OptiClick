@@ -97,7 +97,14 @@ public sealed partial class MainViewModel
         public int ResolveSelectedIndex(GameCardViewModel game) => _owner.Games.IndexOf(game);
         public void SetSettingsStatusText(string message) => _owner.SettingsStatusText = message;
         public void SetScanStatusText(string message) => _owner.ScanStatusText = message;
-        public void ApplyStateUpdate(MainViewModelStateUpdate update) => _owner.ApplyStateUpdate(update);
+        public void ApplyStateUpdate(MainViewModelStateUpdate update)
+        {
+            _owner.ApplyStateUpdate(update);
+            if (update.GpuBundleKey is not null)
+            {
+                _owner.OptiScaler.ApplyGpuBundleKey(update.GpuBundleKey, persistModeChanges: true);
+            }
+        }
         public void ApplyDeferredStateUpdate(MainViewModelStateUpdate update) =>
             _owner.ApplyDeferredStateUpdate(update);
         public void ApplyBusyStateUpdate(MainViewModelBusyStateUpdate update) => _owner.ApplyBusyStateUpdate(update);

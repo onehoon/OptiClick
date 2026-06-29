@@ -14,6 +14,8 @@ public interface IOptiScalerSectionSettingsCodec
 
     string NormalizeFramerateLimitSelection(string? value);
 
+    string NormalizeFsr411Mode(string? value);
+
     string NormalizeVariant(string? value);
 
     bool IsFpsOverlayEnabled(string? value);
@@ -46,6 +48,11 @@ public sealed class CoreOptiScalerSectionSettingsCodec : IOptiScalerSectionSetti
     public string NormalizeFramerateLimitSelection(string? value)
     {
         return OptiScalerCommonIniSettingsMapper.NormalizeFramerateLimitSelection(value);
+    }
+
+    public string NormalizeFsr411Mode(string? value)
+    {
+        return OptiScalerFsr411Policy.NormalizeMode(value);
     }
 
     public string NormalizeVariant(string? value)

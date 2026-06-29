@@ -12,5 +12,6 @@ public sealed record OptiScalerSectionFactoryInput
     public required ObservableCollection<OptiScalerVariantSelectionOption> OptiScalerVariantOptions { get; init; }
     public required string InitialOptiScalerVariantOption { get; init; }
     public required OptiScalerCommonIniSettingsDocument InitialCommonIniSettings { get; init; }
+    public string InitialGpuBundleKey { get; init; } = "";
     public required IOptiScalerSectionSaveHandler SaveHandler { get; init; }
 }

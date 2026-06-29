@@ -69,6 +69,13 @@ public sealed class OptiScalerCommonIniSettingsDraftState
     }
 
     public string SavedFramerateLimit => _savedDraft.FramerateLimit;
+    public string SelectedFsr411Mode
+    {
+        get => _selectedDraft.Fsr411Mode;
+        set => _selectedDraft = _selectedDraft with { Fsr411Mode = OptiScalerFsr411Policy.NormalizeMode(value) };
+    }
+
+    public string SavedFsr411Mode => _savedDraft.Fsr411Mode;
 
     public void ApplySavedState(string selectedVariant, OptiScalerCommonIniSettingsDocument? commonIniSettings)
     {
@@ -89,6 +96,7 @@ public sealed class OptiScalerCommonIniSettingsDraftState
     {
         _savedOptiScalerVariantOption = NormalizeVariant(selectedVariant);
         _savedDraft = normalizedDraft;
+        _selectedDraft = normalizedDraft;
     }
 
     public OptiScalerCommonIniSettingsDraft BuildPersistableDraft()
@@ -111,6 +119,7 @@ public sealed class OptiScalerCommonIniSettingsDraftState
 
         return !string.Equals(_selectedOptiScalerVariantOption, _savedOptiScalerVariantOption, StringComparison.Ordinal)
                || !string.Equals(selected.ShowFpsMode, saved.ShowFpsMode, StringComparison.OrdinalIgnoreCase)
+               || !string.Equals(selected.Fsr411Mode, saved.Fsr411Mode, StringComparison.OrdinalIgnoreCase)
                || !string.Equals(selected.MenuScale, saved.MenuScale, StringComparison.OrdinalIgnoreCase)
                || (compareOverlayDetails
                    && (!string.Equals(selected.FpsOverlayType, saved.FpsOverlayType, StringComparison.OrdinalIgnoreCase)
@@ -124,5 +133,20 @@ public sealed class OptiScalerCommonIniSettingsDraftState
     {
         var normalized = (value ?? "").Trim().ToLowerInvariant();
         return string.IsNullOrWhiteSpace(normalized) ? StableVariant : normalized;
+    }
+
+    public bool NormalizeFsr411ForBundle(string? gpuBundleKey)
+    {
+        var saved = OptiScalerFsr411Policy.NormalizeModeForBundle(_savedDraft.Fsr411Mode, gpuBundleKey);
+        var selected = OptiScalerFsr411Policy.NormalizeModeForBundle(_selectedDraft.Fsr411Mode, gpuBundleKey);
+        var changed = !string.Equals(saved, _savedDraft.Fsr411Mode, StringComparison.Ordinal)
+                      || !string.Equals(selected, _selectedDraft.Fsr411Mode, StringComparison.Ordinal);
+        if (changed)
+        {
+            _savedDraft = _savedDraft with { Fsr411Mode = saved };
+            _selectedDraft = _selectedDraft with { Fsr411Mode = selected };
+        }
+
+        return changed;
     }
 }

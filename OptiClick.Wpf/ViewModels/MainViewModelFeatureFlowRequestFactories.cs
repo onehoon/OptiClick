@@ -116,7 +116,8 @@ internal sealed class MainInstallFlowRequestFactory
         var descriptorContext = resolvedGameInputs.OptiScalerIniApplyContext ?? new OptiScalerIniApplyContext();
         var resolvedContext = (optiScalerIniApplyContext ?? descriptorContext) with
         {
-            GameOptiScalerIniSettings = descriptorContext.GameOptiScalerIniSettings
+            GameOptiScalerIniSettings = descriptorContext.GameOptiScalerIniSettings,
+            GpuBundleKey = resolvedGameInputs.ExecutionDescriptor.GpuBundleKey
         };
         return new InstallFlowRequest
         {

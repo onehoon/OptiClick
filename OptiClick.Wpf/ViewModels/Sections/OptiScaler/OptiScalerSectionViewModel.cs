@@ -13,6 +13,7 @@ public sealed class OptiScalerSectionViewModel : ViewModelBase
     private readonly OptiScalerSectionStateController _stateController;
     private readonly OptiScalerSectionOptionController _optionController;
     private string _statusText = "";
+    private string _currentGpuBundleKey = "";
     private bool _isRefreshingOptionText;
 
     internal OptiScalerSectionViewModel(OptiScalerSectionViewModelOptions options)
@@ -31,9 +32,12 @@ public sealed class OptiScalerSectionViewModel : ViewModelBase
         MenuScaleOptions = new ObservableCollection<OptiScalerSettingOption>();
         FpsScaleOptions = new ObservableCollection<OptiScalerSettingOption>();
         FramerateLimitOptions = new ObservableCollection<OptiScalerSettingOption>();
+        Fsr411ModeOptions = new ObservableCollection<OptiScalerSettingOption>();
+        _currentGpuBundleKey = options.InitialGpuBundleKey ?? "";
         RefreshOptionText();
 
         SaveCommand = new RelayCommand(_ => SaveChanges(), _ => IsSaveEnabled);
+        ApplyGpuBundleKey(_currentGpuBundleKey, persistModeChanges: true);
     }
 
     public AppStrings Strings => _stringsAccessor();
@@ -53,6 +57,8 @@ public sealed class OptiScalerSectionViewModel : ViewModelBase
     public ObservableCollection<OptiScalerSettingOption> FpsScaleOptions { get; }
 
     public ObservableCollection<OptiScalerSettingOption> FramerateLimitOptions { get; }
+
+    public ObservableCollection<OptiScalerSettingOption> Fsr411ModeOptions { get; }
 
     public string SelectedOptiScalerVariantOption
     {
@@ -145,6 +151,16 @@ public sealed class OptiScalerSectionViewModel : ViewModelBase
             nameof(SelectedFramerateLimit));
     }
 
+    public string SelectedFsr411Mode
+    {
+        get => _stateController.SelectedFsr411Mode;
+        set => SetDraftValue(
+            () => _stateController.SelectedFsr411Mode,
+            value => _stateController.SelectedFsr411Mode = value,
+            _stateController.NormalizeFsr411Mode(value),
+            nameof(SelectedFsr411Mode));
+    }
+
     public string StatusText
     {
         get => _statusText;
@@ -157,6 +173,8 @@ public sealed class OptiScalerSectionViewModel : ViewModelBase
 
     public bool IsFpsOverlayDetailsVisible => _stateController.IsFpsOverlayDetailsVisible;
 
+    public bool IsFsr411Visible => _stateController.IsFsr411Visible;
+
     public ICommand SaveCommand { get; }
 
     public void ApplySavedSettings(
@@ -164,7 +182,29 @@ public sealed class OptiScalerSectionViewModel : ViewModelBase
         OptiScalerCommonIniSettingsDocument? commonIniSettings)
     {
         _stateController.ApplySavedSettings(selectedVariant, commonIniSettings);
+        ApplyGpuBundleKey(_currentGpuBundleKey, persistModeChanges: true);
         DiscardChanges();
+    }
+
+    public void ApplyGpuBundleKey(string? gpuBundleKey, bool persistModeChanges = false)
+    {
+        _currentGpuBundleKey = (gpuBundleKey ?? "").Trim();
+        var change = _stateController.ApplyGpuBundleKey(_currentGpuBundleKey);
+        if (change.VisibilityChanged)
+        {
+            OnPropertyChanged(nameof(IsFsr411Visible));
+        }
+
+        if (change.ModeChanged)
+        {
+            OnPropertyChanged(nameof(SelectedFsr411Mode));
+            if (persistModeChanges)
+            {
+                SaveFsr411Normalization();
+            }
+        }
+
+        UpdateDirtyState();
     }
 
     public void ApplyOptiScalerVariantOptions(
@@ -202,6 +242,7 @@ public sealed class OptiScalerSectionViewModel : ViewModelBase
         OnPropertyChanged(nameof(SelectedFpsScale));
         OnPropertyChanged(nameof(SelectedDisableSplashMode));
         OnPropertyChanged(nameof(SelectedFramerateLimit));
+        OnPropertyChanged(nameof(SelectedFsr411Mode));
         UpdateDirtyState();
     }
 
@@ -231,6 +272,7 @@ public sealed class OptiScalerSectionViewModel : ViewModelBase
         _stateController.ApplySavedSettings(
             saveResult.SelectedVariant,
             saveResult.CommonIniSettings);
+        ApplyGpuBundleKey(_currentGpuBundleKey, persistModeChanges: true);
         OnPropertyChanged(nameof(SelectedOptiScalerVariantOption));
         RefreshSelectedOptionBindings();
         StatusText = Strings.OptiScalerSavedStatus;
@@ -247,7 +289,8 @@ public sealed class OptiScalerSectionViewModel : ViewModelBase
             FpsOverlayPositionOptions,
             MenuScaleOptions,
             FpsScaleOptions,
-            FramerateLimitOptions);
+            FramerateLimitOptions,
+            Fsr411ModeOptions);
     }
 
     private bool SetDraftValue(
@@ -283,6 +326,18 @@ public sealed class OptiScalerSectionViewModel : ViewModelBase
         OnPropertyChanged(nameof(SelectedFpsScale));
         OnPropertyChanged(nameof(SelectedDisableSplashMode));
         OnPropertyChanged(nameof(SelectedFramerateLimit));
+        OnPropertyChanged(nameof(SelectedFsr411Mode));
+    }
+
+    private void SaveFsr411Normalization()
+    {
+        var savePayload = _stateController.BuildSavePayload();
+        var saveResult = _saveHandler.Save(new OptiScalerSectionSaveRequest(
+            savePayload.SelectedVariant,
+            savePayload.Document));
+        _stateController.ApplySavedSettings(
+            saveResult.SelectedVariant,
+            saveResult.CommonIniSettings);
     }
 
     private void UpdateDirtyState()
@@ -309,6 +364,7 @@ internal sealed record OptiScalerSectionViewModelOptions
     public required IOptiScalerSectionSaveHandler SaveHandler { get; init; }
     public required OptiScalerSectionStateController StateController { get; init; }
     public required OptiScalerSectionOptionController OptionController { get; init; }
+    public string InitialGpuBundleKey { get; init; } = "";
 }
 
 public sealed record OptiScalerSettingOption(string Value, string DisplayText);

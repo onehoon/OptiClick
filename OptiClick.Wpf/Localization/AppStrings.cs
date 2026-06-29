@@ -121,6 +121,10 @@ public sealed record AppStrings
     public string OptiScalerStartupDescription { get; init; } = "";
     public string OptiScalerFramerateTitle { get; init; } = "";
     public string OptiScalerFramerateDescription { get; init; } = "";
+    public string OptiScalerFsr411Title { get; init; } = "";
+    public string OptiScalerFsr411Description { get; init; } = "";
+    public string OptiScalerFsr411Disabled { get; init; } = "";
+    public string OptiScalerFsr411Enabled { get; init; } = "";
     public string OptiScalerShowFps { get; init; } = "";
     public string OptiScalerOverlayType { get; init; } = "";
     public string OptiScalerOverlayPosition { get; init; } = "";

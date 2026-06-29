@@ -10,6 +10,8 @@ public sealed record OptiScalerIniApplyContext
     public OptiScalerCommonIniSettingsDocument CommonOptiScalerIniSettings { get; init; } =
         new();
 
+    public string GpuBundleKey { get; init; } = "";
+
     public IReadOnlyDictionary<string, string> NormalizeGameOptiScalerIniSettings()
     {
         return NormalizeIniSettings(GameOptiScalerIniSettings);
@@ -18,7 +20,7 @@ public sealed record OptiScalerIniApplyContext
     public IReadOnlyDictionary<string, string> NormalizeCommonOptiScalerIniSettings()
     {
         return NormalizeIniSettings(
-            OptiScalerCommonIniSettingsMaterializer.Materialize(CommonOptiScalerIniSettings));
+            OptiScalerCommonIniSettingsMaterializer.Materialize(CommonOptiScalerIniSettings, GpuBundleKey));
     }
 
     public static IReadOnlyDictionary<string, string> NormalizeIniSettings(IReadOnlyDictionary<string, string>? settings)

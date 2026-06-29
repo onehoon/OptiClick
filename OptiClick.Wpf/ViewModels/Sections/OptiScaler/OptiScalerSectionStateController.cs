@@ -10,10 +10,12 @@ internal sealed class OptiScalerSectionStateController
     public OptiScalerSectionStateController(
         IOptiScalerSectionSettingsCodec settingsCodec,
         string initialSelectedVariant,
-        OptiScalerCommonIniSettingsDocument? initialCommonIniSettings)
+        OptiScalerCommonIniSettingsDocument? initialCommonIniSettings,
+        string initialGpuBundleKey = "")
     {
         _settingsCodec = settingsCodec ?? throw new ArgumentNullException(nameof(settingsCodec));
         ApplySavedSettings(initialSelectedVariant, initialCommonIniSettings);
+        ApplyGpuBundleKey(initialGpuBundleKey);
     }
 
     public string SelectedOptiScalerVariantOption
@@ -64,9 +66,17 @@ internal sealed class OptiScalerSectionStateController
         set => _draftState.SelectedFramerateLimit = value;
     }
 
+    public string SelectedFsr411Mode
+    {
+        get => _draftState.SelectedFsr411Mode;
+        set => _draftState.SelectedFsr411Mode = NormalizeFsr411Mode(value);
+    }
+
     public bool HasUnsavedChanges => _draftState.HasUnsavedChanges();
 
     public bool IsFpsOverlayDetailsVisible => _settingsCodec.IsFpsOverlayEnabled(SelectedShowFpsMode);
+
+    public bool IsFsr411Visible { get; private set; }
 
     public string NormalizeVariant(string? value)
     {
@@ -96,6 +106,20 @@ internal sealed class OptiScalerSectionStateController
     public string NormalizeFramerateLimitSelection(string? value)
     {
         return _settingsCodec.NormalizeFramerateLimitSelection(value);
+    }
+
+    public string NormalizeFsr411Mode(string? value)
+    {
+        return _settingsCodec.NormalizeFsr411Mode(value);
+    }
+
+    public OptiScalerFsr411BundleStateChange ApplyGpuBundleKey(string? gpuBundleKey)
+    {
+        var nextVisible = OptiScalerFsr411Policy.ShouldShowMenu(gpuBundleKey);
+        var visibilityChanged = IsFsr411Visible != nextVisible;
+        IsFsr411Visible = nextVisible;
+        var modeChanged = _draftState.NormalizeFsr411ForBundle(gpuBundleKey);
+        return new OptiScalerFsr411BundleStateChange(visibilityChanged, modeChanged);
     }
 
     public void ApplySavedSettings(
@@ -140,3 +164,7 @@ internal sealed record OptiScalerSectionSavePayload(
     string SelectedVariant,
     OptiScalerCommonIniSettingsDraft PersistedDraft,
     OptiScalerCommonIniSettingsDocument Document);
+
+internal sealed record OptiScalerFsr411BundleStateChange(
+    bool VisibilityChanged,
+    bool ModeChanged);

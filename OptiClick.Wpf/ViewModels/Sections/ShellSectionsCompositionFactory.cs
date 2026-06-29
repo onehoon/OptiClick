@@ -131,6 +131,7 @@ public sealed class ShellSectionsCompositionFactory
                     OptiScalerVariantOptions = optiScaler.OptiScalerVariantOptions,
                     InitialOptiScalerVariantOption = optiScaler.InitialOptiScalerVariantOption,
                     InitialCommonIniSettings = optiScaler.InitialCommonIniSettings,
+                    InitialGpuBundleKey = optiScaler.InitialGpuBundleKey,
                     SaveHandler = optiScaler.SaveHandler
                 },
                 Settings = new SettingsSectionFactoryInput
@@ -265,5 +266,6 @@ public sealed record OptiScalerSectionCompositionInput
     public required ObservableCollection<OptiScalerVariantSelectionOption> OptiScalerVariantOptions { get; init; }
     public required string InitialOptiScalerVariantOption { get; init; }
     public required OptiScalerCommonIniSettingsDocument InitialCommonIniSettings { get; init; }
+    public string InitialGpuBundleKey { get; init; } = "";
     public required IOptiScalerSectionSaveHandler SaveHandler { get; init; }
 }

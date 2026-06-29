@@ -116,7 +116,8 @@ public sealed class ShellSectionsFactory
                 OptiScalerVariantOptions = input.OptiScalerVariantOptions,
                 SaveHandler = input.SaveHandler,
                 StateController = stateController,
-                OptionController = optionController
+                OptionController = optionController,
+                InitialGpuBundleKey = input.InitialGpuBundleKey
             });
     }
 }

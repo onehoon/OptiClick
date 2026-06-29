@@ -43,7 +43,8 @@ internal sealed class OptiScalerSectionOptionController
         ObservableCollection<OptiScalerSettingOption> fpsOverlayPositionOptions,
         ObservableCollection<OptiScalerSettingOption> menuScaleOptions,
         ObservableCollection<OptiScalerSettingOption> fpsScaleOptions,
-        ObservableCollection<OptiScalerSettingOption> framerateLimitOptions)
+        ObservableCollection<OptiScalerSettingOption> framerateLimitOptions,
+        ObservableCollection<OptiScalerSettingOption> fsr411ModeOptions)
     {
         var optionSet = _settingOptionProvider.Create(strings);
         ReplaceOptions(fpsDisplayOptions, optionSet.FpsDisplayOptions);
@@ -53,6 +54,7 @@ internal sealed class OptiScalerSectionOptionController
         ReplaceOptions(menuScaleOptions, optionSet.MenuScaleOptions);
         ReplaceOptions(fpsScaleOptions, optionSet.FpsScaleOptions);
         ReplaceOptions(framerateLimitOptions, optionSet.FramerateLimitOptions);
+        ReplaceOptions(fsr411ModeOptions, optionSet.Fsr411ModeOptions);
     }
 
     private static void ReplaceOptions(

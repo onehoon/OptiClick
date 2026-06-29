@@ -79,6 +79,15 @@ public sealed class OptiScalerSettingOptionProvider
                 new OptiScalerSettingOption(
                     OptiScalerCommonIniSettingsMapper.FramerateLimit165Hz,
                     OptiScalerCommonIniSettingsMapper.FramerateLimit165Hz)
+            ],
+            Fsr411ModeOptions:
+            [
+                new OptiScalerSettingOption(
+                    OptiScalerFsr411Policy.ModeAuto,
+                    strings.OptiScalerFsr411Disabled),
+                new OptiScalerSettingOption(
+                    OptiScalerFsr411Policy.ModeEnabled,
+                    strings.OptiScalerFsr411Enabled)
             ]);
     }
 }
@@ -90,4 +99,5 @@ public sealed record OptiScalerSettingOptionSet(
     IReadOnlyList<OptiScalerSettingOption> FpsOverlayPositionOptions,
     IReadOnlyList<OptiScalerSettingOption> MenuScaleOptions,
     IReadOnlyList<OptiScalerSettingOption> FpsScaleOptions,
-    IReadOnlyList<OptiScalerSettingOption> FramerateLimitOptions);
+    IReadOnlyList<OptiScalerSettingOption> FramerateLimitOptions,
+    IReadOnlyList<OptiScalerSettingOption> Fsr411ModeOptions);

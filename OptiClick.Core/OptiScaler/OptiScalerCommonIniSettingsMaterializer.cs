@@ -25,6 +25,21 @@ public static class OptiScalerCommonIniSettingsMaterializer
     public static IReadOnlyDictionary<string, string> Materialize(
         OptiScalerCommonIniSettingsDocument? document)
     {
+        return Materialize(document, gpuBundleKey: null, includeFsr411ManagedEntries: false);
+    }
+
+    public static IReadOnlyDictionary<string, string> Materialize(
+        OptiScalerCommonIniSettingsDocument? document,
+        string? gpuBundleKey)
+    {
+        return Materialize(document, gpuBundleKey, includeFsr411ManagedEntries: true);
+    }
+
+    private static IReadOnlyDictionary<string, string> Materialize(
+        OptiScalerCommonIniSettingsDocument? document,
+        string? gpuBundleKey,
+        bool includeFsr411ManagedEntries)
+    {
         var normalizedDocument = NormalizeDocument(document);
         var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var entry in normalizedDocument.Entries)
@@ -45,13 +60,36 @@ public static class OptiScalerCommonIniSettingsMaterializer
             result[compositeKey] = value;
         }
 
+        if (includeFsr411ManagedEntries)
+        {
+            foreach (var entry in OptiScalerFsr411Policy.BuildManagedEntries(
+                         normalizedDocument.Fsr411Mode,
+                         gpuBundleKey))
+            {
+                var compositeKey = BuildCompositeKey(entry.Section, entry.Key);
+                var value = (entry.Value ?? "").Trim();
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    continue;
+                }
+
+                if (string.Equals(value, AutoValue, StringComparison.OrdinalIgnoreCase)
+                    && !CanWriteAuto(compositeKey))
+                {
+                    continue;
+                }
+
+                result[compositeKey] = value;
+            }
+        }
+
         return result;
     }
 
     public static OptiScalerCommonIniSettingsDocument NormalizeDocument(
         OptiScalerCommonIniSettingsDocument? document)
     {
-        if (document is null || document.Entries.Count == 0)
+        if (document is null)
         {
             return new OptiScalerCommonIniSettingsDocument();
         }
@@ -81,6 +119,7 @@ public static class OptiScalerCommonIniSettingsMaterializer
         return new OptiScalerCommonIniSettingsDocument
         {
             Version = 1,
+            Fsr411Mode = OptiScalerFsr411Policy.NormalizeMode(document.Fsr411Mode),
             Entries = entriesByCompositeKey
                 .OrderBy(static pair => pair.Key, StringComparer.OrdinalIgnoreCase)
                 .Select(static pair => pair.Value)
@@ -102,5 +141,13 @@ public static class OptiScalerCommonIniSettingsMaterializer
         var normalized = (compositeKey ?? "").Trim();
         return !string.IsNullOrWhiteSpace(normalized)
                && SupportedCompositeKeys.Contains(normalized);
+    }
+
+    public static bool CanWriteAuto(string? compositeKey)
+    {
+        var normalized = (compositeKey ?? "").Trim();
+        return string.Equals(normalized, OptiScalerFsr411IniKeys.Dx12UpscalerCompositeKey, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(normalized, OptiScalerFsr411IniKeys.Fsr4ForceModelCompositeKey, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(normalized, OptiScalerFsr411IniKeys.LoadCustomAmdxc64OnRdna2CompositeKey, StringComparison.OrdinalIgnoreCase);
     }
 }
