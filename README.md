@@ -212,5 +212,5 @@ nitec, TheRazerMD, Fakemichau, Keu, By-U, Atsy, san9, Cryio
 
 ## Privacy Policy
 
-- [개인정보 처리방침 (한국어)](https://github.com/onehoon/OptiClick/wiki/Privacy-Policy)
-- [Privacy Policy (English)](https://github.com/onehoon/OptiClick/wiki/Privacy-Policy-English)
+- [개인정보 처리방침](https://github.com/onehoon/OptiClick/wiki/Privacy-Policy)
+- [Privacy Policy](https://github.com/onehoon/OptiClick/wiki/Privacy-Policy-English)
