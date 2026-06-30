@@ -207,3 +207,10 @@ nitec, TheRazerMD, Fakemichau, Keu, By-U, Atsy, san9, Cryio
 [![Latest release downloads](https://img.shields.io/github/downloads/onehoon/OptiClick/latest/total?label=latest%20downloads)](https://github.com/onehoon/OptiClick/releases/latest)
 [![Total downloads](https://img.shields.io/github/downloads/onehoon/OptiClick/total?label=total%20downloads)](https://github.com/onehoon/OptiClick/releases)
 [![GitHub release](https://img.shields.io/github/v/release/onehoon/OptiClick?label=latest%20release)](https://github.com/onehoon/OptiClick/releases/latest)
+
+---
+
+## Privacy Policy
+
+- [개인정보 처리방침 (한국어)](https://github.com/onehoon/OptiClick/wiki/Privacy-Policy)
+- [Privacy Policy (English)](https://github.com/onehoon/OptiClick/wiki/Privacy-Policy-English)
