@@ -2,7 +2,7 @@ namespace OptiClick.Wpf.Logging;
 
 public sealed class AppLogRetentionPolicy
 {
-    private int _retentionDays = 7;
+    private int _retentionDays = 2;
 
     public int RetentionDays
     {
