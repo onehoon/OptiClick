@@ -60,9 +60,22 @@ public static class ArchiveMemberPathSafety
         }
 
         var fullPath = Path.GetFullPath(Path.Combine(root, normalized));
+        var rootWithSeparator = EnsureTrailingDirectorySeparator(root);
         return fullPath.Equals(root, StringComparison.OrdinalIgnoreCase)
-               || fullPath.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
-               || fullPath.StartsWith(root + Path.AltDirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+               || fullPath.StartsWith(rootWithSeparator, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string EnsureTrailingDirectorySeparator(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return path;
+        }
+
+        return path.EndsWith(Path.DirectorySeparatorChar)
+               || path.EndsWith(Path.AltDirectorySeparatorChar)
+            ? path
+            : path + Path.DirectorySeparatorChar;
     }
 
     private static bool IsDriveAbsolutePath(string path)
