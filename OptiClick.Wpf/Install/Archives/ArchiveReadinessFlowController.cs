@@ -1,6 +1,4 @@
-using System.IO;
 using OptiClick.Wpf.Install.Flow;
-using OptiClick.Wpf.Install.Planning;
 using OptiClick.Wpf.Shell.RuntimeData;
 
 namespace OptiClick.Wpf.Install.Archives;
@@ -9,16 +7,28 @@ public sealed class ArchiveReadinessFlowController
 {
     private readonly IArchivePreparationCoordinator? _archivePreparationCoordinator;
     private readonly IOptiScalerVariantArchiveSyncService? _optiScalerVariantArchiveSyncService;
-    private readonly IOptiScalerPayloadOptiPatcherInjector? _optiPatcherInjector;
+    private readonly OptiScalerPayloadOptiPatcherInjectionCoordinator _optiPatcherInjectionCoordinator;
 
     public ArchiveReadinessFlowController(
         IArchivePreparationCoordinator? archivePreparationCoordinator,
         IOptiScalerVariantArchiveSyncService? optiScalerVariantArchiveSyncService = null,
         IOptiScalerPayloadOptiPatcherInjector? optiPatcherInjector = null)
+        : this(
+            archivePreparationCoordinator,
+            optiScalerVariantArchiveSyncService,
+            new OptiScalerPayloadOptiPatcherInjectionCoordinator(optiPatcherInjector))
+    {
+    }
+
+    internal ArchiveReadinessFlowController(
+        IArchivePreparationCoordinator? archivePreparationCoordinator,
+        IOptiScalerVariantArchiveSyncService? optiScalerVariantArchiveSyncService,
+        OptiScalerPayloadOptiPatcherInjectionCoordinator? optiPatcherInjectionCoordinator)
     {
         _archivePreparationCoordinator = archivePreparationCoordinator;
         _optiScalerVariantArchiveSyncService = optiScalerVariantArchiveSyncService;
-        _optiPatcherInjector = optiPatcherInjector;
+        _optiPatcherInjectionCoordinator =
+            optiPatcherInjectionCoordinator ?? new OptiScalerPayloadOptiPatcherInjectionCoordinator(null);
     }
 
     public async Task<ArchiveReadinessFlowResult> RefreshAsync(
@@ -79,20 +89,23 @@ public sealed class ArchiveReadinessFlowController
                 request.ModuleDownloadLinks,
                 cancellationToken);
 
-            var optiPatcherInjection = InjectOptiPatcherIntoOptiScalerPayloads(
-                optiScalerSnapshot,
-                startupSnapshot,
-                variantSync);
-            if (optiPatcherInjection is not null)
-            {
-                logs.AddRange(ArchiveReadinessLogFormatter.FormatOptiPatcherInjectionLogs(optiPatcherInjection));
-            }
-
             var merged = ArchivePreparationSnapshotMerger.Merge(optiScalerSnapshot, startupSnapshot);
             var readiness = ApplyOptiScalerVariantReadiness(
                 ArchivePreparationSnapshotMapper.ToInstallPlanSnapshot(merged),
                 variantSync);
-            readiness = ApplyOptiPatcherInjectionReadiness(readiness, variantSync, optiPatcherInjection);
+
+            var optiPatcherInjection = _optiPatcherInjectionCoordinator.Apply(
+                readiness,
+                optiScalerSnapshot,
+                startupSnapshot,
+                variantSync);
+            if (optiPatcherInjection.Injection is not null)
+            {
+                logs.AddRange(ArchiveReadinessLogFormatter.FormatOptiPatcherInjectionLogs(
+                    optiPatcherInjection.Injection));
+            }
+
+            readiness = optiPatcherInjection.Readiness;
 
             foreach (var key in ArchivePreparationSequence.StartupReadinessOrder)
             {
@@ -164,92 +177,6 @@ public sealed class ArchiveReadinessFlowController
             OptiScalerFileVersion = variantSync.EffectiveFileVersion,
             OptiScalerProductVersion = variantSync.EffectiveProductVersion
         };
-    }
-
-    private OptiScalerPayloadOptiPatcherInjectionResult? InjectOptiPatcherIntoOptiScalerPayloads(
-        ArchivePreparationSnapshot optiScalerSnapshot,
-        ArchivePreparationSnapshot startupSnapshot,
-        OptiScalerVariantSyncResult? variantSync)
-    {
-        if (_optiPatcherInjector is null)
-        {
-            return null;
-        }
-
-        var targets = BuildOptiScalerInjectionTargets(optiScalerSnapshot, variantSync);
-        if (targets.Count == 0)
-        {
-            return null;
-        }
-
-        return _optiPatcherInjector.Inject(new OptiScalerPayloadOptiPatcherInjectionRequest
-        {
-            OptiPatcherPayloadDirectory = startupSnapshot.Get(ArchiveAssetKey.OptiPatcher).ArchivePath,
-            Targets = targets
-        });
-    }
-
-    private static IReadOnlyList<OptiScalerPayloadOptiPatcherInjectionTarget> BuildOptiScalerInjectionTargets(
-        ArchivePreparationSnapshot optiScalerSnapshot,
-        OptiScalerVariantSyncResult? variantSync)
-    {
-        if (variantSync is not null && variantSync.Manifest.Variants.Count > 0)
-        {
-            return variantSync.Manifest.Variants.Values
-                .Select(static entry => new OptiScalerPayloadOptiPatcherInjectionTarget
-                {
-                    Variant = entry.Variant,
-                    CacheEntryName = entry.CacheEntry,
-                    PayloadDirectory = entry.PayloadDirectory
-                })
-                .ToArray();
-        }
-
-        var optiScaler = optiScalerSnapshot.Get(ArchiveAssetKey.OptiScaler);
-        if (string.IsNullOrWhiteSpace(optiScaler.ArchivePath))
-        {
-            return Array.Empty<OptiScalerPayloadOptiPatcherInjectionTarget>();
-        }
-
-        return
-        [
-            new OptiScalerPayloadOptiPatcherInjectionTarget
-            {
-                CacheEntryName = Path.GetFileName(optiScaler.ArchivePath),
-                PayloadDirectory = optiScaler.ArchivePath
-            }
-        ];
-    }
-
-    private static ArchiveReadinessSnapshot ApplyOptiPatcherInjectionReadiness(
-        ArchiveReadinessSnapshot readiness,
-        OptiScalerVariantSyncResult? variantSync,
-        OptiScalerPayloadOptiPatcherInjectionResult? injection)
-    {
-        if (injection is null)
-        {
-            return readiness;
-        }
-
-        var optiScalerState = readiness.OptiScalerState;
-        if (optiScalerState == ArchiveReadinessState.Ready
-            && (!AreAllRuntimeOptiScalerVariantsReady(variantSync) || !injection.IsReady))
-        {
-            optiScalerState = ArchiveReadinessState.Failed;
-        }
-
-        return readiness with
-        {
-            OptiScalerState = optiScalerState,
-            OptiPatcherState = injection.IsReady ? ArchiveReadinessState.Ready : ArchiveReadinessState.Failed
-        };
-    }
-
-    private static bool AreAllRuntimeOptiScalerVariantsReady(OptiScalerVariantSyncResult? variantSync)
-    {
-        return variantSync is null
-               || variantSync.Manifest.Variants.Count == 0
-               || variantSync.Manifest.Variants.Values.All(static entry => entry.Ready);
     }
 
     private static string FormatBool(bool value)

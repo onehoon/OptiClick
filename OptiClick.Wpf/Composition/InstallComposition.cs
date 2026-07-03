@@ -118,10 +118,12 @@ public sealed class InstallComposition
         var componentInstallContextBuilder = new ComponentInstallContextBuilder();
         var installPopupPresenter = new InstallPopupPresenter();
         var installCompletionMessageBuilder = new InstallCompletionMessageBuilder();
+        var optiPatcherInjectionCoordinator = new OptiScalerPayloadOptiPatcherInjectionCoordinator(
+            archivePreparation.OptiScalerPayloadOptiPatcherInjector);
         var archiveReadinessFlowController = new ArchiveReadinessFlowController(
             archivePreparation.ArchivePreparationCoordinator,
             archivePreparation.OptiScalerVariantArchiveSyncService,
-            archivePreparation.OptiScalerPayloadOptiPatcherInjector);
+            optiPatcherInjectionCoordinator);
         var configApplyComposition = ConfigApplyCompositionFactory.Create(new ConfigApplyCompositionRequest
         {
             ConfigProfileApplier = configProfileServices.ConfigProfileApplier,
