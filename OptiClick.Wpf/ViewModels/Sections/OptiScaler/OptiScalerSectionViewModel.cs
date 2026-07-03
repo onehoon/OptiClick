@@ -268,6 +268,12 @@ public sealed class OptiScalerSectionViewModel : ViewModelBase
         var saveResult = _saveHandler.Save(new OptiScalerSectionSaveRequest(
             savePayload.SelectedVariant,
             savePayload.Document));
+        if (!saveResult.IsSuccess)
+        {
+            StatusText = Strings.OptiScalerSaveFailedStatus;
+            UpdateDirtyState(clearStatusWhenDirty: false);
+            return;
+        }
 
         _stateController.ApplySavedSettings(
             saveResult.SelectedVariant,
@@ -335,14 +341,23 @@ public sealed class OptiScalerSectionViewModel : ViewModelBase
         var saveResult = _saveHandler.Save(new OptiScalerSectionSaveRequest(
             savePayload.SelectedVariant,
             savePayload.Document));
+        if (!saveResult.IsSuccess)
+        {
+            StatusText = Strings.OptiScalerSaveFailedStatus;
+            UpdateDirtyState(clearStatusWhenDirty: false);
+            return;
+        }
+
         _stateController.ApplySavedSettings(
             saveResult.SelectedVariant,
             saveResult.CommonIniSettings);
     }
 
-    private void UpdateDirtyState()
+    private void UpdateDirtyState(bool clearStatusWhenDirty = true)
     {
-        if (HasUnsavedChanges && !string.IsNullOrWhiteSpace(StatusText))
+        if (clearStatusWhenDirty
+            && HasUnsavedChanges
+            && !string.IsNullOrWhiteSpace(StatusText))
         {
             StatusText = "";
         }

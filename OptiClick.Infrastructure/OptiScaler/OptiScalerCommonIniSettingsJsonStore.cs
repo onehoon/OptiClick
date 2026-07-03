@@ -61,19 +61,21 @@ public sealed class OptiScalerCommonIniSettingsJsonStore : IOptiScalerCommonIniS
         }
     }
 
-    public void Save(OptiScalerCommonIniSettingsDocument settings)
+    public OptiScalerSettingsPersistenceResult Save(OptiScalerCommonIniSettingsDocument settings)
     {
         var safeSettings = OptiScalerCommonIniSettingsMaterializer.NormalizeDocument(settings);
         try
         {
             var json = JsonSerializer.Serialize(safeSettings, SerializerOptions);
             AtomicFileWriter.WriteAllTextAtomic(_settingsPath, json);
+            return OptiScalerSettingsPersistenceResult.Success();
         }
         catch (Exception ex)
         {
             _logger.Warning(
                 "Settings",
                 $"optiscaler common ini settings save failed file={Path.GetFileName(_settingsPath)} type={ex.GetType().Name}");
+            return OptiScalerSettingsPersistenceResult.Failed("common_ini_save_failed");
         }
     }
 

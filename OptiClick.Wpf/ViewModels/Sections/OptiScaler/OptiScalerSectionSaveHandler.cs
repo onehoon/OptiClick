@@ -12,5 +12,8 @@ public sealed record OptiScalerSectionSaveRequest(
     OptiScalerCommonIniSettingsDocument CommonIniSettings);
 
 public sealed record OptiScalerSectionSaveResult(
+    bool IsSuccess,
     string SelectedVariant,
-    OptiScalerCommonIniSettingsDocument CommonIniSettings);
+    OptiScalerCommonIniSettingsDocument CommonIniSettings,
+    string ErrorCode = "",
+    string ErrorMessage = "");

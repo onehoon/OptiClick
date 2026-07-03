@@ -106,6 +106,7 @@ public sealed record AppStrings
     public string OptiScalerDescription { get; init; } = "";
     public string OptiScalerSaveButton { get; init; } = "";
     public string OptiScalerSavedStatus { get; init; } = "";
+    public string OptiScalerSaveFailedStatus { get; init; } = "";
     public string OptiScalerDiscardChangesTitle { get; init; } = "";
     public string OptiScalerDiscardChangesSummary { get; init; } = "";
     public string OptiScalerDiscardChangesPrimaryButton { get; init; } = "";

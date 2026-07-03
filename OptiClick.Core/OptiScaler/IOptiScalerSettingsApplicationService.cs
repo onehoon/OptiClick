@@ -6,7 +6,7 @@ public interface IOptiScalerSettingsApplicationService
 {
     OptiScalerCommonIniSettingsDocument LoadCommonIniSettings();
 
-    void SaveCommonIniSettings(OptiScalerCommonIniSettingsDocument settings);
+    OptiScalerSettingsPersistenceResult SaveCommonIniSettings(OptiScalerCommonIniSettingsDocument settings);
 
     OptiScalerSettingsApplyResult ApplySettings(OptiScalerSettingsApplyRequest request);
 

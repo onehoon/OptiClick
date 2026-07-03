@@ -35,9 +35,9 @@ internal sealed class MainOptiScalerSettingsController
         });
     }
 
-    public void SaveCommonIniSettings(OptiScalerCommonIniSettingsDocument commonIniSettings)
+    public OptiScalerSettingsPersistenceResult SaveCommonIniSettings(OptiScalerCommonIniSettingsDocument commonIniSettings)
     {
-        _settingsApplicationService.SaveCommonIniSettings(commonIniSettings);
+        return _settingsApplicationService.SaveCommonIniSettings(commonIniSettings);
     }
 }
 

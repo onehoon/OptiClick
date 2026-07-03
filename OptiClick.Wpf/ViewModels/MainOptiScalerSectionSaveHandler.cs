@@ -33,10 +33,21 @@ internal sealed class MainOptiScalerSectionSaveHandler : IOptiScalerSectionSaveH
             LanguagePreference = _languagePreferenceAccessor(),
             CommonIniSettings = request.CommonIniSettings
         });
+        if (!applyResult.IsSuccess)
+        {
+            return new OptiScalerSectionSaveResult(
+                false,
+                applyResult.SelectedVariantPreference,
+                applyResult.CommonIniSettings,
+                applyResult.ErrorCode,
+                applyResult.ErrorMessage);
+        }
+
         _applyVariantPreference(applyResult.SelectedVariantPreference);
         _refreshVisibleGamesAfterPreferenceChange();
 
         return new OptiScalerSectionSaveResult(
+            true,
             applyResult.SelectedVariantPreference,
             applyResult.CommonIniSettings);
     }

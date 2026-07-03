@@ -21,9 +21,9 @@ public sealed class OptiScalerSettingsApplicationService : IOptiScalerSettingsAp
         return NormalizeDocument(_commonIniSettingsStore.Load());
     }
 
-    public void SaveCommonIniSettings(OptiScalerCommonIniSettingsDocument settings)
+    public OptiScalerSettingsPersistenceResult SaveCommonIniSettings(OptiScalerCommonIniSettingsDocument settings)
     {
-        _commonIniSettingsStore.Save(NormalizeDocument(settings));
+        return _commonIniSettingsStore.Save(NormalizeDocument(settings));
     }
 
     public OptiScalerSettingsApplyResult ApplySettings(OptiScalerSettingsApplyRequest request)
@@ -32,11 +32,24 @@ public sealed class OptiScalerSettingsApplicationService : IOptiScalerSettingsAp
 
         var normalizedVariant = OptiScalerVariantPreference.NormalizeOrDefault(request.SelectedVariantPreference);
         var normalizedSettings = NormalizeDocument(request.CommonIniSettings);
-        _commonIniSettingsStore.Save(normalizedSettings);
+        var saveResult = _commonIniSettingsStore.Save(normalizedSettings);
+        if (!saveResult.IsSuccess)
+        {
+            return new OptiScalerSettingsApplyResult
+            {
+                IsSuccess = false,
+                ErrorCode = saveResult.ErrorCode,
+                ErrorMessage = saveResult.ErrorMessage,
+                SelectedVariantPreference = normalizedVariant,
+                CommonIniSettings = normalizedSettings
+            };
+        }
+
         _variantPreferenceWriter?.WriteVariantPreference(request.LanguagePreference, normalizedVariant);
 
         return new OptiScalerSettingsApplyResult
         {
+            IsSuccess = true,
             SelectedVariantPreference = normalizedVariant,
             CommonIniSettings = normalizedSettings
         };
