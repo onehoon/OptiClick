@@ -26,7 +26,7 @@ public static class StartupArchiveAssetDefinitions
             RuntimeDataKey = ArchiveAssetRuntimeDataKeys.Unreal5,
             Label = "Unreal5 patch archive",
             CacheDirectoryName = "Unreal5",
-            RequiredFiles = ["dxgi.dll", "dxgi.ini"]
+            RequiredFiles = ["dxgi.dll", "dxgi_proxy.ini"]
         },
         new()
         {
