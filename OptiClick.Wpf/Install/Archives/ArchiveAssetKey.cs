@@ -6,7 +6,8 @@ public enum ArchiveAssetKey
     OptiPatcher,
     SpecialK,
     ReFramework,
-    Unreal5
+    Unreal5,
+    Fsr4
 }
 
 public static class ArchiveAssetRuntimeDataKeys
@@ -16,6 +17,7 @@ public static class ArchiveAssetRuntimeDataKeys
     public const string SpecialK = "specialk";
     public const string ReFramework = "reframework";
     public const string Unreal5 = "unreal5";
+    public const string Fsr4 = "fsr4_variants";
 
     public static string ToRuntimeDataEntryKey(ArchiveAssetKey key)
     {
@@ -26,6 +28,7 @@ public static class ArchiveAssetRuntimeDataKeys
             ArchiveAssetKey.SpecialK => SpecialK,
             ArchiveAssetKey.ReFramework => ReFramework,
             ArchiveAssetKey.Unreal5 => Unreal5,
+            ArchiveAssetKey.Fsr4 => Fsr4,
             _ => ""
         };
     }

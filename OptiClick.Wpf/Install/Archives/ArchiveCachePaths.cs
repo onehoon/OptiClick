@@ -14,6 +14,7 @@ public sealed record ArchiveCachePaths
     public required string SpecialKCacheDir { get; init; }
     public required string ReFrameworkCacheDir { get; init; }
     public required string Unreal5CacheDir { get; init; }
+    public required string Fsr4CacheDir { get; init; }
     public required string OptiScalerPayloadCacheRoot { get; init; }
 
     public static ArchiveCachePaths CreateDefault(IAppLocalDataPathProvider? localDataPathProvider = null)
@@ -32,6 +33,7 @@ public sealed record ArchiveCachePaths
             SpecialKCacheDir = Path.Combine(archivesRoot, "SpecialK"),
             ReFrameworkCacheDir = Path.Combine(archivesRoot, "REFramework"),
             Unreal5CacheDir = Path.Combine(archivesRoot, "Unreal5"),
+            Fsr4CacheDir = Path.Combine(archivesRoot, "FSR4"),
             OptiScalerPayloadCacheRoot = optiScalerArchiveRoot
         };
     }
@@ -45,6 +47,7 @@ public sealed record ArchiveCachePaths
         Directory.CreateDirectory(SpecialKCacheDir);
         Directory.CreateDirectory(ReFrameworkCacheDir);
         Directory.CreateDirectory(Unreal5CacheDir);
+        Directory.CreateDirectory(Fsr4CacheDir);
         Directory.CreateDirectory(OptiScalerPayloadCacheRoot);
     }
 
@@ -57,6 +60,7 @@ public sealed record ArchiveCachePaths
             ArchiveAssetKey.SpecialK => SpecialKCacheDir,
             ArchiveAssetKey.ReFramework => ReFrameworkCacheDir,
             ArchiveAssetKey.Unreal5 => Unreal5CacheDir,
+            ArchiveAssetKey.Fsr4 => Fsr4CacheDir,
             _ => Root
         };
     }

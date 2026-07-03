@@ -213,7 +213,8 @@ public sealed record ArchiveReadinessSnapshot
         OptiPatcherState = ArchiveReadinessState.NotReady,
         SpecialKState = ArchiveReadinessState.NotReady,
         ReframeworkState = ArchiveReadinessState.NotReady,
-        Unreal5State = ArchiveReadinessState.NotReady
+        Unreal5State = ArchiveReadinessState.NotReady,
+        Fsr4State = ArchiveReadinessState.NotReady
     };
 
     public ArchiveReadinessState OptiScalerState { get; init; } = ArchiveReadinessState.NotReady;
@@ -231,6 +232,8 @@ public sealed record ArchiveReadinessSnapshot
     public string ReframeworkSourceArchive { get; init; } = "";
     public ArchiveReadinessState Unreal5State { get; init; } = ArchiveReadinessState.NotReady;
     public string Unreal5SourceArchive { get; init; } = "";
+    public ArchiveReadinessState Fsr4State { get; init; } = ArchiveReadinessState.NotReady;
+    public string Fsr4SourceArchive { get; init; } = "";
 
     public bool AreAllStartupArchivesReady()
     {
@@ -238,7 +241,8 @@ public sealed record ArchiveReadinessSnapshot
                && OptiPatcherState == ArchiveReadinessState.Ready
                && SpecialKState == ArchiveReadinessState.Ready
                && ReframeworkState == ArchiveReadinessState.Ready
-               && Unreal5State == ArchiveReadinessState.Ready;
+               && Unreal5State == ArchiveReadinessState.Ready
+               && Fsr4State == ArchiveReadinessState.Ready;
     }
 }
 

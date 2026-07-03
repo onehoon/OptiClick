@@ -17,7 +17,9 @@ public static class ArchivePreparationSnapshotMapper
             ReframeworkState = MapState(snapshot.Get(ArchiveAssetKey.ReFramework)),
             ReframeworkSourceArchive = snapshot.Get(ArchiveAssetKey.ReFramework).ArchivePath,
             Unreal5State = MapState(snapshot.Get(ArchiveAssetKey.Unreal5)),
-            Unreal5SourceArchive = snapshot.Get(ArchiveAssetKey.Unreal5).ArchivePath
+            Unreal5SourceArchive = snapshot.Get(ArchiveAssetKey.Unreal5).ArchivePath,
+            Fsr4State = MapState(snapshot.Get(ArchiveAssetKey.Fsr4)),
+            Fsr4SourceArchive = snapshot.Get(ArchiveAssetKey.Fsr4).ArchivePath
         };
     }
 

@@ -99,7 +99,9 @@ internal sealed class MainInstallArchiveReadinessController
                || previous.ReframeworkState != current.ReframeworkState
                || !string.Equals(previous.ReframeworkSourceArchive, current.ReframeworkSourceArchive, StringComparison.Ordinal)
                || previous.Unreal5State != current.Unreal5State
-               || !string.Equals(previous.Unreal5SourceArchive, current.Unreal5SourceArchive, StringComparison.Ordinal);
+               || !string.Equals(previous.Unreal5SourceArchive, current.Unreal5SourceArchive, StringComparison.Ordinal)
+               || previous.Fsr4State != current.Fsr4State
+               || !string.Equals(previous.Fsr4SourceArchive, current.Fsr4SourceArchive, StringComparison.Ordinal);
     }
 
 }

@@ -123,7 +123,7 @@ public sealed class ArchiveReadinessFlowController
 
             logs.Add(InstallFlowLogEntryFactory.Info(
                 "archive",
-                $"refresh completed all_ready={FormatBool(IsAllReady(readiness))} optiscaler={readiness.OptiScalerState} optipatcher={readiness.OptiPatcherState} specialk={readiness.SpecialKState} reframework={readiness.ReframeworkState} unreal5={readiness.Unreal5State}"));
+                $"refresh completed all_ready={FormatBool(IsAllReady(readiness))} optiscaler={readiness.OptiScalerState} optipatcher={readiness.OptiPatcherState} specialk={readiness.SpecialKState} reframework={readiness.ReframeworkState} unreal5={readiness.Unreal5State} fsr4={readiness.Fsr4State}"));
 
             return new ArchiveReadinessFlowResult
             {
@@ -171,7 +171,8 @@ public sealed class ArchiveReadinessFlowController
                && readiness.OptiPatcherState == ArchiveReadinessState.Ready
                && readiness.SpecialKState == ArchiveReadinessState.Ready
                && readiness.ReframeworkState == ArchiveReadinessState.Ready
-               && readiness.Unreal5State == ArchiveReadinessState.Ready;
+               && readiness.Unreal5State == ArchiveReadinessState.Ready
+               && readiness.Fsr4State == ArchiveReadinessState.Ready;
     }
 
     private static ArchiveReadinessSnapshot ApplyOptiScalerVariantReadiness(

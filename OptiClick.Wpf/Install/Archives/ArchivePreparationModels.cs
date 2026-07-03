@@ -49,6 +49,7 @@ public sealed record ArchivePreparationSequence
         ArchiveAssetKey.SpecialK,
         ArchiveAssetKey.ReFramework,
         ArchiveAssetKey.Unreal5,
+        ArchiveAssetKey.Fsr4,
         ArchiveAssetKey.OptiPatcher
     ];
 
@@ -57,6 +58,7 @@ public sealed record ArchivePreparationSequence
         ArchiveAssetKey.SpecialK,
         ArchiveAssetKey.ReFramework,
         ArchiveAssetKey.Unreal5,
+        ArchiveAssetKey.Fsr4,
         ArchiveAssetKey.OptiPatcher
     ];
 }
