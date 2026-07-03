@@ -282,15 +282,15 @@ public sealed class ArchiveReadinessFlowController
 
     private static string FormatAssetKey(ArchiveAssetKey key)
     {
+        if (StartupArchiveAssetDefinitions.TryGet(key, out var definition))
+        {
+            return definition.RuntimeDataKey;
+        }
+
         return key switch
         {
             ArchiveAssetKey.OptiScaler => ArchiveAssetRuntimeDataKeys.OptiScaler,
             ArchiveAssetKey.OptiPatcher => ArchiveAssetRuntimeDataKeys.OptiPatcher,
-            ArchiveAssetKey.SpecialK => ArchiveAssetRuntimeDataKeys.SpecialK,
-            ArchiveAssetKey.ReFramework => ArchiveAssetRuntimeDataKeys.ReFramework,
-            ArchiveAssetKey.Unreal5 => ArchiveAssetRuntimeDataKeys.Unreal5,
-            ArchiveAssetKey.Fsr4 => ArchiveAssetRuntimeDataKeys.Fsr4,
-            ArchiveAssetKey.Amdxc64 => ArchiveAssetRuntimeDataKeys.Amdxc64,
             _ => key.ToString().ToLowerInvariant()
         };
     }

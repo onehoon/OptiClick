@@ -43,24 +43,13 @@ public sealed record ArchivePreparationSnapshot
 
 public sealed record ArchivePreparationSequence
 {
-    public static readonly IReadOnlyList<ArchiveAssetKey> StartupReadinessOrder =
-    [
-        ArchiveAssetKey.OptiScaler,
-        ArchiveAssetKey.SpecialK,
-        ArchiveAssetKey.ReFramework,
-        ArchiveAssetKey.Unreal5,
-        ArchiveAssetKey.Fsr4,
-        ArchiveAssetKey.Amdxc64,
-        ArchiveAssetKey.OptiPatcher
-    ];
-
     public static readonly IReadOnlyList<ArchiveAssetKey> DefaultStartupOrder =
-    [
-        ArchiveAssetKey.SpecialK,
-        ArchiveAssetKey.ReFramework,
-        ArchiveAssetKey.Unreal5,
-        ArchiveAssetKey.Fsr4,
-        ArchiveAssetKey.Amdxc64,
-        ArchiveAssetKey.OptiPatcher
-    ];
+        StartupArchiveAssetDefinitions.VersionedStartupArchiveOrder
+            .Concat([ArchiveAssetKey.OptiPatcher])
+            .ToArray();
+
+    public static readonly IReadOnlyList<ArchiveAssetKey> StartupReadinessOrder =
+        new[] { ArchiveAssetKey.OptiScaler }
+            .Concat(DefaultStartupOrder)
+            .ToArray();
 }

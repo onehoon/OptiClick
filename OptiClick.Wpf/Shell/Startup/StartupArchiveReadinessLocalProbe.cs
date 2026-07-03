@@ -285,16 +285,12 @@ internal static class StartupArchiveReadinessLocalProbe
 
     private static IArchivePayloadValidator CreateValidator(ArchiveAssetKey key)
     {
-        return key switch
+        if (key == ArchiveAssetKey.OptiPatcher)
         {
-            ArchiveAssetKey.OptiPatcher => new OptiPatcherPayloadValidator(),
-            ArchiveAssetKey.SpecialK => new RequiredFilesPayloadValidator(["SpecialK64.dll"]),
-            ArchiveAssetKey.ReFramework => new RequiredFilesPayloadValidator(["dinput8.dll"]),
-            ArchiveAssetKey.Unreal5 => new NonEmptyPayloadValidator(),
-            ArchiveAssetKey.Fsr4 => new NonEmptyPayloadValidator(),
-            ArchiveAssetKey.Amdxc64 => new RequiredFilesPayloadValidator(["amdxc64.dll"]),
-            _ => new NonEmptyPayloadValidator()
-        };
+            return new OptiPatcherPayloadValidator();
+        }
+
+        return StartupArchiveAssetDefinitions.CreateValidator(key);
     }
 
     private static ModuleDownloadLinkEntry? GetEntry(ModuleDownloadLinkContext moduleDownloadLinks, string key)

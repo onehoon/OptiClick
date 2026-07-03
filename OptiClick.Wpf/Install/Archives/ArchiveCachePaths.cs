@@ -31,11 +31,11 @@ public sealed record ArchiveCachePaths
             ManifestRoot = manifestRoot,
             OptiScalerCacheDir = optiScalerArchiveRoot,
             OptiPatcherCacheDir = Path.Combine(archivesRoot, "OptiPatcher"),
-            SpecialKCacheDir = Path.Combine(archivesRoot, "SpecialK"),
-            ReFrameworkCacheDir = Path.Combine(archivesRoot, "REFramework"),
-            Unreal5CacheDir = Path.Combine(archivesRoot, "Unreal5"),
-            Fsr4CacheDir = Path.Combine(archivesRoot, "FSR4"),
-            Amdxc64CacheDir = Path.Combine(archivesRoot, "amdxc64"),
+            SpecialKCacheDir = ResolveVersionedCacheDir(archivesRoot, ArchiveAssetKey.SpecialK),
+            ReFrameworkCacheDir = ResolveVersionedCacheDir(archivesRoot, ArchiveAssetKey.ReFramework),
+            Unreal5CacheDir = ResolveVersionedCacheDir(archivesRoot, ArchiveAssetKey.Unreal5),
+            Fsr4CacheDir = ResolveVersionedCacheDir(archivesRoot, ArchiveAssetKey.Fsr4),
+            Amdxc64CacheDir = ResolveVersionedCacheDir(archivesRoot, ArchiveAssetKey.Amdxc64),
             OptiScalerPayloadCacheRoot = optiScalerArchiveRoot
         };
     }
@@ -56,16 +56,21 @@ public sealed record ArchiveCachePaths
 
     public string ResolveCacheDirectory(ArchiveAssetKey key)
     {
+        if (StartupArchiveAssetDefinitions.TryGet(key, out var definition))
+        {
+            return Path.Combine(Root, definition.CacheDirectoryName);
+        }
+
         return key switch
         {
             ArchiveAssetKey.OptiScaler => OptiScalerCacheDir,
             ArchiveAssetKey.OptiPatcher => OptiPatcherCacheDir,
-            ArchiveAssetKey.SpecialK => SpecialKCacheDir,
-            ArchiveAssetKey.ReFramework => ReFrameworkCacheDir,
-            ArchiveAssetKey.Unreal5 => Unreal5CacheDir,
-            ArchiveAssetKey.Fsr4 => Fsr4CacheDir,
-            ArchiveAssetKey.Amdxc64 => Amdxc64CacheDir,
             _ => Root
         };
+    }
+
+    private static string ResolveVersionedCacheDir(string archivesRoot, ArchiveAssetKey key)
+    {
+        return Path.Combine(archivesRoot, StartupArchiveAssetDefinitions.Get(key).CacheDirectoryName);
     }
 }

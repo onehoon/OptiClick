@@ -23,15 +23,15 @@ public static class ArchiveAssetRuntimeDataKeys
 
     public static string ToRuntimeDataEntryKey(ArchiveAssetKey key)
     {
+        if (StartupArchiveAssetDefinitions.TryGet(key, out var definition))
+        {
+            return definition.RuntimeDataKey;
+        }
+
         return key switch
         {
             ArchiveAssetKey.OptiScaler => OptiScaler,
             ArchiveAssetKey.OptiPatcher => OptiPatcher,
-            ArchiveAssetKey.SpecialK => SpecialK,
-            ArchiveAssetKey.ReFramework => ReFramework,
-            ArchiveAssetKey.Unreal5 => Unreal5,
-            ArchiveAssetKey.Fsr4 => Fsr4,
-            ArchiveAssetKey.Amdxc64 => Amdxc64,
             _ => ""
         };
     }

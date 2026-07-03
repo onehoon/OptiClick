@@ -64,15 +64,9 @@ public sealed class ArchivePreparationCoordinator : IArchivePreparationCoordinat
 
     private static string ToAssetLabel(ArchiveAssetKey key)
     {
-        return key switch
-        {
-            ArchiveAssetKey.SpecialK => "Special K archive",
-            ArchiveAssetKey.ReFramework => "REFramework archive",
-            ArchiveAssetKey.Unreal5 => "Unreal5 patch archive",
-            ArchiveAssetKey.Fsr4 => "FSR4 archive",
-            ArchiveAssetKey.Amdxc64 => "amdxc64 archive",
-            _ => "archive"
-        };
+        return StartupArchiveAssetDefinitions.TryGet(key, out var definition)
+            ? definition.Label
+            : "archive";
     }
 
     private static ArchivePreparationStageStatus WithDuration(

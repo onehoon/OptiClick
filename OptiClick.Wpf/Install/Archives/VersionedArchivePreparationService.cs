@@ -34,6 +34,10 @@ public sealed class VersionedArchivePreparationService : IVersionedArchivePrepar
         string cacheDirectory,
         CancellationToken cancellationToken = default)
     {
+        var allowDirectPayloadFile =
+            StartupArchiveAssetDefinitions.TryGet(assetKey, out var definition)
+            && definition.AllowDirectPayloadFile;
+
         return await _payloadCacheService.PrepareAsync(
             new ExtractedArchivePayloadCacheRequest
             {
@@ -45,24 +49,11 @@ public sealed class VersionedArchivePreparationService : IVersionedArchivePrepar
                 CacheEntryName = ArchivePayloadCacheEntryNames.ResolveVersionedEntryName(
                     entry,
                     ArchiveAssetRuntimeDataKeys.ToStateKey(assetKey)),
-                Validator = CreateValidator(assetKey),
-                AllowDirectPayloadFile = assetKey == ArchiveAssetKey.Amdxc64,
+                Validator = StartupArchiveAssetDefinitions.CreateValidator(assetKey),
+                AllowDirectPayloadFile = allowDirectPayloadFile,
                 EnableRetentionCleanup = true,
                 RetentionCount = 2
             },
             cancellationToken);
-    }
-
-    private static IArchivePayloadValidator CreateValidator(ArchiveAssetKey assetKey)
-    {
-        return assetKey switch
-        {
-            ArchiveAssetKey.SpecialK => new RequiredFilesPayloadValidator(["SpecialK64.dll"]),
-            ArchiveAssetKey.ReFramework => new RequiredFilesPayloadValidator(["dinput8.dll"]),
-            ArchiveAssetKey.Unreal5 => new NonEmptyPayloadValidator(),
-            ArchiveAssetKey.Fsr4 => new NonEmptyPayloadValidator(),
-            ArchiveAssetKey.Amdxc64 => new RequiredFilesPayloadValidator(["amdxc64.dll"]),
-            _ => new NonEmptyPayloadValidator()
-        };
     }
 }
