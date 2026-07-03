@@ -35,8 +35,7 @@ internal sealed class MainInstallArchiveReadinessController
             {
                 ModuleDownloadLinks = context.State.ModuleDownloadLinks,
                 OptiScalerVariantCatalog = context.State.LatestOptiScalerVariantCatalog,
-                PreferredOptiScalerVariant = context.State.PreferredOptiScalerVariant,
-                GpuBundleKey = context.State.GpuBundleKey
+                PreferredOptiScalerVariant = context.State.PreferredOptiScalerVariant
             },
             cancellationToken);
 
@@ -101,7 +100,9 @@ internal sealed class MainInstallArchiveReadinessController
                || previous.Unreal5State != current.Unreal5State
                || !string.Equals(previous.Unreal5SourceArchive, current.Unreal5SourceArchive, StringComparison.Ordinal)
                || previous.Fsr4State != current.Fsr4State
-               || !string.Equals(previous.Fsr4SourceArchive, current.Fsr4SourceArchive, StringComparison.Ordinal);
+               || !string.Equals(previous.Fsr4SourceArchive, current.Fsr4SourceArchive, StringComparison.Ordinal)
+               || previous.Amdxc64State != current.Amdxc64State
+               || !string.Equals(previous.Amdxc64SourceArchive, current.Amdxc64SourceArchive, StringComparison.Ordinal);
     }
 
 }

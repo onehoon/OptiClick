@@ -46,6 +46,7 @@ public sealed class VersionedArchivePreparationService : IVersionedArchivePrepar
                     entry,
                     ArchiveAssetRuntimeDataKeys.ToStateKey(assetKey)),
                 Validator = CreateValidator(assetKey),
+                AllowDirectPayloadFile = assetKey == ArchiveAssetKey.Amdxc64,
                 EnableRetentionCleanup = true,
                 RetentionCount = 2
             },
@@ -60,6 +61,7 @@ public sealed class VersionedArchivePreparationService : IVersionedArchivePrepar
             ArchiveAssetKey.ReFramework => new RequiredFilesPayloadValidator(["dinput8.dll"]),
             ArchiveAssetKey.Unreal5 => new NonEmptyPayloadValidator(),
             ArchiveAssetKey.Fsr4 => new NonEmptyPayloadValidator(),
+            ArchiveAssetKey.Amdxc64 => new RequiredFilesPayloadValidator(["amdxc64.dll"]),
             _ => new NonEmptyPayloadValidator()
         };
     }

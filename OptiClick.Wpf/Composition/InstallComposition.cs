@@ -51,7 +51,6 @@ public sealed class InstallComposition
         public required IArchivePreparationCoordinator ArchivePreparationCoordinator { get; init; }
         public required IOptiScalerVariantArchiveSyncService OptiScalerVariantArchiveSyncService { get; init; }
         public required IOptiScalerPayloadOptiPatcherInjector OptiScalerPayloadOptiPatcherInjector { get; init; }
-        public required IOptiScalerPayloadAmdxc64Provisioner OptiScalerPayloadAmdxc64Provisioner { get; init; }
         public required ArchiveCachePaths ArchiveCachePaths { get; init; }
     }
 
@@ -122,9 +121,7 @@ public sealed class InstallComposition
         var archiveReadinessFlowController = new ArchiveReadinessFlowController(
             archivePreparation.ArchivePreparationCoordinator,
             archivePreparation.OptiScalerVariantArchiveSyncService,
-            archivePreparation.OptiScalerPayloadOptiPatcherInjector,
-            archivePreparation.OptiScalerPayloadAmdxc64Provisioner,
-            archivePreparation.ArchiveCachePaths);
+            archivePreparation.OptiScalerPayloadOptiPatcherInjector);
         var configApplyComposition = ConfigApplyCompositionFactory.Create(new ConfigApplyCompositionRequest
         {
             ConfigProfileApplier = configProfileServices.ConfigProfileApplier,
@@ -192,7 +189,6 @@ public sealed class InstallComposition
             new VersionedArchivePreparationService(archiveDownloader, archiveManifestStore, archiveExtractor),
             new OptiPatcherArchivePreparationService(archiveDownloader, archiveExtractor, archiveManifestStore));
         var optiScalerPayloadOptiPatcherInjector = new OptiScalerPayloadOptiPatcherInjector();
-        var optiScalerPayloadAmdxc64Provisioner = new OptiScalerPayloadAmdxc64Provisioner(archiveDownloader);
         var optiScalerVariantManifestStore = new OptiScalerVariantManifestStore(
             archiveCachePaths.ManifestRoot,
             app.AppLogger);
@@ -210,7 +206,6 @@ public sealed class InstallComposition
             ArchivePreparationCoordinator = archivePreparationCoordinator,
             OptiScalerVariantArchiveSyncService = optiScalerVariantArchiveSyncService,
             OptiScalerPayloadOptiPatcherInjector = optiScalerPayloadOptiPatcherInjector,
-            OptiScalerPayloadAmdxc64Provisioner = optiScalerPayloadAmdxc64Provisioner,
             ArchiveCachePaths = archiveCachePaths
         };
     }

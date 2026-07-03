@@ -7,7 +7,8 @@ public enum ArchiveAssetKey
     SpecialK,
     ReFramework,
     Unreal5,
-    Fsr4
+    Fsr4,
+    Amdxc64
 }
 
 public static class ArchiveAssetRuntimeDataKeys
@@ -18,6 +19,7 @@ public static class ArchiveAssetRuntimeDataKeys
     public const string ReFramework = "reframework";
     public const string Unreal5 = "unreal5";
     public const string Fsr4 = "fsr4_variants";
+    public const string Amdxc64 = "amdxc64";
 
     public static string ToRuntimeDataEntryKey(ArchiveAssetKey key)
     {
@@ -29,6 +31,7 @@ public static class ArchiveAssetRuntimeDataKeys
             ArchiveAssetKey.ReFramework => ReFramework,
             ArchiveAssetKey.Unreal5 => Unreal5,
             ArchiveAssetKey.Fsr4 => Fsr4,
+            ArchiveAssetKey.Amdxc64 => Amdxc64,
             _ => ""
         };
     }

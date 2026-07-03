@@ -10,21 +10,15 @@ public sealed class ArchiveReadinessFlowController
     private readonly IArchivePreparationCoordinator? _archivePreparationCoordinator;
     private readonly IOptiScalerVariantArchiveSyncService? _optiScalerVariantArchiveSyncService;
     private readonly IOptiScalerPayloadOptiPatcherInjector? _optiPatcherInjector;
-    private readonly IOptiScalerPayloadAmdxc64Provisioner? _amdxc64Provisioner;
-    private readonly ArchiveCachePaths? _archiveCachePaths;
 
     public ArchiveReadinessFlowController(
         IArchivePreparationCoordinator? archivePreparationCoordinator,
         IOptiScalerVariantArchiveSyncService? optiScalerVariantArchiveSyncService = null,
-        IOptiScalerPayloadOptiPatcherInjector? optiPatcherInjector = null,
-        IOptiScalerPayloadAmdxc64Provisioner? amdxc64Provisioner = null,
-        ArchiveCachePaths? archiveCachePaths = null)
+        IOptiScalerPayloadOptiPatcherInjector? optiPatcherInjector = null)
     {
         _archivePreparationCoordinator = archivePreparationCoordinator;
         _optiScalerVariantArchiveSyncService = optiScalerVariantArchiveSyncService;
         _optiPatcherInjector = optiPatcherInjector;
-        _amdxc64Provisioner = amdxc64Provisioner;
-        _archiveCachePaths = archiveCachePaths;
     }
 
     public async Task<ArchiveReadinessFlowResult> RefreshAsync(
@@ -94,18 +88,6 @@ public sealed class ArchiveReadinessFlowController
                 logs.AddRange(FormatOptiPatcherInjectionLogs(optiPatcherInjection));
             }
 
-            if (ShouldProvisionAmdxc64(request.GpuBundleKey))
-            {
-                var amdxc64Provision = await ProvisionAmdxc64Async(
-                    request,
-                    variantSync,
-                    cancellationToken);
-                if (amdxc64Provision is not null)
-                {
-                    logs.AddRange(FormatAmdxc64ProvisionLogs(amdxc64Provision));
-                }
-            }
-
             var merged = ArchivePreparationSnapshotMerger.Merge(optiScalerSnapshot, startupSnapshot);
             var readiness = ApplyOptiScalerVariantReadiness(
                 ArchivePreparationSnapshotMapper.ToInstallPlanSnapshot(merged),
@@ -123,7 +105,7 @@ public sealed class ArchiveReadinessFlowController
 
             logs.Add(InstallFlowLogEntryFactory.Info(
                 "archive",
-                $"refresh completed all_ready={FormatBool(IsAllReady(readiness))} optiscaler={readiness.OptiScalerState} optipatcher={readiness.OptiPatcherState} specialk={readiness.SpecialKState} reframework={readiness.ReframeworkState} unreal5={readiness.Unreal5State} fsr4={readiness.Fsr4State}"));
+                $"refresh completed all_ready={FormatBool(IsAllReady(readiness))} optiscaler={readiness.OptiScalerState} optipatcher={readiness.OptiPatcherState} specialk={readiness.SpecialKState} reframework={readiness.ReframeworkState} unreal5={readiness.Unreal5State} fsr4={readiness.Fsr4State} amdxc64={readiness.Amdxc64State}"));
 
             return new ArchiveReadinessFlowResult
             {
@@ -172,7 +154,8 @@ public sealed class ArchiveReadinessFlowController
                && readiness.SpecialKState == ArchiveReadinessState.Ready
                && readiness.ReframeworkState == ArchiveReadinessState.Ready
                && readiness.Unreal5State == ArchiveReadinessState.Ready
-               && readiness.Fsr4State == ArchiveReadinessState.Ready;
+               && readiness.Fsr4State == ArchiveReadinessState.Ready
+               && readiness.Amdxc64State == ArchiveReadinessState.Ready;
     }
 
     private static ArchiveReadinessSnapshot ApplyOptiScalerVariantReadiness(
@@ -280,69 +263,6 @@ public sealed class ArchiveReadinessFlowController
                || variantSync.Manifest.Variants.Values.All(static entry => entry.Ready);
     }
 
-    public static bool ShouldProvisionAmdxc64(string? gpuBundleKey)
-    {
-        return string.Equals(
-            (gpuBundleKey ?? string.Empty).Trim(),
-            "radeon_rx60",
-            StringComparison.OrdinalIgnoreCase);
-    }
-
-    private async Task<Amdxc64ProvisionResult?> ProvisionAmdxc64Async(
-        ArchiveReadinessFlowRequest request,
-        OptiScalerVariantSyncResult? variantSync,
-        CancellationToken cancellationToken)
-    {
-        if (_amdxc64Provisioner is null || _archiveCachePaths is null)
-        {
-            return new Amdxc64ProvisionResult
-            {
-                DidRun = true,
-                IsSuccess = false,
-                ErrorCode = "amdxc64_provisioner_missing"
-            };
-        }
-
-        if (!request.ModuleDownloadLinks.TryResolveLink("amdxc64", out var descriptor))
-        {
-            return new Amdxc64ProvisionResult
-            {
-                DidRun = true,
-                IsSuccess = false,
-                ErrorCode = OptiScalerPayloadAmdxc64Provisioner.DescriptorMissing
-            };
-        }
-
-        var targets = BuildAmdxc64ProvisionTargets(variantSync);
-        return await _amdxc64Provisioner.EnsureAsync(
-            new Amdxc64ProvisionRequest
-            {
-                ArchiveCacheRoot = _archiveCachePaths.Root,
-                Descriptor = descriptor,
-                Targets = targets
-            },
-            cancellationToken);
-    }
-
-    private static IReadOnlyList<Amdxc64ProvisionTarget> BuildAmdxc64ProvisionTargets(
-        OptiScalerVariantSyncResult? variantSync)
-    {
-        if (variantSync is null || variantSync.Manifest.Variants.Count == 0)
-        {
-            return [];
-        }
-
-        return variantSync.Manifest.Variants.Values
-            .Where(static entry => entry.Ready)
-            .Select(static entry => new Amdxc64ProvisionTarget
-            {
-                Variant = entry.Variant,
-                CacheEntryName = entry.CacheEntry,
-                PayloadDirectory = entry.PayloadDirectory
-            })
-            .ToArray();
-    }
-
     private static IEnumerable<InstallFlowLogEntry> FormatOptiPatcherInjectionLogs(
         OptiScalerPayloadOptiPatcherInjectionResult injection)
     {
@@ -360,55 +280,6 @@ public sealed class ArchiveReadinessFlowController
         }
     }
 
-    private static IEnumerable<InstallFlowLogEntry> FormatAmdxc64ProvisionLogs(
-        Amdxc64ProvisionResult result)
-    {
-        if (!result.DidRun)
-        {
-            yield break;
-        }
-
-        if (!result.IsSuccess)
-        {
-            yield return InstallFlowLogEntryFactory.Warning(
-                "archive",
-                $"amdxc64 provision failed error={Normalize(result.ErrorCode, "-")} targets={result.Targets.Count}");
-        }
-
-        foreach (var target in result.Targets)
-        {
-            if (target.AlreadyReady)
-            {
-                yield return InstallFlowLogEntryFactory.Info(
-                    "archive",
-                    $"amdxc64 provision skipped variant={Normalize(target.Variant, "-")} reason=already_ready");
-                continue;
-            }
-
-            if (target.Copied)
-            {
-                yield return InstallFlowLogEntryFactory.Info(
-                    "archive",
-                    $"amdxc64 provision copied variant={Normalize(target.Variant, "-")} destination={Normalize(RelativeAmdxc64Destination(target.DestinationPath), "-")}");
-                continue;
-            }
-
-            if (target.Failed)
-            {
-                yield return InstallFlowLogEntryFactory.Warning(
-                    "archive",
-                    $"amdxc64 provision failed variant={Normalize(target.Variant, "-")} error={Normalize(target.ErrorCode, "-")}");
-            }
-        }
-    }
-
-    private static string RelativeAmdxc64Destination(string destinationPath)
-    {
-        return string.IsNullOrWhiteSpace(destinationPath)
-            ? ""
-            : Path.Combine("OptiScaler", "amdxc64.dll");
-    }
-
     private static string FormatAssetKey(ArchiveAssetKey key)
     {
         return key switch
@@ -418,6 +289,8 @@ public sealed class ArchiveReadinessFlowController
             ArchiveAssetKey.SpecialK => ArchiveAssetRuntimeDataKeys.SpecialK,
             ArchiveAssetKey.ReFramework => ArchiveAssetRuntimeDataKeys.ReFramework,
             ArchiveAssetKey.Unreal5 => ArchiveAssetRuntimeDataKeys.Unreal5,
+            ArchiveAssetKey.Fsr4 => ArchiveAssetRuntimeDataKeys.Fsr4,
+            ArchiveAssetKey.Amdxc64 => ArchiveAssetRuntimeDataKeys.Amdxc64,
             _ => key.ToString().ToLowerInvariant()
         };
     }

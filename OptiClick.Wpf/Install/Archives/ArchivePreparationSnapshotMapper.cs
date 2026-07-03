@@ -19,7 +19,9 @@ public static class ArchivePreparationSnapshotMapper
             Unreal5State = MapState(snapshot.Get(ArchiveAssetKey.Unreal5)),
             Unreal5SourceArchive = snapshot.Get(ArchiveAssetKey.Unreal5).ArchivePath,
             Fsr4State = MapState(snapshot.Get(ArchiveAssetKey.Fsr4)),
-            Fsr4SourceArchive = snapshot.Get(ArchiveAssetKey.Fsr4).ArchivePath
+            Fsr4SourceArchive = snapshot.Get(ArchiveAssetKey.Fsr4).ArchivePath,
+            Amdxc64State = MapState(snapshot.Get(ArchiveAssetKey.Amdxc64)),
+            Amdxc64SourceArchive = snapshot.Get(ArchiveAssetKey.Amdxc64).ArchivePath
         };
     }
 

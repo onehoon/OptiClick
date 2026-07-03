@@ -292,6 +292,7 @@ internal static class StartupArchiveReadinessLocalProbe
             ArchiveAssetKey.ReFramework => new RequiredFilesPayloadValidator(["dinput8.dll"]),
             ArchiveAssetKey.Unreal5 => new NonEmptyPayloadValidator(),
             ArchiveAssetKey.Fsr4 => new NonEmptyPayloadValidator(),
+            ArchiveAssetKey.Amdxc64 => new RequiredFilesPayloadValidator(["amdxc64.dll"]),
             _ => new NonEmptyPayloadValidator()
         };
     }

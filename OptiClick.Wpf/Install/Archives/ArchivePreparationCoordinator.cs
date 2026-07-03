@@ -70,6 +70,7 @@ public sealed class ArchivePreparationCoordinator : IArchivePreparationCoordinat
             ArchiveAssetKey.ReFramework => "REFramework archive",
             ArchiveAssetKey.Unreal5 => "Unreal5 patch archive",
             ArchiveAssetKey.Fsr4 => "FSR4 archive",
+            ArchiveAssetKey.Amdxc64 => "amdxc64 archive",
             _ => "archive"
         };
     }
