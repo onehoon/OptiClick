@@ -154,13 +154,14 @@ public sealed class ZipArchiveExtractor : IArchiveExtractor
                     continue;
                 }
 
-                var outputPath = Path.GetFullPath(Path.Combine(destination, entry.FullName));
-                if (!outputPath.StartsWith(destination, StringComparison.OrdinalIgnoreCase))
+                if (!ArchiveMemberPathSafety.IsSafeMemberPath(destination, entry.FullName))
                 {
                     return Task.FromResult(ArchiveExtractionResult.Failure("unsafe_archive_path"));
                 }
 
-                if (entry.FullName.EndsWith("/", StringComparison.Ordinal))
+                var outputPath = Path.GetFullPath(Path.Combine(destination, entry.FullName));
+                if (entry.FullName.EndsWith("/", StringComparison.Ordinal)
+                    || entry.FullName.EndsWith("\\", StringComparison.Ordinal))
                 {
                     Directory.CreateDirectory(outputPath);
                     continue;

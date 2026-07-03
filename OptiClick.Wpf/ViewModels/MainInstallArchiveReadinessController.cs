@@ -119,7 +119,6 @@ internal sealed class MainInstallArchiveReadinessState
     public required ModuleDownloadLinkContext ModuleDownloadLinks { get; init; }
     public required OptiScalerVariantCatalog LatestOptiScalerVariantCatalog { get; init; }
     public required string PreferredOptiScalerVariant { get; init; }
-    public string GpuBundleKey { get; init; } = "";
     public required ArchiveReadinessSnapshot LatestArchiveReadiness { get; init; }
     public required bool RefreshVisibleGamesAfterArchiveReadiness { get; init; }
 }

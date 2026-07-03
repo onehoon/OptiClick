@@ -177,7 +177,6 @@ internal sealed record MainInstallShellFacade
             ReadLatestOptiScalerVariantCatalog =
                 () => input.RuntimeShellState.LatestOptiScalerVariantCatalog,
             ReadPreferredOptiScalerVariant = input.ReadPreferredOptiScalerVariant,
-            ReadGpuBundleKey = () => input.RuntimeShellState.LatestGpuBundleKey,
             ReadLatestArchiveReadiness =
                 () => input.RuntimeShellState.LatestArchiveReadiness,
             ArchiveReadinessRefreshCoordinator = input.ArchiveReadinessRefreshCoordinator,
