@@ -46,17 +46,17 @@ public sealed record ArchivePreparationSequence
     public static readonly IReadOnlyList<ArchiveAssetKey> StartupReadinessOrder =
     [
         ArchiveAssetKey.OptiScaler,
-        ArchiveAssetKey.OptiPatcher,
         ArchiveAssetKey.SpecialK,
         ArchiveAssetKey.ReFramework,
-        ArchiveAssetKey.Unreal5
+        ArchiveAssetKey.Unreal5,
+        ArchiveAssetKey.OptiPatcher
     ];
 
     public static readonly IReadOnlyList<ArchiveAssetKey> DefaultStartupOrder =
     [
-        ArchiveAssetKey.OptiPatcher,
         ArchiveAssetKey.SpecialK,
         ArchiveAssetKey.ReFramework,
-        ArchiveAssetKey.Unreal5
+        ArchiveAssetKey.Unreal5,
+        ArchiveAssetKey.OptiPatcher
     ];
 }
