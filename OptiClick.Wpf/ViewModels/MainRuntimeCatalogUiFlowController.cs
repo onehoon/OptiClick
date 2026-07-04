@@ -3,6 +3,7 @@ using OptiClick.Wpf.Install.UiState;
 using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Shell.Games.GpuBundle;
+using OptiClick.Wpf.Shell.RemoteV2;
 using OptiClick.Wpf.Shell.Runtime;
 using OptiClick.Wpf.Shell.Selection;
 
@@ -219,6 +220,19 @@ internal sealed class MainRuntimeCatalogUiFlowController
         }
 
         var remote = runtimeContext.RemoteData ?? new RemoteDataOptions();
+        if (remote.IsV2)
+        {
+            ClearGpuManifestRestartRequiredState(context);
+            var v2Candidates = AuthV2GpuCandidateFilter.FilterUploadCandidates(detectedCandidates);
+            foreach (var excluded in detectedCandidates.Where(candidate => !ContainsSameGpu(v2Candidates, candidate)))
+            {
+                context.Callbacks.LogRuntimeInfo(
+                    $"gpu candidate excluded vendor={NormalizeStatusCode(excluded.Vendor, MainViewModelStatusCodes.Unknown)} name=\"{NormalizeStatusCode(excluded.Name, MainViewModelStatusCodes.Unknown)}\" code=auth_v2_prefilter_excluded");
+            }
+
+            return v2Candidates;
+        }
+
         var manifestEndpoint = (remote.GpuBundleManifestUrl ?? "").Trim();
         if (string.IsNullOrWhiteSpace(manifestEndpoint))
         {
@@ -333,6 +347,15 @@ internal sealed class MainRuntimeCatalogUiFlowController
             }
         };
         context.State.ApplySelectionState(selectionState);
+    }
+
+    private static bool ContainsSameGpu(IReadOnlyList<GpuInfo> candidates, GpuInfo gpu)
+    {
+        var vendor = AuthV2GpuCandidateFilter.NormalizeVendor(gpu.Vendor, gpu.Name);
+        var name = AuthV2GpuCandidateFilter.NormalizeWhitespace(gpu.Name);
+        return candidates.Any(candidate =>
+            string.Equals(AuthV2GpuCandidateFilter.NormalizeVendor(candidate.Vendor, candidate.Name), vendor, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(AuthV2GpuCandidateFilter.NormalizeWhitespace(candidate.Name), name, StringComparison.OrdinalIgnoreCase));
     }
 
     private static string NormalizeStatusCode(string? value, string fallback)

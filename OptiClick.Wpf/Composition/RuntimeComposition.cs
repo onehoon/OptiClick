@@ -1,12 +1,15 @@
 ﻿using OptiClick.Core.Abstractions;
+using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Configuration;
 using OptiClick.Wpf.Shell.Runtime.DeviceIdentity;
 using OptiClick.Wpf.Shell.RuntimeData;
 using OptiClick.Wpf.Services;
 using OptiClick.Wpf.Shell.Games;
 using OptiClick.Wpf.Shell.Games.GpuBundle;
+using OptiClick.Wpf.Shell.RemoteV2;
 using OptiClick.Wpf.Shell.Runtime;
 using System.Net.Http;
+using OptiClick.Infrastructure.Storage;
 
 namespace OptiClick.Wpf.Composition;
 
@@ -70,10 +73,22 @@ public sealed class RuntimeComposition
             _root.CreateRemoteGpuBundleParser(),
             app.AppVersionProvider,
             app.AppLogger);
-        var remoteCatalogPipeline = new RemoteCatalogPipeline(
-            runtimeDataLoader,
-            gpuBundleRuntimeLoader,
-            _root.CreateGpuBundleGameDatabaseMerger());
+        var remoteOptions = app.RemoteEndpointProvider.GetRemoteDataOptions() ?? new RemoteDataOptions();
+        IRemoteCatalogPipeline remoteCatalogPipeline = new RemoteCatalogV2Pipeline(
+            new AuthV2SessionClient(
+                remoteOptions.AuthV2BaseUrl,
+                sharedRemoteHttpClient,
+                new AuthV2CredentialStore(app.LocalDataPathProvider, app.AppLogger),
+                app.AppVersionProvider,
+                app.AppLogger),
+            new DataV2Client(
+                remoteOptions.DataV2BaseUrl,
+                sharedRemoteHttpClient,
+                app.AppLogger),
+            _root.CreateRemoteRuntimeDataParser(),
+            _root.CreateRemoteGpuBundleParser(),
+            _root.CreateGpuBundleGameDatabaseMerger(),
+            app.AppLogger);
         var gpuBundleManifestRuleResolver = _root.CreateGpuBundleManifestRuleResolver();
         var runtimeDataCardFactory = _root.CreateShellGameCardViewModelFactory(
             _root.CreateShellGameCardStateResolver(),

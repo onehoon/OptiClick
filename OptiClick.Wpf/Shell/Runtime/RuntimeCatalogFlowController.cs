@@ -178,6 +178,13 @@ public sealed class RuntimeCatalogFlowController
     private static string BuildRemoteEndpointLogSummary(RemoteDataOptions? remoteData)
     {
         var safeRemoteData = remoteData ?? new RemoteDataOptions();
+        if (safeRemoteData.IsV2)
+        {
+            var authConfigured = !string.IsNullOrWhiteSpace(safeRemoteData.AuthV2BaseUrl);
+            var dataConfigured = !string.IsNullOrWhiteSpace(safeRemoteData.DataV2BaseUrl);
+            return $"endpoint_status protocol=v2 auth={(authConfigured ? "configured" : "missing")} data={(dataConfigured ? "configured" : "missing")}";
+        }
+
         var runtimeDataConfigured = !string.IsNullOrWhiteSpace(safeRemoteData.GetEffectiveRuntimeDataUrl());
         var manifestConfigured = !string.IsNullOrWhiteSpace(safeRemoteData.GpuBundleManifestUrl);
         var bundleConfigured = !string.IsNullOrWhiteSpace(safeRemoteData.GpuBundleUrl);
