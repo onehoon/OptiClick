@@ -88,6 +88,7 @@ public sealed class RuntimeComposition
             _root.CreateRemoteRuntimeDataParser(),
             _root.CreateRemoteGpuBundleParser(),
             _root.CreateGpuBundleGameDatabaseMerger(),
+            app.SecurityServices.ApiSession,
             app.AppLogger);
         var gpuBundleManifestRuleResolver = _root.CreateGpuBundleManifestRuleResolver();
         var runtimeDataCardFactory = _root.CreateShellGameCardViewModelFactory(

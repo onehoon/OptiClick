@@ -21,6 +21,14 @@ public sealed record RuntimeCatalogFlowText
     public required string RuntimeCatalogFailedBullet2 { get; init; }
     public required string RuntimeCatalogUnsupportedGpuTitle { get; init; }
     public required string RuntimeCatalogUnsupportedGpuSummary { get; init; }
+    public required string RuntimeCatalogGpuSelectionRequiredTitle { get; init; }
+    public required string RuntimeCatalogGpuSelectionRequiredSummary { get; init; }
+    public required string RuntimeCatalogGpuSelectionRequiredBullet { get; init; }
+    public required string RuntimeCatalogInvalidSelectedGpuTitle { get; init; }
+    public required string RuntimeCatalogInvalidSelectedGpuSummary { get; init; }
+    public required string RuntimeCatalogInvalidSelectedGpuBullet { get; init; }
+    public required string RuntimeCatalogMultiGpuUnsupportedTitle { get; init; }
+    public required string RuntimeCatalogMultiGpuUnsupportedSummary { get; init; }
     public required string RuntimeCatalogGpuDetectionFailedTitle { get; init; }
     public required string RuntimeCatalogGpuDetectionFailedSummary { get; init; }
     public required string RuntimeCatalogGpuDetectionRetryFailedSummary { get; init; }
@@ -58,6 +66,14 @@ public sealed record RuntimeCatalogFlowText
             RuntimeCatalogFailedBullet2 = strings.RuntimeCatalogFailedBullet2,
             RuntimeCatalogUnsupportedGpuTitle = strings.RuntimeCatalogUnsupportedGpuTitle,
             RuntimeCatalogUnsupportedGpuSummary = strings.RuntimeCatalogUnsupportedGpuSummary,
+            RuntimeCatalogGpuSelectionRequiredTitle = strings.RuntimeCatalogGpuSelectionRequiredTitle,
+            RuntimeCatalogGpuSelectionRequiredSummary = strings.RuntimeCatalogGpuSelectionRequiredSummary,
+            RuntimeCatalogGpuSelectionRequiredBullet = strings.RuntimeCatalogGpuSelectionRequiredBullet,
+            RuntimeCatalogInvalidSelectedGpuTitle = strings.RuntimeCatalogInvalidSelectedGpuTitle,
+            RuntimeCatalogInvalidSelectedGpuSummary = strings.RuntimeCatalogInvalidSelectedGpuSummary,
+            RuntimeCatalogInvalidSelectedGpuBullet = strings.RuntimeCatalogInvalidSelectedGpuBullet,
+            RuntimeCatalogMultiGpuUnsupportedTitle = strings.RuntimeCatalogMultiGpuUnsupportedTitle,
+            RuntimeCatalogMultiGpuUnsupportedSummary = strings.RuntimeCatalogMultiGpuUnsupportedSummary,
             RuntimeCatalogGpuDetectionFailedTitle = strings.RuntimeCatalogGpuDetectionFailedTitle,
             RuntimeCatalogGpuDetectionFailedSummary = strings.RuntimeCatalogGpuDetectionFailedSummary,
             RuntimeCatalogGpuDetectionRetryFailedSummary = strings.RuntimeCatalogGpuDetectionRetryFailedSummary,

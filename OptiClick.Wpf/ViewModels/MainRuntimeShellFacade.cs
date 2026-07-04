@@ -55,6 +55,8 @@ internal sealed record MainRuntimeShellFacade
                     {
                         _ = await input.CrossFeature.RefreshArchiveReadinessAsync(ct);
                     },
+                    RefreshRuntimeCatalogWithSelectedGpuAsync =
+                        input.CrossFeature.RefreshRuntimeCatalogWithSelectedGpuAsync,
                     ShowRemoteCatalogDialogOnceAsync = input.Interaction.ShowRemoteCatalogDialogOnceAsync,
                     ShowDialogAsync = input.Interaction.DialogPresenter.ShowSafelyAsync,
                     ClearScannedGameState = input.State.ScannedGameState.Clear,
@@ -162,4 +164,5 @@ internal sealed record MainRuntimeCrossFeaturePort
 
     public required Action ApplyMultiGpuBlockedUiState { get; init; }
     public required Func<RuntimeCatalogRefreshMode, CancellationToken, Task> RefreshRuntimeCatalogAsync { get; init; }
+    public required Func<GpuInfo, RuntimeCatalogRefreshMode, CancellationToken, Task> RefreshRuntimeCatalogWithSelectedGpuAsync { get; init; }
 }

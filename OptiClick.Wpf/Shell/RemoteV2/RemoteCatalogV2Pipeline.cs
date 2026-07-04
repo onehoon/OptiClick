@@ -2,6 +2,7 @@ using OptiClick.Core.Games.GpuBundle;
 using OptiClick.Core.Runtime;
 using OptiClick.Core.RuntimeData;
 using OptiClick.Infrastructure.Logging;
+using OptiClick.Infrastructure.Security;
 using OptiClick.Wpf.Shell.Games;
 using OptiClick.Wpf.Shell.Games.GpuBundle;
 using OptiClick.Wpf.Shell.RuntimeData;
@@ -15,6 +16,7 @@ public sealed class RemoteCatalogV2Pipeline : IRemoteCatalogPipeline
     private readonly IRemoteRuntimeDataParser _runtimeDataParser;
     private readonly IRemoteGpuBundleParser _gpuBundleParser;
     private readonly IGpuBundleGameDatabaseMerger _gpuBundleMerger;
+    private readonly IOptiClickApiSession _apiSession;
     private readonly IAppLogger _logger;
 
     public RemoteCatalogV2Pipeline(
@@ -23,6 +25,7 @@ public sealed class RemoteCatalogV2Pipeline : IRemoteCatalogPipeline
         IRemoteRuntimeDataParser runtimeDataParser,
         IRemoteGpuBundleParser gpuBundleParser,
         IGpuBundleGameDatabaseMerger gpuBundleMerger,
+        IOptiClickApiSession apiSession,
         IAppLogger? logger = null)
     {
         _authClient = authClient ?? throw new ArgumentNullException(nameof(authClient));
@@ -30,6 +33,7 @@ public sealed class RemoteCatalogV2Pipeline : IRemoteCatalogPipeline
         _runtimeDataParser = runtimeDataParser ?? throw new ArgumentNullException(nameof(runtimeDataParser));
         _gpuBundleParser = gpuBundleParser ?? throw new ArgumentNullException(nameof(gpuBundleParser));
         _gpuBundleMerger = gpuBundleMerger ?? throw new ArgumentNullException(nameof(gpuBundleMerger));
+        _apiSession = apiSession ?? throw new ArgumentNullException(nameof(apiSession));
         _logger = logger ?? NullAppLogger.Instance;
     }
 
@@ -41,12 +45,17 @@ public sealed class RemoteCatalogV2Pipeline : IRemoteCatalogPipeline
         try
         {
             var safeContext = runtimeContext ?? new RuntimeContext();
-            var appStartId = Guid.NewGuid().ToString("N");
+            var appStartId = _apiSession.AppStartId;
             var authResult = await _authClient.StartSessionAsync(
                 safeContext,
                 appStartId,
                 safeContext.SelectedGpu,
                 cancellationToken);
+            if (authResult.IsBusinessStatus)
+            {
+                return BusinessStatus(authResult);
+            }
+
             if (!authResult.IsResolved)
             {
                 return Failure(
@@ -219,6 +228,30 @@ public sealed class RemoteCatalogV2Pipeline : IRemoteCatalogPipeline
         };
     }
 
+    private static RemoteCatalogPipelineResult BusinessStatus(AuthV2SessionStartResult authResult)
+    {
+        var status = NormalizeErrorCode(authResult.Status, NormalizeErrorCode(authResult.ErrorCode, "auth_v2_session_not_ready"));
+        return new RemoteCatalogPipelineResult
+        {
+            IsSuccess = false,
+            IsAuthV2BusinessStatus = true,
+            ErrorCode = status,
+            AuthV2Status = status,
+            AuthV2Candidates = authResult.Candidates
+                .Where(static candidate => !string.IsNullOrWhiteSpace(candidate.Name))
+                .Select(static candidate => new GpuInfo
+                {
+                    Name = candidate.Name,
+                    Vendor = candidate.Vendor,
+                    AdapterId = candidate.CandidateId,
+                    IsPrimary = candidate.SourceIndex == 0
+                })
+                .ToArray(),
+            RuntimeData = RemoteRuntimeData.Empty,
+            GpuBundleLoadResult = RemoteGpuBundleRuntimeLoadResult.Skipped()
+        };
+    }
+
     private static string NormalizeStatusError(string status)
     {
         var normalized = (status ?? "").Trim();
@@ -231,4 +264,3 @@ public sealed class RemoteCatalogV2Pipeline : IRemoteCatalogPipeline
         return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
     }
 }
-

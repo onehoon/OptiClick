@@ -17,6 +17,9 @@ public sealed class RemoteCatalogPipelineResult
     public int BundleGameCount { get; init; }
     public int MatchedGameCount { get; init; }
     public int SupportedGameCount { get; init; }
+    public bool IsAuthV2BusinessStatus { get; init; }
+    public string AuthV2Status { get; init; } = "";
+    public IReadOnlyList<GpuInfo> AuthV2Candidates { get; init; } = [];
 }
 
 public interface IRemoteCatalogPipeline

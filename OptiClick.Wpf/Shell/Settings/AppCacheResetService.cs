@@ -1,6 +1,7 @@
 using System.IO;
 using System.Linq;
 using OptiClick.Infrastructure.FileSystem;
+using OptiClick.Infrastructure.Storage;
 using OptiClick.Wpf.Install.Archives;
 using OptiClick.Wpf.Logging;
 
@@ -69,6 +70,7 @@ internal sealed class AppCacheResetService
             DirectoryTarget(archiveCachePaths.ManifestRoot),
             DirectoryTarget(_localDataPathProvider.InstallExecutionTempDirectory),
             FileTarget(Path.Combine(manifestDirectory, FirstRunStateFileName)),
+            FileTarget(Path.Combine(manifestDirectory, AuthV2CredentialStore.CredentialFileName)),
             FileTarget(Path.Combine(
                 _localDataPathProvider.RootDirectory,
                 SecurityDirectoryName,

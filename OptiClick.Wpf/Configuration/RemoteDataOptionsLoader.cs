@@ -221,6 +221,8 @@ public sealed class RemoteDataOptionsLoader
 
         return new RemoteDataOptions
         {
+            // V2 is currently enforced intentionally.
+            // V1 code paths remain in the tree only for rollback/reference and are not selectable by configuration.
             Protocol = RemoteDataProtocol.V2,
             RuntimeDataUrl = runtimeDataUrl,
             GpuBundleManifestUrl = gpuBundleManifestUrl,
