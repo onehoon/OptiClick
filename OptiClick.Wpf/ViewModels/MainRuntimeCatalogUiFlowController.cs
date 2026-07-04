@@ -462,8 +462,7 @@ internal sealed class MainRuntimeCatalogUiFlowController
 
     private static bool IsAuthV2GpuSelectionStatus(string status)
     {
-        return string.Equals(status, "gpu_selection_required", StringComparison.OrdinalIgnoreCase)
-               || string.Equals(status, "invalid_selected_gpu", StringComparison.OrdinalIgnoreCase);
+        return string.Equals(status, "gpu_selection_required", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string NormalizeStatusCode(string? value, string fallback)
