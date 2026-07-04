@@ -28,6 +28,10 @@ internal static class MainShellStartupPortComposer
             RunStartupAutoScanAsync = access.RunStartupAutoScanAsync,
             StartStartupDialogsInBackground =
                 () => input.ResolveStartupFeature().StartStartupDialogsInBackground(),
+            StartStartupUpdateCheckInBackground =
+                () => input.ResolveStartupFeature().StartStartupUpdateCheckInBackground(),
+            StartStartupAnnouncementInBackground =
+                () => input.ResolveStartupFeature().StartStartupAnnouncementInBackground(),
             StartGameMasterCoverPrefetchInBackground =
                 () => input.ResolveStartupFeature().StartGameMasterCoverPrefetchInBackground(),
             QueueHomeCoverPrefetchInBackground =

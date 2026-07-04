@@ -44,20 +44,45 @@ internal sealed class MainStartupDialogsController
         ArgumentNullException.ThrowIfNull(context);
 
         var cancellationTokenSource = context.Services.StartupBackgroundTaskManager.CreateSource();
-        _ = RunInBackgroundAsync(context, cancellationTokenSource);
+        _ = RunInBackgroundAsync(context, cancellationTokenSource, runUpdateCheck: true, runAnnouncement: true);
+    }
+
+    public void StartUpdateCheckInBackground(MainStartupDialogsContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        var cancellationTokenSource = context.Services.StartupBackgroundTaskManager.CreateSource();
+        _ = RunInBackgroundAsync(context, cancellationTokenSource, runUpdateCheck: true, runAnnouncement: false);
+    }
+
+    public void StartAnnouncementInBackground(MainStartupDialogsContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        var cancellationTokenSource = context.Services.StartupBackgroundTaskManager.CreateSource();
+        _ = RunInBackgroundAsync(context, cancellationTokenSource, runUpdateCheck: false, runAnnouncement: true);
     }
 
     private static async Task RunInBackgroundAsync(
         MainStartupDialogsContext context,
-        CancellationTokenSource cancellationTokenSource)
+        CancellationTokenSource cancellationTokenSource,
+        bool runUpdateCheck,
+        bool runAnnouncement)
     {
         var cancellationToken = cancellationTokenSource.Token;
         var canceled = false;
         var failed = false;
         try
         {
-            await context.Services.ShowStartupAnnouncementIfNeededAsync(cancellationToken);
-            await context.Services.ShowStartupUpdateCheckDialogAsync(cancellationToken);
+            if (runUpdateCheck)
+            {
+                await context.Services.ShowStartupUpdateCheckDialogAsync(cancellationToken);
+            }
+
+            if (runAnnouncement)
+            {
+                await context.Services.ShowStartupAnnouncementIfNeededAsync(cancellationToken);
+            }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

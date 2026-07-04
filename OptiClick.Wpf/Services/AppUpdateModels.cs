@@ -16,7 +16,8 @@ public sealed record AppUpdateInfo(
     string DownloadFileName,
     string Note,
     AppUpdatePackageType PackageType,
-    bool IsForced);
+    bool IsForced,
+    string Sha256 = "");
 
 public sealed record AppUpdatePreparedFile(
     string DownloadedOriginalPath,

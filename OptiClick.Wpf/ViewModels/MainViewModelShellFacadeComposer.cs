@@ -61,6 +61,10 @@ internal static class MainViewModelShellFacadeComposer
                 StartDeviceIdentityRulesRefreshInBackground =
                     ports.Runtime.StartDeviceIdentityRulesRefreshInBackground,
                 StartStartupDialogsInBackground = ports.Startup.StartStartupDialogsInBackground,
+                StartStartupUpdateCheckInBackground =
+                    ports.Startup.StartStartupUpdateCheckInBackground,
+                StartStartupAnnouncementInBackground =
+                    ports.Startup.StartStartupAnnouncementInBackground,
                 StartSupportedGamesWikiRefreshInBackground =
                     ports.Ui.StartSupportedGamesWikiRefreshInBackground,
                 StartGameMasterCoverPrefetchInBackground =
@@ -316,6 +320,8 @@ internal sealed record MainShellFacadeStartupPort
     public required Func<CancellationToken, Task> ShowPendingStartupNoticesAsync { get; init; }
     public required Func<CancellationToken, Task> RunStartupAutoScanAsync { get; init; }
     public required Action StartStartupDialogsInBackground { get; init; }
+    public required Action StartStartupUpdateCheckInBackground { get; init; }
+    public required Action StartStartupAnnouncementInBackground { get; init; }
     public required Action StartGameMasterCoverPrefetchInBackground { get; init; }
     public required Action<string> QueueHomeCoverPrefetchInBackground { get; init; }
     public required Func<CancellationToken, Task> StartStartupPreparationAsync { get; init; }

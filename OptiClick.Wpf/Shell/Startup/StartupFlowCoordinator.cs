@@ -19,6 +19,11 @@ public sealed class StartupFlowCoordinator
         request.LogInfo($"cache_manifest={request.CacheManifestDirectory}");
         request.LogInfo($"cache_payload={request.CachePayloadDirectory}");
 
+        await request.WaitForStartupDialogsReadyAsync(cancellationToken);
+        request.LogInfo("milestone startup_overlay_ready");
+        request.StartStartupUpdateCheckInBackground();
+        request.LogInfo("milestone app_update_background_started");
+
         var runtimeContextStopwatch = Stopwatch.StartNew();
         await request.RefreshRuntimeContextAsync(cancellationToken);
         request.LogInfo("milestone runtime_context_completed");
@@ -30,10 +35,8 @@ public sealed class StartupFlowCoordinator
         request.LogInfo("milestone runtime_catalog_completed");
         request.LogInfo("startup runtime catalog completed");
         request.LogInfo($"startup runtime catalog duration_ms={runtimeCatalogStopwatch.ElapsedMilliseconds}");
-
-        await request.WaitForStartupDialogsReadyAsync(cancellationToken);
-        request.LogInfo("milestone startup_overlay_ready");
-        request.StartStartupDialogsInBackground();
+        request.StartStartupAnnouncementInBackground();
+        request.LogInfo("milestone startup_announcement_background_started");
 
         // Device identity rules are best-effort and cache-oriented for startup.
         // Apply cached rules immediately, then keep remote sync in the background.

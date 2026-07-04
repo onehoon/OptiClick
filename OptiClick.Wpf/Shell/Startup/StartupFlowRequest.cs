@@ -18,6 +18,8 @@ public sealed class StartupFlowRequest
     public Action? StartDeviceIdentityRulesRefreshInBackground { get; init; }
 
     public required Action StartStartupDialogsInBackground { get; init; }
+    public required Action StartStartupUpdateCheckInBackground { get; init; }
+    public required Action StartStartupAnnouncementInBackground { get; init; }
     public required Action StartSupportedGamesWikiRefreshInBackground { get; init; }
     public required Action StartGameMasterCoverPrefetchInBackground { get; init; }
 
