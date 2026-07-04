@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using OptiClick.Wpf.Install.Archives;
 using OptiClick.Wpf.Logging;
 using OptiClick.Infrastructure.FileSystem;
@@ -129,7 +130,8 @@ public sealed class AppUpdateExecutionService : IAppUpdateExecutionService
                 updateInfo.DownloadUrl,
                 downloadTempPath,
                 _downloadTimeout,
-                cancellationToken);
+                cancellationToken,
+                updateInfo.Sha256);
             if (!download.IsSuccess)
             {
                 _logger.Warning("app-update", $"update download failed code={download.ErrorCode}");
@@ -171,6 +173,13 @@ public sealed class AppUpdateExecutionService : IAppUpdateExecutionService
             {
                 _logger.Warning("app-update", "update download final file is empty");
                 return AppUpdateExecutionResult.Failure("download_final_empty");
+            }
+
+            var hashValidationError = await ValidateSha256Async(updateInfo, downloadedOriginalPath, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(hashValidationError))
+            {
+                _logger.Warning("app-update", $"update sha256 validation failed code={hashValidationError}");
+                return AppUpdateExecutionResult.Failure(hashValidationError);
             }
 
             var resolvedExePath = updateInfo.PackageType switch
@@ -365,6 +374,30 @@ public sealed class AppUpdateExecutionService : IAppUpdateExecutionService
         }
 
         return candidate;
+    }
+
+    private static async Task<string> ValidateSha256Async(
+        AppUpdateInfo updateInfo,
+        string filePath,
+        CancellationToken cancellationToken)
+    {
+        var expected = (updateInfo.Sha256 ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(expected))
+        {
+            return "";
+        }
+
+        if (!File.Exists(filePath))
+        {
+            return "sha256_file_missing";
+        }
+
+        await using var stream = File.OpenRead(filePath);
+        var actualBytes = await SHA256.HashDataAsync(stream, cancellationToken);
+        var actual = Convert.ToHexString(actualBytes);
+        return string.Equals(actual, expected, StringComparison.OrdinalIgnoreCase)
+            ? ""
+            : "sha256_mismatch";
     }
 
     private async Task<string> ResolveExecutableFromArchiveAsync(

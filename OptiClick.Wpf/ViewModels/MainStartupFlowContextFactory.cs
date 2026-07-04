@@ -46,6 +46,10 @@ internal sealed class MainStartupFlowContextFactory
                 StartDeviceIdentityRulesRefreshInBackground =
                     _input.StartDeviceIdentityRulesRefreshInBackground,
                 StartStartupDialogsInBackground = _input.StartStartupDialogsInBackground,
+                StartStartupUpdateCheckInBackground =
+                    _input.StartStartupUpdateCheckInBackground,
+                StartStartupAnnouncementInBackground =
+                    _input.StartStartupAnnouncementInBackground,
                 StartSupportedGamesWikiRefreshInBackground =
                     _input.StartSupportedGamesWikiRefreshInBackground,
                 StartGameMasterCoverPrefetchInBackground =
@@ -100,6 +104,8 @@ internal sealed record MainStartupFlowContextFactoryInput
     public required Func<CancellationToken, Task> ApplyDeviceIdentityRulesFromCacheAsync { get; init; }
     public required Action StartDeviceIdentityRulesRefreshInBackground { get; init; }
     public required Action StartStartupDialogsInBackground { get; init; }
+    public required Action StartStartupUpdateCheckInBackground { get; init; }
+    public required Action StartStartupAnnouncementInBackground { get; init; }
     public required Action StartSupportedGamesWikiRefreshInBackground { get; init; }
     public required Action StartGameMasterCoverPrefetchInBackground { get; init; }
     public required Action<string> LogInfo { get; init; }

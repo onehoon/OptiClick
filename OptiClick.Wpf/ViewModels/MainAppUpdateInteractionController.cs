@@ -25,7 +25,7 @@ internal sealed class MainAppUpdateInteractionController
         ArgumentNullException.ThrowIfNull(context);
 
         var strings = context.ReadStrings();
-        var coordinatorResult = context.AppUpdateCoordinator.BeginCheck(
+        var coordinatorResult = await context.AppUpdateCoordinator.BeginCheckAsync(
             new AppUpdateCoordinatorRequest
             {
                 Trigger = trigger,
@@ -33,7 +33,8 @@ internal sealed class MainAppUpdateInteractionController
                 CurrentVersion = context.ReadCurrentAppVersion(),
                 Text = AppUpdateCoordinatorText.FromAppStrings(strings),
                 IsAppUpdateInProgress = context.IsAppUpdateInProgress()
-            });
+            },
+            cancellationToken);
 
         context.DispatchFlowLogs(coordinatorResult.Logs, MainViewModelLogCategories.AppUpdate);
 

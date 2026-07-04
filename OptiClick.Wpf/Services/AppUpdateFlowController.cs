@@ -3,6 +3,7 @@ namespace OptiClick.Wpf.Services;
 public sealed class AppUpdateFlowController
 {
     private readonly IAppUpdateService _appUpdateService;
+    private readonly IPublicAppUpdateService? _publicAppUpdateService;
     private readonly IAppUpdateExecutionService _appUpdateExecutionService;
     private readonly IExternalUrlLauncher _externalUrlLauncher;
     private readonly AppUpdateDialogPresenter _dialogPresenter;
@@ -11,9 +12,11 @@ public sealed class AppUpdateFlowController
         IAppUpdateService appUpdateService,
         IAppUpdateExecutionService appUpdateExecutionService,
         IExternalUrlLauncher externalUrlLauncher,
+        IPublicAppUpdateService? publicAppUpdateService = null,
         AppUpdateDialogPresenter? dialogPresenter = null)
     {
         _appUpdateService = appUpdateService ?? throw new ArgumentNullException(nameof(appUpdateService));
+        _publicAppUpdateService = publicAppUpdateService;
         _appUpdateExecutionService = appUpdateExecutionService ?? throw new ArgumentNullException(nameof(appUpdateExecutionService));
         _externalUrlLauncher = externalUrlLauncher ?? throw new ArgumentNullException(nameof(externalUrlLauncher));
         _dialogPresenter = dialogPresenter ?? new AppUpdateDialogPresenter();
@@ -40,6 +43,59 @@ public sealed class AppUpdateFlowController
         }
 
         logs.Add(Info($"update available current={updateInfo.CurrentVersion} latest={updateInfo.LatestVersion}"));
+        return new AppUpdateCheckResult
+        {
+            IsUpdateAvailable = true,
+            ShouldExecuteImmediately = updateInfo.IsForced,
+            UpdateInfo = updateInfo,
+            DialogRequest = updateInfo.IsForced
+                ? null
+                : _dialogPresenter.BuildUpdateAvailableDialog(updateInfo, request.Text),
+            Logs = logs
+        };
+    }
+
+    public async Task<AppUpdateCheckResult> CheckForUpdateAsync(
+        AppUpdateFlowRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(request.Text);
+
+        if (_publicAppUpdateService is null)
+        {
+            return CheckForUpdate(request);
+        }
+
+        var logs = new List<AppUpdateFlowLogEntry>();
+        var publicResult = await _publicAppUpdateService.TryResolveUpdateAsync(
+            request.CurrentVersion,
+            cancellationToken);
+        if (!publicResult.IsSuccess)
+        {
+            logs.Add(Warning($"public app update check failed code={NormalizeStatusCode(publicResult.ErrorCode, "failed")}"));
+            return new AppUpdateCheckResult
+            {
+                IsUpdateAvailable = false,
+                Logs = logs
+            };
+        }
+
+        if (!publicResult.IsUpdateAvailable || publicResult.UpdateInfo is null)
+        {
+            var noUpdateDialog = _dialogPresenter.BuildNoUpdateDialog(request.CurrentVersion, request.Text);
+            logs.Add(Info($"public no update available current={request.CurrentVersion}"));
+            return new AppUpdateCheckResult
+            {
+                IsUpdateAvailable = false,
+                StatusText = noUpdateDialog.Summary,
+                DialogRequest = noUpdateDialog,
+                Logs = logs
+            };
+        }
+
+        var updateInfo = publicResult.UpdateInfo;
+        logs.Add(Info($"public update available current={updateInfo.CurrentVersion} latest={updateInfo.LatestVersion} forced={updateInfo.IsForced}"));
         return new AppUpdateCheckResult
         {
             IsUpdateAvailable = true,

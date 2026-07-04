@@ -85,21 +85,17 @@ internal sealed class MainStartupFeatureFacade
 
     public void StartStartupDialogsInBackground()
     {
-        _dialogsController.StartInBackground(new MainStartupDialogsContext
-        {
-            Services = new MainStartupDialogsServices
-            {
-                StartupBackgroundTaskManager = _backgroundTaskManager,
-                ShowStartupAnnouncementIfNeededAsync = _dialogsPort.ShowStartupAnnouncementIfNeededAsync,
-                ShowStartupUpdateCheckDialogAsync = _dialogsPort.ShowStartupUpdateCheckDialogAsync
-            },
-            Callbacks = new MainStartupDialogsCallbacks
-            {
-                UpdateStartupPreparationState = _dialogsPort.UpdateStartupPreparationState,
-                ClearLastErrorCode = _dialogsPort.ClearLastErrorCode,
-                LogWarning = _dialogsPort.LogWarning
-            }
-        });
+        _dialogsController.StartInBackground(CreateStartupDialogsContext());
+    }
+
+    public void StartStartupUpdateCheckInBackground()
+    {
+        _dialogsController.StartUpdateCheckInBackground(CreateStartupDialogsContext());
+    }
+
+    public void StartStartupAnnouncementInBackground()
+    {
+        _dialogsController.StartAnnouncementInBackground(CreateStartupDialogsContext());
     }
 
     public void StartGameMasterCoverPrefetchInBackground()
@@ -145,6 +141,25 @@ internal sealed class MainStartupFeatureFacade
     public void RemoveBackgroundTask(CancellationTokenSource cancellationTokenSource)
     {
         _backgroundTaskManager.Remove(cancellationTokenSource);
+    }
+
+    private MainStartupDialogsContext CreateStartupDialogsContext()
+    {
+        return new MainStartupDialogsContext
+        {
+            Services = new MainStartupDialogsServices
+            {
+                StartupBackgroundTaskManager = _backgroundTaskManager,
+                ShowStartupAnnouncementIfNeededAsync = _dialogsPort.ShowStartupAnnouncementIfNeededAsync,
+                ShowStartupUpdateCheckDialogAsync = _dialogsPort.ShowStartupUpdateCheckDialogAsync
+            },
+            Callbacks = new MainStartupDialogsCallbacks
+            {
+                UpdateStartupPreparationState = _dialogsPort.UpdateStartupPreparationState,
+                ClearLastErrorCode = _dialogsPort.ClearLastErrorCode,
+                LogWarning = _dialogsPort.LogWarning
+            }
+        };
     }
 
 }

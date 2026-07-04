@@ -1,3 +1,4 @@
+using System.Net.Http;
 using OptiClick.Wpf.Services;
 
 namespace OptiClick.Wpf.Composition;
@@ -28,6 +29,12 @@ public sealed class UpdateComposition
         var appVersionProvider = _root.CreateAppVersionProvider();
         var appUpdateVersionComparer = _root.CreateAppUpdateVersionComparer();
         var appUpdateService = _root.CreateAppUpdateService(appUpdateVersionComparer);
+        var remoteOptions = app.RemoteEndpointProvider.GetRemoteDataOptions();
+        var publicAppUpdateService = new PublicAppUpdateService(
+            remoteOptions?.DataV2BaseUrl ?? "",
+            new HttpClient(),
+            appUpdateVersionComparer,
+            app.AppLogger);
         var appUpdateExecutionService = new LazyAppUpdateExecutionService(() =>
             _root.CreateAppUpdateExecutionService(app.LocalDataPathProvider, app.AppLogger));
         var appUpdateDialogPresenter = new AppUpdateDialogPresenter();
@@ -43,6 +50,7 @@ public sealed class UpdateComposition
                 appUpdateService,
                 appUpdateExecutionService,
                 app.ExternalUrlLauncher,
+                publicAppUpdateService,
                 appUpdateDialogPresenter)
         };
     }

@@ -51,6 +51,8 @@ public sealed class AppUpdateService(IAppUpdateVersionComparer versionComparer) 
             return false;
         }
 
+        var isForced = RuntimeDataRowReader.GetString(row, "force_update")
+            .Equals("true", StringComparison.OrdinalIgnoreCase);
         if (!versionComparer.IsUpdateAvailable(currentVersion, latestVersion))
         {
             return false;
@@ -62,9 +64,6 @@ public sealed class AppUpdateService(IAppUpdateVersionComparer versionComparer) 
             displayVersion = latestVersion;
         }
 
-        var isForced = RuntimeDataRowReader.GetString(row, "force_update")
-            .Equals("true", StringComparison.OrdinalIgnoreCase);
-
         updateInfo = new AppUpdateInfo(
             currentVersion,
             latestVersion,
@@ -73,7 +72,8 @@ public sealed class AppUpdateService(IAppUpdateVersionComparer versionComparer) 
             filename,
             RuntimeDataRowReader.GetString(row, "note"),
             packageType,
-            isForced);
+            isForced,
+            RuntimeDataRowReader.GetString(row, "sha256"));
         return true;
     }
 

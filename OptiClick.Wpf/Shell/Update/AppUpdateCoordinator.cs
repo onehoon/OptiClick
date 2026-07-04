@@ -54,6 +54,51 @@ public sealed class AppUpdateCoordinator
         };
     }
 
+    public async Task<AppUpdateCoordinatorResult> BeginCheckAsync(
+        AppUpdateCoordinatorRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(request.Text);
+
+        if (request.IsAppUpdateInProgress)
+        {
+            return new AppUpdateCoordinatorResult
+            {
+                ShouldContinue = false,
+                StatusText = request.Trigger == AppUpdateTrigger.Manual
+                    ? request.Text.UpdateAlreadyInProgress
+                    : ""
+            };
+        }
+
+        var checkResult = await _appUpdateFlowController.CheckForUpdateAsync(
+            new AppUpdateFlowRequest
+            {
+                LatestRuntimeData = request.LatestRuntimeData,
+                CurrentVersion = request.CurrentVersion,
+                Text = request.Text.FlowText
+            },
+            cancellationToken);
+
+        return new AppUpdateCoordinatorResult
+        {
+            ShouldContinue = true,
+            ShouldShowDialog = checkResult.IsUpdateAvailable && !checkResult.ShouldExecuteImmediately,
+            IsUpdateAvailable = checkResult.IsUpdateAvailable,
+            ShouldExecuteImmediately = checkResult.ShouldExecuteImmediately,
+            StatusText = request.Trigger == AppUpdateTrigger.Manual
+                ? checkResult.StatusText
+                : "",
+            MissingUpdateInfoLogMessage = request.Trigger == AppUpdateTrigger.Startup
+                ? "update info missing after startup update availability check"
+                : "update info missing after update availability check",
+            DialogRequest = checkResult.DialogRequest,
+            UpdateInfo = checkResult.UpdateInfo,
+            Logs = checkResult.Logs
+        };
+    }
+
     public static bool IsDialogConfirmed(AppDialogResult result)
     {
         return result == AppDialogResult.Continue || result == AppDialogResult.Ok;

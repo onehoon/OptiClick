@@ -76,7 +76,7 @@ internal static class MainViewModelFallbackAppDependencyComposer
             resolvedAppUpdateService,
             resolvedAppUpdateExecutionService,
             resolvedExternalUrlLauncher,
-            resolvedAppUpdateDialogPresenter);
+            dialogPresenter: resolvedAppUpdateDialogPresenter);
         var appUpdateCoordinator = appDependencies.AppUpdateCoordinator ?? new AppUpdateCoordinator(appUpdateFlowController);
         var settingsComposition = OptiScalerSettingsModuleComposition.Compose(
             appDependencies,
