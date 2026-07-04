@@ -4,5 +4,6 @@ public enum RuntimeCatalogRefreshMode
 {
     Inline,
     BackgroundWarmup,
-    GpuDetectionRetry
+    GpuDetectionRetry,
+    AuthV2GpuSelectionRetry
 }

@@ -119,6 +119,23 @@ internal sealed class MainRuntimeFeatureFacade
             cancellationToken);
     }
 
+    public Task RefreshRuntimeDataCatalogWithSelectedGpuAsync(
+        GpuInfo selectedGpu,
+        RuntimeCatalogRefreshMode refreshMode,
+        CancellationToken cancellationToken = default)
+    {
+        var selectedContext = _runtimeShellState.LatestRuntimeContext with
+        {
+            SelectedGpu = selectedGpu
+        };
+        return RefreshRuntimeDataCatalogAsync(
+            _buildCatalogRefreshRequest(),
+            refreshMode,
+            cancellationToken,
+            selectedContext,
+            bypassStartupSnapshot: true);
+    }
+
     private Task RefreshRuntimeCatalogAsync(
         RuntimeCatalogCoordinatorRequest request,
         CancellationToken cancellationToken)
@@ -129,11 +146,13 @@ internal sealed class MainRuntimeFeatureFacade
     private async Task RefreshRuntimeDataCatalogAsync(
         MainRuntimeDataCatalogRefreshRequest request,
         RuntimeCatalogRefreshMode refreshMode,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        RuntimeContext? runtimeContextOverride = null,
+        bool bypassStartupSnapshot = false)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        if (_runtimeShellState.TryGetStartupRemoteCatalogSnapshot(out var startupRemoteCatalogSnapshot))
+        if (!bypassStartupSnapshot && _runtimeShellState.TryGetStartupRemoteCatalogSnapshot(out var startupRemoteCatalogSnapshot))
         {
             await ApplyRuntimeCatalogFlowResultAsync(
                 startupRemoteCatalogSnapshot.Result,
@@ -144,6 +163,7 @@ internal sealed class MainRuntimeFeatureFacade
             return;
         }
 
+        var latestRuntimeContext = runtimeContextOverride ?? _runtimeShellState.LatestRuntimeContext;
         await RefreshRuntimeCatalogAsync(
             new RuntimeCatalogCoordinatorRequest
             {
@@ -153,7 +173,7 @@ internal sealed class MainRuntimeFeatureFacade
                 IsGpuManifestRestartRequired = _runtimeShellState.IsGpuManifestRestartRequired,
                 LatestRemoteCatalogDetailErrorCode = _runtimeShellState.LatestRemoteCatalogDetailErrorCode,
                 GpuManifestRestartRequiredErrorCode = _gpuManifest.RestartRequiredErrorCode,
-                LatestRuntimeContext = _runtimeShellState.LatestRuntimeContext,
+                LatestRuntimeContext = latestRuntimeContext,
                 SelectedLanguage = request.SelectedLanguage,
                 Text = RuntimeCatalogCoordinatorText.FromAppStrings(request.Strings),
                 RefreshMode = refreshMode,

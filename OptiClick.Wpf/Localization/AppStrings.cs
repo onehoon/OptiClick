@@ -202,6 +202,14 @@ public sealed record AppStrings
     public string RuntimeCatalogFailedBullet2 { get; init; } = "";
     public string RuntimeCatalogUnsupportedGpuTitle { get; init; } = "";
     public string RuntimeCatalogUnsupportedGpuSummary { get; init; } = "";
+    public string RuntimeCatalogGpuSelectionRequiredTitle { get; init; } = "";
+    public string RuntimeCatalogGpuSelectionRequiredSummary { get; init; } = "";
+    public string RuntimeCatalogGpuSelectionRequiredBullet { get; init; } = "";
+    public string RuntimeCatalogInvalidSelectedGpuTitle { get; init; } = "";
+    public string RuntimeCatalogInvalidSelectedGpuSummary { get; init; } = "";
+    public string RuntimeCatalogInvalidSelectedGpuBullet { get; init; } = "";
+    public string RuntimeCatalogMultiGpuUnsupportedTitle { get; init; } = "";
+    public string RuntimeCatalogMultiGpuUnsupportedSummary { get; init; } = "";
     public string RuntimeCatalogGpuDetectionFailedTitle { get; init; } = "";
     public string RuntimeCatalogGpuDetectionFailedSummary { get; init; } = "";
     public string RuntimeCatalogGpuDetectionRetryFailedSummary { get; init; } = "";

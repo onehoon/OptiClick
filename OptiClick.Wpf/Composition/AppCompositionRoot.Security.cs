@@ -11,6 +11,7 @@ namespace OptiClick.Wpf.Composition;
 public sealed record AppSecurityServices
 {
     public required IOptiClickServerClock ServerClock { get; init; }
+    public required IOptiClickApiSession ApiSession { get; init; }
     public required IOptiClickApiRequestAuthenticator ApiRequestAuthenticator { get; init; }
     public required IOptiClickApiTicketStore TicketStore { get; init; }
     public required IArchiveDownloadRequestPreparer ArchiveDownloadRequestPreparer { get; init; }
@@ -50,11 +51,12 @@ public sealed partial class AppCompositionRoot
             readAppVersion,
             effectiveLogger);
         var ticketStore = new OptiClickApiTicketStore();
+        var apiSession = new OptiClickApiSession();
         var authenticator = new OptiClickApiRequestAuthenticator(
             credentialProvider,
             new OptiClickHmacSigner(),
             new OptiClickRequestCanonicalizer(),
-            new OptiClickApiSession(),
+            apiSession,
             utcNow: () => serverClock.UtcNow,
             logger: effectiveLogger);
         var archiveRequestPreparer = new OptiClickArchiveDownloadRequestPreparer(
@@ -66,6 +68,7 @@ public sealed partial class AppCompositionRoot
         return new AppSecurityServices
         {
             ServerClock = serverClock,
+            ApiSession = apiSession,
             ApiRequestAuthenticator = authenticator,
             TicketStore = ticketStore,
             ArchiveDownloadRequestPreparer = archiveRequestPreparer

@@ -5,6 +5,9 @@ namespace OptiClick.Wpf.Shell.RemoteV2;
 
 public static class AuthV2GpuCandidateFilter
 {
+    // This filter only removes permanently unsupported GPU families before Auth V2.
+    // It is not a replacement for server-side Resolve V2 manifest matching.
+    // Supported GPU family and bundle selection remain server-driven.
     private static readonly Regex XeTokenRegex = new(@"(^|\W)xe(\W|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex GtxTokenRegex = new(@"(^|\W)gtx(\W|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
@@ -123,4 +126,3 @@ public static class AuthV2GpuCandidateFilter
         };
     }
 }
-

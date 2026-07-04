@@ -3,6 +3,7 @@ using OptiClick.Wpf.Install.UiState;
 using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Shell.Games.GpuBundle;
+using OptiClick.Wpf.Shell.Gpu;
 using OptiClick.Wpf.Shell.RemoteV2;
 using OptiClick.Wpf.Shell.Runtime;
 using OptiClick.Wpf.Shell.Selection;
@@ -42,6 +43,12 @@ internal sealed class MainRuntimeCatalogUiFlowController
         var normalizedErrorCode = string.IsNullOrWhiteSpace(preNormalizedErrorCode)
             ? NormalizeStatusCode(result.ErrorCode, MainViewModelStatusCodes.RuntimeDataFailed)
             : preNormalizedErrorCode;
+
+        if (!isReplay && await TryRetryAuthV2GpuSelectionAsync(context, result, refreshMode, cancellationToken))
+        {
+            return;
+        }
+
         var update = context.Services.CreateRuntimeCatalogStateUpdate(
             result,
             normalizedErrorCode);
@@ -331,6 +338,101 @@ internal sealed class MainRuntimeCatalogUiFlowController
             $"remote catalog loaded games={context.State.ReadRemoteCatalogGameCount()} visible_games={context.State.ReadVisibleGameCount()}");
     }
 
+    private static async Task<bool> TryRetryAuthV2GpuSelectionAsync(
+        MainRuntimeCatalogUiFlowContext context,
+        RuntimeCatalogFlowResult result,
+        RuntimeCatalogRefreshMode refreshMode,
+        CancellationToken cancellationToken)
+    {
+        if (refreshMode == RuntimeCatalogRefreshMode.AuthV2GpuSelectionRetry
+            || !result.IsAuthV2BusinessStatus
+            || !IsAuthV2GpuSelectionStatus(result.AuthV2Status)
+            || result.AuthV2Candidates.Count == 0)
+        {
+            return false;
+        }
+
+        var candidates = result.AuthV2Candidates
+            .Where(static candidate => !string.IsNullOrWhiteSpace(candidate.Name))
+            .ToArray();
+        if (candidates.Length == 0)
+        {
+            return false;
+        }
+
+        GpuInfo? selectedGpu = null;
+        if (candidates.Length == 1)
+        {
+            selectedGpu = candidates[0];
+            context.Callbacks.LogRuntimeInfo(
+                $"auth v2 gpu selection retry auto vendor={NormalizeStatusCode(selectedGpu.Vendor, MainViewModelStatusCodes.Unknown)} name=\"{NormalizeStatusCode(selectedGpu.Name, MainViewModelStatusCodes.Unknown)}\"");
+        }
+        else if (candidates.Length == 2)
+        {
+            selectedGpu = await PromptAuthV2GpuSelectionAsync(
+                context,
+                result.AuthV2Status,
+                candidates[0],
+                candidates[1],
+                cancellationToken);
+        }
+
+        if (selectedGpu is null)
+        {
+            return false;
+        }
+
+        context.Callbacks.LogRuntimeInfo(
+            $"auth v2 retry with selected gpu vendor={NormalizeStatusCode(selectedGpu.Vendor, MainViewModelStatusCodes.Unknown)} name=\"{NormalizeStatusCode(selectedGpu.Name, MainViewModelStatusCodes.Unknown)}\"");
+        await context.Services.RefreshRuntimeCatalogWithSelectedGpuAsync(
+            selectedGpu,
+            RuntimeCatalogRefreshMode.AuthV2GpuSelectionRetry,
+            cancellationToken);
+        return true;
+    }
+
+    private static async Task<GpuInfo?> PromptAuthV2GpuSelectionAsync(
+        MainRuntimeCatalogUiFlowContext context,
+        string status,
+        GpuInfo firstGpu,
+        GpuInfo secondGpu,
+        CancellationToken cancellationToken)
+    {
+        var strings = context.State.ReadStrings();
+        var isInvalidSelection = string.Equals(status, "invalid_selected_gpu", StringComparison.OrdinalIgnoreCase);
+        var request = new AppDialogRequest
+        {
+            Kind = AppDialogKind.GpuSelection,
+            Severity = DialogSeverity.Warning,
+            Title = isInvalidSelection
+                ? strings.RuntimeCatalogInvalidSelectedGpuTitle
+                : strings.RuntimeCatalogGpuSelectionRequiredTitle,
+            Summary = isInvalidSelection
+                ? strings.RuntimeCatalogInvalidSelectedGpuSummary
+                : strings.RuntimeCatalogGpuSelectionRequiredSummary,
+            PrimaryButtonText = GpuSelectionCoordinator.BuildGpuSelectionButtonText(firstGpu, 1),
+            SecondaryButtonText = GpuSelectionCoordinator.BuildGpuSelectionButtonText(secondGpu, 2),
+            PrimaryResult = AppDialogResult.Continue,
+            SecondaryResult = AppDialogResult.Cancel,
+            IsBlocking = true,
+            CanClose = false,
+            CloseOnOverlayClick = false
+        };
+
+        var result = await context.Services.ShowDialogAsync(request, cancellationToken);
+        if (result == AppDialogResult.Continue)
+        {
+            return firstGpu;
+        }
+
+        if (result == AppDialogResult.Cancel)
+        {
+            return secondGpu;
+        }
+
+        return null;
+    }
+
     private static void ApplyRemoteCatalogUnavailableSelectionState(MainRuntimeCatalogUiFlowContext context)
     {
         var selectionState = context.State.ReadSelectionState() with
@@ -356,6 +458,12 @@ internal sealed class MainRuntimeCatalogUiFlowController
         return candidates.Any(candidate =>
             string.Equals(AuthV2GpuCandidateFilter.NormalizeVendor(candidate.Vendor, candidate.Name), vendor, StringComparison.OrdinalIgnoreCase)
             && string.Equals(AuthV2GpuCandidateFilter.NormalizeWhitespace(candidate.Name), name, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool IsAuthV2GpuSelectionStatus(string status)
+    {
+        return string.Equals(status, "gpu_selection_required", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(status, "invalid_selected_gpu", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string NormalizeStatusCode(string? value, string fallback)
@@ -399,8 +507,9 @@ internal sealed class MainRuntimeCatalogUiFlowServices
     public required Action RebuildSupportedGamesRows { get; init; }
     public required Func<CancellationToken, Task> StartStartupPreparationAsync { get; init; }
     public required Func<CancellationToken, Task> RefreshArchiveReadinessAsync { get; init; }
+    public required Func<GpuInfo, RuntimeCatalogRefreshMode, CancellationToken, Task> RefreshRuntimeCatalogWithSelectedGpuAsync { get; init; }
     public required Func<AppDialogRequest, CancellationToken, Task> ShowRemoteCatalogDialogOnceAsync { get; init; }
-    public required Func<AppDialogRequest, CancellationToken, Task> ShowDialogAsync { get; init; }
+    public required Func<AppDialogRequest, CancellationToken, Task<AppDialogResult>> ShowDialogAsync { get; init; }
     public required Action ClearScannedGameState { get; init; }
     public required Action<IReadOnlyList<GameCardViewModel>, bool> ReplaceGameCards { get; init; }
     public required Action<GameCardViewModel?> SetSelectedGame { get; init; }

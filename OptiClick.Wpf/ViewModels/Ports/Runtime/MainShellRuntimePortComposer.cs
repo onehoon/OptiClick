@@ -46,7 +46,13 @@ internal static class MainShellRuntimePortComposer
                         candidates,
                         ct),
             ApplyMultiGpuBlockedUiState = () => input.ResolveRuntimeFeature().ApplyMultiGpuBlockedUiState(),
-            RefreshRuntimeCatalogAsync = access.RefreshRuntimeDataCatalogByModeAsync
+            RefreshRuntimeCatalogAsync = access.RefreshRuntimeDataCatalogByModeAsync,
+            RefreshRuntimeCatalogWithSelectedGpuAsync =
+                (selectedGpu, refreshMode, cancellationToken) =>
+                    input.ResolveRuntimeFeature().RefreshRuntimeDataCatalogWithSelectedGpuAsync(
+                        selectedGpu,
+                        refreshMode,
+                        cancellationToken)
         };
     }
 }

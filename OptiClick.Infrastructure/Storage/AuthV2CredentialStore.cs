@@ -10,7 +10,7 @@ namespace OptiClick.Infrastructure.Storage;
 
 public sealed class AuthV2CredentialStore : IAuthV2CredentialStore
 {
-    private const string CredentialFileName = "auth-v2-credential.json";
+    public const string CredentialFileName = "auth-v2-credential.json";
     private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("OptiClick.AuthV2Credential.v1");
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -115,4 +115,3 @@ public sealed class AuthV2CredentialStore : IAuthV2CredentialStore
         public string ProtectedClientSecret { get; init; } = "";
     }
 }
-

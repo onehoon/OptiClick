@@ -86,6 +86,24 @@ public sealed record AuthV2SessionStartResult
         && string.Equals(Status, "resolved", StringComparison.OrdinalIgnoreCase)
         && !string.IsNullOrWhiteSpace(RuntimeToken)
         && ResolvedGpu.IsUsable;
+
+    public bool IsUnsupported =>
+        string.Equals(Status, "unsupported", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(ErrorCode, "gpu_unsupported", StringComparison.OrdinalIgnoreCase);
+
+    public bool RequiresGpuSelection =>
+        string.Equals(Status, "gpu_selection_required", StringComparison.OrdinalIgnoreCase);
+
+    public bool IsInvalidSelectedGpu =>
+        string.Equals(Status, "invalid_selected_gpu", StringComparison.OrdinalIgnoreCase);
+
+    public bool IsMultiGpuUnsupported =>
+        string.Equals(Status, "multi_gpu_unsupported", StringComparison.OrdinalIgnoreCase);
+
+    public bool IsBusinessStatus =>
+        IsHttpSuccess
+        && !SessionReady
+        && (IsUnsupported || RequiresGpuSelection || IsInvalidSelectedGpu || IsMultiGpuUnsupported);
 }
 
 public sealed record AuthV2ResolvedGpu
@@ -121,4 +139,3 @@ public sealed record DataV2GpuBundleResult
     public string ErrorCode { get; init; } = "";
     public string GpuBundleJson { get; init; } = "";
 }
-

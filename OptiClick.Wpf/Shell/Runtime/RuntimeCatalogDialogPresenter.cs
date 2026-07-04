@@ -57,6 +57,48 @@ public sealed class RuntimeCatalogDialogPresenter
         };
     }
 
+    public AppDialogRequest BuildAuthV2GpuSelectionRequiredDialog(
+        RuntimeCatalogFlowText text,
+        IReadOnlyList<string> candidateLabels)
+    {
+        return BuildAuthV2BusinessStatusWarning(
+            "gpu_selection_required",
+            text.RuntimeCatalogGpuSelectionRequiredTitle,
+            text.RuntimeCatalogGpuSelectionRequiredSummary,
+            text,
+            candidateLabels is { Count: > 0 }
+                ? candidateLabels
+                : [text.RuntimeCatalogGpuSelectionRequiredBullet]);
+    }
+
+    public AppDialogRequest BuildAuthV2InvalidSelectedGpuDialog(
+        RuntimeCatalogFlowText text,
+        IReadOnlyList<string> candidateLabels)
+    {
+        return BuildAuthV2BusinessStatusWarning(
+            "invalid_selected_gpu",
+            text.RuntimeCatalogInvalidSelectedGpuTitle,
+            text.RuntimeCatalogInvalidSelectedGpuSummary,
+            text,
+            candidateLabels is { Count: > 0 }
+                ? candidateLabels
+                : [text.RuntimeCatalogInvalidSelectedGpuBullet]);
+    }
+
+    public AppDialogRequest BuildAuthV2MultiGpuUnsupportedDialog(RuntimeCatalogFlowText text)
+    {
+        return new AppDialogRequest
+        {
+            Kind = AppDialogKind.Warning,
+            Severity = DialogSeverity.Warning,
+            Title = text.RuntimeCatalogMultiGpuUnsupportedTitle,
+            Summary = text.RuntimeCatalogMultiGpuUnsupportedSummary,
+            ErrorCode = "multi_gpu_unsupported",
+            PrimaryButtonText = text.DialogButtonOk,
+            PrimaryResult = AppDialogResult.Ok
+        };
+    }
+
     public AppDialogRequest BuildGpuDetectionFailedDialog(
         RuntimeCatalogFlowText text,
         bool retryFailed = false)
@@ -112,6 +154,20 @@ public sealed class RuntimeCatalogDialogPresenter
             Summary = summary,
             BulletItems = bulletItems ?? [],
             ErrorCode = errorCode
+        };
+    }
+
+    private static AppDialogRequest BuildAuthV2BusinessStatusWarning(
+        string errorCode,
+        string title,
+        string summary,
+        RuntimeCatalogFlowText text,
+        IReadOnlyList<string> bulletItems)
+    {
+        return BuildWarning(errorCode, title, summary, bulletItems) with
+        {
+            PrimaryButtonText = text.DialogButtonOk,
+            PrimaryResult = AppDialogResult.Ok
         };
     }
 

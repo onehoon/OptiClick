@@ -123,7 +123,8 @@ internal static class MainViewModelShellFacadeComposer
                     ResolveManifestSupportedGpuCandidatesAsync =
                         ports.Runtime.ResolveManifestSupportedGpuCandidatesAsync,
                     ApplyMultiGpuBlockedUiState = ports.Runtime.ApplyMultiGpuBlockedUiState,
-                    RefreshRuntimeCatalogAsync = ports.Runtime.RefreshRuntimeCatalogAsync
+                    RefreshRuntimeCatalogAsync = ports.Runtime.RefreshRuntimeCatalogAsync,
+                    RefreshRuntimeCatalogWithSelectedGpuAsync = ports.Runtime.RefreshRuntimeCatalogWithSelectedGpuAsync
                 }
             });
     }
@@ -305,6 +306,7 @@ internal sealed record MainShellFacadeRuntimePort
 
     public required Action ApplyMultiGpuBlockedUiState { get; init; }
     public required Func<RuntimeCatalogRefreshMode, CancellationToken, Task> RefreshRuntimeCatalogAsync { get; init; }
+    public required Func<GpuInfo, RuntimeCatalogRefreshMode, CancellationToken, Task> RefreshRuntimeCatalogWithSelectedGpuAsync { get; init; }
 }
 
 internal sealed record MainShellFacadeStartupPort

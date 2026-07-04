@@ -1,5 +1,6 @@
 using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Localization;
+using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Shell.RuntimeData;
 using OptiClick.Wpf.Shell.Games;
 
@@ -95,6 +96,27 @@ public sealed class RuntimeCatalogFlowController
             };
         }
 
+        if (pipelineResult.IsAuthV2BusinessStatus)
+        {
+            var code = NormalizeStatusCode(pipelineResult.AuthV2Status, NormalizeStatusCode(pipelineResult.ErrorCode, "auth_v2_session_not_ready"));
+            logs.Add(Warning(
+                "remote-v2",
+                $"auth business status status={code} candidates={pipelineResult.AuthV2Candidates.Count}"));
+            return new RuntimeCatalogFlowResult
+            {
+                DidRun = true,
+                IsSuccess = false,
+                ErrorCode = code,
+                IsAuthV2BusinessStatus = true,
+                AuthV2Status = code,
+                AuthV2Candidates = pipelineResult.AuthV2Candidates,
+                RuntimeData = pipelineResult.RuntimeData ?? RemoteRuntimeData.Empty,
+                SettingsStatusText = LocalizedTextFormatter.Format(text.RuntimeRemoteCatalogFailed, code),
+                DialogRequest = BuildAuthV2BusinessStatusDialog(code, pipelineResult.AuthV2Candidates, text),
+                Logs = logs
+            };
+        }
+
         if (!pipelineResult.IsSuccess)
         {
             var code = NormalizeStatusCode(pipelineResult.ErrorCode, "runtime_data_failed");
@@ -182,6 +204,55 @@ public sealed class RuntimeCatalogFlowController
         var manifestConfigured = !string.IsNullOrWhiteSpace(safeRemoteData.GpuBundleManifestUrl);
         var bundleConfigured = !string.IsNullOrWhiteSpace(safeRemoteData.GpuBundleUrl);
         return $"endpoint_status runtime_data={(runtimeDataConfigured ? "configured" : "missing")} manifest={(manifestConfigured ? "configured" : "missing")} bundle={(bundleConfigured ? "configured" : "missing")}";
+    }
+
+    private AppDialogRequest BuildAuthV2BusinessStatusDialog(
+        string status,
+        IReadOnlyList<GpuInfo> candidates,
+        RuntimeCatalogFlowText text)
+    {
+        if (string.Equals(status, "unsupported", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(status, "gpu_unsupported", StringComparison.OrdinalIgnoreCase))
+        {
+            return _dialogPresenter.BuildUnsupportedGpuDialog(text);
+        }
+
+        if (string.Equals(status, "gpu_selection_required", StringComparison.OrdinalIgnoreCase))
+        {
+            return _dialogPresenter.BuildAuthV2GpuSelectionRequiredDialog(text, FormatCandidateLabels(candidates, text));
+        }
+
+        if (string.Equals(status, "invalid_selected_gpu", StringComparison.OrdinalIgnoreCase))
+        {
+            return _dialogPresenter.BuildAuthV2InvalidSelectedGpuDialog(text, FormatCandidateLabels(candidates, text));
+        }
+
+        if (string.Equals(status, "multi_gpu_unsupported", StringComparison.OrdinalIgnoreCase))
+        {
+            return _dialogPresenter.BuildAuthV2MultiGpuUnsupportedDialog(text);
+        }
+
+        return _dialogPresenter.BuildFailedDialog(status, text);
+    }
+
+    private static IReadOnlyList<string> FormatCandidateLabels(
+        IReadOnlyList<GpuInfo> candidates,
+        RuntimeCatalogFlowText text)
+    {
+        if (candidates is not { Count: > 0 })
+        {
+            return [];
+        }
+
+        return candidates
+            .Where(static candidate => !string.IsNullOrWhiteSpace(candidate.Name))
+            .Select(candidate =>
+            {
+                var vendor = NormalizeStatusCode(candidate.Vendor, text.StatusUnknown);
+                var name = NormalizeStatusCode(candidate.Name, text.StatusUnknown);
+                return $"{vendor}: {name}";
+            })
+            .ToArray();
     }
 
     private static RuntimeFlowLogEntry Info(string category, string message)

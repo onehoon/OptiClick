@@ -47,6 +47,7 @@ internal sealed class MainRuntimeCatalogUiFlowContextFactory
                 RebuildSupportedGamesRows = _input.RebuildSupportedGamesRows,
                 StartStartupPreparationAsync = _input.StartStartupPreparationAsync,
                 RefreshArchiveReadinessAsync = _input.RefreshArchiveReadinessAsync,
+                RefreshRuntimeCatalogWithSelectedGpuAsync = _input.RefreshRuntimeCatalogWithSelectedGpuAsync,
                 ShowRemoteCatalogDialogOnceAsync = _input.ShowRemoteCatalogDialogOnceAsync,
                 ShowDialogAsync = _input.ShowDialogAsync,
                 ClearScannedGameState = _input.ClearScannedGameState,
@@ -90,8 +91,9 @@ internal sealed record MainRuntimeCatalogUiFlowContextFactoryInput
     public required Action RebuildSupportedGamesRows { get; init; }
     public required Func<CancellationToken, Task> StartStartupPreparationAsync { get; init; }
     public required Func<CancellationToken, Task> RefreshArchiveReadinessAsync { get; init; }
+    public required Func<GpuInfo, RuntimeCatalogRefreshMode, CancellationToken, Task> RefreshRuntimeCatalogWithSelectedGpuAsync { get; init; }
     public required Func<AppDialogRequest, CancellationToken, Task> ShowRemoteCatalogDialogOnceAsync { get; init; }
-    public required Func<AppDialogRequest, CancellationToken, Task> ShowDialogAsync { get; init; }
+    public required Func<AppDialogRequest, CancellationToken, Task<AppDialogResult>> ShowDialogAsync { get; init; }
     public required Action ClearScannedGameState { get; init; }
     public required Action<IReadOnlyList<GameCardViewModel>, bool> ReplaceGameCards { get; init; }
     public required Action<GameCardViewModel?> SetSelectedGame { get; init; }
