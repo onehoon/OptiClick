@@ -224,7 +224,7 @@ public sealed class RuntimeCatalogFlowController
 
         if (string.Equals(status, "invalid_selected_gpu", StringComparison.OrdinalIgnoreCase))
         {
-            return _dialogPresenter.BuildAuthV2InvalidSelectedGpuDialog(text, FormatCandidateLabels(candidates, text));
+            return _dialogPresenter.BuildUnsupportedGpuDialog(text);
         }
 
         if (string.Equals(status, "multi_gpu_unsupported", StringComparison.OrdinalIgnoreCase))
