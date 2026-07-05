@@ -106,13 +106,14 @@ public sealed class RemoteCatalogV2Pipeline : IRemoteCatalogPipeline
             }
 
             var selectedGpu = authResult.ResolvedGpu;
+            var fsr4Policy = ResolveFsr4Policy(selectedGpu);
             var bundleParse = _gpuBundleParser.Parse(
                 bundleResult.GpuBundleJson,
                 selectedGpuGroup: selectedGpu.GpuGroup,
                 requestVendor: selectedGpu.Vendor,
                 bundleKey: selectedGpu.BundleKey,
                 manifestVersion: selectedGpu.ManifestVersion,
-                fsr4Policy: Fsr4ManifestPolicy.Disabled);
+                fsr4Policy: fsr4Policy);
             if (!bundleParse.IsSuccess)
             {
                 return Failure(
@@ -126,7 +127,7 @@ public sealed class RemoteCatalogV2Pipeline : IRemoteCatalogPipeline
                 selectedGpu.BundleKey,
                 selectedGpu.GpuGroup,
                 selectedGpu.Vendor,
-                Fsr4ManifestPolicy.Disabled);
+                fsr4Policy);
             return BuildMergedResult(runtimeParse.RuntimeData, gpuBundleLoadResult, language);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -262,5 +263,24 @@ public sealed class RemoteCatalogV2Pipeline : IRemoteCatalogPipeline
     {
         var normalized = (value ?? "").Trim();
         return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+    }
+
+    private static Fsr4ManifestPolicy ResolveFsr4Policy(AuthV2ResolvedGpu selectedGpu)
+    {
+        if (IsRadeonRx60(selectedGpu.BundleKey) || IsRadeonRx60(selectedGpu.GpuGroup))
+        {
+            return new Fsr4ManifestPolicy
+            {
+                Enabled = true,
+                Variant = "4.0.2c"
+            };
+        }
+
+        return Fsr4ManifestPolicy.Disabled;
+    }
+
+    private static bool IsRadeonRx60(string value)
+    {
+        return string.Equals((value ?? "").Trim(), "radeon_rx60", StringComparison.OrdinalIgnoreCase);
     }
 }
