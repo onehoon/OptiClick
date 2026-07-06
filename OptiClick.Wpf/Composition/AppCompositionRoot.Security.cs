@@ -1,7 +1,5 @@
-using System.IO;
 using System.Net.Http;
 using OptiClick.Core.Runtime;
-using OptiClick.Infrastructure.FileSystem;
 using OptiClick.Infrastructure.Logging;
 using OptiClick.Infrastructure.Security;
 using OptiClick.Wpf.Services;
@@ -12,9 +10,9 @@ public sealed record AppSecurityServices
 {
     public required IOptiClickServerClock ServerClock { get; init; }
     public required IOptiClickApiSession ApiSession { get; init; }
-    public required IOptiClickApiRequestAuthenticator ApiRequestAuthenticator { get; init; }
+    public IOptiClickApiRequestAuthenticator? ApiRequestAuthenticator { get; init; }
     public required IOptiClickApiTicketStore TicketStore { get; init; }
-    public required IArchiveDownloadRequestPreparer ArchiveDownloadRequestPreparer { get; init; }
+    public IArchiveDownloadRequestPreparer? ArchiveDownloadRequestPreparer { get; init; }
 }
 
 public sealed partial class AppCompositionRoot
@@ -29,79 +27,17 @@ public sealed partial class AppCompositionRoot
         ArgumentNullException.ThrowIfNull(localDataPathProvider);
         ArgumentNullException.ThrowIfNull(appVersionProvider);
 
-        var sharedHttpClient = httpClient ?? new HttpClient();
         var effectiveLogger = logger ?? NullAppLogger.Instance;
-        Func<string?> readAppVersion = () => appVersionProvider.GetCurrentVersion();
         var serverClock = new OptiClickServerClock(
             EnumerateTrustedWorkerApiEndpoints(remoteDataOptions),
             logger: effectiveLogger);
 
-        var credentialStore = new ProtectedDataOptiClickClientCredentialStore(
-            credentialPath: BuildCredentialPath(localDataPathProvider),
-            logger: effectiveLogger);
-        var registrationClient = new OptiClickClientRegistrationClient(
-            sharedHttpClient,
-            BuildApiEndpoint(remoteDataOptions, "/v1/client/register"),
-            readAppVersion,
-            effectiveLogger,
-            serverClock: serverClock);
-        var credentialProvider = new OptiClickClientCredentialProvider(
-            credentialStore,
-            registrationClient,
-            readAppVersion,
-            effectiveLogger);
-        var ticketStore = new OptiClickApiTicketStore();
-        var apiSession = new OptiClickApiSession();
-        var authenticator = new OptiClickApiRequestAuthenticator(
-            credentialProvider,
-            new OptiClickHmacSigner(),
-            new OptiClickRequestCanonicalizer(),
-            apiSession,
-            utcNow: () => serverClock.UtcNow,
-            logger: effectiveLogger);
-        var downloadTicketClient = new RemoteDownloadTicketClient(
-            sharedHttpClient,
-            BuildApiEndpoint(remoteDataOptions, "/v1/download-ticket"),
-            authenticator,
-            readAppVersion,
-            effectiveLogger,
-            serverClock: serverClock);
-        var archiveRequestPreparer = new OptiClickArchiveDownloadRequestPreparer(
-            downloadTicketClient,
-            authenticator,
-            readAppVersion,
-            effectiveLogger);
-
         return new AppSecurityServices
         {
             ServerClock = serverClock,
-            ApiSession = apiSession,
-            ApiRequestAuthenticator = authenticator,
-            TicketStore = ticketStore,
-            ArchiveDownloadRequestPreparer = archiveRequestPreparer
+            ApiSession = new OptiClickApiSession(),
+            TicketStore = new OptiClickApiTicketStore()
         };
-    }
-
-    private static Uri? BuildApiEndpoint(RemoteDataOptions? remoteDataOptions, string path)
-    {
-        var normalizedPath = (path ?? "").Trim();
-        if (!normalizedPath.StartsWith("/", StringComparison.Ordinal))
-        {
-            normalizedPath = "/" + normalizedPath;
-        }
-
-        foreach (var endpoint in EnumerateCandidateEndpoints(remoteDataOptions))
-        {
-            if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri)
-                || !IsWorkerApiEndpointCandidate(uri))
-            {
-                continue;
-            }
-
-            return new UriBuilder(uri.Scheme, uri.Host, uri.Port, normalizedPath).Uri;
-        }
-
-        return null;
     }
 
     private static IEnumerable<Uri> EnumerateTrustedWorkerApiEndpoints(RemoteDataOptions? remoteDataOptions)
@@ -114,14 +50,6 @@ public sealed partial class AppCompositionRoot
                 yield return uri;
             }
         }
-    }
-
-    private static string BuildCredentialPath(IAppLocalDataPathProvider localDataPathProvider)
-    {
-        return Path.Combine(
-            localDataPathProvider.RootDirectory,
-            "Security",
-            "client-credential.json");
     }
 
     private static IEnumerable<string> EnumerateCandidateEndpoints(RemoteDataOptions? remoteDataOptions)
