@@ -2,9 +2,23 @@ name: Publish Windows
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 1.2.3)'
+        required: true
+        type: string
+      channel:
+        description: 'Release channel'
+        required: true
+        type: choice
+        options:
+          - stable
+          - pre
+        default: stable
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  VELOPACK_APP_ID: OptiClick
 
 jobs:
   publish:
@@ -19,6 +33,10 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
+
+      - name: Install vpk
+        shell: pwsh
+        run: dotnet tool install -g vpk
 
       - name: Restore appsettings.json
         shell: pwsh
@@ -35,10 +53,36 @@ jobs:
       - name: Publish
         shell: pwsh
         run: |
-          dotnet publish .\OptiClick.Wpf\OptiClick.Wpf.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false
+          dotnet publish .\OptiClick.Wpf\OptiClick.Wpf.csproj -c Release -r win-x64 --self-contained true -p:DebugType=None -p:DebugSymbols=false
+
+      - name: Pack with vpk
+        shell: pwsh
+        run: |
+          vpk pack `
+            --packId $env:VELOPACK_APP_ID `
+            --packVersion "${{ inputs.version }}" `
+            --packDir ".\OptiClick.Wpf\bin\Release\net10.0-windows10.0.22000.0\win-x64\publish\" `
+            --mainExe OptiClick.exe `
+            --icon ".\OptiClick.Wpf\Assets\AppIcon.ico"
+
+      - name: Upload release to GitHub
+        shell: pwsh
+        env:
+          VPK_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $vpkArgs = @(
+            'upload', 'github',
+            '--repoUrl', "https://github.com/${{ github.repository }}",
+            '--publish',
+            '--tag', "v${{ inputs.version }}"
+          )
+          if ("${{ inputs.channel }}" -eq "pre") {
+            $vpkArgs += '--pre'
+          }
+          vpk @vpkArgs
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
           name: OptiClick-win-x64
-          path: .\OptiClick.Wpf\bin\Release\net10.0-windows10.0.22000.0\win-x64\publish\
+          path: .\Releases\

@@ -1,5 +1,4 @@
 ﻿using OptiClick.Core.Abstractions;
-using System.Net.Http;
 using OptiClick.Core.Scan;
 using OptiClick.Wpf.Configuration;
 using OptiClick.Wpf.Diagnostics;
@@ -52,26 +51,13 @@ public sealed partial class AppCompositionRoot
         return new AssemblyAppVersionProvider();
     }
 
-    public IAppUpdateVersionComparer CreateAppUpdateVersionComparer()
+    public IVelopackAppUpdateService CreateVelopackAppUpdateService()
     {
-        return new AppUpdateVersionComparer();
-    }
-
-    public IAppUpdateService CreateAppUpdateService(IAppUpdateVersionComparer? versionComparer = null)
-    {
-        return new AppUpdateService(versionComparer ?? CreateAppUpdateVersionComparer());
-    }
-
-    public IAppUpdateExecutionService CreateAppUpdateExecutionService(
-        IAppLocalDataPathProvider? localDataPathProvider = null,
-        IAppLogger? logger = null,
-        HttpClient? httpClient = null)
-    {
-        return new AppUpdateExecutionService(
-            localDataPathProvider ?? CreateAppLocalDataPathProvider(),
-            new ArchiveDownloader(httpClient ?? new HttpClient()),
-            CreateArchiveExtractor(),
-            logger);
+        var includePreReleases = string.Equals(
+            Environment.GetEnvironmentVariable("OPTICLICK_UPDATE_PRERELEASE"),
+            "true",
+            StringComparison.OrdinalIgnoreCase);
+        return new VelopackAppUpdateService(includePreReleases: includePreReleases);
     }
 
     public IFolderPickerService CreateFolderPickerService()

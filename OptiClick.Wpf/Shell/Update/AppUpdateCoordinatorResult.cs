@@ -8,7 +8,6 @@ public sealed record AppUpdateCoordinatorResult
     public bool ShouldContinue { get; init; }
     public bool ShouldShowDialog { get; init; }
     public bool IsUpdateAvailable { get; init; }
-    public bool ShouldExecuteImmediately { get; init; }
     public string StatusText { get; init; } = "";
     public string MissingUpdateInfoLogMessage { get; init; } = "";
     public AppDialogRequest? DialogRequest { get; init; }

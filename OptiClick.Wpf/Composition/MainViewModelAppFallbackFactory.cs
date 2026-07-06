@@ -22,12 +22,7 @@ internal static class MainViewModelAppFallbackFactory
         var userSettingsStore = appDependencies.UserSettingsStore ?? new AppUserSettingsStore(localDataPathProvider, appLogger);
         var firstRunStateStore = appDependencies.FirstRunStateStore ?? new FirstRunStateStore(localDataPathProvider, appLogger);
         var appVersionProvider = appDependencies.AppVersionProvider ?? new AssemblyAppVersionProvider();
-        var appUpdateVersionComparer = appDependencies.AppUpdateVersionComparer ?? new AppUpdateVersionComparer();
-        var appUpdateService = appDependencies.AppUpdateService ?? new AppUpdateService(appUpdateVersionComparer);
-        var appUpdateExecutionService = appDependencies.AppUpdateExecutionService
-                                        ?? new AppUpdateExecutionService(
-                                            localDataPathProvider: localDataPathProvider,
-                                            logger: appLogger);
+        var velopackAppUpdateService = appDependencies.VelopackAppUpdateService ?? new VelopackAppUpdateService();
         var externalUrlLauncher = appDependencies.ExternalUrlLauncher ?? new ExternalUrlLauncher(appLogger);
         var optiScalerCommonIniSettingsStore = new OptiScalerCommonIniSettingsJsonStore(
             localDataPathProvider,
@@ -42,8 +37,7 @@ internal static class MainViewModelAppFallbackFactory
             UserSettingsStore = userSettingsStore,
             FirstRunStateStore = firstRunStateStore,
             AppVersionProvider = appVersionProvider,
-            AppUpdateService = appUpdateService,
-            AppUpdateExecutionService = appUpdateExecutionService,
+            VelopackAppUpdateService = velopackAppUpdateService,
             ExternalUrlLauncher = externalUrlLauncher,
             OptiScalerSettingsApplicationService = optiScalerSettingsApplicationService
         };
@@ -68,12 +62,9 @@ internal static class MainViewModelAppFallbackFactory
             AppVersionProvider = Require(
                 appDependencies.AppVersionProvider,
                 nameof(MainViewModelAppDependencies.AppVersionProvider)),
-            AppUpdateService = Require(
-                appDependencies.AppUpdateService,
-                nameof(MainViewModelAppDependencies.AppUpdateService)),
-            AppUpdateExecutionService = Require(
-                appDependencies.AppUpdateExecutionService,
-                nameof(MainViewModelAppDependencies.AppUpdateExecutionService)),
+            VelopackAppUpdateService = Require(
+                appDependencies.VelopackAppUpdateService,
+                nameof(MainViewModelAppDependencies.VelopackAppUpdateService)),
             ExternalUrlLauncher = Require(
                 appDependencies.ExternalUrlLauncher,
                 nameof(MainViewModelAppDependencies.ExternalUrlLauncher)),

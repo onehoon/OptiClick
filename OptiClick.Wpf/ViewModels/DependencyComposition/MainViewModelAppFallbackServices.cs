@@ -11,8 +11,7 @@ internal sealed record MainViewModelAppFallbackServices
     public required IAppUserSettingsStore UserSettingsStore { get; init; }
     public required IFirstRunStateStore FirstRunStateStore { get; init; }
     public required IAppVersionProvider AppVersionProvider { get; init; }
-    public required IAppUpdateService AppUpdateService { get; init; }
-    public required IAppUpdateExecutionService AppUpdateExecutionService { get; init; }
+    public required IVelopackAppUpdateService VelopackAppUpdateService { get; init; }
     public required IExternalUrlLauncher ExternalUrlLauncher { get; init; }
     public required IOptiScalerSettingsApplicationService OptiScalerSettingsApplicationService { get; init; }
 }

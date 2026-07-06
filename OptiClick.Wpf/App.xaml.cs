@@ -1,11 +1,17 @@
 using System.Windows;
 using OptiClick.Wpf.Composition;
 using OptiClick.Wpf.ViewModels;
+using Velopack;
 
 namespace OptiClickShell;
 
 public partial class App : Application
 {
+    public App()
+    {
+        VelopackApp.Build().Run();
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         var bootstrapper = new AppBootstrapper();

@@ -43,19 +43,6 @@ internal sealed class MainAppUpdateInteractionController
             context.SetSettingsStatusText(coordinatorResult.StatusText);
         }
 
-        if (coordinatorResult.ShouldExecuteImmediately)
-        {
-            if (!coordinatorResult.TryGetUpdateInfo(out var forcedUpdateInfo))
-            {
-                context.SetSettingsStatusText(strings.UpdateFailed);
-                context.LogError(coordinatorResult.MissingUpdateInfoLogMessage);
-                return;
-            }
-
-            await ExecuteConfirmedAppUpdateAsync(context, forcedUpdateInfo, cancellationToken);
-            return;
-        }
-
         if (!coordinatorResult.ShouldContinue
             || !coordinatorResult.ShouldShowDialog
             || coordinatorResult.DialogRequest is null)

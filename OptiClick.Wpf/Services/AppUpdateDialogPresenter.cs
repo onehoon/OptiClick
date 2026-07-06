@@ -1,18 +1,15 @@
-using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Models;
 
 namespace OptiClick.Wpf.Services;
 
 public sealed class AppUpdateDialogPresenter
 {
-    public AppDialogRequest BuildNoUpdateDialog(string currentVersion, AppUpdateFlowText text)
+    public AppDialogRequest BuildNoUpdateDialog(AppUpdateFlowText text)
     {
-        _ = currentVersion;
-        var message = text.UpdateLatestMessage;
         return new AppDialogRequest
         {
             Title = text.UpdateCheckTitle,
-            Summary = message,
+            Summary = text.UpdateLatestMessage,
             Kind = AppDialogKind.Info,
             Severity = DialogSeverity.Info
         };
@@ -36,7 +33,7 @@ public sealed class AppUpdateDialogPresenter
         };
     }
 
-    public AppDialogRequest BuildPrepareFailedDialog(string errorCode, AppUpdateFlowText text)
+    public AppDialogRequest BuildUpdateFailedDialog(AppUpdateFlowText text)
     {
         return new AppDialogRequest
         {
@@ -44,28 +41,7 @@ public sealed class AppUpdateDialogPresenter
             Summary = text.UpdatePrepareFailedSummary,
             Kind = AppDialogKind.Warning,
             Severity = DialogSeverity.Warning,
-            BulletItems =
-            [
-                LocalizedTextFormatter.Format(text.UpdateFailedReasonFormat, errorCode ?? ""),
-                text.UpdateTryAgainLater
-            ]
+            BulletItems = [text.UpdateTryAgainLater]
         };
     }
-
-    public AppDialogRequest BuildLaunchFailedDialog(string errorCode, AppUpdateFlowText text)
-    {
-        return new AppDialogRequest
-        {
-            Title = text.UpdateFailedTitle,
-            Summary = text.UpdateLaunchFailedSummary,
-            Kind = AppDialogKind.Warning,
-            Severity = DialogSeverity.Warning,
-            BulletItems =
-            [
-                LocalizedTextFormatter.Format(text.UpdateFailedReasonFormat, errorCode ?? ""),
-                text.UpdateRunCopiedInstaller
-            ]
-        };
-    }
-
 }
