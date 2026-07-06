@@ -135,8 +135,8 @@ public sealed class MainViewModelFlowRequestFactory
             text);
     }
 
-    public AppUpdateFlowRequest BuildAppUpdateRequest(AppUpdateFlowText text)
+    public AppUpdateFlowRequest BuildAppUpdateRequest(AppUpdateFlowText text, AppLanguage language)
     {
-        return _appUpdate.BuildAppUpdateRequest(text);
+        return _appUpdate.BuildAppUpdateRequest(text, language);
     }
 }

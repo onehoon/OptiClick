@@ -182,11 +182,12 @@ internal sealed class MainUninstallFlowRequestFactory
 
 internal sealed class MainAppUpdateFlowRequestFactory
 {
-    public AppUpdateFlowRequest BuildAppUpdateRequest(AppUpdateFlowText text)
+    public AppUpdateFlowRequest BuildAppUpdateRequest(AppUpdateFlowText text, AppLanguage language)
     {
         return new AppUpdateFlowRequest
         {
-            Text = text
+            Text = text,
+            Language = language
         };
     }
 }

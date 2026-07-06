@@ -33,7 +33,8 @@ public sealed class AppUpdateCoordinator
         var checkResult = await _appUpdateFlowController.CheckForUpdateAsync(
             new AppUpdateFlowRequest
             {
-                Text = request.Text.FlowText
+                Text = request.Text.FlowText,
+                Language = request.Language
             },
             cancellationToken);
 

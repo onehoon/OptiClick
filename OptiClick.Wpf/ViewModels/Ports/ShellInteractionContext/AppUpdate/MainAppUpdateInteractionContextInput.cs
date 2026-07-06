@@ -1,3 +1,4 @@
+using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Services;
@@ -15,6 +16,7 @@ internal sealed record MainAppUpdateInteractionContextInput
     public required AppUpdateCoordinator AppUpdateCoordinator { get; init; }
     public required AppUpdateFlowController AppUpdateFlowController { get; init; }
     public required Func<AppStrings> ReadStrings { get; init; }
+    public required Func<AppLanguage> ReadLanguage { get; init; }
     public required Func<RemoteRuntimeData> ReadLatestRuntimeData { get; init; }
     public required Func<string> ReadCurrentAppVersion { get; init; }
     public required Func<bool> IsAppUpdateInProgress { get; init; }

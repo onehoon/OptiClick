@@ -55,7 +55,7 @@ public sealed class AppUpdateFlowController
         {
             IsUpdateAvailable = true,
             UpdateInfo = updateInfo,
-            DialogRequest = _dialogPresenter.BuildUpdateAvailableDialog(updateInfo, request.Text),
+            DialogRequest = _dialogPresenter.BuildUpdateAvailableDialog(updateInfo, request.Text, request.Language),
             Logs = logs
         };
     }

@@ -1,8 +1,11 @@
+using OptiClick.Core.Runtime;
+
 namespace OptiClick.Wpf.Services;
 
 public sealed record AppUpdateFlowRequest
 {
     public required AppUpdateFlowText Text { get; init; }
+    public required AppLanguage Language { get; init; }
 }
 
 public sealed record AppUpdateConfirmedRequest

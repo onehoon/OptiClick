@@ -26,6 +26,7 @@ internal static class MainAppUpdateInteractionContextComposer
             BusyStateApplier = input.ShellDependencies.BusyStateApplier,
             ResultApplier = input.ShellDependencies.ResultApplier,
             ReadStrings = () => access.Strings,
+            ReadLanguage = () => access.SelectedLanguage,
             ReadLatestRuntimeData = () => access.LatestRuntimeData,
             ReadCurrentAppVersion = () => MainShellInteractionContextUtilities.NormalizeAppVersion(
                 input.AppDependencies.AppVersionProvider.GetCurrentVersion()),
