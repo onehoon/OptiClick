@@ -2,7 +2,9 @@ using System.Net.Http;
 using OptiClick.Core.Runtime;
 using OptiClick.Infrastructure.Logging;
 using OptiClick.Infrastructure.Security;
+using OptiClick.Infrastructure.Storage;
 using OptiClick.Wpf.Services;
+using OptiClick.Wpf.Shell.RemoteV2;
 
 namespace OptiClick.Wpf.Composition;
 
@@ -31,13 +33,32 @@ public sealed partial class AppCompositionRoot
         var serverClock = new OptiClickServerClock(
             EnumerateTrustedWorkerApiEndpoints(remoteDataOptions),
             logger: effectiveLogger);
+        var apiSession = new OptiClickApiSession();
+        var archiveRequestPreparer = new AuthV2ArchiveDownloadRequestPreparer(
+            new AuthV2CredentialStore(localDataPathProvider, effectiveLogger),
+            apiSession,
+            BuildDataV2ArchiveEndpoint(remoteDataOptions),
+            effectiveLogger);
 
         return new AppSecurityServices
         {
             ServerClock = serverClock,
-            ApiSession = new OptiClickApiSession(),
-            TicketStore = new OptiClickApiTicketStore()
+            ApiSession = apiSession,
+            TicketStore = new OptiClickApiTicketStore(),
+            ArchiveDownloadRequestPreparer = archiveRequestPreparer
         };
+    }
+
+    private static Uri? BuildDataV2ArchiveEndpoint(RemoteDataOptions? remoteDataOptions)
+    {
+        var baseUrl = (remoteDataOptions?.DataV2BaseUrl ?? "").Trim().TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl)
+            || !Uri.TryCreate($"{baseUrl}/v2/resources/extra_bundle", UriKind.Absolute, out var endpoint))
+        {
+            return null;
+        }
+
+        return endpoint;
     }
 
     private static IEnumerable<Uri> EnumerateTrustedWorkerApiEndpoints(RemoteDataOptions? remoteDataOptions)
