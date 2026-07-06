@@ -51,13 +51,17 @@ public sealed partial class AppCompositionRoot
         return new AssemblyAppVersionProvider();
     }
 
-    public IVelopackAppUpdateService CreateVelopackAppUpdateService()
+    public IVelopackAppUpdateService CreateVelopackAppUpdateService(IAppLogger? logger = null)
     {
-        var includePreReleases = string.Equals(
-            Environment.GetEnvironmentVariable("OPTICLICK_UPDATE_PRERELEASE"),
-            "true",
-            StringComparison.OrdinalIgnoreCase);
-        return new VelopackAppUpdateService(includePreReleases: includePreReleases);
+        // Prefer the installed Velopack channel (set at pack time) to decide whether to include
+        // pre-releases. The env var is only for local dev overrides when running unpackaged.
+        var overrideValue = Environment.GetEnvironmentVariable("OPTICLICK_UPDATE_PRERELEASE");
+        bool? includePreReleases = overrideValue switch
+        {
+            null or "" => null,
+            _ => string.Equals(overrideValue, "true", StringComparison.OrdinalIgnoreCase)
+        };
+        return new VelopackAppUpdateService(includePreReleases: includePreReleases, logger: logger);
     }
 
     public IFolderPickerService CreateFolderPickerService()

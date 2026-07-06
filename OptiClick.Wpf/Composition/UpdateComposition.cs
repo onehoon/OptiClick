@@ -24,7 +24,7 @@ public sealed class UpdateComposition
         ArgumentNullException.ThrowIfNull(app);
 
         var appVersionProvider = _root.CreateAppVersionProvider();
-        var velopackAppUpdateService = _root.CreateVelopackAppUpdateService();
+        var velopackAppUpdateService = _root.CreateVelopackAppUpdateService(app.AppLogger);
         var appUpdateDialogPresenter = new AppUpdateDialogPresenter();
 
         return new UpdateCompositionServices

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (e.g. 1.2.3)'
+        description: 'Version to publish (e.g. 1.2.3 or 1.2.3-preview.1)'
         required: true
         type: string
       channel:
@@ -15,6 +15,9 @@ on:
           - stable
           - pre
         default: stable
+
+permissions:
+  contents: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -50,20 +53,64 @@ jobs:
           $null = $env:OPTICLICK_APPSETTINGS_JSON | ConvertFrom-Json
           Set-Content -Path ".\OptiClick.Wpf\appsettings.json" -Value $env:OPTICLICK_APPSETTINGS_JSON -Encoding utf8
 
+      - name: Resolve versions and channel
+        id: resolve
+        shell: pwsh
+        run: |
+          $version = "${{ inputs.version }}"
+          $channel = if ("${{ inputs.channel }}" -eq "pre") { "win-preview" } else { "win" }
+
+          # AppFileVersion is a Windows FILEVERSION resource: numeric 4-part only, no
+          # pre-release suffix. Derive it from the leading numeric part of $version.
+          if ($version -notmatch '^(\d+)\.(\d+)\.(\d+)') {
+            throw "Version '$version' must start with a numeric major.minor.patch (e.g. 1.2.3 or 1.2.3-preview.1)."
+          }
+          $fileVersion = "$($Matches[1]).$($Matches[2]).$($Matches[3]).0"
+
+          Write-Host "Package version: $version"
+          Write-Host "File version:    $fileVersion"
+          Write-Host "Channel:         $channel"
+
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "fileVersion=$fileVersion" >> $env:GITHUB_OUTPUT
+          "channel=$channel" >> $env:GITHUB_OUTPUT
+
       - name: Publish
         shell: pwsh
         run: |
-          dotnet publish .\OptiClick.Wpf\OptiClick.Wpf.csproj -c Release -r win-x64 --self-contained true -p:DebugType=None -p:DebugSymbols=false
+          dotnet publish .\OptiClick.Wpf\OptiClick.Wpf.csproj -c Release -r win-x64 --self-contained true `
+            -p:AppVersion="${{ steps.resolve.outputs.version }}" `
+            -p:AppFileVersion="${{ steps.resolve.outputs.fileVersion }}" `
+            -p:DebugType=None -p:DebugSymbols=false
+
+      - name: Download previous release (for delta packages)
+        shell: pwsh
+        run: |
+          $downloadArgs = @(
+            'download', 'github',
+            '--repoUrl', "https://github.com/${{ github.repository }}",
+            '--channel', "${{ steps.resolve.outputs.channel }}",
+            '--outputDir', '.\Releases'
+          )
+          if ("${{ inputs.channel }}" -eq "pre") {
+            $downloadArgs += '--pre'
+          }
+          vpk @downloadArgs
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "No previous release found for this channel yet (expected for the first release) - continuing without a delta base."
+          }
 
       - name: Pack with vpk
         shell: pwsh
         run: |
           vpk pack `
             --packId $env:VELOPACK_APP_ID `
-            --packVersion "${{ inputs.version }}" `
+            --packVersion "${{ steps.resolve.outputs.version }}" `
             --packDir ".\OptiClick.Wpf\bin\Release\net10.0-windows10.0.22000.0\win-x64\publish\" `
             --mainExe OptiClick.exe `
-            --icon ".\OptiClick.Wpf\Assets\AppIcon.ico"
+            --icon ".\OptiClick.Wpf\Assets\AppIcon.ico" `
+            --channel "${{ steps.resolve.outputs.channel }}" `
+            --outputDir ".\Releases"
 
       - name: Upload release to GitHub
         shell: pwsh
@@ -73,8 +120,10 @@ jobs:
           $vpkArgs = @(
             'upload', 'github',
             '--repoUrl', "https://github.com/${{ github.repository }}",
+            '--channel', "${{ steps.resolve.outputs.channel }}",
+            '--outputDir', '.\Releases',
             '--publish',
-            '--tag', "v${{ inputs.version }}"
+            '--tag', "v${{ steps.resolve.outputs.version }}"
           )
           if ("${{ inputs.channel }}" -eq "pre") {
             $vpkArgs += '--pre'

@@ -25,12 +25,26 @@ public sealed class AppUpdateDialogPresenter
             Summary = text.UpdateAvailableSummary,
             Kind = AppDialogKind.Warning,
             Severity = DialogSeverity.Warning,
-            BulletItems = [],
+            BulletItems = ParseReleaseNotes(updateInfo.Notes),
             PrimaryButtonText = text.UpdateAvailablePrimaryButton,
             SecondaryButtonText = text.UpdateAvailableSecondaryButton,
             PrimaryResult = AppDialogResult.Continue,
             SecondaryResult = AppDialogResult.Cancel
         };
+    }
+
+    private static IReadOnlyList<string> ParseReleaseNotes(string notesMarkdown)
+    {
+        if (string.IsNullOrWhiteSpace(notesMarkdown))
+        {
+            return [];
+        }
+
+        return notesMarkdown
+            .Split('\n')
+            .Select(static line => line.Trim().TrimStart('-', '*').Trim())
+            .Where(static line => !string.IsNullOrWhiteSpace(line) && !line.StartsWith('#'))
+            .ToArray();
     }
 
     public AppDialogRequest BuildUpdateFailedDialog(AppUpdateFlowText text)
