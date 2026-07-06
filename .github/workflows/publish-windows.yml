@@ -15,6 +15,10 @@ on:
           - stable
           - pre
         default: stable
+      releaseNotes:
+        description: 'Release notes (markdown, shown in the in-app update dialog). Leave empty to skip.'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -75,6 +79,22 @@ jobs:
           "fileVersion=$fileVersion" >> $env:GITHUB_OUTPUT
           "channel=$channel" >> $env:GITHUB_OUTPUT
 
+      - name: Write release notes
+        id: notes
+        shell: pwsh
+        env:
+          RELEASE_NOTES: ${{ inputs.releaseNotes }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:RELEASE_NOTES)) {
+            "hasNotes=false" >> $env:GITHUB_OUTPUT
+            return
+          }
+
+          $notesPath = Join-Path $pwd "release-notes.md"
+          Set-Content -Path $notesPath -Value $env:RELEASE_NOTES -Encoding utf8
+          "hasNotes=true" >> $env:GITHUB_OUTPUT
+          "path=$notesPath" >> $env:GITHUB_OUTPUT
+
       - name: Publish
         shell: pwsh
         run: |
@@ -103,14 +123,20 @@ jobs:
       - name: Pack with vpk
         shell: pwsh
         run: |
-          vpk pack `
-            --packId $env:VELOPACK_APP_ID `
-            --packVersion "${{ steps.resolve.outputs.version }}" `
-            --packDir ".\OptiClick.Wpf\bin\Release\net10.0-windows10.0.22000.0\win-x64\publish\" `
-            --mainExe OptiClick.exe `
-            --icon ".\OptiClick.Wpf\Assets\AppIcon.ico" `
-            --channel "${{ steps.resolve.outputs.channel }}" `
-            --outputDir ".\Releases"
+          $packArgs = @(
+            'pack',
+            '--packId', $env:VELOPACK_APP_ID,
+            '--packVersion', "${{ steps.resolve.outputs.version }}",
+            '--packDir', '.\OptiClick.Wpf\bin\Release\net10.0-windows10.0.22000.0\win-x64\publish\',
+            '--mainExe', 'OptiClick.exe',
+            '--icon', '.\OptiClick.Wpf\Assets\AppIcon.ico',
+            '--channel', "${{ steps.resolve.outputs.channel }}",
+            '--outputDir', '.\Releases'
+          )
+          if ("${{ steps.notes.outputs.hasNotes }}" -eq "true") {
+            $packArgs += @('--releaseNotes', "${{ steps.notes.outputs.path }}")
+          }
+          vpk @packArgs
 
       - name: Upload release to GitHub
         shell: pwsh
