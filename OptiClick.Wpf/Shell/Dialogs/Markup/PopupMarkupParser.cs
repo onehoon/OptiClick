@@ -39,6 +39,27 @@ public sealed record PopupMarkupBulletItem
 {
     public IReadOnlyList<PopupMarkupInlineSegment> Inline { get; init; } = [];
     public string PlainText { get; init; } = "";
+
+    /// <summary>
+    /// True when this item is a heading/intro line (text before the first [DOT]) rather than
+    /// an actual [DOT] bullet, so renderers can skip the bullet marker for it.
+    /// </summary>
+    public bool IsHeading { get; init; }
+
+    /// <summary>
+    /// Number of [INDENT] tokens seen immediately before the [DOT] that started this bullet.
+    /// Shifts the whole bullet (marker included) rightward when rendered.
+    /// </summary>
+    public int IndentLevel { get; init; }
+
+    /// <summary>
+    /// True when this bullet is the first one after a [P] boundary (multiple messages are
+    /// joined into one markup string with [P] - see StartupAnnouncementFlowController), so
+    /// renderers can add extra spacing above it to visually separate messages. Callers that
+    /// merge multiple already-parsed results into one list may also set this for the first
+    /// item of each source item.
+    /// </summary>
+    public bool IsNewMessageGroup { get; init; }
 }
 
 public sealed record PopupMarkupParseResult
@@ -62,8 +83,6 @@ public static class PopupMarkupParser
         "INDENT"
     ];
 
-    private const int IndentSpaces = 3;
-
     public static PopupMarkupParseResult Parse(string? rawText)
     {
         var normalizedText = NormalizeLineEndings(rawText);
@@ -76,6 +95,10 @@ public static class PopupMarkupParser
         var bulletItems = new List<PopupMarkupBulletItem>();
         List<PopupMarkupInlineSegment>? currentBulletSegments = null;
         var isEmphasis = false;
+        var pendingIndentLevel = 0;
+        var currentBulletIndentLevel = 0;
+        var pendingNewMessageGroup = false;
+        var currentBulletIsNewMessageGroup = false;
 
         var cursor = 0;
         while (cursor < normalizedText.Length)
@@ -106,10 +129,17 @@ public static class PopupMarkupParser
                     case "P":
                         if (currentBulletSegments is not null)
                         {
-                            FinalizeBulletItem(currentBulletSegments, bulletItems);
+                            FinalizeBulletItem(currentBulletSegments, bulletItems, currentBulletIndentLevel, currentBulletIsNewMessageGroup);
                             currentBulletSegments = null;
+                            currentBulletIndentLevel = 0;
+                            currentBulletIsNewMessageGroup = false;
                         }
 
+                        pendingIndentLevel = 0;
+                        // [P] is how multiple messages get joined into one markup string (see
+                        // string.Join("[P]", ...) upstream), so whichever bullet starts next is
+                        // the first item of a new message and should get extra spacing above it.
+                        pendingNewMessageGroup = true;
                         AddLineBreak(inlineSegments);
                         AddLineBreak(inlineSegments);
                         break;
@@ -122,19 +152,30 @@ public static class PopupMarkupParser
                         if (currentBulletSegments is null)
                         {
                             currentBulletSegments = new List<PopupMarkupInlineSegment>();
+                            currentBulletIndentLevel = pendingIndentLevel;
+                            pendingIndentLevel = 0;
+                            currentBulletIsNewMessageGroup = pendingNewMessageGroup;
+                            pendingNewMessageGroup = false;
                             break;
                         }
 
                         if (HasVisibleContent(currentBulletSegments))
                         {
-                            FinalizeBulletItem(currentBulletSegments, bulletItems);
+                            FinalizeBulletItem(currentBulletSegments, bulletItems, currentBulletIndentLevel, currentBulletIsNewMessageGroup);
                             currentBulletSegments = new List<PopupMarkupInlineSegment>();
+                            currentBulletIndentLevel = pendingIndentLevel;
+                            pendingIndentLevel = 0;
+                            currentBulletIsNewMessageGroup = pendingNewMessageGroup;
+                            pendingNewMessageGroup = false;
                         }
 
                         break;
 
                     case "INDENT":
-                        AddText(GetActiveSegments(inlineSegments, currentBulletSegments), new string(' ', IndentSpaces), isEmphasis);
+                        // Only meaningful directly before the [DOT] that starts the next bullet
+                        // (shifts the whole bullet, marker included); tracked as pending state
+                        // rather than literal space text so trimming can't eat it.
+                        pendingIndentLevel++;
                         break;
                 }
 
@@ -156,7 +197,7 @@ public static class PopupMarkupParser
 
         if (currentBulletSegments is not null)
         {
-            FinalizeBulletItem(currentBulletSegments, bulletItems);
+            FinalizeBulletItem(currentBulletSegments, bulletItems, currentBulletIndentLevel, currentBulletIsNewMessageGroup);
         }
 
         var normalizedInline = NormalizeSegments(inlineSegments, trimOuterWhitespace: true);
@@ -268,7 +309,9 @@ public static class PopupMarkupParser
 
     private static void FinalizeBulletItem(
         List<PopupMarkupInlineSegment> segments,
-        List<PopupMarkupBulletItem> items)
+        List<PopupMarkupBulletItem> items,
+        int indentLevel,
+        bool isNewMessageGroup)
     {
         var normalizedSegments = NormalizeSegments(segments, trimOuterWhitespace: true);
         if (!HasVisibleContent(normalizedSegments))
@@ -279,7 +322,9 @@ public static class PopupMarkupParser
         items.Add(new PopupMarkupBulletItem
         {
             Inline = normalizedSegments,
-            PlainText = BuildPlainText(normalizedSegments).Trim()
+            PlainText = BuildPlainText(normalizedSegments).Trim(),
+            IndentLevel = indentLevel,
+            IsNewMessageGroup = isNewMessageGroup
         });
     }
 
@@ -312,6 +357,19 @@ public static class PopupMarkupParser
 
         var segments = source.Select(segment => segment).ToList();
 
+        if (trimOuterWhitespace)
+        {
+            TrimStartWhitespace(segments);
+            TrimEndWhitespace(segments);
+        }
+
+        // Trimming whitespace-only text segments to empty (below) can expose a LineBreak that
+        // was previously followed by that now-empty text, so the leading/trailing LineBreak
+        // trim must run *after* the empty-text filter, not before it.
+        segments = segments
+            .Where(segment => segment.Kind != PopupMarkupInlineKind.Text || !string.IsNullOrEmpty(segment.Text))
+            .ToList();
+
         while (segments.Count > 0 && segments[0].Kind == PopupMarkupInlineKind.LineBreak)
         {
             segments.RemoveAt(0);
@@ -321,16 +379,6 @@ public static class PopupMarkupParser
         {
             segments.RemoveAt(segments.Count - 1);
         }
-
-        if (trimOuterWhitespace)
-        {
-            TrimStartWhitespace(segments);
-            TrimEndWhitespace(segments);
-        }
-
-        segments = segments
-            .Where(segment => segment.Kind != PopupMarkupInlineKind.Text || !string.IsNullOrEmpty(segment.Text))
-            .ToList();
 
         return segments;
     }

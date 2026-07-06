@@ -1,7 +1,6 @@
 using System;
 using System.Windows;
 using System.Windows.Media;
-using System.Text.RegularExpressions;
 using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Shell.Dialogs.Markup;
 
@@ -9,7 +8,6 @@ namespace OptiClick.Wpf.ViewModels;
 
 public sealed class DialogRequestViewModel : ViewModelBase
 {
-    private static readonly Regex StartupWarningDotTokenRegex = new(@"\[\s*DOT\s*\][ \t]*", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Brush NvidiaVendorTintBrush = CreateBrush(0x1E, 0x2A, 0x1F);
     private static readonly Brush AmdVendorTintBrush = CreateBrush(0x2A, 0x17, 0x1A);
     private static readonly Brush IntelVendorTintBrush = CreateBrush(0x12, 0x24, 0x3A);
@@ -245,35 +243,45 @@ public sealed class DialogRequestViewModel : ViewModelBase
                 continue;
             }
 
-            var normalizedSourceItem = NormalizeStartupWarningMarkup(sourceItem);
-            var parsed = PopupMarkupParser.Parse(normalizedSourceItem);
-            if (parsed.BulletItems.Count > 0)
+            // Parse the raw markup directly so [DOT] produces real structured bullet items
+            // (with correct hanging-indent rendering) instead of being flattened into a
+            // literal "\u2022 " character inside one long wrapped line.
+            var parsed = PopupMarkupParser.Parse(sourceItem.Trim());
+
+            // Track whether this is the first item contributed by this source message, so it
+            // can be marked to get extra spacing above it (separating it from the previous
+            // message's items) - except for the very first item overall, which needs none.
+            var isFirstItemOfGroup = true;
+
+            void AddGroupItem(PopupMarkupBulletItem item)
             {
-                merged.AddRange(parsed.BulletItems);
+                merged.Add(isFirstItemOfGroup && merged.Count > 0
+                    ? item with { IsNewMessageGroup = true }
+                    : item);
+                isFirstItemOfGroup = false;
             }
 
+            // Any text before the first [DOT] is a heading/intro line, not a bullet, so it
+            // must come before the bullets it introduces and render without a bullet marker.
+            // A message with no [DOT] at all isn't introducing a list - treat it as a
+            // regular (dotted) single-line item instead.
             if (!string.IsNullOrWhiteSpace(parsed.PlainText))
             {
-                merged.Add(new PopupMarkupBulletItem
+                AddGroupItem(new PopupMarkupBulletItem
                 {
                     Inline = parsed.Inline,
-                    PlainText = parsed.PlainText
+                    PlainText = parsed.PlainText,
+                    IsHeading = parsed.BulletItems.Count > 0
                 });
+            }
+
+            foreach (var bullet in parsed.BulletItems)
+            {
+                AddGroupItem(bullet);
             }
         }
 
         return merged;
-    }
-
-    private static string NormalizeStartupWarningMarkup(string sourceItem)
-    {
-        var normalized = (sourceItem ?? "").Trim();
-        if (string.IsNullOrWhiteSpace(normalized))
-        {
-            return "";
-        }
-
-        return StartupWarningDotTokenRegex.Replace(normalized, "\u2022 ");
     }
 
     private static Brush ResolveVendorTintBrush(string? text)
