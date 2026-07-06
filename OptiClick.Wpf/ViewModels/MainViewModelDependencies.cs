@@ -138,9 +138,7 @@ public sealed record MainViewModelShellSectionDependencies
 public sealed record MainViewModelAppDependencies
 {
     public IAppVersionProvider? AppVersionProvider { get; init; }
-    public IAppUpdateVersionComparer? AppUpdateVersionComparer { get; init; }
-    public IAppUpdateService? AppUpdateService { get; init; }
-    public IAppUpdateExecutionService? AppUpdateExecutionService { get; init; }
+    public IVelopackAppUpdateService? VelopackAppUpdateService { get; init; }
     public AppUpdateDialogPresenter? AppUpdateDialogPresenter { get; init; }
     public AppUpdateFlowController? AppUpdateFlowController { get; init; }
     public AppUpdateCoordinator? AppUpdateCoordinator { get; init; }

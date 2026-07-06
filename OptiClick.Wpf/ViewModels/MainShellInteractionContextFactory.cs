@@ -80,6 +80,7 @@ internal sealed class MainShellInteractionContextFactory
             BusyStateApplier = input.BusyStateApplier,
             ResultApplier = input.ResultApplier,
             ReadStrings = input.ReadStrings,
+            ReadLanguage = input.ReadLanguage,
             ReadLatestRuntimeData = input.ReadLatestRuntimeData,
             ReadCurrentAppVersion = input.ReadCurrentAppVersion,
             IsAppUpdateInProgress = input.IsAppUpdateInProgress,

@@ -135,14 +135,8 @@ public sealed class MainViewModelFlowRequestFactory
             text);
     }
 
-    public AppUpdateFlowRequest BuildAppUpdateRequest(
-        RemoteRuntimeData latestRuntimeData,
-        string currentVersion,
-        AppUpdateFlowText text)
+    public AppUpdateFlowRequest BuildAppUpdateRequest(AppUpdateFlowText text, AppLanguage language)
     {
-        return _appUpdate.BuildAppUpdateRequest(
-            latestRuntimeData,
-            currentVersion,
-            text);
+        return _appUpdate.BuildAppUpdateRequest(text, language);
     }
 }

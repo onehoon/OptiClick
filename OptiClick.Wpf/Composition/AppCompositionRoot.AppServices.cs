@@ -1,5 +1,4 @@
 ﻿using OptiClick.Core.Abstractions;
-using System.Net.Http;
 using OptiClick.Core.Scan;
 using OptiClick.Wpf.Configuration;
 using OptiClick.Wpf.Diagnostics;
@@ -52,26 +51,17 @@ public sealed partial class AppCompositionRoot
         return new AssemblyAppVersionProvider();
     }
 
-    public IAppUpdateVersionComparer CreateAppUpdateVersionComparer()
+    public IVelopackAppUpdateService CreateVelopackAppUpdateService(IAppLogger? logger = null)
     {
-        return new AppUpdateVersionComparer();
-    }
-
-    public IAppUpdateService CreateAppUpdateService(IAppUpdateVersionComparer? versionComparer = null)
-    {
-        return new AppUpdateService(versionComparer ?? CreateAppUpdateVersionComparer());
-    }
-
-    public IAppUpdateExecutionService CreateAppUpdateExecutionService(
-        IAppLocalDataPathProvider? localDataPathProvider = null,
-        IAppLogger? logger = null,
-        HttpClient? httpClient = null)
-    {
-        return new AppUpdateExecutionService(
-            localDataPathProvider ?? CreateAppLocalDataPathProvider(),
-            new ArchiveDownloader(httpClient ?? new HttpClient()),
-            CreateArchiveExtractor(),
-            logger);
+        // Prefer the installed Velopack channel (set at pack time) to decide whether to include
+        // pre-releases. The env var is only for local dev overrides when running unpackaged.
+        var overrideValue = Environment.GetEnvironmentVariable("OPTICLICK_UPDATE_PRERELEASE");
+        bool? includePreReleases = overrideValue switch
+        {
+            null or "" => null,
+            _ => string.Equals(overrideValue, "true", StringComparison.OrdinalIgnoreCase)
+        };
+        return new VelopackAppUpdateService(includePreReleases: includePreReleases, logger: logger);
     }
 
     public IFolderPickerService CreateFolderPickerService()

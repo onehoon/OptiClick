@@ -1,12 +1,11 @@
-using OptiClick.Wpf.Shell.RuntimeData;
+using OptiClick.Core.Runtime;
 
 namespace OptiClick.Wpf.Services;
 
 public sealed record AppUpdateFlowRequest
 {
-    public required RemoteRuntimeData LatestRuntimeData { get; init; }
-    public required string CurrentVersion { get; init; }
     public required AppUpdateFlowText Text { get; init; }
+    public required AppLanguage Language { get; init; }
 }
 
 public sealed record AppUpdateConfirmedRequest

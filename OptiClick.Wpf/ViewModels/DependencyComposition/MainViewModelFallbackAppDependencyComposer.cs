@@ -68,14 +68,11 @@ internal static class MainViewModelFallbackAppDependencyComposer
             appLogger);
 
         var appVersionProvider = fallbackServices.AppVersionProvider;
-        var resolvedAppUpdateService = fallbackServices.AppUpdateService;
-        var resolvedAppUpdateExecutionService = fallbackServices.AppUpdateExecutionService;
+        var resolvedVelopackAppUpdateService = fallbackServices.VelopackAppUpdateService;
         var resolvedExternalUrlLauncher = fallbackServices.ExternalUrlLauncher;
         var resolvedAppUpdateDialogPresenter = appDependencies.AppUpdateDialogPresenter ?? new AppUpdateDialogPresenter();
         var appUpdateFlowController = appDependencies.AppUpdateFlowController ?? new AppUpdateFlowController(
-            resolvedAppUpdateService,
-            resolvedAppUpdateExecutionService,
-            resolvedExternalUrlLauncher,
+            resolvedVelopackAppUpdateService,
             dialogPresenter: resolvedAppUpdateDialogPresenter);
         var appUpdateCoordinator = appDependencies.AppUpdateCoordinator ?? new AppUpdateCoordinator(appUpdateFlowController);
         var settingsComposition = OptiScalerSettingsModuleComposition.Compose(

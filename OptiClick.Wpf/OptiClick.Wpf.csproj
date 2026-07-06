@@ -18,10 +18,12 @@
 
   <ItemGroup>
     <PackageReference Include="WPF-UI" Version="4.3.0" />
+    <PackageReference Include="Velopack" Version="1.2.0" />
   </ItemGroup>
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
+    <StartupObject>OptiClickShell.Program</StartupObject>
     <!-- windows10.0.22000.0 is the Windows 11 SDK baseline build; runtime policy still blocks Windows 10. -->
     <AssemblyName>OptiClick</AssemblyName>
     <TargetFramework>net10.0-windows10.0.22000.0</TargetFramework>
@@ -50,9 +52,6 @@
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release' and '$(RuntimeIdentifier)' == 'win-x64'">
     <SelfContained>true</SelfContained>
-    <PublishSingleFile>true</PublishSingleFile>
-    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <DebugType>None</DebugType>
     <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>

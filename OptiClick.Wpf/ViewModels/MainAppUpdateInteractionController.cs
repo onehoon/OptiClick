@@ -1,3 +1,4 @@
+using OptiClick.Core.Runtime;
 using OptiClick.Wpf.Localization;
 using OptiClick.Wpf.Models;
 using OptiClick.Wpf.Services;
@@ -32,6 +33,7 @@ internal sealed class MainAppUpdateInteractionController
                 LatestRuntimeData = context.ReadLatestRuntimeData(),
                 CurrentVersion = context.ReadCurrentAppVersion(),
                 Text = AppUpdateCoordinatorText.FromAppStrings(strings),
+                Language = context.ReadLanguage(),
                 IsAppUpdateInProgress = context.IsAppUpdateInProgress()
             },
             cancellationToken);
@@ -41,19 +43,6 @@ internal sealed class MainAppUpdateInteractionController
         if (!string.IsNullOrWhiteSpace(coordinatorResult.StatusText))
         {
             context.SetSettingsStatusText(coordinatorResult.StatusText);
-        }
-
-        if (coordinatorResult.ShouldExecuteImmediately)
-        {
-            if (!coordinatorResult.TryGetUpdateInfo(out var forcedUpdateInfo))
-            {
-                context.SetSettingsStatusText(strings.UpdateFailed);
-                context.LogError(coordinatorResult.MissingUpdateInfoLogMessage);
-                return;
-            }
-
-            await ExecuteConfirmedAppUpdateAsync(context, forcedUpdateInfo, cancellationToken);
-            return;
         }
 
         if (!coordinatorResult.ShouldContinue
@@ -147,6 +136,7 @@ internal sealed class MainAppUpdateInteractionContext
     public required MainViewModelBusyStateApplier BusyStateApplier { get; init; }
     public required MainViewModelResultApplier ResultApplier { get; init; }
     public required Func<AppStrings> ReadStrings { get; init; }
+    public required Func<AppLanguage> ReadLanguage { get; init; }
     public required Func<RemoteRuntimeData> ReadLatestRuntimeData { get; init; }
     public required Func<string> ReadCurrentAppVersion { get; init; }
     public required Func<bool> IsAppUpdateInProgress { get; init; }

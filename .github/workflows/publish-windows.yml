@@ -2,9 +2,30 @@ name: Publish Windows
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 1.2.3 or 1.2.3-preview.1)'
+        required: true
+        type: string
+      channel:
+        description: 'Release channel'
+        required: true
+        type: choice
+        options:
+          - stable
+          - pre
+        default: stable
+      releaseNotes:
+        description: 'Quick release notes override (markdown). Leave empty to use .github/RELEASE_NOTES.md instead.'
+        required: false
+        type: string
+
+permissions:
+  contents: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  VELOPACK_APP_ID: OptiClick
 
 jobs:
   publish:
@@ -20,6 +41,10 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Install vpk
+        shell: pwsh
+        run: dotnet tool install -g vpk
+
       - name: Restore appsettings.json
         shell: pwsh
         env:
@@ -32,13 +57,120 @@ jobs:
           $null = $env:OPTICLICK_APPSETTINGS_JSON | ConvertFrom-Json
           Set-Content -Path ".\OptiClick.Wpf\appsettings.json" -Value $env:OPTICLICK_APPSETTINGS_JSON -Encoding utf8
 
+      - name: Resolve versions and channel
+        id: resolve
+        shell: pwsh
+        run: |
+          $version = "${{ inputs.version }}"
+          $channel = if ("${{ inputs.channel }}" -eq "pre") { "win-preview" } else { "win" }
+
+          # AppFileVersion is a Windows FILEVERSION resource: numeric 4-part only, no
+          # pre-release suffix. Derive it from the leading numeric part of $version.
+          if ($version -notmatch '^(\d+)\.(\d+)\.(\d+)') {
+            throw "Version '$version' must start with a numeric major.minor.patch (e.g. 1.2.3 or 1.2.3-preview.1)."
+          }
+          $fileVersion = "$($Matches[1]).$($Matches[2]).$($Matches[3]).0"
+
+          Write-Host "Package version: $version"
+          Write-Host "File version:    $fileVersion"
+          Write-Host "Channel:         $channel"
+
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "fileVersion=$fileVersion" >> $env:GITHUB_OUTPUT
+          "channel=$channel" >> $env:GITHUB_OUTPUT
+
+      - name: Resolve release notes
+        id: notes
+        shell: pwsh
+        env:
+          RELEASE_NOTES: ${{ inputs.releaseNotes }}
+        run: |
+          # Prefer the workflow_dispatch input (quick one-off override); otherwise fall back
+          # to .github/RELEASE_NOTES.md tracked in the repo, which is easier to edit for
+          # anything longer than a line or two.
+          if (-not [string]::IsNullOrWhiteSpace($env:RELEASE_NOTES)) {
+            $notesPath = Join-Path $pwd "release-notes.generated.md"
+            Set-Content -Path $notesPath -Value $env:RELEASE_NOTES -Encoding utf8
+            Write-Host "Using release notes from workflow input."
+            "hasNotes=true" >> $env:GITHUB_OUTPUT
+            "path=$notesPath" >> $env:GITHUB_OUTPUT
+            return
+          }
+
+          $repoNotesPath = Join-Path $pwd ".github\RELEASE_NOTES.md"
+          if ((Test-Path $repoNotesPath) -and -not [string]::IsNullOrWhiteSpace((Get-Content $repoNotesPath -Raw))) {
+            Write-Host "Using release notes from .github/RELEASE_NOTES.md."
+            "hasNotes=true" >> $env:GITHUB_OUTPUT
+            "path=$repoNotesPath" >> $env:GITHUB_OUTPUT
+            return
+          }
+
+          Write-Host "No release notes provided (workflow input empty, .github/RELEASE_NOTES.md empty or missing)."
+          "hasNotes=false" >> $env:GITHUB_OUTPUT
+
       - name: Publish
         shell: pwsh
         run: |
-          dotnet publish .\OptiClick.Wpf\OptiClick.Wpf.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false
+          dotnet publish .\OptiClick.Wpf\OptiClick.Wpf.csproj -c Release -r win-x64 --self-contained true `
+            -p:AppVersion="${{ steps.resolve.outputs.version }}" `
+            -p:AppFileVersion="${{ steps.resolve.outputs.fileVersion }}" `
+            -p:DebugType=None -p:DebugSymbols=false
+
+      - name: Download previous release (for delta packages)
+        shell: pwsh
+        run: |
+          $downloadArgs = @(
+            'download', 'github',
+            '--repoUrl', "https://github.com/${{ github.repository }}",
+            '--channel', "${{ steps.resolve.outputs.channel }}",
+            '--outputDir', '.\Releases'
+          )
+          if ("${{ inputs.channel }}" -eq "pre") {
+            $downloadArgs += '--pre'
+          }
+          vpk @downloadArgs
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "No previous release found for this channel yet (expected for the first release) - continuing without a delta base."
+          }
+
+      - name: Pack with vpk
+        shell: pwsh
+        run: |
+          $packArgs = @(
+            'pack',
+            '--packId', $env:VELOPACK_APP_ID,
+            '--packVersion', "${{ steps.resolve.outputs.version }}",
+            '--packDir', '.\OptiClick.Wpf\bin\Release\net10.0-windows10.0.22000.0\win-x64\publish\',
+            '--mainExe', 'OptiClick.exe',
+            '--icon', '.\OptiClick.Wpf\Assets\AppIcon.ico',
+            '--channel', "${{ steps.resolve.outputs.channel }}",
+            '--outputDir', '.\Releases'
+          )
+          if ("${{ steps.notes.outputs.hasNotes }}" -eq "true") {
+            $packArgs += @('--releaseNotes', "${{ steps.notes.outputs.path }}")
+          }
+          vpk @packArgs
+
+      - name: Upload release to GitHub
+        shell: pwsh
+        env:
+          VPK_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $vpkArgs = @(
+            'upload', 'github',
+            '--repoUrl', "https://github.com/${{ github.repository }}",
+            '--channel', "${{ steps.resolve.outputs.channel }}",
+            '--outputDir', '.\Releases',
+            '--publish',
+            '--tag', "v${{ steps.resolve.outputs.version }}"
+          )
+          if ("${{ inputs.channel }}" -eq "pre") {
+            $vpkArgs += '--pre'
+          }
+          vpk @vpkArgs
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
         with:
           name: OptiClick-win-x64
-          path: .\OptiClick.Wpf\bin\Release\net10.0-windows10.0.22000.0\win-x64\publish\
+          path: .\Releases\

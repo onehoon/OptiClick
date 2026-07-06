@@ -12,48 +12,6 @@ public sealed class AppUpdateCoordinator
         _appUpdateFlowController = appUpdateFlowController ?? throw new ArgumentNullException(nameof(appUpdateFlowController));
     }
 
-    public AppUpdateCoordinatorResult BeginCheck(AppUpdateCoordinatorRequest request)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(request.Text);
-
-        if (request.IsAppUpdateInProgress)
-        {
-            return new AppUpdateCoordinatorResult
-            {
-                ShouldContinue = false,
-                StatusText = request.Trigger == AppUpdateTrigger.Manual
-                    ? request.Text.UpdateAlreadyInProgress
-                    : ""
-            };
-        }
-
-        var checkResult = _appUpdateFlowController.CheckForUpdate(
-            new AppUpdateFlowRequest
-            {
-                LatestRuntimeData = request.LatestRuntimeData,
-                CurrentVersion = request.CurrentVersion,
-                Text = request.Text.FlowText
-            });
-
-        return new AppUpdateCoordinatorResult
-        {
-            ShouldContinue = true,
-            ShouldShowDialog = checkResult.IsUpdateAvailable && !checkResult.ShouldExecuteImmediately,
-            IsUpdateAvailable = checkResult.IsUpdateAvailable,
-            ShouldExecuteImmediately = checkResult.ShouldExecuteImmediately,
-            StatusText = request.Trigger == AppUpdateTrigger.Manual
-                ? checkResult.StatusText
-                : "",
-            MissingUpdateInfoLogMessage = request.Trigger == AppUpdateTrigger.Startup
-                ? "update info missing after startup update availability check"
-                : "update info missing after update availability check",
-            DialogRequest = checkResult.DialogRequest,
-            UpdateInfo = checkResult.UpdateInfo,
-            Logs = checkResult.Logs
-        };
-    }
-
     public async Task<AppUpdateCoordinatorResult> BeginCheckAsync(
         AppUpdateCoordinatorRequest request,
         CancellationToken cancellationToken = default)
@@ -75,18 +33,16 @@ public sealed class AppUpdateCoordinator
         var checkResult = await _appUpdateFlowController.CheckForUpdateAsync(
             new AppUpdateFlowRequest
             {
-                LatestRuntimeData = request.LatestRuntimeData,
-                CurrentVersion = request.CurrentVersion,
-                Text = request.Text.FlowText
+                Text = request.Text.FlowText,
+                Language = request.Language
             },
             cancellationToken);
 
         return new AppUpdateCoordinatorResult
         {
             ShouldContinue = true,
-            ShouldShowDialog = checkResult.IsUpdateAvailable && !checkResult.ShouldExecuteImmediately,
+            ShouldShowDialog = checkResult.IsUpdateAvailable,
             IsUpdateAvailable = checkResult.IsUpdateAvailable,
-            ShouldExecuteImmediately = checkResult.ShouldExecuteImmediately,
             StatusText = request.Trigger == AppUpdateTrigger.Manual
                 ? checkResult.StatusText
                 : "",

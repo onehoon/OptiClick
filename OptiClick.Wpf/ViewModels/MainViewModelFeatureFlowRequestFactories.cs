@@ -181,16 +181,12 @@ internal sealed class MainUninstallFlowRequestFactory
 
 internal sealed class MainAppUpdateFlowRequestFactory
 {
-    public AppUpdateFlowRequest BuildAppUpdateRequest(
-        RemoteRuntimeData latestRuntimeData,
-        string currentVersion,
-        AppUpdateFlowText text)
+    public AppUpdateFlowRequest BuildAppUpdateRequest(AppUpdateFlowText text, AppLanguage language)
     {
         return new AppUpdateFlowRequest
         {
-            LatestRuntimeData = latestRuntimeData,
-            CurrentVersion = currentVersion,
-            Text = text
+            Text = text,
+            Language = language
         };
     }
 }
