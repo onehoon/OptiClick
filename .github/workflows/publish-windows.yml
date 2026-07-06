@@ -62,7 +62,7 @@ jobs:
         shell: pwsh
         run: |
           $version = "${{ inputs.version }}"
-          $channel = if ("${{ inputs.channel }}" -eq "pre") { "win-preview" } else { "win" }
+          $channel = if ("${{ inputs.channel }}" -eq "pre") { "preview" } else { "stable" }
 
           # AppFileVersion is a Windows FILEVERSION resource: numeric 4-part only, no
           # pre-release suffix. Derive it from the leading numeric part of $version.
