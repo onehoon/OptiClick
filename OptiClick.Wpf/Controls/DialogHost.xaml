@@ -44,15 +44,28 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="DialogCardSizeStyle" TargetType="Border">
+            <Setter Property="Width" Value="580" />
+            <Setter Property="MinWidth" Value="460" />
+            <Setter Property="MaxWidth" Value="640" />
+            <Setter Property="MaxHeight" Value="620" />
+            <Style.Triggers>
+                <!-- Startup announcements vary a lot in length (multi-language notes, game lists,
+                     etc.), so let the card size to its content instead of a fixed width: short
+                     notices stay narrow, long ones grow up to MaxWidth before wrapping. -->
+                <DataTrigger Binding="{Binding CurrentDialog.IsStartupAnnouncementDialog}" Value="True">
+                    <Setter Property="Width" Value="Auto" />
+                    <Setter Property="MinWidth" Value="580" />
+                    <Setter Property="MaxWidth" Value="820" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
     <Grid Visibility="{Binding OverlayVisibility}">
         <Rectangle Fill="#99000000"
                    MouseLeftButtonDown="Overlay_OnMouseLeftButtonDown" />
 
-        <Border Width="580"
-                MinWidth="460"
-                MaxWidth="640"
-                MaxHeight="620"
+        <Border Style="{StaticResource DialogCardSizeStyle}"
                 Background="{DynamicResource OptiDialogBackgroundBrush}"
                 BorderBrush="{DynamicResource OptiDialogBorderBrush}"
                 BorderThickness="1"
@@ -82,9 +95,13 @@
                                Foreground="{DynamicResource OptiDialogTitleBrush}" />
                 </Grid>
 
-                <StackPanel Grid.Row="1"
-                            Margin="0,14,0,0"
-                            Style="{StaticResource StandardDialogBodyVisibilityStyle}">
+                <ScrollViewer Grid.Row="1"
+                              Margin="0,14,0,0"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              CanContentScroll="False">
+                <Grid>
+                <StackPanel Style="{StaticResource StandardDialogBodyVisibilityStyle}">
                     <controls:PopupMarkupTextBlock Segments="{Binding CurrentDialog.SummaryInline}"
                                                    Foreground="{DynamicResource OptiDialogBodyBrush}"
                                                    FontSize="14"
@@ -142,9 +159,7 @@
                                TextWrapping="Wrap" />
                 </StackPanel>
 
-                <StackPanel Grid.Row="1"
-                            Margin="0,14,0,0"
-                            Style="{StaticResource StartupAnnouncementDialogVisibilityStyle}">
+                <StackPanel Style="{StaticResource StartupAnnouncementDialogVisibilityStyle}">
                     <StackPanel Margin="0,14,0,0"
                                 Visibility="{Binding CurrentDialog.HasNewGameSupportSection, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <TextBlock Text="{Binding CurrentDialog.NewGameSupportTitle}"
@@ -192,9 +207,7 @@
                     </ItemsControl>
                 </StackPanel>
 
-                <StackPanel Grid.Row="1"
-                            Margin="0,14,0,0"
-                            Style="{StaticResource GpuSelectionDialogVisibilityStyle}">
+                <StackPanel Style="{StaticResource GpuSelectionDialogVisibilityStyle}">
                     <controls:PopupMarkupTextBlock Segments="{Binding CurrentDialog.SummaryInline}"
                                                    Foreground="{DynamicResource OptiDialogBodyBrush}"
                                                    FontSize="14"
@@ -225,6 +238,8 @@
                                 Command="{Binding SecondaryCommand}" />
                     </UniformGrid>
                 </StackPanel>
+                </Grid>
+                </ScrollViewer>
 
                 <StackPanel Grid.Row="2"
                             Orientation="Horizontal"
