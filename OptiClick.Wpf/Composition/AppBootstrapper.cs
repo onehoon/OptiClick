@@ -1,6 +1,5 @@
 using System.Windows;
 using OptiClick.Infrastructure.Windows;
-using OptiClick.Wpf.Diagnostics;
 using OptiClick.Wpf.Logging;
 using OptiClick.Wpf.Services;
 using OptiClick.Wpf.ViewModels;
@@ -18,31 +17,6 @@ public sealed class AppBootstrapper
         if (startupEventArgs.Args.Contains("--smoke-test", StringComparer.OrdinalIgnoreCase))
         {
             app.Shutdown(0);
-            return;
-        }
-
-        if (startupEventArgs.Args.Contains("--smoke-remote-data-contract", StringComparer.OrdinalIgnoreCase))
-        {
-            var compositionRoot = new AppCompositionRoot();
-            var runner = compositionRoot.CreateRemoteDataContractSmokeRunner();
-            var previousSynchronizationContext = SynchronizationContext.Current;
-            RemoteDataContractSmokeResult result;
-            try
-            {
-                SynchronizationContext.SetSynchronizationContext(null);
-                result = runner.RunAsync().GetAwaiter().GetResult();
-            }
-            finally
-            {
-                SynchronizationContext.SetSynchronizationContext(previousSynchronizationContext);
-            }
-
-            foreach (var line in result.OutputLines)
-            {
-                Console.WriteLine(line);
-            }
-
-            app.Shutdown(result.ExitCode);
             return;
         }
 

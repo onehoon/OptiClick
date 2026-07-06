@@ -16,7 +16,6 @@ namespace OptiClick.Wpf.Composition;
 public sealed record RuntimeCompositionServices
 {
     public required IRuntimeContextProvider RuntimeContextProvider { get; init; }
-    public required IRemoteRuntimeDataLoader RuntimeDataLoader { get; init; }
     public required IRemoteCatalogPipeline RemoteCatalogPipeline { get; init; }
     public required DeviceIdentityResolver DeviceIdentityResolver { get; init; }
     public required IRemoteDeviceIdentityRulesLoader DeviceIdentityRulesLoader { get; init; }
@@ -44,15 +43,6 @@ public sealed class RuntimeComposition
         ArgumentNullException.ThrowIfNull(app);
 
         var sharedRemoteHttpClient = new HttpClient();
-        var runtimeDataLoader = _root.CreateRemoteRuntimeDataLoader(
-            _root.CreateRemoteRuntimeDataClient(
-                app.RemoteEndpointProvider,
-                sharedRemoteHttpClient,
-                app.AppLogger,
-                app.AppVersionProvider,
-                app.SecurityServices.ApiRequestAuthenticator,
-                app.SecurityServices.ServerClock),
-            _root.CreateRemoteRuntimeDataParser());
         var gpuBundleManifestClient = _root.CreateRemoteGpuBundleManifestClient(
             sharedRemoteHttpClient,
             app.AppLogger,
@@ -60,19 +50,6 @@ public sealed class RuntimeComposition
             app.SecurityServices.ApiRequestAuthenticator,
             app.SecurityServices.TicketStore,
             app.SecurityServices.ServerClock);
-        var gpuBundleRuntimeLoader = new RemoteGpuBundleRuntimeLoader(
-            gpuBundleManifestClient,
-            _root.CreateGpuBundleManifestRuleResolver(),
-            _root.CreateRemoteGpuBundleClient(
-                sharedRemoteHttpClient,
-                app.AppLogger,
-                app.AppVersionProvider,
-                app.SecurityServices.ApiRequestAuthenticator,
-                app.SecurityServices.TicketStore,
-                app.SecurityServices.ServerClock),
-            _root.CreateRemoteGpuBundleParser(),
-            app.AppVersionProvider,
-            app.AppLogger);
         var remoteOptions = app.RemoteEndpointProvider.GetRemoteDataOptions() ?? new RemoteDataOptions();
         IRemoteCatalogPipeline remoteCatalogPipeline = new RemoteCatalogV2Pipeline(
             new AuthV2SessionClient(
@@ -128,7 +105,6 @@ public sealed class RuntimeComposition
         return new RuntimeCompositionServices
         {
             RuntimeContextProvider = runtimeContextProvider,
-            RuntimeDataLoader = runtimeDataLoader,
             RemoteCatalogPipeline = remoteCatalogPipeline,
             DeviceIdentityResolver = deviceIdentityResolver,
             DeviceIdentityRulesLoader = deviceIdentityRulesLoader,

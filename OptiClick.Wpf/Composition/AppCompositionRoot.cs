@@ -1,7 +1,6 @@
 ﻿using OptiClick.Core.Abstractions;
 using System.Net.Http;
 using OptiClick.Wpf.Configuration;
-using OptiClick.Wpf.Diagnostics;
 using OptiClick.Wpf.Install.Planning;
 using OptiClick.Wpf.Install.Config;
 using OptiClick.Wpf.Install.Precheck;
