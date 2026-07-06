@@ -16,7 +16,7 @@ on:
           - pre
         default: stable
       releaseNotes:
-        description: 'Release notes (markdown, shown in the in-app update dialog). Leave empty to skip.'
+        description: 'Quick release notes override (markdown). Leave empty to use .github/RELEASE_NOTES.md instead.'
         required: false
         type: string
 
@@ -79,21 +79,34 @@ jobs:
           "fileVersion=$fileVersion" >> $env:GITHUB_OUTPUT
           "channel=$channel" >> $env:GITHUB_OUTPUT
 
-      - name: Write release notes
+      - name: Resolve release notes
         id: notes
         shell: pwsh
         env:
           RELEASE_NOTES: ${{ inputs.releaseNotes }}
         run: |
-          if ([string]::IsNullOrWhiteSpace($env:RELEASE_NOTES)) {
-            "hasNotes=false" >> $env:GITHUB_OUTPUT
+          # Prefer the workflow_dispatch input (quick one-off override); otherwise fall back
+          # to .github/RELEASE_NOTES.md tracked in the repo, which is easier to edit for
+          # anything longer than a line or two.
+          if (-not [string]::IsNullOrWhiteSpace($env:RELEASE_NOTES)) {
+            $notesPath = Join-Path $pwd "release-notes.generated.md"
+            Set-Content -Path $notesPath -Value $env:RELEASE_NOTES -Encoding utf8
+            Write-Host "Using release notes from workflow input."
+            "hasNotes=true" >> $env:GITHUB_OUTPUT
+            "path=$notesPath" >> $env:GITHUB_OUTPUT
             return
           }
 
-          $notesPath = Join-Path $pwd "release-notes.md"
-          Set-Content -Path $notesPath -Value $env:RELEASE_NOTES -Encoding utf8
-          "hasNotes=true" >> $env:GITHUB_OUTPUT
-          "path=$notesPath" >> $env:GITHUB_OUTPUT
+          $repoNotesPath = Join-Path $pwd ".github\RELEASE_NOTES.md"
+          if ((Test-Path $repoNotesPath) -and -not [string]::IsNullOrWhiteSpace((Get-Content $repoNotesPath -Raw))) {
+            Write-Host "Using release notes from .github/RELEASE_NOTES.md."
+            "hasNotes=true" >> $env:GITHUB_OUTPUT
+            "path=$repoNotesPath" >> $env:GITHUB_OUTPUT
+            return
+          }
+
+          Write-Host "No release notes provided (workflow input empty, .github/RELEASE_NOTES.md empty or missing)."
+          "hasNotes=false" >> $env:GITHUB_OUTPUT
 
       - name: Publish
         shell: pwsh
