@@ -197,11 +197,76 @@
                                   Visibility="{Binding CurrentDialog.HasStartupWarningItems, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <controls:PopupMarkupTextBlock Margin="0,0,0,10"
-                                                               Segments="{Binding Inline}"
-                                                               Foreground="{DynamicResource OptiDialogBodyBrush}"
-                                                               FontSize="14"
-                                                               TextWrapping="Wrap" />
+                                <Border>
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Margin" Value="0,0,0,0" />
+                                            <Style.Triggers>
+                                                <!-- Extra space above the first item merged in from a new
+                                                     source message, to visually separate messages. -->
+                                                <DataTrigger Binding="{Binding IsNewMessageGroup}" Value="True">
+                                                    <Setter Property="Margin" Value="0,10,0,0" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <Grid>
+                                        <Grid.Style>
+                                            <Style TargetType="Grid">
+                                                <Setter Property="Margin" Value="0,0,0,7" />
+                                                <Style.Triggers>
+                                                    <!-- Shift the whole bullet (marker included) rightward per
+                                                         [INDENT] level seen before its [DOT]. The Grid already
+                                                         reserves 16px for the dot column, so keep this modest -
+                                                         it stacks on top of that, not replaces it. -->
+                                                    <DataTrigger Binding="{Binding IndentLevel}" Value="1">
+                                                        <Setter Property="Margin" Value="10,0,0,7" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IndentLevel}" Value="2">
+                                                        <Setter Property="Margin" Value="20,0,0,7" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Grid.Style>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="16" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Ellipse Width="4"
+                                                 Height="4"
+                                                 Fill="{DynamicResource OptiDialogBodyBrush}"
+                                                 VerticalAlignment="Top"
+                                                 Margin="0,8,0,0">
+                                            <Ellipse.Style>
+                                                <Style TargetType="Ellipse">
+                                                    <Style.Triggers>
+                                                        <!-- Heading/intro lines (text before the first [DOT]) aren't
+                                                             bullets, so they render without the dot marker. -->
+                                                        <DataTrigger Binding="{Binding IsHeading}" Value="True">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Ellipse.Style>
+                                        </Ellipse>
+                                        <controls:PopupMarkupTextBlock Segments="{Binding Inline}"
+                                                                       Foreground="{DynamicResource OptiDialogBodyBrush}"
+                                                                       FontSize="14"
+                                                                       TextWrapping="Wrap">
+                                            <controls:PopupMarkupTextBlock.Style>
+                                                <Style TargetType="controls:PopupMarkupTextBlock">
+                                                    <Setter Property="Grid.Column" Value="1" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsHeading}" Value="True">
+                                                            <Setter Property="Grid.Column" Value="0" />
+                                                            <Setter Property="Grid.ColumnSpan" Value="2" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </controls:PopupMarkupTextBlock.Style>
+                                        </controls:PopupMarkupTextBlock>
+                                    </Grid>
+                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
