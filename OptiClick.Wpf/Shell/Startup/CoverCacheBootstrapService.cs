@@ -56,8 +56,8 @@ public sealed record CoverCacheBootstrapResult
 
 public sealed class CoverCacheBootstrapService : ICoverCacheBootstrapService
 {
-    private const string CoverCacheBundleHost = "opticlick" + "-data-api" + "." + "onehoon" + ".workers" + ".dev";
-    public const string CoverCacheBundleUrl = "https://" + CoverCacheBundleHost + "/v1/resources/extra_bundle/cover_bundle/0.1/cover_cache.zip";
+    private const string CoverCacheBundleHost = "opticlick" + "-data-v2" + "." + "onehoon" + ".workers" + ".dev";
+    public const string CoverCacheBundleUrl = "https://" + CoverCacheBundleHost + "/v2/resources/extra_bundle/cover_bundle/0.1/cover_cache.zip";
     public const string CoverCacheBundleFileName = "cover_cache.zip";
     public const string CoverCacheManifestFileName = "cover_cache_manifest.json";
 
