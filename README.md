@@ -182,19 +182,6 @@ As a result, users can install and start playing immediately without additional 
 
 ---
 
-## 🧹 OptiScaler Removal (Per Game)
-
-- Navigate to the game folder
-- Locate one of the following files:
-  - `dxgi.dll`
-  - `winmm.dll`
-  - `version.dll`
-  - `OptiScaler.asi`
-- Check file properties
-- Delete the file identified as **OptiScaler**
-
----
-
 ## 🙏 Credits
 
 All credit goes to the OptiScaler team for their work:
