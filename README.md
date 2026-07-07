@@ -129,7 +129,6 @@ As a result, users can install and start playing immediately without additional 
 ### 🔄 Updates
 - Automatically checks for updates on launch
 - Automatically downloads and launches the latest version when available
-- Automatically opens the release notes page when updating
 
 ---
 
