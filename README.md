@@ -57,7 +57,7 @@ As a result, users can install and start playing immediately without additional 
 3. **Remove the app:** Windows Settings → Apps → find `OptiClick` → Uninstall.
 
 > [!TIP]
-> The app checks for updates automatically on launch and installs them in place — see [🔄 Updates](#-updates) below.
+> The app checks for updates automatically on launch and installs them in place.
 
 ---
 
@@ -125,10 +125,6 @@ As a result, users can install and start playing immediately without additional 
 > [!NOTE]
 > A GPU selection popup appears on first launch.  
 > The selected GPU is used as the installation target, and running the game later on a different GPU may cause unexpected behavior.
-
-### 🔄 Updates
-- Automatically checks for updates on launch
-- Automatically downloads and launches the latest version when available
 
 ---
 
