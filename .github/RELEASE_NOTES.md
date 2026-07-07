@@ -1,5 +1,5 @@
 ﻿## ko-KR
-- 테스트 빌드입니다. 설치하지 마세요.
+- 앱 설치 및 업데이트 방식을 Single EXE 방식에서 Velopack 기반 설치 방식으로 변경하였습니다.
 
 ## en-US
-- This is a test build. Please do not install.
+- The app installation and update method has been changed from a single EXE to a Velopack-based installer.
