@@ -46,6 +46,21 @@ As a result, users can install and start playing immediately without additional 
 
 ---
 
+## 📥 App Installation, Launch & Removal
+
+> [!NOTE]
+> Starting from **v0.7.3**, OptiClick uses a Velopack-based installer instead of a single portable EXE.
+
+1. **Download & Install:** Get `OptiClickApp-stable-Setup.exe` from the [latest release](https://github.com/onehoon/OptiClick/releases/latest) and run it.
+2. **Launch:** Use the desktop shortcut or the `OptiClick` entry in the Start menu.
+   > Do not run old `OptiClick_v0.x.x.exe` files directly — they are no longer used.
+3. **Remove the app:** Windows Settings → Apps → find `OptiClick` → Uninstall.
+
+> [!TIP]
+> The app checks for updates automatically on launch and installs them in place — see [🔄 Updates](#-updates) below.
+
+---
+
 ## 💻 GPU Support and Rendering Configuration
 
 > [!NOTE]
@@ -172,7 +187,7 @@ As a result, users can install and start playing immediately without additional 
 
 ---
 
-## 🧹 Uninstallation
+## 🧹 OptiScaler Removal (Per Game)
 
 - Navigate to the game folder
 - Locate one of the following files:
