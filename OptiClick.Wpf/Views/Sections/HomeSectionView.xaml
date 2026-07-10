@@ -1,4 +1,4 @@
-<UserControl x:Class="OptiClick.Wpf.Views.Sections.HomeSectionView"
+﻿<UserControl x:Class="OptiClick.Wpf.Views.Sections.HomeSectionView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:OptiClick.Wpf.Controls"
@@ -6,9 +6,10 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
     <UserControl.Resources>
         <SolidColorBrush x:Key="SelectedGameTitleIceBlueBrush" Color="#DCEBFF" />
-        <Thickness x:Key="HomeGridRightInset">0,0,18,0</Thickness>
+        <Thickness x:Key="HomeGridRightInset">0,0,0,0</Thickness>
     </UserControl.Resources>
-    <Grid x:Name="HomeSectionRoot">
+    <Grid x:Name="HomeSectionRoot"
+          Background="{DynamicResource AppBackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="{StaticResource ShellHeaderRowHeight}" />
             <RowDefinition Height="*" />
@@ -40,9 +41,8 @@
                         </StackPanel.Style>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="{Binding SelectedGameAction.SelectedGameTitle}"
-                                       FontSize="18"
-                                       FontWeight="SemiBold"
-                                       Foreground="{StaticResource SelectedGameTitleIceBlueBrush}"
+                                       Style="{StaticResource PageTitleTextStyle}"
+                                       Foreground="{DynamicResource SelectedGameTitleIceBlueBrush}"
                                        VerticalAlignment="Center"
                                        TextTrimming="CharacterEllipsis" />
                         </StackPanel>
@@ -63,9 +63,7 @@
                             </Style>
                         </StackPanel.Style>
                         <TextBlock Text="{Binding Strings.HomeNoGameSelected}"
-                                   FontSize="18"
-                                   FontWeight="SemiBold"
-                                   Foreground="{StaticResource InkBrush}" />
+                                   Style="{StaticResource PageTitleTextStyle}" />
                     </StackPanel>
                 </StackPanel>
 
@@ -101,8 +99,8 @@
                       Grid.Row="1"
                       Margin="{StaticResource ActionRowMargin}"
                       HorizontalAlignment="Stretch"
-                      Background="{StaticResource AppBackgroundBrush}"
-                      VerticalScrollBarVisibility="Auto"
+                      Background="{DynamicResource AppBackgroundBrush}"
+                      VerticalScrollBarVisibility="Hidden"
                       HorizontalScrollBarVisibility="Disabled"
                       VerticalContentAlignment="Top"
                       ScrollChanged="HomeGamesScrollViewer_OnScrollChanged"

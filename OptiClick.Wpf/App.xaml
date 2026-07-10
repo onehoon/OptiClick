@@ -6,10 +6,11 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ui:ThemesDictionary Theme="Dark" />
+                <ui:ThemesDictionary x:Name="WpfUiThemeDictionary" Theme="Dark" />
                 <ui:ControlsDictionary />
-                <ResourceDictionary Source="Resources/Theme.Tokens.xaml" />
-                <ResourceDictionary Source="Resources/Theme.Brushes.xaml" />
+                <ResourceDictionary Source="Resources/Theme.Tokens.Shared.xaml" />
+                <ResourceDictionary x:Name="ThemeColorsDictionary" Source="Resources/Theme.Tokens.Dark.xaml" />
+                <ResourceDictionary x:Name="ThemeBrushesDictionary" Source="Resources/Theme.Brushes.xaml" />
                 <ResourceDictionary Source="Resources/Controls/Forms.xaml" />
                 <ResourceDictionary Source="Resources/Controls/Buttons.xaml" />
                 <ResourceDictionary Source="Resources/Controls/Cards.xaml" />

@@ -21,6 +21,7 @@ public sealed class AppBootstrapper
         }
 
         var root = new AppCompositionRoot();
+        ThemeService.Initialize(root.CreateAppUserSettingsStore());
         var startupLogger = root.CreateAppLogger();
         startupLogger.Info(MainViewModelLogCategories.App, "milestone app_process_started");
         startupLogger.Info(MainViewModelLogCategories.App, "milestone app_bootstrapper_started");

@@ -1,4 +1,4 @@
-<UserControl x:Class="OptiClick.Wpf.Views.Sections.OptiScalerSectionView"
+﻿<UserControl x:Class="OptiClick.Wpf.Views.Sections.OptiScalerSectionView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
@@ -7,14 +7,14 @@
                TargetType="ui:Card"
                BasedOn="{StaticResource SectionListItemCardControlStyle}">
             <Setter Property="Padding" Value="16,14" />
-            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="Margin" Value="0,0,0,0" />
         </Style>
 
         <Style x:Key="OptiScalerIconPanelStyle" TargetType="Border">
             <Setter Property="Width" Value="36" />
             <Setter Property="Height" Value="36" />
             <Setter Property="CornerRadius" Value="10" />
-            <Setter Property="Background" Value="{StaticResource SurfaceHoverBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
@@ -33,22 +33,17 @@
         </Style>
 
         <Style x:Key="OptiScalerSaveButtonStyle"
-               TargetType="{x:Type ui:Button}"
-               BasedOn="{StaticResource {x:Type ui:Button}}">
-            <Setter Property="Appearance" Value="Primary" />
-            <Setter Property="MinWidth" Value="92" />
-            <Setter Property="MinHeight" Value="40" />
-            <Setter Property="Padding" Value="18,0" />
-        </Style>
+               TargetType="Button"
+               BasedOn="{StaticResource PrimaryButtonStyle}" />
     </UserControl.Resources>
 
-    <Grid>
+    <Grid Background="{DynamicResource AppBackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,18,18">
+        <Grid Grid.Row="0" Margin="0,12,13,18">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -63,22 +58,22 @@
 
             <StackPanel Grid.Column="1"
                         Orientation="Horizontal"
-                        VerticalAlignment="Top">
+                        VerticalAlignment="Center">
                 <TextBlock Text="{Binding StatusText}"
                            Style="{StaticResource SmallDescriptionTextStyle}"
                            VerticalAlignment="Center"
                            Margin="0,0,10,0" />
-                <ui:Button Content="{Binding Strings.OptiScalerSaveButton}"
-                           Style="{StaticResource OptiScalerSaveButtonStyle}"
-                           Command="{Binding SaveCommand}" />
+                <Button Content="{Binding Strings.OptiScalerSaveButton}"
+                        Style="{StaticResource OptiScalerSaveButtonStyle}"
+                        Command="{Binding SaveCommand}" />
             </StackPanel>
         </Grid>
 
         <ScrollViewer Grid.Row="1"
-                      VerticalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Hidden"
                       HorizontalScrollBarVisibility="Disabled"
                       Padding="0,0,10,0">
-            <StackPanel Margin="0,0,18,0"
+            <StackPanel Margin="0,0,0,0"
                         HorizontalAlignment="Stretch">
                 <ui:Card Style="{StaticResource OptiScalerCardControlStyle}"
                          HorizontalAlignment="Stretch">
@@ -93,7 +88,7 @@
 
                         <Border Grid.Column="0" Style="{StaticResource OptiScalerIconPanelStyle}">
                             <ui:SymbolIcon Symbol="ArrowClockwise24"
-                                           Foreground="{StaticResource AccentPrimaryBrush}"
+                                           Foreground="{DynamicResource AccentPrimaryBrush}"
                                            FontSize="20"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center" />
@@ -120,7 +115,7 @@
 
                 <ui:Card Style="{StaticResource OptiScalerCardControlStyle}"
                          HorizontalAlignment="Stretch"
-                         Margin="0,6,0,10"
+                         Margin="0,6,0,0"
                          Visibility="{Binding IsFsr411Visible, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <Grid MinHeight="62">
                         <Grid.ColumnDefinitions>
@@ -133,7 +128,7 @@
 
                         <Border Grid.Column="0" Style="{StaticResource OptiScalerIconPanelStyle}">
                             <ui:SymbolIcon Symbol="Settings24"
-                                           Foreground="{StaticResource AccentPrimaryBrush}"
+                                           Foreground="{DynamicResource AccentPrimaryBrush}"
                                            FontSize="20"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center" />
@@ -160,7 +155,7 @@
 
                 <ui:Card Style="{StaticResource OptiScalerCardControlStyle}"
                          HorizontalAlignment="Stretch"
-                         Margin="0,6,0,10">
+                         Margin="0,6,0,0">
                     <Grid MinHeight="62">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -172,7 +167,7 @@
 
                         <Border Grid.Column="0" Style="{StaticResource OptiScalerIconPanelStyle}">
                             <ui:SymbolIcon Symbol="Settings24"
-                                           Foreground="{StaticResource AccentPrimaryBrush}"
+                                           Foreground="{DynamicResource AccentPrimaryBrush}"
                                            FontSize="20"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center" />
@@ -202,7 +197,7 @@
 
                 <ui:Card Style="{StaticResource OptiScalerCardControlStyle}"
                          HorizontalAlignment="Stretch"
-                         Margin="0,6,0,10">
+                         Margin="0,6,0,0">
                     <Grid MinHeight="62">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -214,7 +209,7 @@
 
                         <Border Grid.Column="0" Style="{StaticResource OptiScalerIconPanelStyle}">
                             <ui:SymbolIcon Symbol="ChatMultiple24"
-                                           Foreground="{StaticResource AccentPrimaryBrush}"
+                                           Foreground="{DynamicResource AccentPrimaryBrush}"
                                            FontSize="20"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center" />
@@ -241,7 +236,7 @@
 
                 <ui:Card Style="{StaticResource OptiScalerCardControlStyle}"
                          HorizontalAlignment="Stretch"
-                         Margin="0,6,0,10">
+                         Margin="0,6,0,0">
                     <Grid MinHeight="62">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -251,7 +246,7 @@
 
                         <Border Grid.Column="0" Style="{StaticResource OptiScalerIconPanelStyle}">
                             <ui:SymbolIcon Symbol="Gauge24"
-                                           Foreground="{StaticResource AccentPrimaryBrush}"
+                                           Foreground="{DynamicResource AccentPrimaryBrush}"
                                            FontSize="20"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center" />
@@ -286,7 +281,7 @@
 
                 <ui:Card Style="{StaticResource OptiScalerCardControlStyle}"
                          HorizontalAlignment="Stretch"
-                         Margin="0,6,0,10">
+                         Margin="0,6,0,0">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -296,7 +291,7 @@
 
                         <Border Grid.Column="0" Style="{StaticResource OptiScalerHeaderIconPanelStyle}">
                             <ui:SymbolIcon Symbol="XboxController24"
-                                           Foreground="{StaticResource AccentPrimaryBrush}"
+                                           Foreground="{DynamicResource AccentPrimaryBrush}"
                                            FontSize="20"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center" />

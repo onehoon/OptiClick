@@ -1,0 +1,43 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <FontFamily x:Key="AppFontFamily">Segoe UI</FontFamily>
+    <FontFamily x:Key="IconFontFamily">Segoe MDL2 Assets</FontFamily>
+    <FontFamily x:Key="MonoFontFamily">Consolas</FontFamily>
+
+    <Thickness x:Key="PageHeaderMargin">0,16,0,18</Thickness>
+    <Thickness x:Key="PageDescriptionMargin">0,6,0,0</Thickness>
+    <Thickness x:Key="SectionDescriptionLeadMargin">0,6,0,0</Thickness>
+    <Thickness x:Key="SectionDescriptionMargin">0,4,0,0</Thickness>
+    <Thickness x:Key="SectionDescriptionBottomMargin">0,4,0,14</Thickness>
+    <Thickness x:Key="ActionRowMargin">0,18,0,0</Thickness>
+
+    <GridLength x:Key="SectionGridGapLength">18</GridLength>
+    <GridLength x:Key="ActionButtonGapLength">10</GridLength>
+
+    <Thickness x:Key="PanelCardPadding">18</Thickness>
+    <CornerRadius x:Key="PanelCardCornerRadius">8</CornerRadius>
+    <Thickness x:Key="SectionStatusCardPadding">14,10</Thickness>
+    <Thickness x:Key="SectionStatusCardMargin">0,18,0,0</Thickness>
+
+    <CornerRadius x:Key="StatusPillCornerRadius">14</CornerRadius>
+    <Thickness x:Key="StatusPillPadding">12,5</Thickness>
+    <CornerRadius x:Key="ListItemCornerRadius">7</CornerRadius>
+    <Thickness x:Key="ListItemPadding">10,6</Thickness>
+    <Thickness x:Key="ListItemMargin">0,0,0,8</Thickness>
+
+    <GridLength x:Key="ShellSideRailWidth">80</GridLength>
+    <GridLength x:Key="ShellHeaderRowHeight">52</GridLength>
+    <Thickness x:Key="ShellTitleBarMargin">10,8,10,0</Thickness>
+    <CornerRadius x:Key="ShellTitleBarCornerRadius">0</CornerRadius>
+    <Thickness x:Key="ShellTitleBarPadding">12,4,0,4</Thickness>
+    <Thickness x:Key="ShellSideRailOuterMargin">0,0,0,0</Thickness>
+    <Thickness x:Key="ShellMainSurfaceMargin">0,0,0,0</Thickness>
+    <CornerRadius x:Key="ShellMainSurfaceCornerRadius">0</CornerRadius>
+    <Thickness x:Key="ShellMainContentMargin">24,10,24,0</Thickness>
+    <Thickness x:Key="ShellViewContainerMargin">0,0,0,0</Thickness>
+    <CornerRadius x:Key="ShellSideRailCornerRadius">0</CornerRadius>
+    <Thickness x:Key="ShellBrandMargin">12,14,12,10</Thickness>
+    <Thickness x:Key="ShellBrandPadding">10,8</Thickness>
+    <CornerRadius x:Key="ShellBrandCornerRadius">10</CornerRadius>
+    <Thickness x:Key="ShellFooterButtonMargin">8,0,8,16</Thickness>
+</ResourceDictionary>

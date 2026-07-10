@@ -74,6 +74,8 @@ public sealed record AppStrings
     public string SettingsSupportSectionTitle { get; init; } = "";
     public string SettingsAppearanceTitle { get; init; } = "";
     public string SettingsAppearanceDescription { get; init; } = "";
+    public string SettingsThemeDark { get; init; } = "";
+    public string SettingsThemeLight { get; init; } = "";
     public string SettingsCoverSize { get; init; } = "";
     public string SettingsLanguage { get; init; } = "";
     public string SettingsLanguageDescription { get; init; } = "";

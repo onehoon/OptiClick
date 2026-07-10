@@ -1,4 +1,4 @@
-<UserControl x:Class="OptiClick.Wpf.Views.Sections.SettingsSectionView"
+﻿<UserControl x:Class="OptiClick.Wpf.Views.Sections.SettingsSectionView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
@@ -18,29 +18,65 @@
             <Setter Property="Width" Value="36" />
             <Setter Property="Height" Value="36" />
             <Setter Property="CornerRadius" Value="10" />
-            <Setter Property="Background" Value="{StaticResource SurfaceHoverBrush}" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
         <Style x:Key="SettingsLanguageComboBoxStyle"
                TargetType="ComboBox"
                BasedOn="{StaticResource FluentCompactComboBoxStyle}">
-            <Setter Property="Width" Value="96" />
-            <Setter Property="MinWidth" Value="96" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceElevatedBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Width" Value="140" />
+            <Setter Property="MinWidth" Value="140" />
         </Style>
 
         <Style x:Key="SettingsActionButtonStyle"
                TargetType="{x:Type ui:Button}"
                BasedOn="{StaticResource {x:Type ui:Button}}">
-            <Setter Property="Appearance" Value="Secondary" />
-            <Setter Property="MinWidth" Value="96" />
+            <Setter Property="Background" Value="{DynamicResource PrimaryButtonBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryButtonBackgroundBrush}" />
+            <Setter Property="Width" Value="140" />
+            <Setter Property="MinWidth" Value="140" />
             <Setter Property="MinHeight" Value="36" />
             <Setter Property="Padding" Value="14,0" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
+
+        <Style x:Key="SettingsThemeToggleButtonStyle" TargetType="Button">
+            <Setter Property="MinWidth" Value="72" />
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              RecognizesAccessKey="False" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SettingsThemeToggleButtonSelectedStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource SettingsThemeToggleButtonStyle}">
+            <Setter Property="Background" Value="{DynamicResource AccentPrimaryBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        </Style>
     </UserControl.Resources>
 
-    <Grid>
+    <Grid Background="{DynamicResource AppBackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -53,10 +89,10 @@
         </StackPanel>
 
         <ScrollViewer Grid.Row="1"
-                      VerticalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Hidden"
                       HorizontalScrollBarVisibility="Disabled"
                       Padding="0,0,10,0">
-            <StackPanel Margin="0,0,18,0"
+            <StackPanel Margin="0,0,0,0"
                         HorizontalAlignment="Stretch">
                 <TextBlock Text="{Binding Strings.SettingsGeneralSectionTitle}"
                            Style="{StaticResource SectionTitleTextStyle}"
@@ -74,7 +110,7 @@
 
                         <Border Grid.Column="0" Style="{StaticResource SettingsIconPanelStyle}">
                             <ui:SymbolIcon Symbol="LocalLanguage24"
-                                           Foreground="{StaticResource AccentPrimaryBrush}"
+                                           Foreground="{DynamicResource AccentPrimaryBrush}"
                                            FontSize="20"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center" />
@@ -97,6 +133,59 @@
                     </Grid>
                 </ui:Card>
 
+                <ui:Card Style="{StaticResource SettingsItemCardControlStyle}"
+                         HorizontalAlignment="Stretch"
+                         Visibility="Collapsed">
+                    <!-- Light theme is implemented but hidden for now — Dark ships first, Light follows later.
+                         Keep this card (and ThemeService/Theme.Tokens.Light.xaml) in place for re-enabling. -->
+                    <Grid MinHeight="56">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Style="{StaticResource SettingsIconPanelStyle}">
+                            <ui:SymbolIcon Symbol="WeatherMoon24"
+                                           Foreground="{DynamicResource AccentPrimaryBrush}"
+                                           FontSize="20"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" />
+                        </Border>
+
+                        <StackPanel Grid.Column="2"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Strings.SettingsAppearanceTitle}"
+                                       Style="{StaticResource SectionTitleTextStyle}"
+                                       FontSize="15" />
+                            <TextBlock Text="{Binding Strings.SettingsAppearanceDescription}"
+                                       Style="{StaticResource SmallDescriptionTextStyle}"
+                                       Margin="0,4,0,0" />
+                        </StackPanel>
+
+                        <Border Grid.Column="4"
+                                Background="{DynamicResource SurfaceHoverBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="3">
+                            <StackPanel Orientation="Horizontal">
+                                <Button x:Name="DarkThemeButton"
+                                        Content="{Binding Strings.SettingsThemeDark}"
+                                        Style="{StaticResource SettingsThemeToggleButtonStyle}"
+                                        Click="DarkThemeButton_OnClick" />
+                                <Button x:Name="LightThemeButton"
+                                        Content="{Binding Strings.SettingsThemeLight}"
+                                        Style="{StaticResource SettingsThemeToggleButtonStyle}"
+                                        Margin="4,0,0,0"
+                                        Click="LightThemeButton_OnClick" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </ui:Card>
+
                 <TextBlock Text="{Binding Strings.SettingsManagementSectionTitle}"
                            Style="{StaticResource SectionTitleTextStyle}"
                            Margin="0,18,0,8" />
@@ -113,7 +202,7 @@
 
                         <Border Grid.Column="0" Style="{StaticResource SettingsIconPanelStyle}">
                             <ui:SymbolIcon Symbol="Folder24"
-                                           Foreground="{StaticResource AccentPrimaryBrush}"
+                                           Foreground="{DynamicResource AccentPrimaryBrush}"
                                            FontSize="20"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center" />
@@ -149,7 +238,7 @@
 
                         <Border Grid.Column="0" Style="{StaticResource SettingsIconPanelStyle}">
                             <ui:SymbolIcon Symbol="ArrowClockwise24"
-                                           Foreground="{StaticResource AccentPrimaryBrush}"
+                                           Foreground="{DynamicResource AccentPrimaryBrush}"
                                            FontSize="20"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center" />
@@ -188,7 +277,7 @@
 
                         <Border Grid.Column="0" Style="{StaticResource SettingsIconPanelStyle}">
                             <ui:SymbolIcon Symbol="QuestionCircle24"
-                                           Foreground="{StaticResource AccentPrimaryBrush}"
+                                           Foreground="{DynamicResource AccentPrimaryBrush}"
                                            FontSize="20"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center" />

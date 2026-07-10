@@ -1,6 +1,7 @@
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml">
+                    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <Style x:Key="SideRailIconButtonStyle" TargetType="Button">
         <Setter Property="Width" Value="48" />
         <Setter Property="Height" Value="48" />
@@ -11,7 +12,7 @@
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Foreground" Value="{StaticResource NavIconMutedBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource NavIconMutedBrush}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -32,20 +33,22 @@
                                    Width="4"
                                    HorizontalAlignment="Left"
                                    VerticalAlignment="Stretch"
-                                   Margin="0,8,0,8"
+                                   Margin="0,10,0,10"
                                    RadiusX="2"
                                    RadiusY="2"
-                                   Fill="{StaticResource NavSelectedAccentBrush}"
+                                   Fill="{DynamicResource NavSelectedAccentBrush}"
                                    Opacity="0" />
                         <ContentPresenter HorizontalAlignment="Center"
                                           VerticalAlignment="Center"
                                           RecognizesAccessKey="False" />
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
-                                     Value="True">
+                        <Trigger Property="Tag">
+                            <Trigger.Value>
+                                <sys:Boolean>True</sys:Boolean>
+                            </Trigger.Value>
                             <Setter TargetName="SelectionBar" Property="Opacity" Value="1" />
-                        </DataTrigger>
+                        </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="SelectionBar" Property="Opacity" Value="0" />
                         </Trigger>
@@ -55,46 +58,57 @@
         </Setter>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{StaticResource NavItemHoverBrush}" />
+                <Setter Property="Background" Value="{DynamicResource NavItemHoverBrush}" />
                 <Setter Property="BorderBrush" Value="Transparent" />
-                <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
             </Trigger>
             <Trigger Property="IsPressed" Value="True">
-                <Setter Property="Background" Value="{StaticResource NavItemPressedBrush}" />
+                <Setter Property="Background" Value="{DynamicResource NavItemPressedBrush}" />
                 <Setter Property="BorderBrush" Value="Transparent" />
-                <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
             </Trigger>
-            <Trigger Property="Tag" Value="True">
-                <Setter Property="Background" Value="{StaticResource NavItemActiveBrush}" />
+            <Trigger Property="Tag">
+                <Trigger.Value>
+                    <sys:Boolean>True</sys:Boolean>
+                </Trigger.Value>
+                <Setter Property="Background" Value="{DynamicResource NavItemActiveBrush}" />
                 <Setter Property="BorderBrush" Value="Transparent" />
                 <Setter Property="BorderThickness" Value="0" />
-                <Setter Property="Foreground" Value="{StaticResource NavSelectedAccentBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource NavSelectedAccentBrush}" />
                 <Setter Property="Effect">
                     <Setter.Value>
-                        <DropShadowEffect BlurRadius="10"
+                        <DropShadowEffect BlurRadius="18"
                                           ShadowDepth="0"
-                                          Opacity="0.20"
-                                          Color="{StaticResource NavSelectedGlowColor}" />
+                                          Opacity="0.5"
+                                          Color="{DynamicResource NavSelectedGlowColor}" />
                     </Setter.Value>
                 </Setter>
             </Trigger>
             <MultiTrigger>
                 <MultiTrigger.Conditions>
-                    <Condition Property="Tag" Value="True" />
+                    <Condition Property="Tag">
+                        <Condition.Value>
+                            <sys:Boolean>True</sys:Boolean>
+                        </Condition.Value>
+                    </Condition>
                     <Condition Property="IsMouseOver" Value="True" />
                 </MultiTrigger.Conditions>
-                <Setter Property="Background" Value="{StaticResource NavItemActiveHoverBrush}" />
+                <Setter Property="Background" Value="{DynamicResource NavItemActiveHoverBrush}" />
                 <Setter Property="BorderBrush" Value="Transparent" />
-                <Setter Property="Foreground" Value="{StaticResource NavSelectedAccentBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource NavSelectedAccentBrush}" />
             </MultiTrigger>
             <MultiTrigger>
                 <MultiTrigger.Conditions>
-                    <Condition Property="Tag" Value="True" />
+                    <Condition Property="Tag">
+                        <Condition.Value>
+                            <sys:Boolean>True</sys:Boolean>
+                        </Condition.Value>
+                    </Condition>
                     <Condition Property="IsPressed" Value="True" />
                 </MultiTrigger.Conditions>
-                <Setter Property="Background" Value="{StaticResource NavItemActivePressedBrush}" />
+                <Setter Property="Background" Value="{DynamicResource NavItemActivePressedBrush}" />
                 <Setter Property="BorderBrush" Value="Transparent" />
-                <Setter Property="Foreground" Value="{StaticResource NavSelectedAccentBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource NavSelectedAccentBrush}" />
             </MultiTrigger>
             <Trigger Property="IsEnabled" Value="False">
                 <Setter Property="Opacity" Value="0.45" />
@@ -111,43 +125,27 @@
 
     <Style x:Key="SideRailShellStyle" TargetType="Border">
         <Setter Property="Margin" Value="{StaticResource ShellSideRailOuterMargin}" />
-        <Setter Property="Background" Value="{StaticResource AppBackgroundBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="{StaticResource ShellSideRailCornerRadius}" />
-        <Setter Property="Effect">
-            <Setter.Value>
-                <DropShadowEffect BlurRadius="22"
-                                  ShadowDepth="0"
-                                  Opacity="0.08"
-                                  Color="{DynamicResource BorderColor}" />
-            </Setter.Value>
-        </Setter>
     </Style>
 
     <Style x:Key="SideRailBrandCardStyle" TargetType="Border">
         <Setter Property="Margin" Value="{StaticResource ShellBrandMargin}" />
         <Setter Property="Padding" Value="{StaticResource ShellBrandPadding}" />
         <Setter Property="CornerRadius" Value="{StaticResource ShellBrandCornerRadius}" />
-        <Setter Property="Background" Value="{StaticResource ShellBrandCardBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="Background" Value="{DynamicResource ShellBrandCardBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
     <Style x:Key="ShellMainSurfaceStyle" TargetType="Border">
         <Setter Property="Margin" Value="{StaticResource ShellMainSurfaceMargin}" />
         <Setter Property="Padding" Value="0" />
-        <Setter Property="Background" Value="{StaticResource AppBackgroundBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="Background" Value="{DynamicResource AppBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="{StaticResource ShellMainSurfaceCornerRadius}" />
-        <Setter Property="Effect">
-            <Setter.Value>
-                <DropShadowEffect BlurRadius="24"
-                                  ShadowDepth="0"
-                                  Opacity="0.10"
-                                  Color="{DynamicResource BorderColor}" />
-            </Setter.Value>
-        </Setter>
     </Style>
 </ResourceDictionary>
