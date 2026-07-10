@@ -18,7 +18,6 @@ public partial class MainWindow : FluentWindow
         InitializeComponent();
         DataContext = viewModel;
         ContentRendered += MainWindow_OnContentRendered;
-        UpdateWindowButtonGlyph();
     }
 
     private void MainWindow_OnContentRendered(object? sender, EventArgs e)
@@ -77,11 +76,6 @@ public partial class MainWindow : FluentWindow
         SystemCommands.CloseWindow(this);
     }
 
-    private void Window_OnStateChanged(object sender, EventArgs e)
-    {
-        UpdateWindowButtonGlyph();
-    }
-
     private void ToggleMaximizeRestore()
     {
         if (ResizeMode == ResizeMode.NoResize)
@@ -97,15 +91,5 @@ public partial class MainWindow : FluentWindow
         {
             SystemCommands.MaximizeWindow(this);
         }
-    }
-
-    private void UpdateWindowButtonGlyph()
-    {
-        if (MaximizeRestoreGlyph is not System.Windows.Controls.TextBlock maximizeRestoreGlyph)
-        {
-            return;
-        }
-
-        maximizeRestoreGlyph.Text = WindowState == WindowState.Maximized ? "\uE923" : "\uE922";
     }
 }

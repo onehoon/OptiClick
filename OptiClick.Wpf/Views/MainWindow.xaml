@@ -1,4 +1,4 @@
-<ui:FluentWindow x:Class="OptiClickShell.MainWindow"
+﻿<ui:FluentWindow x:Class="OptiClickShell.MainWindow"
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:controls="clr-namespace:OptiClick.Wpf.Controls"
@@ -10,18 +10,17 @@
                  Icon="pack://application:,,,/Assets/AppIcon.ico"
                  Width="1130"
                  Height="660"
-                 MinWidth="920"
+                 MinWidth="950"
                  MinHeight="635"
                  WindowStartupLocation="CenterScreen"
                  UseLayoutRounding="True"
                  SnapsToDevicePixels="True"
                  TextOptions.TextFormattingMode="Display"
                  TextOptions.TextRenderingMode="ClearType"
-                 Background="{StaticResource AppBackgroundBrush}"
-                 WindowCornerPreference="DoNotRound"
-                 WindowBackdropType="Mica"
+                 Background="{DynamicResource AppBackgroundBrush}"
+                 WindowCornerPreference="Round"
+                 WindowBackdropType="None"
                  ExtendsContentIntoTitleBar="True"
-                 StateChanged="Window_OnStateChanged"
                  PreviewKeyDown="Window_OnPreviewKeyDown">
     <ui:FluentWindow.Resources>
         <DataTemplate x:Key="HomeSectionTemplate">
@@ -40,62 +39,65 @@
             <sections:SettingsSectionView DataContext="{Binding Settings}" />
         </DataTemplate>
     </ui:FluentWindow.Resources>
-    <Grid Background="{StaticResource AppBackgroundBrush}">
+    <Grid Background="{DynamicResource AppBackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="40" />
             <RowDefinition Height="*" />
             <RowDefinition Height="28" />
         </Grid.RowDefinitions>
 
-        <Ellipse Width="520"
-                 Height="520"
-                 Grid.Row="1"
+        <Ellipse Width="620"
+                 Height="620"
+                 Grid.Row="0"
+                 Grid.RowSpan="2"
                  HorizontalAlignment="Left"
                  VerticalAlignment="Top"
-                Margin="-120,-220,0,0"
+                Margin="-140,0,0,0"
                 IsHitTestVisible="False"
-                 Opacity="0.14">
+                 Opacity="1">
             <Ellipse.Fill>
-                <RadialGradientBrush RadiusX="0.5" RadiusY="0.5">
-                    <GradientStop Color="{StaticResource ShellAmbientBlueColor}" Offset="0" />
-                    <GradientStop Color="{StaticResource ShellAmbientBlueFadeColor}" Offset="1" />
+                <RadialGradientBrush RadiusX="0.5" RadiusY="0.5"
+                                     ColorInterpolationMode="SRgbLinearInterpolation">
+                    <GradientStop Color="{DynamicResource ShellAmbientBlueColor}" Offset="0" />
+                    <GradientStop Color="{DynamicResource ShellAmbientBlueFadeColor}" Offset="0.7" />
                 </RadialGradientBrush>
             </Ellipse.Fill>
         </Ellipse>
 
-        <Ellipse Width="460"
-                 Height="460"
+        <Ellipse Width="560"
+                 Height="560"
                  Grid.Row="1"
                  HorizontalAlignment="Right"
                  VerticalAlignment="Top"
-                Margin="0,-200,-90,0"
+                Margin="0,-60,-120,0"
                 IsHitTestVisible="False"
-                 Opacity="0.12">
+                 Opacity="1">
             <Ellipse.Fill>
-                <RadialGradientBrush RadiusX="0.5" RadiusY="0.5">
-                    <GradientStop Color="{StaticResource ShellAmbientPurpleColor}" Offset="0" />
-                    <GradientStop Color="{StaticResource ShellAmbientPurpleFadeColor}" Offset="1" />
+                <RadialGradientBrush RadiusX="0.5" RadiusY="0.5"
+                                     ColorInterpolationMode="SRgbLinearInterpolation">
+                    <GradientStop Color="{DynamicResource ShellAmbientPurpleColor}" Offset="0" />
+                    <GradientStop Color="{DynamicResource ShellAmbientPurpleFadeColor}" Offset="0.7" />
                 </RadialGradientBrush>
             </Ellipse.Fill>
         </Ellipse>
 
         <Border Grid.Row="0"
                 Margin="0"
-                Background="{StaticResource AppBackgroundBrush}"
-                BorderBrush="{StaticResource ShellTitleBarBorderBrush}"
+                Background="Transparent"
+                BorderBrush="{DynamicResource ShellTitleBarBorderBrush}"
                 BorderThickness="0"
                 CornerRadius="0"
                 MouseLeftButtonDown="TopBar_OnMouseLeftButtonDown">
             <Border.Resources>
                 <Style x:Key="CaptionButtonStyle" TargetType="Button">
-                    <Setter Property="Width" Value="46" />
+                    <Setter Property="Width" Value="22" />
                     <Setter Property="Height" Value="36" />
                     <Setter Property="Margin" Value="0" />
                     <Setter Property="Padding" Value="0" />
                     <Setter Property="Background" Value="Transparent" />
                     <Setter Property="BorderBrush" Value="Transparent" />
                     <Setter Property="BorderThickness" Value="0" />
-                    <Setter Property="Foreground" Value="{StaticResource InkBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
                     <Setter Property="FontFamily" Value="{StaticResource IconFontFamily}" />
                     <Setter Property="FontSize" Value="12" />
                     <Setter Property="Template">
@@ -109,27 +111,33 @@
                                                       VerticalAlignment="Center"
                                                       RecognizesAccessKey="False" />
                                 </Border>
-                                <ControlTemplate.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Root" Property="Background" Value="{StaticResource CaptionButtonHoverBrush}" />
-                                    </Trigger>
-                                    <Trigger Property="IsPressed" Value="True">
-                                        <Setter TargetName="Root" Property="Background" Value="{StaticResource CaptionButtonPressedBrush}" />
-                                    </Trigger>
-                                </ControlTemplate.Triggers>
                             </ControlTemplate>
                         </Setter.Value>
                     </Setter>
                 </Style>
                 <Style x:Key="CaptionCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource CaptionButtonStyle}">
                     <Setter Property="FontSize" Value="12" />
+                </Style>
+                <Style x:Key="CaptionDotIdleStyle" TargetType="Ellipse">
+                    <Setter Property="Fill" Value="{DynamicResource CaptionDotIdleBrush}" />
                     <Style.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="{StaticResource CaptionCloseHoverBrush}" />
-                        </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="{StaticResource CaptionClosePressedBrush}" />
-                        </Trigger>
+                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Button}}" Value="True">
+                            <Setter Property="Fill" Value="{DynamicResource TextPrimaryBrush}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsPressed, RelativeSource={RelativeSource AncestorType=Button}}" Value="True">
+                            <Setter Property="Fill" Value="{DynamicResource TextPrimaryBrush}" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+                <Style x:Key="CaptionDotCloseStyle" TargetType="Ellipse">
+                    <Setter Property="Fill" Value="{DynamicResource CaptionDotCloseBrush}" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Button}}" Value="True">
+                            <Setter Property="Fill" Value="{DynamicResource CaptionDotCloseHoverBrush}" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsPressed, RelativeSource={RelativeSource AncestorType=Button}}" Value="True">
+                            <Setter Property="Fill" Value="{DynamicResource CaptionDotCloseHoverBrush}" />
+                        </DataTrigger>
                     </Style.Triggers>
                 </Style>
             </Border.Resources>
@@ -145,7 +153,7 @@
                            Text="{Binding WindowTitleWithVersion}"
                            Margin="17,0,0,0"
                            VerticalAlignment="Center"
-                           Foreground="#DDE6F8"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
                            FontSize="13.5"
                            FontWeight="SemiBold" />
 
@@ -154,12 +162,9 @@
                         Style="{StaticResource CaptionButtonStyle}"
                         ToolTip="Minimize"
                         Click="MinimizeButton_OnClick">
-                    <TextBlock Text="&#xE921;"
-                               FontFamily="{StaticResource IconFontFamily}"
-                               FontSize="12"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               TextAlignment="Center" />
+                    <Ellipse Width="12"
+                             Height="12"
+                             Style="{StaticResource CaptionDotIdleStyle}" />
                 </Button>
 
                 <Button x:Name="MaximizeRestoreButton"
@@ -168,32 +173,25 @@
                         Style="{StaticResource CaptionButtonStyle}"
                         ToolTip="Maximize / Restore"
                         Click="MaximizeRestoreButton_OnClick">
-                    <TextBlock x:Name="MaximizeRestoreGlyph"
-                               Text="&#xE922;"
-                               FontFamily="{StaticResource IconFontFamily}"
-                               FontSize="12"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               TextAlignment="Center" />
+                    <Ellipse Width="12"
+                             Height="12"
+                             Style="{StaticResource CaptionDotIdleStyle}" />
                 </Button>
 
                 <Button Grid.Column="3"
-                        Margin="0"
+                        Margin="0,0,5,0"
                         VerticalAlignment="Center"
                         Style="{StaticResource CaptionCloseButtonStyle}"
                         ToolTip="Close"
                         Click="CloseButton_OnClick">
-                    <TextBlock Text="&#xE8BB;"
-                               FontFamily="{StaticResource IconFontFamily}"
-                               FontSize="12"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               TextAlignment="Center" />
+                    <Ellipse Width="12"
+                             Height="12"
+                             Style="{StaticResource CaptionDotCloseStyle}" />
                 </Button>
-            </Grid>
+                </Grid>
         </Border>
 
-        <Grid Grid.Row="1" Background="{StaticResource AppBackgroundBrush}">
+        <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="{StaticResource ShellSideRailWidth}" />
                 <ColumnDefinition Width="*" />
@@ -209,7 +207,7 @@
 
                     <StackPanel Grid.Row="0"
                                 Margin="8,3,8,0">
-                        <ui:Button Command="{Binding Commands.ShowHomeCommand}"
+                        <Button Command="{Binding Commands.ShowHomeCommand}"
                                    Tag="{Binding Navigation.IsHomeViewActive}"
                                    ToolTip="{Binding Strings.NavHome}"
                                    AutomationProperties.Name="{Binding Strings.NavHome}"
@@ -217,15 +215,14 @@
                                    AutomationProperties.SizeOfSet="5"
                                    TabIndex="0"
                                    Style="{StaticResource SideRailIconButtonStyle}">
-                            <ui:SymbolIcon Symbol="Home24"
-                                           Filled="True"
-                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                           FontSize="24"
-                                           Width="26"
-                                           Height="26" />
-                        </ui:Button>
+                            <Viewbox Width="26" Height="26">
+                                <Path Data="M12 2.7 2.9 10.2c-.55.45-.22 1.35.48 1.35H4.4v8.35c0 .6.48 1.08 1.08 1.08h3.9v-6.1c0-.5.4-.9.9-.9h3.44c.5 0 .9.4.9.9v6.1h3.9c.6 0 1.08-.48 1.08-1.08v-8.35h1.02c.7 0 1.03-.9.48-1.35L12 2.7Z"
+                                      Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                      Stretch="Uniform" />
+                            </Viewbox>
+                        </Button>
 
-                        <ui:Button Command="{Binding Commands.ShowScanViewCommand}"
+                        <Button Command="{Binding Commands.ShowScanViewCommand}"
                                    Tag="{Binding Navigation.IsScanViewActive}"
                                    ToolTip="{Binding Strings.NavScan}"
                                    AutomationProperties.Name="{Binding Strings.NavScan}"
@@ -233,15 +230,27 @@
                                    AutomationProperties.SizeOfSet="5"
                                    TabIndex="1"
                                    Style="{StaticResource SideRailIconButtonStyle}">
-                            <ui:SymbolIcon Symbol="Search24"
-                                           Filled="True"
-                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                           FontSize="24"
-                                           Width="26"
-                                           Height="26" />
-                        </ui:Button>
+                            <Viewbox Width="25" Height="25">
+                                <Canvas Width="24" Height="24">
+                                    <Ellipse Canvas.Left="3.8"
+                                             Canvas.Top="3.8"
+                                             Width="13.4"
+                                             Height="13.4"
+                                             Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                             StrokeThickness="2.2" />
+                                    <Line X1="15.4"
+                                          Y1="15.4"
+                                          X2="21"
+                                          Y2="21"
+                                          Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                          StrokeThickness="2.2"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round" />
+                                </Canvas>
+                            </Viewbox>
+                        </Button>
 
-                        <ui:Button Command="{Binding Commands.ShowSupportedGamesWikiViewCommand}"
+                        <Button Command="{Binding Commands.ShowSupportedGamesWikiViewCommand}"
                                    Tag="{Binding Navigation.IsSupportedGamesWikiViewActive}"
                                    ToolTip="{Binding Strings.NavSupportedGamesWiki}"
                                    AutomationProperties.Name="{Binding Strings.NavSupportedGamesWiki}"
@@ -249,15 +258,39 @@
                                    AutomationProperties.SizeOfSet="5"
                                    TabIndex="2"
                                    Style="{StaticResource SideRailIconButtonStyle}">
-                            <ui:SymbolIcon Symbol="XboxController24"
-                                           Filled="True"
-                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                           FontSize="24"
-                                           Width="26"
-                                           Height="26" />
-                        </ui:Button>
+                            <Viewbox Width="27" Height="27">
+                                <Canvas Width="24" Height="24">
+                                    <Path Data="M7 6.5h10a4.5 4.5 0 0 1 4.47 5.03l-.6 5.1a2.3 2.3 0 0 1-4.1 1.16L15.2 15.5H8.8l-1.57 2.29a2.3 2.3 0 0 1-4.1-1.16l-.6-5.1A4.5 4.5 0 0 1 7 6.5Z"
+                                          Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                    <Rectangle Canvas.Left="6"
+                                               Canvas.Top="10"
+                                               Width="1.6"
+                                               Height="4"
+                                               RadiusX=".4"
+                                               RadiusY=".4"
+                                               Fill="{Binding Background, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                    <Rectangle Canvas.Left="4.2"
+                                               Canvas.Top="11.2"
+                                               Width="4"
+                                               Height="1.6"
+                                               RadiusX=".4"
+                                               RadiusY=".4"
+                                               Fill="{Binding Background, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                    <Ellipse Canvas.Left="15.9"
+                                             Canvas.Top="8.9"
+                                             Width="2.2"
+                                             Height="2.2"
+                                             Fill="{Binding Background, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                    <Ellipse Canvas.Left="18.1"
+                                             Canvas.Top="11.1"
+                                             Width="2.2"
+                                             Height="2.2"
+                                             Fill="{Binding Background, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                </Canvas>
+                            </Viewbox>
+                        </Button>
 
-                        <ui:Button Command="{Binding Commands.ShowOptiScalerCommand}"
+                        <Button Command="{Binding Commands.ShowOptiScalerCommand}"
                                    Tag="{Binding Navigation.IsOptiScalerViewActive}"
                                    ToolTip="{Binding Strings.NavOptiScaler}"
                                    AutomationProperties.Name="{Binding Strings.NavOptiScaler}"
@@ -265,31 +298,49 @@
                                    AutomationProperties.SizeOfSet="5"
                                    TabIndex="3"
                                    Style="{StaticResource SideRailIconButtonStyle}">
-                            <ui:SymbolIcon Symbol="Gauge24"
-                                           Filled="True"
-                                           Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                           FontSize="24"
-                                           Width="26"
-                                           Height="26" />
-                        </ui:Button>
+                            <Viewbox Width="26" Height="26">
+                                <Canvas Width="24" Height="24">
+                                    <Ellipse Canvas.Left="3.7"
+                                             Canvas.Top="3.7"
+                                             Width="16.6"
+                                             Height="16.6"
+                                             Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                             StrokeThickness="2" />
+                                    <Line X1="12"
+                                          Y1="12"
+                                          X2="15.6"
+                                          Y2="7.8"
+                                          Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                          StrokeThickness="2"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round" />
+                                    <Ellipse Canvas.Left="10.7"
+                                             Canvas.Top="10.7"
+                                             Width="2.6"
+                                             Height="2.6"
+                                             Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                </Canvas>
+                            </Viewbox>
+                        </Button>
                     </StackPanel>
 
-                    <ui:Button Grid.Row="1"
-                               Command="{Binding Commands.ShowSettingsCommand}"
-                               Tag="{Binding Navigation.IsSettingsViewActive}"
-                               ToolTip="{Binding Strings.NavSettings}"
-                               AutomationProperties.Name="{Binding Strings.NavSettings}"
-                               AutomationProperties.PositionInSet="5"
-                               AutomationProperties.SizeOfSet="5"
-                               TabIndex="4"
-                               Style="{StaticResource SideRailFooterIconButtonStyle}">
-                        <ui:SymbolIcon Symbol="Settings24"
-                                       Filled="True"
-                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                       FontSize="24"
-                                       Width="26"
-                                       Height="26" />
-                    </ui:Button>
+                    <Button Grid.Row="1"
+                            Command="{Binding Commands.ShowSettingsCommand}"
+                            Tag="{Binding Navigation.IsSettingsViewActive}"
+                            ToolTip="{Binding Strings.NavSettings}"
+                            AutomationProperties.Name="{Binding Strings.NavSettings}"
+                            AutomationProperties.PositionInSet="5"
+                            AutomationProperties.SizeOfSet="5"
+                            TabIndex="4"
+                            Style="{StaticResource SideRailFooterIconButtonStyle}">
+                        <Viewbox Width="24"
+                                 Height="24"
+                                 HorizontalAlignment="Center"
+                                 VerticalAlignment="Center">
+                            <Path Data="M12 8.4a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 0 0 0-7.2Zm9.3 2.5-1.7-.4a7.4 7.4 0 0 0-.6-1.5l1-1.5a.7.7 0 0 0-.1-.9l-1.4-1.4a.7.7 0 0 0-.9-.1l-1.5 1a7.4 7.4 0 0 0-1.5-.6l-.4-1.7a.7.7 0 0 0-.7-.5h-2a.7.7 0 0 0-.7.5l-.4 1.7a7.4 7.4 0 0 0-1.5.6l-1.5-1a.7.7 0 0 0-.9.1L4.9 6.6a.7.7 0 0 0-.1.9l1 1.5a7.4 7.4 0 0 0-.6 1.5l-1.7.4a.7.7 0 0 0-.5.7v2a.7.7 0 0 0 .5.7l1.7.4c.15.53.36 1.03.6 1.5l-1 1.5a.7.7 0 0 0 .1.9l1.4 1.4a.7.7 0 0 0 .9.1l1.5-1c.47.24.97.45 1.5.6l.4 1.7a.7.7 0 0 0 .7.5h2a.7.7 0 0 0 .7-.5l.4-1.7c.53-.15 1.03-.36 1.5-.6l1.5 1a.7.7 0 0 0 .9-.1l1.4-1.4a.7.7 0 0 0 .1-.9l-1-1.5c.24-.47.45-.97.6-1.5l1.7-.4a.7.7 0 0 0 .5-.7v-2a.7.7 0 0 0-.5-.7Z"
+                                  Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                        </Viewbox>
+                    </Button>
                 </Grid>
             </Border>
 
@@ -341,9 +392,9 @@
         </Grid>
 
         <Border Grid.Row="2"
-                Background="{StaticResource AppBackgroundBrush}"
-                BorderBrush="{StaticResource BorderBrush}"
-                BorderThickness="0"
+                Background="{DynamicResource ShellFooterBarBrush}"
+                BorderBrush="{DynamicResource ShellFooterBorderBrush}"
+                BorderThickness="0,1,0,0"
                 Margin="0">
             <Grid>
             <Grid.ColumnDefinitions>
@@ -355,7 +406,7 @@
                        Style="{StaticResource DeviceMetaTextStyle}"
                        HorizontalAlignment="Right"
                        VerticalAlignment="Center"
-                       Margin="0,0,24,0"
+                       Margin="0,-1,24,0"
                        TextAlignment="Right"
                        MaxWidth="700"
                        TextTrimming="CharacterEllipsis" />
@@ -372,7 +423,7 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center">
                 <TextBlock Text="{Binding ShellBusyState.OperationOverlayMessage}"
-                           Foreground="{StaticResource TextPrimaryBrush}"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
                            FontSize="22"
                            FontWeight="SemiBold"
                            TextAlignment="Center"
@@ -381,7 +432,7 @@
                              Height="4"
                              Margin="0,16,0,0"
                              HorizontalAlignment="Center"
-                             Foreground="{StaticResource AccentPrimaryBrush}"
+                             Foreground="{DynamicResource AccentPrimaryBrush}"
                              IsIndeterminate="True" />
             </StackPanel>
         </Grid>
@@ -396,14 +447,14 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center">
                 <TextBlock Text="{Binding Strings.StartupPreparationTitle}"
-                           Foreground="{StaticResource TextPrimaryBrush}"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
                            FontSize="20"
                            FontWeight="SemiBold"
                            TextAlignment="Center"
                            TextWrapping="Wrap" />
                 <TextBlock Text="{Binding Strings.StartupPreparationBody}"
                            Margin="0,12,0,18"
-                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
                            FontSize="14"
                            LineHeight="21"
                            TextAlignment="Center"
@@ -411,7 +462,7 @@
                 <ProgressBar Width="360"
                              Height="4"
                              HorizontalAlignment="Center"
-                             Foreground="{StaticResource AccentPrimaryBrush}"
+                             Foreground="{DynamicResource AccentPrimaryBrush}"
                              IsIndeterminate="True" />
             </StackPanel>
         </Grid>

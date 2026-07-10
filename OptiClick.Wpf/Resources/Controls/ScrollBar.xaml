@@ -63,4 +63,6 @@
             </Trigger>
         </Style.Triggers>
     </Style>
+
+    <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource SlimVerticalScrollBarStyle}" />
 </ResourceDictionary>

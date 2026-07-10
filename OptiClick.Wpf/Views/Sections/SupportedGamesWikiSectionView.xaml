@@ -4,8 +4,8 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:services="clr-namespace:OptiClick.Wpf.Services">
     <UserControl.Resources>
-        <Thickness x:Key="WikiSearchBoxMargin">0,10,18,0</Thickness>
-        <Thickness x:Key="WikiRowRightInset">0,0,12,0</Thickness>
+        <Thickness x:Key="WikiSearchBoxMargin">0,10,0,0</Thickness>
+        <Thickness x:Key="WikiRowRightInset">0,0,0,0</Thickness>
         <Thickness x:Key="WikiCardMargin">0,0,0,8</Thickness>
         <Thickness x:Key="WikiCardPadding">8</Thickness>
         <Thickness x:Key="WikiVendorBadgePadding">8,5</Thickness>
@@ -17,21 +17,22 @@
         <SolidColorBrush x:Key="WikiVendorNvidiaBrush" Color="#8ACB43" />
 
         <Style x:Key="RequestGameSupportButtonStyle" TargetType="{x:Type ui:Button}" BasedOn="{StaticResource SecondaryButtonStyle}">
-            <Setter Property="Background" Value="{DynamicResource SupportedGamesInputBackgroundBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource SupportedGamesCardBorderBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SupportedGamesOutlineBorderBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="12,0" />
             <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="13" />
             <Setter Property="MinHeight" Value="36" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource SupportedGamesCardHoverBackgroundBrush}" />
+                    <Setter Property="Background" Value="Transparent" />
                     <Setter Property="BorderBrush" Value="{DynamicResource AccentPrimaryBrush}" />
                     <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
                 </Trigger>
                 <Trigger Property="IsPressed" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}" />
+                    <Setter Property="Background" Value="Transparent" />
                     <Setter Property="BorderBrush" Value="{DynamicResource AccentSecondaryBrush}" />
                     <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
                 </Trigger>
@@ -123,15 +124,15 @@
         </Style>
 
         <Style x:Key="WikiVendorIntelTextStyle" TargetType="TextBlock" BasedOn="{StaticResource WikiVendorLabelTextStyle}">
-            <Setter Property="Foreground" Value="{StaticResource WikiVendorIntelBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource WikiVendorIntelBrush}" />
         </Style>
 
         <Style x:Key="WikiVendorAmdTextStyle" TargetType="TextBlock" BasedOn="{StaticResource WikiVendorLabelTextStyle}">
-            <Setter Property="Foreground" Value="{StaticResource WikiVendorAmdBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource WikiVendorAmdBrush}" />
         </Style>
 
         <Style x:Key="WikiVendorNvidiaTextStyle" TargetType="TextBlock" BasedOn="{StaticResource WikiVendorLabelTextStyle}">
-            <Setter Property="Foreground" Value="{StaticResource WikiVendorNvidiaBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource WikiVendorNvidiaBrush}" />
         </Style>
 
         <Style x:Key="SupportedGamesItemCardStyle" TargetType="Border">
@@ -184,7 +185,7 @@
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0"
-              Margin="0,2,0,14">
+              Margin="0,14,0,14">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
@@ -201,7 +202,7 @@
 
             <ui:Button Grid.Row="0"
                        Grid.Column="1"
-                       Margin="0,0,18,0"
+                       Margin="0,0,0,0"
                        Command="{Binding OpenGameSupportRequestCommand}"
                        ToolTip="{Binding Strings.SupportedGamesWikiRequestGameTooltip}"
                        Style="{StaticResource RequestGameSupportButtonStyle}">
@@ -270,7 +271,7 @@
 
         <ui:Card Grid.Row="1"
                  Style="{StaticResource PanelCardControlStyle}"
-                 Padding="14,14,0,14"
+                 Padding="14,14,14,14"
                  Background="{DynamicResource SupportedGamesPanelBackgroundBrush}"
                  BorderBrush="{DynamicResource SupportedGamesCardBorderBrush}">
             <Grid>
@@ -298,7 +299,7 @@
                               Grid.Row="2"
                               Margin="0,10,0,0"
                               Background="{DynamicResource SupportedGamesPanelBackgroundBrush}"
-                              VerticalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Hidden"
                               HorizontalScrollBarVisibility="Disabled"
                               ScrollChanged="SupportedGamesWikiScrollViewer_OnScrollChanged"
                               SizeChanged="SupportedGamesWikiScrollViewer_OnSizeChanged">
