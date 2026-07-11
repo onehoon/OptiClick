@@ -368,7 +368,8 @@ public sealed class AuthV2SessionClient : IAuthV2SessionClient
     private static bool IsCredentialRejected(string errorCode)
     {
         return string.Equals(errorCode, "client_not_found", StringComparison.OrdinalIgnoreCase)
-               || string.Equals(errorCode, "invalid_signature", StringComparison.OrdinalIgnoreCase);
+               || string.Equals(errorCode, "invalid_signature", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(errorCode, "invalid_client_record", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string NormalizeLogValue(string? value, string fallback)
