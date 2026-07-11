@@ -9,6 +9,7 @@ public static class AuthV2GpuCandidateFilter
     // It is not a replacement for server-side Resolve V2 manifest matching.
     // Supported GPU family and bundle selection remain server-driven.
     private static readonly Regex XeTokenRegex = new(@"(^|\W)xe(\W|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex UhdGraphicsRegex = new(@"(^|\W)uhd\s+graphics(\W|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex GtxTokenRegex = new(@"(^|\W)gtx(\W|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
     public static IReadOnlyList<GpuInfo> FilterUploadCandidates(IReadOnlyList<GpuInfo>? gpus)
@@ -83,7 +84,8 @@ public static class AuthV2GpuCandidateFilter
         if (normalizedVendor == "intel")
         {
             return !normalizedName.Contains("iris", StringComparison.Ordinal)
-                   && !XeTokenRegex.IsMatch(normalizedName);
+                   && !XeTokenRegex.IsMatch(normalizedName)
+                   && !UhdGraphicsRegex.IsMatch(normalizedName);
         }
 
         if (normalizedVendor == "nvidia")

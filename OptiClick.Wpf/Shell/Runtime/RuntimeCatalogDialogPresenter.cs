@@ -12,8 +12,10 @@ public sealed class RuntimeCatalogDialogPresenter
             text.RuntimeCatalogUnexpectedErrorTitle,
             text.RuntimeCatalogUnexpectedErrorSummary,
             text.RuntimeCatalogUnexpectedErrorBullet1,
-            text.RuntimeCatalogUnexpectedErrorBullet2,
-            "Error code: remote_catalog_unexpected_error");
+            text.RuntimeCatalogUnexpectedErrorBullet2) with
+        {
+            DisplayErrorCode = "remote_catalog_failed"
+        };
     }
 
     public AppDialogRequest BuildSkippedDialog(
@@ -26,8 +28,10 @@ public sealed class RuntimeCatalogDialogPresenter
             text.RuntimeCatalogSkippedTitle,
             text.RuntimeCatalogSkippedSummary,
             text.RuntimeCatalogSkippedBullet1,
-            text.RuntimeCatalogSkippedBullet2,
-            $"Error code: {normalizedCode}");
+            text.RuntimeCatalogSkippedBullet2) with
+        {
+            DisplayErrorCode = ResolveDisplayErrorCode(normalizedCode)
+        };
     }
 
     public AppDialogRequest BuildFailedDialog(
@@ -40,8 +44,10 @@ public sealed class RuntimeCatalogDialogPresenter
             text.RuntimeCatalogFailedTitle,
             text.RuntimeCatalogFailedSummary,
             text.RuntimeCatalogFailedBullet1,
-            text.RuntimeCatalogFailedBullet2,
-            $"Error code: {normalizedCode}");
+            text.RuntimeCatalogFailedBullet2) with
+        {
+            DisplayErrorCode = ResolveDisplayErrorCode(normalizedCode)
+        };
     }
 
     public AppDialogRequest BuildUnsupportedGpuDialog(RuntimeCatalogFlowText text)
@@ -184,5 +190,73 @@ public sealed class RuntimeCatalogDialogPresenter
     {
         var normalized = (value ?? "").Trim();
         return string.IsNullOrWhiteSpace(normalized) ? fallback : normalized;
+    }
+
+    private static string ResolveDisplayErrorCode(string diagnosticErrorCode)
+    {
+        var normalized = (diagnosticErrorCode ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            return "remote_catalog_failed";
+        }
+
+        if (string.Equals(normalized, "bootstrap_diversity_exceeded", StringComparison.OrdinalIgnoreCase))
+        {
+            return "authentication_temporarily_unavailable";
+        }
+
+        if (MatchesAny(
+                normalized,
+                "client_not_found",
+                "invalid_signature",
+                "invalid_client_record",
+                "invalid_request"))
+        {
+            return "authentication_failed";
+        }
+
+        if (MatchesAny(
+                normalized,
+                "runtime_token_replay",
+                "gpu_bundle_token_replay",
+                "invalid_runtime_token",
+                "invalid_gpu_bundle_token",
+                "runtime_token_expired",
+                "gpu_bundle_token_expired"))
+        {
+            return "authentication_session_expired";
+        }
+
+        if (MatchesAny(
+                normalized,
+                "auth_v2_kv_unavailable",
+                "data_v2_kv_unavailable",
+                "resolve_v2_unavailable",
+                "runtime_data_unavailable",
+                "gpu_bundle_unavailable"))
+        {
+            return "service_temporarily_unavailable";
+        }
+
+        if (MatchesAny(
+                normalized,
+                "resolve_v2_invalid_contract",
+                "auth_v2_invalid_json",
+                "data_v2_invalid_json",
+                "invalid_runtime_data",
+                "invalid_gpu_bundle",
+                "runtime_data_parse_failed",
+                "gpu_bundle_parse_failed"))
+        {
+            return "service_response_invalid";
+        }
+
+        return "remote_catalog_failed";
+    }
+
+    private static bool MatchesAny(string value, params string[] candidates)
+    {
+        return candidates.Any(candidate =>
+            string.Equals(value, candidate, StringComparison.OrdinalIgnoreCase));
     }
 }

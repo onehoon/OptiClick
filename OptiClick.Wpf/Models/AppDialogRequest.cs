@@ -18,6 +18,7 @@ public sealed record AppDialogRequest
     public string AcknowledgementText { get; init; } = "";
     public bool IsBlocking { get; init; }
     public string ErrorCode { get; init; } = "";
+    public string? DisplayErrorCode { get; init; }
     public string FooterText { get; init; } = "";
     public bool CanClose { get; init; } = true;
     public bool CloseOnOverlayClick { get; init; }

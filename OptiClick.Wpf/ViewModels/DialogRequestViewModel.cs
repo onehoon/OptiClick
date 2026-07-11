@@ -150,7 +150,10 @@ public sealed class DialogRequestViewModel : ViewModelBase
 
     public bool HasFooterText => !string.IsNullOrWhiteSpace(FooterText);
 
-    public string ErrorCode => Request.ErrorCode;
+    public string ErrorCode =>
+        Request.DisplayErrorCode is null
+            ? Request.ErrorCode
+            : Request.DisplayErrorCode;
 
     public bool HasErrorCode => !string.IsNullOrWhiteSpace(ErrorCode);
 
