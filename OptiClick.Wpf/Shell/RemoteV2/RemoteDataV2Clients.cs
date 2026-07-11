@@ -1,8 +1,10 @@
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using OptiClick.Core.Runtime;
 using OptiClick.Infrastructure.Logging;
+using OptiClick.Infrastructure.Security;
 using OptiClick.Wpf.Services;
 
 namespace OptiClick.Wpf.Shell.RemoteV2;
@@ -40,6 +42,7 @@ public sealed class AuthV2SessionClient : IAuthV2SessionClient
     private readonly HttpClient _httpClient;
     private readonly IAuthV2CredentialStore _credentialStore;
     private readonly IAppVersionProvider _appVersionProvider;
+    private readonly IOptiClickServerClock _serverClock;
     private readonly IAppLogger _logger;
 
     public AuthV2SessionClient(
@@ -47,12 +50,14 @@ public sealed class AuthV2SessionClient : IAuthV2SessionClient
         HttpClient httpClient,
         IAuthV2CredentialStore credentialStore,
         IAppVersionProvider appVersionProvider,
+        IOptiClickServerClock serverClock,
         IAppLogger? logger = null)
     {
         _baseUrl = (baseUrl ?? "").Trim().TrimEnd('/');
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _credentialStore = credentialStore ?? throw new ArgumentNullException(nameof(credentialStore));
         _appVersionProvider = appVersionProvider ?? throw new ArgumentNullException(nameof(appVersionProvider));
+        _serverClock = serverClock ?? throw new ArgumentNullException(nameof(serverClock));
         _logger = logger ?? NullAppLogger.Instance;
     }
 
@@ -67,34 +72,55 @@ public sealed class AuthV2SessionClient : IAuthV2SessionClient
             return Failure("auth_v2_endpoint_missing");
         }
 
-        var payload = CreatePayload(runtimeContext, appStartId, selectedGpu);
-        if (payload.Gpus.Count == 0)
-        {
-            return Failure("auth_v2_gpu_candidates_missing");
-        }
-
-        var rawBody = JsonSerializer.Serialize(payload, SerializerOptions);
         var credential = _credentialStore.Load();
-        using var request = new HttpRequestMessage(HttpMethod.Post, BuildUri("/v2/auth/session/start"));
-        request.Content = new StringContent(rawBody, Encoding.UTF8, "application/json");
-        if (credential?.IsUsable == true)
-        {
-            try
-            {
-                AddSignedHeaders(request, credential, payload, rawBody);
-            }
-            catch (Exception ex)
-            {
-                _logger.Warning("remote-v2", $"auth v2 credential signing failed; falling back to bootstrap type={ex.GetType().Name}");
-                _credentialStore.Clear();
-            }
-        }
-
         try
         {
-            using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
-            var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-            var result = ParseSessionStartResponse(content, response.IsSuccessStatusCode, response.StatusCode);
+            AuthV2SessionStartResult result;
+            for (var attempt = 0; ; attempt++)
+            {
+                var payload = CreatePayload(runtimeContext, appStartId, selectedGpu);
+                if (payload.Gpus.Count == 0)
+                {
+                    return Failure("auth_v2_gpu_candidates_missing");
+                }
+
+                var rawBody = JsonSerializer.Serialize(payload, SerializerOptions);
+                using var request = new HttpRequestMessage(HttpMethod.Post, BuildUri("/v2/auth/session/start"));
+                request.Content = new StringContent(rawBody, Encoding.UTF8, "application/json");
+                var isSignedRequest = false;
+                if (credential?.IsUsable == true)
+                {
+                    try
+                    {
+                        AddSignedHeaders(request, credential, payload, rawBody);
+                        isSignedRequest = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Warning("remote-v2", $"auth v2 credential signing failed; falling back to bootstrap type={ex.GetType().Name}");
+                        _credentialStore.Clear();
+                    }
+                }
+
+                using var response = await _httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+                response.RequestMessage ??= request;
+                var clockAdjusted = _serverClock.Observe(response);
+                var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+                result = ParseSessionStartResponse(content, response.IsSuccessStatusCode, response.StatusCode);
+                if (attempt == 0
+                    && isSignedRequest
+                    && clockAdjusted
+                    && response.StatusCode == HttpStatusCode.BadRequest
+                    && string.Equals(result.ErrorCode, "invalid_request", StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(result.ErrorReason, "invalid_signed_timestamp", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.Warning("remote-v2", "auth v2 retry reason=timestamp_skew_recovery");
+                    continue;
+                }
+
+                break;
+            }
+
             if (credential?.IsUsable == true && IsCredentialRejected(result.ErrorCode))
             {
                 _logger.Warning("remote-v2", $"auth v2 credential rejected code={NormalizeLogValue(result.ErrorCode, "unknown")}; retrying bootstrap");
@@ -165,7 +191,7 @@ public sealed class AuthV2SessionClient : IAuthV2SessionClient
             },
             Gpus = candidates,
             SelectedGpu = selectedPayload,
-            Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            Timestamp = _serverClock.UtcNow.ToUnixTimeSeconds(),
             Nonce = Guid.NewGuid().ToString("N")
         };
     }
@@ -245,6 +271,7 @@ public sealed class AuthV2SessionClient : IAuthV2SessionClient
                 ErrorCode = httpSuccess
                     ? ReadString(root, "error")
                     : NormalizeLogValue(ReadString(root, "error"), $"auth_v2_http_{(int)statusCode}"),
+                ErrorReason = ReadString(root, "reason"),
                 Status = status,
                 SessionReady = sessionReady,
                 RuntimeToken = runtimeToken,

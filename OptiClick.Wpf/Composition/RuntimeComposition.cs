@@ -57,6 +57,7 @@ public sealed class RuntimeComposition
                 sharedRemoteHttpClient,
                 new AuthV2CredentialStore(app.LocalDataPathProvider, app.AppLogger),
                 app.AppVersionProvider,
+                app.SecurityServices.ServerClock,
                 app.AppLogger),
             new DataV2Client(
                 remoteOptions.DataV2BaseUrl,

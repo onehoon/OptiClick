@@ -17,17 +17,20 @@ public sealed class AuthV2ArchiveDownloadRequestPreparer : IArchiveDownloadReque
 {
     private readonly IAuthV2CredentialStore _credentialStore;
     private readonly IOptiClickApiSession _session;
+    private readonly IOptiClickServerClock _serverClock;
     private readonly Uri? _archiveResourceEndpoint;
     private readonly IAppLogger _logger;
 
     public AuthV2ArchiveDownloadRequestPreparer(
         IAuthV2CredentialStore credentialStore,
         IOptiClickApiSession session,
+        IOptiClickServerClock serverClock,
         Uri? archiveResourceEndpoint = null,
         IAppLogger? logger = null)
     {
         _credentialStore = credentialStore ?? throw new ArgumentNullException(nameof(credentialStore));
         _session = session ?? throw new ArgumentNullException(nameof(session));
+        _serverClock = serverClock ?? throw new ArgumentNullException(nameof(serverClock));
         _archiveResourceEndpoint = archiveResourceEndpoint;
         _logger = logger ?? NullAppLogger.Instance;
     }
@@ -51,7 +54,7 @@ public sealed class AuthV2ArchiveDownloadRequestPreparer : IArchiveDownloadReque
             return Task.CompletedTask;
         }
 
-        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var timestamp = _serverClock.UtcNow.ToUnixTimeSeconds();
         var nonce = CreateNonce();
         var signature = AuthV2RequestSigner.CreateSignature(
             request.Method?.Method ?? "GET",

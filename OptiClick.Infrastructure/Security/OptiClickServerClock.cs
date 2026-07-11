@@ -88,8 +88,9 @@ public sealed class OptiClickServerClock : IOptiClickServerClock
     private static bool IsWorkerApiPath(Uri uri)
     {
         var path = (uri.AbsolutePath ?? "").TrimEnd('/');
-        return string.Equals(path, "/v1", StringComparison.Ordinal)
-               || path.StartsWith("/v1/", StringComparison.Ordinal);
+        return string.Equals(path, "/v2/auth/session/start", StringComparison.Ordinal)
+               || string.Equals(path, "/v2/resources/extra_bundle", StringComparison.Ordinal)
+               || path.StartsWith("/v2/resources/extra_bundle/", StringComparison.Ordinal);
     }
 
     private static string BuildOriginKey(Uri uri)

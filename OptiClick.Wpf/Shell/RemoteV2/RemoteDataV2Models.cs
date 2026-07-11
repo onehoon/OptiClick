@@ -70,6 +70,7 @@ public sealed record AuthV2SessionStartResult
 {
     public bool IsHttpSuccess { get; init; }
     public string ErrorCode { get; init; } = "";
+    public string ErrorReason { get; init; } = "";
     public string Status { get; init; } = "";
     public bool SessionReady { get; init; }
     public string RuntimeToken { get; init; } = "";

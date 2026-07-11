@@ -37,6 +37,7 @@ public sealed partial class AppCompositionRoot
         var archiveRequestPreparer = new AuthV2ArchiveDownloadRequestPreparer(
             new AuthV2CredentialStore(localDataPathProvider, effectiveLogger),
             apiSession,
+            serverClock,
             BuildDataV2ArchiveEndpoint(remoteDataOptions),
             effectiveLogger);
 
@@ -80,10 +81,17 @@ public sealed partial class AppCompositionRoot
             yield break;
         }
 
-        yield return remoteDataOptions.GpuBundleUrl;
-        yield return remoteDataOptions.GpuBundleManifestUrl;
-        yield return remoteDataOptions.RuntimeDataUrl;
-        yield return remoteDataOptions.ManifestEndpoint;
+        yield return BuildAuthV2SessionEndpoint(remoteDataOptions)?.AbsoluteUri ?? "";
+        yield return BuildDataV2ArchiveEndpoint(remoteDataOptions)?.AbsoluteUri ?? "";
+    }
+
+    private static Uri? BuildAuthV2SessionEndpoint(RemoteDataOptions? remoteDataOptions)
+    {
+        var baseUrl = (remoteDataOptions?.AuthV2BaseUrl ?? "").Trim().TrimEnd('/');
+        return !string.IsNullOrWhiteSpace(baseUrl)
+               && Uri.TryCreate($"{baseUrl}/v2/auth/session/start", UriKind.Absolute, out var endpoint)
+            ? endpoint
+            : null;
     }
 
     private static bool IsWorkerApiEndpointCandidate(Uri uri)
@@ -108,7 +116,7 @@ public sealed partial class AppCompositionRoot
         }
 
         var path = uri.AbsolutePath.TrimEnd('/');
-        return string.Equals(path, "/v1", StringComparison.Ordinal)
-            || path.StartsWith("/v1/", StringComparison.Ordinal);
+        return string.Equals(path, "/v2/auth/session/start", StringComparison.Ordinal)
+            || string.Equals(path, "/v2/resources/extra_bundle", StringComparison.Ordinal);
     }
 }
