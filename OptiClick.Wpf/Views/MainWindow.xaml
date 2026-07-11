@@ -406,7 +406,7 @@
                        Style="{StaticResource DeviceMetaTextStyle}"
                        HorizontalAlignment="Right"
                        VerticalAlignment="Center"
-                       Margin="0,-1,24,0"
+                       Margin="0,-2,24,0"
                        TextAlignment="Right"
                        MaxWidth="700"
                        TextTrimming="CharacterEllipsis" />
