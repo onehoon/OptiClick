@@ -1,6 +1,7 @@
 # 🚀 OptiClick
 
-<img width="1130" alt="Installer" src="https://github.com/user-attachments/assets/656f51de-3ad8-4e54-b74f-4608efba0185" />
+<img width="1457" alt="OptiClick" src="https://github.com/user-attachments/assets/aaf51263-b45b-43b6-a2cf-a80261fcd32a" />
+
 
 <p align="center">
   <b>Automatically installs and configures OptiScaler per game and GPU.</b><br>
