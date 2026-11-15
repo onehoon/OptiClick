@@ -206,6 +206,16 @@ nitec, TheRazerMD, Fakemichau, Keu, By-U, Atsy, san9, Cryio
 
 ---
 
+## License
+
+**OptiClick Application:** OptiClick is proprietary freeware, available free of charge for personal use. The application is closed-source; unauthorized redistribution or resale is prohibited. See the [Software License](LICENSE.md).
+
+**OptiClick Data:** OptiClick's original game compatibility data, GPU configurations, and installation profiles are licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/). Non-commercial reuse is permitted with attribution; commercial reuse of protected materials requires separate permission. See the [Data License](DATA-LICENSE.md).
+
+Third-party software and assets are governed by their respective licenses.
+
+---
+
 ## Privacy Policy
 
 - [개인정보 처리방침](https://github.com/onehoon/OptiClick/wiki/Privacy-Policy)
