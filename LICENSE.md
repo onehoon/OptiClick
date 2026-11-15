@@ -35,7 +35,9 @@ OptiClick uses or installs third-party software and libraries, including OptiSca
 
 You use OptiClick **at your own risk and responsibility**. You are responsible for deciding whether to install and use the application, reviewing game compatibility and related instructions, and taking appropriate precautions, such as backing up game files and settings.
 
-You assume responsibility for the consequences arising from your installation, configuration, or use of OptiClick and any third-party components, including game instability, crashes, data loss, compatibility problems, and restrictions or penalties imposed by game publishers or anti-cheat systems, to the extent permitted by applicable law.
+OptiClick may install or configure third-party modifications that can be detected or restricted by a game's anti-cheat system or violate a game publisher's rules. **Use of OptiClick may result in warnings, loss of online access, account suspension, or permanent bans.** A game's inclusion in OptiClick's supported-game list does not guarantee that its use is permitted by the game publisher or safe from anti-cheat enforcement.
+
+You are responsible for reviewing the applicable game rules and deciding whether to use OptiClick. You assume the risks arising from your installation, configuration, or use of OptiClick and third-party components, including game instability, crashes, data loss, and account-related penalties, to the extent permitted by applicable law.
 
 ## 6. No Warranty and Limitation of Liability
 
