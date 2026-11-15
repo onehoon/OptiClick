@@ -31,8 +31,16 @@ These restrictions apply only to rights owned by the OptiClick copyright holder 
 
 OptiClick uses or installs third-party software and libraries, including OptiScaler and other game-related components. Such components are governed by their respective licenses and copyright holders. Nothing in this license removes or overrides rights granted under those licenses.
 
-## 5. No Warranty
+## 5. User Responsibility and Assumption of Risk
 
-OptiClick is provided **"AS IS"**, without any warranty, express or implied, to the maximum extent permitted by applicable law. The copyright holder is not liable for damages arising from its use to the maximum extent permitted by applicable law.
+You use OptiClick **at your own risk and responsibility**. You are responsible for deciding whether to install and use the application, reviewing game compatibility and related instructions, and taking appropriate precautions, such as backing up game files and settings.
+
+You assume responsibility for the consequences arising from your installation, configuration, or use of OptiClick and any third-party components, including game instability, crashes, data loss, compatibility problems, and restrictions or penalties imposed by game publishers or anti-cheat systems, to the extent permitted by applicable law.
+
+## 6. No Warranty and Limitation of Liability
+
+OptiClick is provided **"AS IS"**, without any warranty, express or implied, to the maximum extent permitted by applicable law. To that extent, the copyright holder is not liable for losses, damages, or other consequences arising from installation or use of OptiClick.
+
+Nothing in this license excludes or limits liability that cannot be excluded or limited under applicable law.
 
 All rights not expressly granted are reserved by the copyright holder.
