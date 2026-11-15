@@ -33,11 +33,11 @@ OptiClick uses or installs third-party software and libraries, including OptiSca
 
 ## 5. User Responsibility and Assumption of Risk
 
-You use OptiClick **at your own risk and responsibility**. You are responsible for deciding whether to install and use the application, reviewing game compatibility and related instructions, and taking appropriate precautions, such as backing up game files and settings.
+**All use of OptiClick is at the user's own risk and responsibility, including when the application, game support, configurations, installation profiles, or other components are provided or recommended directly by OptiClick.** OptiClick providing or supporting a game does not mean its use is authorized by the game publisher or guaranteed to be safe from anti-cheat detection.
 
-OptiClick may install or configure third-party modifications that can be detected or restricted by a game's anti-cheat system or violate a game publisher's rules. **Use of OptiClick may result in warnings, loss of online access, account suspension, or permanent bans.** A game's inclusion in OptiClick's supported-game list does not guarantee that its use is permitted by the game publisher or safe from anti-cheat enforcement.
+Game anti-cheat systems or publisher policies may restrict such modifications. Use of OptiClick may result in warnings, disabled online functionality, account suspensions, or permanent bans, as well as crashes, compatibility problems, or data loss.
 
-You are responsible for reviewing the applicable game rules and deciding whether to use OptiClick. You assume the risks arising from your installation, configuration, or use of OptiClick and third-party components, including game instability, crashes, data loss, and account-related penalties, to the extent permitted by applicable law.
+You are responsible for reviewing the rules of each game, deciding whether to install and use OptiClick, and accepting the associated risks and consequences, to the extent permitted by applicable law. This section does not exclude any liability that cannot legally be excluded.
 
 ## 6. No Warranty and Limitation of Liability
 
