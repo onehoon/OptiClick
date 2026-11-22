@@ -6,8 +6,9 @@
   <b>One-click OptiScaler installation and configuration for supported games and GPUs.</b>
 </p>
 
-> [!NOTE]
-> OptiClick is an independent project and is not officially provided by the OptiScaler team.
+> [!IMPORTANT]
+> **OptiClick is an unofficial, independent third-party installer for OptiScaler.**
+> It is **not affiliated with, endorsed by, or officially associated with** the OptiScaler project or its developers.
 
 ## Download & Installation
 
